@@ -1,5 +1,5 @@
 // scripts/serve.mjs
-// new-lead-dashboard v3
+// new-lead-dashboard v4
 import { createServer } from 'node:http';
 import { readFile, writeFile, realpath, stat, lstat } from 'node:fs/promises';
 import { join, resolve, sep, extname } from 'node:path';
@@ -12,10 +12,14 @@ import { findFreePort } from './lib/port.mjs';
 
 const MIME = {
   '.html': 'text/html', '.js': 'text/javascript', '.mjs': 'text/javascript', '.css': 'text/css',
-  '.json': 'application/json', '.svg': 'image/svg+xml', '.md': 'text/plain',
+  '.json': 'application/json', '.svg': 'image/svg+xml', '.pdf': 'application/pdf',
+  '.md': 'text/plain; charset=utf-8', '.txt': 'text/plain; charset=utf-8', '.csv': 'text/plain; charset=utf-8',
 };
 const ID = ID_RE.source.slice(1, -1);
 const DIST_RE = new RegExp(`^/leads/(${ID})/dist/`);
+// Documents at the lead root (requirements.md, rfp.md, a client PDF, ...) are
+// viewable in the browser: one path segment deep, doc extensions only.
+const DOC_RE = new RegExp(`^/leads/(${ID})/[^/]+\\.(?:md|txt|csv|json|pdf)$`);
 const SCRIPTS_DIR = 'scripts';
 const DEFAULT_PORT = 4600;
 
@@ -128,7 +132,8 @@ function send(res, status, body) {
 function isAllowlisted(decoded) {
   return decoded === '/scripts/stats.mjs'
     || decoded.startsWith('/scripts/vendor/')
-    || DIST_RE.test(decoded);
+    || DIST_RE.test(decoded)
+    || DOC_RE.test(decoded);
 }
 
 async function serveStatic(root, pathname, res) {

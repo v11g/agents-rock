@@ -65,13 +65,30 @@ test('static serving with traversal guard', async () => {
   assert.equal((await fetch(`${base}/leads/acme-crm/..%2F..%2Fetc%2Fpasswd`)).status, 403);
   assert.equal((await fetch(`${base}/leads/acme-crm/..%2Fleads.json.lock`)).status, 403);
 });
-test('static allowlist: leads.json, notes.md, rfp.md, brief.md -> 404; stats.mjs, vendor -> 200', async () => {
+test('static allowlist: leads.json -> 404; lead-root docs, stats.mjs, vendor -> 200', async () => {
   assert.equal((await fetch(`${base}/leads.json`)).status, 404);
-  assert.equal((await fetch(`${base}/leads/acme-crm/notes.md`)).status, 404);
-  assert.equal((await fetch(`${base}/leads/acme-crm/rfp.md`)).status, 404);
-  assert.equal((await fetch(`${base}/leads/acme-crm/brief.md`)).status, 404);
+  assert.equal((await fetch(`${base}/leads/acme-crm/notes.md`)).status, 200);
+  assert.equal((await fetch(`${base}/leads/acme-crm/rfp.md`)).status, 200);
+  assert.equal((await fetch(`${base}/leads/acme-crm/brief.md`)).status, 200);
   assert.equal((await fetch(`${base}/scripts/stats.mjs`)).status, 200);
   assert.equal((await fetch(`${base}/scripts/vendor/reactflow-bundle.js`)).status, 200);
+});
+test('lead-root docs: only doc extensions, only one path segment deep', async () => {
+  await writeFile(join(root, 'leads', 'acme-crm', 'script.mjs'), 'export {};\n');
+  assert.equal((await fetch(`${base}/leads/acme-crm/script.mjs`)).status, 404);
+  await mkdir(join(root, 'leads', 'acme-crm', 'docs'), { recursive: true });
+  await writeFile(join(root, 'leads', 'acme-crm', 'docs', 'nested.md'), 'nested\n');
+  assert.equal((await fetch(`${base}/leads/acme-crm/docs/nested.md`)).status, 404);
+  const md = await fetch(`${base}/leads/acme-crm/rfp.md`);
+  assert.equal(md.headers.get('content-type'), 'text/plain; charset=utf-8');
+});
+test('lead-root doc symlinked out of the root is rejected, not followed', async () => {
+  const outside = join(root, '..', 'outside-doc.md');
+  await writeFile(outside, 'top secret');
+  await symlink(outside, join(root, 'leads', 'acme-crm', 'leak.md'));
+  const res = await fetch(`${base}/leads/acme-crm/leak.md`);
+  assert.ok(res.status >= 400 && res.status < 500, `expected 4xx, got ${res.status}`);
+  await rm(outside, { force: true });
 });
 test('static content-type and body are correct for allowlisted files', async () => {
   const stats = await fetch(`${base}/scripts/stats.mjs`);
@@ -114,23 +131,10 @@ test('symlink inside dist/ escaping to leads.json is rejected, not the registry'
   assert.ok(res.status >= 400 && res.status < 500, `expected 4xx, got ${res.status}`);
   assert.doesNotMatch(await res.text(), /Beta Shop/);
 });
-test('symlink inside dist/ escaping to notes.md is rejected, not the notes', async () => {
-  await symlink(join(root, 'leads', 'acme-crm', 'notes.md'), join(root, 'leads', 'acme-crm', 'dist', 'notes-leak.md'));
-  const res = await fetch(`${base}/leads/acme-crm/dist/notes-leak.md`);
-  assert.ok(res.status >= 400 && res.status < 500, `expected 4xx, got ${res.status}`);
-  assert.doesNotMatch(await res.text(), /omnichannel/);
-});
-test('symlinks inside dist/ escaping to brief.md and rfp.md are also rejected', async () => {
-  const targets = [
-    ['brief.md', /aging spreadsheet-based/],
-    ['rfp.md', /Request for Proposal/],
-  ];
-  for (const [name, marker] of targets) {
-    await symlink(join(root, 'leads', 'acme-crm', name), join(root, 'leads', 'acme-crm', 'dist', `escape-${name}`));
-    const res = await fetch(`${base}/leads/acme-crm/dist/escape-${name}`);
-    assert.ok(res.status >= 400 && res.status < 500, `${name}: expected 4xx, got ${res.status}`);
-    assert.doesNotMatch(await res.text(), marker);
-  }
+test('symlink inside dist/ to a lead-root doc serves 200 — those docs are allowlisted directly now', async () => {
+  await symlink(join(root, 'leads', 'acme-crm', 'rfp.md'), join(root, 'leads', 'acme-crm', 'dist', 'alias-rfp.md'));
+  const res = await fetch(`${base}/leads/acme-crm/dist/alias-rfp.md`);
+  assert.equal(res.status, 200);
 });
 test('symlinked directory inside dist/ cannot reach leads.json through it', async () => {
   await symlink(root, join(root, 'leads', 'acme-crm', 'dist', 'sub'));

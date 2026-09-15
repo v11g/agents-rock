@@ -26,6 +26,10 @@ test('evidence is the human-dropped files, never the generated artifacts', async
     assert.ok(!labels.includes(generated), `${generated} must not be listed as evidence`);
   }
 });
+test('evidence doc files are clickable, served from the lead root', async () => {
+  const m = await buildLeadMap(ROOT, 'acme-crm');
+  assert.equal(byId(m, 'evidence-rfp.md').data.href, '/leads/acme-crm/rfp.md');
+});
 test('components parsed from ARCHITECTURE.md §6 table', async () => {
   const m = await buildLeadMap(ROOT, 'acme-crm');
   assert.ok(byId(m, 'component-atlas.api'));

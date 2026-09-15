@@ -1,5 +1,5 @@
 // scripts/lib/map-nodes.mjs
-// new-lead-dashboard v2
+// new-lead-dashboard v3
 import { readdir } from 'node:fs/promises';
 import { join } from 'node:path';
 
@@ -37,7 +37,7 @@ export async function leadNodes(id, dir, src) {
   const proposalMds = [...ctx.names].filter((n) => isProposalMd(n) && n !== 'proposal.md');
   const claimed = new Set([...Object.values(NAMED_PAGES), ...proposalMds.map(htmlFor)]);
   return [
-    ...evidenceNodes(entries),
+    ...evidenceNodes(ctx, entries),
     ...docNodes(ctx),
     ...proposalMds.map((n) => docNode(ctx, { key: n, label: n, page: htmlFor(n), exists: true })),
     ...pageNodes(ctx, claimed),
@@ -51,12 +51,20 @@ function isEvidence(entry) {
     && !isProposalMd(entry.name);
 }
 
-function evidenceNodes(entries) {
+// Doc extensions the dashboard server serves from the lead root (serve.mjs DOC_RE).
+const VIEWABLE_RE = /\.(?:md|txt|csv|json|pdf)$/;
+
+function evidenceNodes(ctx, entries) {
   return entries.filter(isEvidence).map((entry) => ({
     id: `evidence-${entry.name}`,
     type: 'evidence',
     position: { x: 0, y: 0 },
-    data: { label: entry.name, status: 'ready', href: null, detail: null },
+    data: {
+      label: entry.name,
+      status: 'ready',
+      href: entry.isFile() && VIEWABLE_RE.test(entry.name) ? `/leads/${ctx.id}/${entry.name}` : null,
+      detail: null,
+    },
   }));
 }
 
