@@ -1,269 +1,287 @@
-# Scoring Path — Design Spec
+# Real Scores at STANDARD Depth — Design Spec
 
 Date: 2026-09-15
 Skill: `plugins/solution-architect/skills/estimate/`
-Predecessors (ship first, no spec):
+Predecessors (shipped on `feat/estimate-ai-assisted`, no spec):
   A — `plan` → `aiAssisted` + `toolingCostPerSeat` on scenarios
   B — page Summary block replaces scenario cards, cost bars, what-if rail
 
+Supersedes the two earlier drafts in this file (a `SCORING`/`PERT` technique
+fork, then a SCORING-only split). Both were dropped on 2026-09-15 once the
+team confirmed the spreadsheet is the deliverable: its scoring tab and its
+task tab must both be filled from one estimate.
+
 ## Summary
 
-Make factor-scored tiering a first-class estimation method instead of a lossy
-shortcut. Today the interview scores five factors per feature at QUICK depth,
-picks a tier, reads the calibration band — then writes one synthetic task and
-**discards the scores**. The HTML page's "scoring mode" re-derives five
-scores backwards from the hours, so it can never disagree with them, and the
-`estimation.md` Summary carries a `Tier` column that nothing validates. Both
-live leads label features `M` with a 40–160 h range and `S` with 16–56 h;
-no rule produced those letters.
+The interview already asks five factor scores per feature at every depth
+(`interview.md` §4 step 3). At STANDARD and DEEP those scores are then thrown
+away: nothing in `estimation-inputs.json` holds them, and the HTML page and
+xlsx export re-derive five "scores" backwards from hours (`deriveScores`).
+Measured on the two live leads, 43 features: Uncertainty is 4 or 5 on every
+row, Risk never reaches 1 or 4, Tech never reaches 1, zero features tier S.
+The rubric asks about spec clarity and business impact; the derivation
+answers with PERT spread and estimate confidence.
 
-After this change: scores are elicited against a written rubric, persisted
-with provenance, turned into a tier by one scale, and read by every
-downstream surface. PERT survives unchanged and gains a cross-check against
-the tier band. Compute math is untouched.
+After this change, at STANDARD and DEEP the human's scores are written to
+inputs next to the tasks, validated, and read verbatim by the page and the
+spreadsheet. QUICK is untouched. Compute, scenarios, cost, roadmap,
+`/proposal` are untouched.
 
-## Decisions (approved in design session)
+## Decisions
 
 | # | Decision |
 | --- | --- |
-| D1 | `technique` is the fork the human chooses: `SCORING` or `PERT`. `QUICK` stops being a depth — it *is* `SCORING`. `depth` (`STANDARD` / `DEEP`) is meaningful only under `PERT`. |
-| D2 | `SCORING` keeps the synthetic-task bridge (`o`/`m`/`p` = band low/mid/high). `compute.mjs`, `rollup.mjs`, scenarios, roadmap, `/proposal` are not modified. |
-| D3 | Every feature on every path carries `scores`, `tier`, `band`. Under `PERT`, scores are elicited **before** task decomposition and the PERT total is cross-checked against the band. |
-| D4 | Scores are never derived from hours. `deriveScores` in the template is deleted; the page reads `features[].scores`. |
-| D5 | One tier scale everywhere: the workbook's `S ≤ 11 · M ≤ 17 · L ≤ 22 · XL > 22`. The calibration table gains an `XL` band. `techniques.md` and `TIER_BREAKS` in `estimate-math.mjs` are updated to match. |
-| D6 | The rubric leaves the HTML for `references/scoring-guide.md`. The interviewer reads it before proposing any score; `render.mjs` injects it into the page as a slot. |
-| D7 | Score elicitation is evidence-first: the agent proposes all five scores per feature from the evidence it already read, labels them `proposed`, and the human accepts or corrects. Cards are batched 4–6 per turn. |
-| D8 | A PERT feature whose expected hours fall outside its tier band must carry a `bandNote` explaining the reconciliation, or `validate.mjs` refuses. Same spirit as the existing >30% analogy-divergence rule. |
-| D9 | The xlsx export's tier → `$` price columns (`500/1500/4000/10000` and `1500/4000/10000/25000`) are removed. They are a second pricing model with no owner. |
-| D10 | Milestones under `SCORING` are optional (asked, skippable). Under `PERT` unchanged. |
+| D1 | Depth names stay `QUICK` / `STANDARD` / `DEEP`. No technique fork. QUICK's flow (scores → tier → calibration band → one synthetic task) is not modified and still does not persist scores. |
+| D2 | At `STANDARD` and `DEEP`, every feature carries `scores` (each factor: number, rubric anchor verbatim, evidence cite), a plain-words `scoreNote`, and `scoreProvenance`. `schema.mjs` refuses their absence at those depths and their presence at `QUICK`. |
+| D3 | Scores are never derived from hours. `deriveScores`, `TECH_CATEGORY_SCORE`, the `band()` score helper, `scoreTier`, `SCORE_GUIDE`, `bdModePill`, `bdMode` and every `derived:` string leave the template. |
+| D4 | One tier scale: `S ≤ 11 · M ≤ 17 · L ≤ 22 · XL > 22` (the workbook's sheet-1 formula). `TIER_BREAKS` in `estimate-math.mjs` and `techniques.md` §2 are updated; the default calibration table gains `XL 400–800 h`. `tierFor` is the single source, inlined into the page beside `pert`. |
+| D5 | The rubric moves from the HTML to `references/scoring-guide.md`. The interviewer reads it before proposing a score; `render.mjs` injects it into the page through `<!-- slot:GUIDE -->`. |
+| D6 | Score elicitation is evidence-first: the agent proposes all five scores per feature from the evidence it has read, labels them `proposed`, batches 4–6 cards per turn; the human accepts or corrects. Accepted as offered → `scoreProvenance: "proposed"`; any cell changed → `"stated"`. |
+| D7 | Soft cross-check. When a feature's PERT hours fall outside its tier's calibration band the page marks the row `⚠` and the interviewer says so once after o/m/p. Nothing is refused, nothing new is written. Hardening to a validator rule is a later decision. |
+| D8 | The xlsx export keeps its tier → `$` columns (I–K) and its Task Breakdown tab. Sheet 1 score cells read `features[].scores`; at QUICK they are blank. Sheet 1 gains column N `WHY THIS TIER` (the plain-words `scoreNote`, for sales and client readers) and the workbook gains a fifth tab `Score Rationale` (one row per feature × factor: score, anchor, cite, provenance, for engineers). |
+| D9 | Live leads are backfilled through the interview (D6 cards against their existing evidence), never by script. |
+| D10 | The human picks the review channel for the proposed scores: terminal cards, a CSV the agent writes and reads back, or an HTML review page. The agent asks once per estimate, gives a one-line reason for each option, and recommends one from the feature count. All three produce the same `scores` + `scoreProvenance`. |
 
 ## 1. Interview (`references/interview.md`)
 
-### 1.1 Fork
+§4 step 3 today:
 
-§2 "Depth question — ask first" becomes:
+> **Factor scores per feature** — five factors, each scored 1-5 … (STANDARD/DEEP also want task-level O/M/P)
 
-```text
-Technique?
- ├── SCORING — five factors per feature, tier, calibration band     (±wide)
- └── PERT    — score first, then task-level three-point            (±moderate)
-                 depth?  STANDARD | DEEP                           (DEEP: ±narrow)
-```
-
-§2b delivery mode is unchanged and still asked second. The evidence →
-technique decision table in `techniques.md` §1 still drives the *recommended*
-answer; the human confirms or overrides as today.
-
-### 1.2 Question sequence
+becomes two steps:
 
 ```text
-0. evidence scan            pre-fill scope, show provenance table   (unchanged)
-1. technique                SCORING | PERT (+ depth)                (was: depth)
-2. delivery mode            TRADITIONAL | AGENTIC                   (unchanged)
-3. clear-vs-assumed gate                                            (unchanged)
-4. calibration table        S · M · L · XL bands, org history or defaults   (was Q7 — moved up)
-5. score features           §1.3 — both techniques
-6. milestone grouping       PERT: as today · SCORING: optional      (D10)
-7. PERT tasks + o/m/p       PERT only, with band cross-check §1.4
-8. team + rates + seniority                                         (unchanged)
-9. tooling cost per seat    from predecessor A                      (unchanged)
-10. deadline / budget ceiling                                       (unchanged)
-11. expose rates to client                                          (unchanged)
+3.  Factor scores per feature   all depths — read scoring-guide.md first,
+                                ask review channel §1.2, then cards §1.1
+    STANDARD/DEEP: write scores + scoreProvenance on every feature
+    QUICK:         use them for the tier as today; nothing else changes
+3b. Tasks + O/M/P               STANDARD/DEEP only, as today (techniques.md §3)
+    after each feature: compare Σ pert(e) with the tier band; if outside,
+    say so once — "Σ19 → L → 160–400 h, tasks sum to 85 h; tasks missing or
+    scores high?" — human decides, nothing is written
 ```
 
-Calibration moves before scoring because it is the thing that turns a letter
-into hours; the human must see the bands before handing out tiers.
+Steps 1, 2, 4–8 unchanged. The calibration table (step 7) is unchanged and
+still asked at every depth; at STANDARD/DEEP it feeds only the ⚠ check.
 
-### 1.3 Score cards
+### 1.1 Score cards
 
-One card per feature, batched 4–6 per turn. The agent fills every cell from
+One card per feature, 4–6 per turn. The agent fills every cell from
 evidence and cites the source inline; the human answers `accept`, `<factor>
 <n>`, or `split`.
 
 ```text
-┌ F07  Payment reconciliation ───────────────────────────── proposed ┐
-│  Tech    4  non-trivial algorithms     ← ARCHITECTURE.md §6 matching │
-│  Size    3  multiple components + BE   ← PRD §4.2, 3 screens        │
-│  Deps    4  multiple 3rd-party APIs    ← Stripe + bank CSV import   │
-│  Unc     3  design decisions in build  ← reconciliation rules TBD   │
-│  Risk    5  payments / irreversible    ← rubric: payments = 4–5     │
-│  Σ 19  →  L  →  160–400 h                                            │
-│  accept · change <factor> <n> · split                               │
-└──────────────────────────────────────────────────────────────────────┘
+┌ F07  Payment reconciliation ──────────────────────────────────── proposed ┐
+│  Tech  4  Non-trivial algorithms, real-time systems, ML inference,        │
+│           complex data transforms                                         │
+│           ← ARCHITECTURE.md §6: fuzzy match bank rows to invoices         │
+│  Size  3  Medium feature with multiple components and backend logic       │
+│           ← PRD §4.2: 3 screens + nightly job                             │
+│  Deps  4  Multiple third-party APIs or tightly coupled internal systems   │
+│           ← Stripe API + bank CSV import                                  │
+│  Unc   3  Some open questions, design decisions to be made during build   │
+│           ← PRD §4.2: "reconciliation rules TBD"                          │
+│  Risk  5  Core infrastructure, compliance requirements, irreversible ops  │
+│           ← payments; rubric puts payments at 4–5, chose 5: irreversible  │
+│  Σ 19  →  L  →  160–400 h                                                 │
+│  Why (client): handles payments and two outside services; matching       │
+│                rules still to be decided                                  │
+│  accept · change <factor> <n> · why <text> · split                        │
+└───────────────────────────────────────────────────────────────────────────┘
 ```
 
 Rules:
 
-- Anchors come from `scoring-guide.md` verbatim; the card never paraphrases.
-- A card at Σ 11, 17 or 22 shows an edge line: `one point from <tier>; <factor>
-  +1 moves this to <band>`.
+- `Why` is one plain sentence for a non-technical reader: what the feature
+  touches and what is still unknown. No file names, no factor names, no
+  rubric wording. The human may rewrite it (`why <text>`); a rewrite marks
+  the feature `stated` like a score change.
+
+- Anchors come from `scoring-guide.md` verbatim, full sentence, never
+  truncated or paraphrased; the cite quotes the fact it rests on. The
+  engineer checks two things per row: right rubric sentence, evidence
+  supports it.
+- Every score shows its anchor and its cite, in every channel. No evidence
+  for a factor → the cell is `?` and the agent asks; it never fills a 3.
+- A card at Σ 11, 17 or 22 shows an edge line: `one point from <tier>;
+  <factor> +1 moves this to <band>`.
+- Σ > 22 (XL): the card recommends `split` before `accept`.
 - Any factor scored 5 shows `review`.
-- `scoreProvenance` is `proposed` when the human accepts the card as
-  offered, `stated` when they change any cell.
 - `split` returns to the clear-vs-assumed gate (loop rule §5 already covers
   this).
 
-### 1.4 PERT cross-check
+### 1.2 Review channel (D10)
 
-Under `PERT`, after o/m/p are elicited for a feature's tasks, compare
-`Σ pert(task).e` with `band`:
+Asked once, after the clear-vs-assumed gate and before the first card:
 
 ```text
-F07  Σ19 → L → 160–400 h
-     PERT tasks 85 h        ⚠ below band — tasks missing what the scorer felt?
+25 features to score. How do you want to review them?
+  1. terminal   cards here, 4–6 per turn, reply "accept" or "F03 deps 4"
+                — fastest for ≤ 8 features, no file to open
+  2. csv        I write scores-draft.csv, you edit in Sheets/Excel, say "done"
+                — all rows on one screen, notes column, fits the workbook habit
+  3. html       I write scores-review.html, you open it, set dropdowns, copy
+                the feedback block back here
+                — anchor text on hover, edge/XL badges, best for 15+ features
+Recommended: 2 (25 features).
 ```
 
-The interviewer must reconcile before writing inputs: adjust the tasks, adjust
-the scores, or record why both are right in `bandNote`. Never average.
+Recommendation rule: ≤ 8 → terminal, 9–14 → csv, 15+ → html; the human
+overrides freely. Whatever the channel, every proposed cell carries its
+anchor and its cite, and the agent reports the diff before writing:
+`3 changes: F07 risk 5→4, F12 unc 2→3, F19 deps 3→4 — all stated. Σ moves
+F12 to L. Proceed?`
+
+| Channel | Agent writes | Human does | Agent reads back |
+| --- | --- | --- | --- |
+| terminal | cards (§1.1) in chat | replies per batch | parses the reply |
+| csv | `scores-draft.csv`: `id, feature, tech, tech_why, tech_cite, … risk, risk_why, risk_cite, sum, tier, why_this_tier, note` — each `*_why` is the anchor sentence verbatim, `*_cite` the evidence, `why_this_tier` the plain-words note | edits numbers or the plain note, optional `note` to the agent, says "done" | `scripts/score-review.mjs --read scores-draft.csv` diffs against the proposal it wrote |
+| html | `scores-review.html` from `assets/scores-review-template.html`: one row per feature, a `<select>` per score, anchor sentence as cell title, cite column, ⚑ edge and XL badges, live Σ/tier, "copy feedback" button that puts a JSON block on the clipboard | sets dropdowns, pastes the block | parses the pasted JSON (same shape as the csv diff) |
+
+`score-review.mjs` owns both file formats: `--write <draft.json> --format
+csv|html` and `--read <file>`. It is the only new script; it does no
+scoring, only serialisation and diff. The HTML page reuses the estimate
+template's palette and table CSS, embeds the scoring guide table under a
+fold, and has no internal/client split. A `note` from csv or html lands in
+the feature's `assumptions` only if the human says so; by default it is
+shown in the diff and discarded.
 
 ## 2. Scoring guide (`references/scoring-guide.md`)
 
-New file. Content is `SCORE_GUIDE` from `estimate-template.html:894-925` —
-five dimensions × five anchors — with every `derived:` footnote removed.
-Format: one markdown table, header `Dimension | 1 | 2 | 3 | 4 | 5`, plus the
-tier scale line and a one-paragraph note on `proposed` vs `stated`.
+New file. Content is `SCORE_GUIDE` from `estimate-template.html` — five
+dimensions × five anchors — with every `derived:` footnote removed. Format:
+one markdown table, header `Dimension | 1 | 2 | 3 | 4 | 5`, the tier scale
+line (D4), and one paragraph on `proposed` vs `stated`.
 
-`render.mjs` reads this file and injects the table into the page via
-`<!-- slot:GUIDE -->`, so page and interview explain a score in the same
-words and the HTML no longer owns the rubric.
+`render.mjs` reads the file and injects the table via `<!-- slot:GUIDE -->`,
+so page and interview explain a score in the same words and the HTML no
+longer owns the rubric.
 
-## 3. Data model (`estimation-inputs.json`, `lib/schema.mjs`)
+## 3. Data model
 
-### 3.1 Top level
-
-```jsonc
-{
-  "technique": "SCORING" | "PERT",          // was free text, e.g. "three-point-pert"
-  "depth": "STANDARD" | "DEEP",             // PERT only; absent under SCORING
-  "calibration": {
-    "S": [20, 60], "M": [60, 160], "L": [160, 400], "XL": [400, 800],
-    "provenance": "stated" | "proposed"     // org history vs defaults
-  }
-}
-```
-
-`QUICK` is rejected. `calibration.provenance` is new and required —
-`proposed` means the defaults are in use, and the page says so.
-
-### 3.2 Per feature
+### 3.1 Per feature (STANDARD / DEEP)
 
 ```jsonc
 {
   "id": "payment-recon",
   "name": "Payment reconciliation",
   "provenance": "stated",
-  "scores": { "tech": 4, "size": 3, "deps": 4, "unc": 3, "risk": 5 },
+  "scores": {
+    "tech": { "n": 4, "anchor": "Non-trivial algorithms, real-time systems, ML inference, complex data transforms", "cite": "ARCHITECTURE.md §6" },
+    "size": { "n": 3, "anchor": "…", "cite": "PRD §4.2" },
+    "deps": { "n": 4, "anchor": "…", "cite": "Stripe + bank CSV import" },
+    "unc":  { "n": 3, "anchor": "…", "cite": "PRD §4.2 — reconciliation rules TBD" },
+    "risk": { "n": 5, "anchor": "…", "cite": "rubric: payments" }
+  },
+  "scoreNote": "Handles payments and two outside services; matching rules still to be decided",
   "scoreProvenance": "stated" | "proposed",
-  "tier": "L",
-  "band": [160, 400],
-  "bandNote": "…",                          // PERT only; required when Σe ∉ band
-  "tasks": [ … ]                            // SCORING: exactly one synthetic task
+  "tasks": [ … ]                            // unchanged
 }
 ```
 
-Validation added to `checkInputs`:
+`anchor` must equal one of the five anchor sentences for that factor in
+`scoring-guide.md` (the validator checks it verbatim), so the reason a score
+was given cannot drift from the rubric the way the scores drifted from the
+hours.
+
+QUICK features keep today's shape. `tier` and `band` are not stored: the
+page and `checks.mjs` compute them from `scores` through `tierFor` and the
+calibration table already in inputs.
+
+### 3.2 Validation (`schema.mjs`)
 
 | Rule | Finding |
 | --- | --- |
-| all five scores present, integers 1–5 | `feature X: scores.<k> must be an integer 1–5` |
-| `tier` equals `tierFor(scores)` under D5 | `feature X: tier "M" does not match Σ19 (L)` |
-| `band` equals `calibration[tier]` | `feature X: band does not match calibration L` |
-| SCORING: exactly one task, `o/m/p` = band low / mid / high | `feature X: SCORING synthetic task must equal band` |
-| PERT: `Σ pert(task).e ∈ band` or `bandNote` non-empty | `feature X: PERT 85h outside band 160–400 and no bandNote` |
-| `calibration.provenance` present | `calibration.provenance is required` |
+| STANDARD/DEEP: `scores` has exactly `tech size deps unc risk`; each `n` an integer 1–5 | `feature X: scores.<k>.n must be an integer 1–5` |
+| STANDARD/DEEP: each `anchor` equals the guide's anchor for that factor and score | `feature X: scores.<k>.anchor is not the guide's sentence for <k> = <n>` |
+| STANDARD/DEEP: each `cite` non-empty string | `feature X: scores.<k>.cite is required` |
+| STANDARD/DEEP: `scoreNote` non-empty, contains no factor name, no `.md`, no `§` | `feature X: scoreNote must be one plain sentence (no file names, factor names or section marks)` |
+| STANDARD/DEEP: `scoreProvenance` is `stated` or `proposed` | `feature X: scoreProvenance must be stated\|proposed` |
+| QUICK: `scores` or `scoreProvenance` present | `feature X: scores are not persisted at QUICK depth` |
+| `depth` is `QUICK\|STANDARD\|DEEP` | `depth must be QUICK\|STANDARD\|DEEP` |
 
-Existing all-or-nothing rules (milestones, components) unchanged.
+`depth` is currently free text in inputs and unread by any script; this is
+the first rule that names it. Agentic mode is unaffected (its features carry
+no scores; the STANDARD/DEEP rule applies to traditional delivery only).
 
 ### 3.3 `estimation.json`
 
-`computed.features[id]` gains `tier`, `band`, `total` (Σ scores) copied from
-inputs so the page and `checks.mjs` read one object. No new math.
+At STANDARD/DEEP, `computed.features[id]` gains `scoreTotal` and `tier`
+(from `tierFor`) so page, `checks.mjs` and xlsx read one object. No new
+math.
 
-## 4. Tier scale (D5)
+## 4. Tier scale (D4)
 
 | Where | Today | After |
 | --- | --- | --- |
 | `estimate-math.mjs` `TIER_BREAKS` | `S ≤10 · M ≤17 · L` | `S ≤11 · M ≤17 · L ≤22 · XL` |
 | `techniques.md` §2 | `≤10 S / 11–17 M / ≥18 L` | same as above |
-| page `scoreTier` | `S ≤11 · M ≤17 · L ≤22 · XL` | reads `features[].tier`; local function deleted |
-| xlsx `rowFormulas` | `S ≤11 · M ≤17 · L ≤22 · XL` | unchanged formula, prices removed (D9) |
+| page `scoreTier` | `S ≤11 · M ≤17 · L ≤22 · XL` (local copy) | deleted; reads `computed.features[].tier` |
+| xlsx `rowFormulas` | `S ≤11 · M ≤17 · L ≤22 · XL` | unchanged |
 | default calibration | `S 20–60 · M 60–160 · L 160–400` | `+ XL 400–800` |
 
-`tierFor` moves from a page-only helper to the single source, imported by
-`schema.mjs` for validation and inlined into the template as today's math is.
-
-## 5. Compute
-
-No change to `compute.mjs`, `rollup.mjs`, `estimate-math.mjs` beyond
-`TIER_BREAKS` (§4). The bridge task is what the pipeline already consumes.
-
-`checks.mjs` gains:
+## 5. Checks (`checks.mjs`)
 
 | Rule | Finding |
 | --- | --- |
-| `estimation.md` Summary `Tier` cell equals `features[].tier` | `scope row "X": Tier M does not match inputs (L)` |
-| `estimation.md` Summary `Range (h)` equals `band` under SCORING | `scope row "X": range must equal band 160–400` |
-| calibration line names provenance | `calibration line must state org history or defaults` |
+| STANDARD/DEEP: `estimation.md` Summary `Tier` cell equals `computed.features[].tier` | `scope row "X": Tier M does not match scores (L)` |
+
+The `Tier` column already exists in the skeleton (`writing.md` §2) with
+nothing producing it. At QUICK the agent still types the tier it chose, as
+today, unchecked.
 
 ## 6. Page (`assets/estimate-template.html`)
 
-Renders per `inputs.technique`. Predecessor B has already replaced cards,
-bars and the what-if rail with the Summary block; this section builds on
-that page.
+One template. Column set chosen once from `inputs.depth`.
 
-| Element | PERT | SCORING |
+| Element | QUICK | STANDARD / DEEP |
 | --- | --- | --- |
-| Summary — size line | `1,381 h · 25 features · 52 tasks · 6 milestones` | `1,381 h · 25 features · 4 S · 15 M · 6 L` |
-| Summary — method line | `PERT, STANDARD depth · scope 25/25 stated` | `factor-scored · calibration: defaults (uncalibrated)` or `org history` |
-| Summary — fragility line | — | `3 features on a tier edge` |
-| Breakdown columns | Feature · Tech Size Deps Unc Risk · Σ · Tier · Band · Hours · Confidence · Source | Feature · Tech Size Deps Unc Risk · Σ · Tier · Band · Hours · Source |
-| Breakdown `Range` column | removed | removed |
-| Score cell = 5 | `review` styling (existing CSS) | same |
-| Σ at 11 / 17 / 22 | edge marker on the row | same |
-| Task drill-down | as today | hidden (one synthetic row = its parent) |
-| Scoring guide | fold under the table, from `slot:GUIDE` | same, open on first view |
-| Mode toggle (estimate / scores) | removed — one table carries both | removed |
-| Method fold | PERT text + "scores cross-checked against tier band" | scores → tier → calibration band → hours |
-| Derivation trace (row hover / expand) | `Σ19 → L → 160–400 h · PERT 280 h ✓` | `Σ19 → L → 160–400 h → 280 h` |
-| Containers, roadmap, risk register | unchanged | unchanged |
-
-Deleted from the template: `deriveScores`, `TECH_CATEGORY_SCORE`, `band()`
-score-banding helper, `scoreTier`, `SCORE_GUIDE`, `bdModePill`, `bdMode`,
-the `derived:` strings.
+| Breakdown columns | Feature · Effort · Confidence · Source (today's estimate table) | Feature · Tech Size Deps Unc Risk · Σ · Tier · Effort · Confidence · Source |
+| Task drill-down | as today | as today |
+| Score cell = 5 | — | `review` styling (existing CSS) |
+| Σ at 11 / 17 / 22 | — | edge marker on the row |
+| Hours outside tier band | — | `⚠` on the row, title `PERT 85 h below L band 160–400 h` |
+| Score cell hover | — | anchor sentence + cite |
+| Feature row subline | — | `scoreNote` in plain words, same slot the task assumptions use |
+| Scoring guide | — | fold under the table from `slot:GUIDE`, open on first view |
+| Mode toggle (estimate / scores) | removed | removed |
+| `download xlsx` | as today | as today |
+| Summary, containers, roadmap, risks, method | unchanged | unchanged |
 
 Client view: identical minus rates (existing `redactForClient`). Scores and
 tiers are client-facing — they are the clear-vs-assumed split made visible.
 
 ## 7. xlsx export
 
-- Score columns export `features[].scores`, not derived values.
-- Tier formula unchanged (already the D5 scale).
-- Columns `I`/`J` (tier → `$` low/high) removed, with their `totalRowXml`
-  sums. Cost lives in scenarios, nowhere else.
-- Sheet-2 task tab unchanged.
+- Sheet 1 score cells B–F read `features[].scores.*.n`; blank at QUICK.
+- Sheet 1 column N `WHY THIS TIER` = `scoreNote`, header styled like L/M
+  (`MILESTONE`, `CONTAINER`), autofilter widened to N.
+- New tab `Score Rationale` (sheet5, registered like Task Breakdown):
+  `FEATURE | FACTOR | SCORE | ANCHOR | EVIDENCE | PROVENANCE`, five rows per
+  feature, header frozen, autofilter. Empty at QUICK.
+- Tier formula (H), `$` columns (I–K), totals, Scoring Guide and Tier
+  Reference tabs, Task Breakdown tab: unchanged.
+- The "rows arrive with `.scores` already derived" comment goes with
+  `deriveScores`.
 
 ## 8. Documentation
 
 | File | Change |
 | --- | --- |
-| `SKILL.md` | Flow step 2 → "Technique and delivery mode"; step 4 folds into it; `scoring-guide.md` listed as a read |
-| `references/interview.md` | §2 rewritten (§1.1), §4 sequence (§1.2), new §4a cards (§1.3), §4b cross-check (§1.4) |
-| `references/techniques.md` | §1 decision table maps to `SCORING` / `PERT`; §2 tier breaks → D5; bridge paragraph unchanged |
-| `references/writing.md` | §1 inputs shape: `scores`, `tier`, `band`, `bandNote`, `calibration.provenance`; §2 skeleton: Summary `Tier` cell must equal inputs; calibration line names provenance |
+| `SKILL.md` | flow step for the interview lists `scoring-guide.md` as a read |
+| `references/interview.md` | §4 step 3 split into 3 / 3b (§1); review channel question (§1.2); cards (§1.1) |
+| `references/techniques.md` | §2 tier breaks → D4; one sentence: at STANDARD/DEEP the scores are persisted and the band is a cross-check |
+| `references/writing.md` | §1 inputs shape gains `scores` (n / anchor / cite), `scoreNote`, `scoreProvenance`, with the plain-words rule for the note; §2: Summary `Tier` cell must match scores at STANDARD/DEEP |
 | `references/scoring-guide.md` | new (§2) |
-| `references/ai-multipliers.md` | unchanged by C (pricing table already removed by A) |
-| `README.md` | one line: two techniques, scores persisted |
+| `README.md` | one line |
 
 ## 9. Migration
 
 | Artifact | Action |
 | --- | --- |
-| `~/WIP/mine/new-lead-livetest/leads/*/estimation-inputs.json` | both leads are `three-point-pert` at `STANDARD`/`DEEP`. They stay valid against the *old* validator and are not touched by this change. The first time either is re-estimated, the skill runs a **score backfill pass** (cards from §1.3 against existing ARCHITECTURE.md/PRD), renames technique to `PERT`, sets `calibration.provenance: "proposed"` (both use defaults), then re-runs compute + validate; `estimation.md` Summary `Tier` cells are rewritten from the new field. Until then their `proposal.md` is unaffected. |
-| Fixtures | `booking-inputs.json`, `agentic-inputs.json`, `estimation-pass.md`, `estimation-fail.md` gain the new fields; any `QUICK` fixture becomes `SCORING`. |
-| Old `depth: QUICK` inputs in the wild | none known; validation rejects with `depth QUICK is now technique SCORING`. |
-
-Backfill is a one-time interview, not a script — scores are judgments and
-the agent must not invent them from hours (D4).
+| `~/WIP/mine/new-lead-livetest/leads/{montalvo,residental-app}` | 18 + 25 features, `three-point-pert` at DEEP / STANDARD. Backfill interview (D9): cards from §1.1 against their ARCHITECTURE.md / PRD, ~8 turns, then `depth` written if absent, compute re-run (hours byte-identical), `estimation.md` Summary `Tier` cells rewritten, validate. |
+| Fixtures | `booking-inputs.json` gains scores on every feature; `estimation-pass.md` Tier cells match; a QUICK fixture (if added) carries none. |
+| Inputs in the wild | any STANDARD/DEEP inputs without scores now fail validation with the §3.2 finding. Same hard-break posture as predecessor A. |
 
 ## 10. Testing
 
@@ -271,32 +289,31 @@ TDD, RED first:
 
 | Test file | Covers |
 | --- | --- |
-| `schema.test.mjs` | every rule in §3.2; `QUICK` rejected; `XL` accepted; `calibration.provenance` required |
+| `schema.test.mjs` | every rule in §3.2, both directions (missing at STANDARD, present at QUICK); depth enum |
 | `estimate-math.test.mjs` | `tierFor` at 11 / 12 / 17 / 18 / 22 / 23 |
-| `validate.test.mjs` | `checks.mjs` rules in §5 against `estimation-pass.md` / `-fail.md` |
-| `render.test.mjs` | `slot:GUIDE` injected; no `derived:` string in output; drill-down absent under SCORING; Σ edge marker present |
-| `browser.test.mjs` | breakdown shows `features[].scores` verbatim; mode pill absent; Summary size line per technique |
-| `xlsx-export.test.mjs` | no `I`/`J` price columns; score cells equal inputs |
-| `references.test.mjs` | `scoring-guide.md` has five rows × five anchors; `techniques.md` states D5 breaks; `interview.md` names `SCORING`/`PERT` |
-| `e2e.test.mjs` | booking fixture under both techniques renders and validates |
+| `compute.test.mjs` | `scoreTotal`, `tier` in computed features; hours unchanged on the booking fixture |
+| `validate.test.mjs` | §5 Tier rule against `estimation-pass.md` / `-fail.md` |
+| `render.test.mjs` | `slot:GUIDE` injected; no `derived:` string; no `deriveScores`; `tierFor` inlined |
+| `browser.test.mjs` | breakdown shows `features[].scores` verbatim; mode pill absent; `⚠` on an out-of-band row; QUICK inputs render today's columns |
+| `xlsx-export.test.mjs` | score cells equal inputs; column N equals `scoreNote`; Score Rationale tab has 5 rows per feature with anchor and cite; blank/empty at QUICK; I–K and Task Breakdown unchanged |
+| `references.test.mjs` | `scoring-guide.md` five rows × five anchors; `techniques.md` states D4 breaks; `interview.md` has step 3b and names the three channels |
+| `score-review.test.mjs` (new) | csv write → edit two cells → read returns exactly those two diffs; html page renders one `<select>` per score with the anchor as title; "copy feedback" JSON round-trips to the same diff; untouched rows stay `proposed` |
 
-Coverage stays ≥ 80 %. Quality gates (20 lines / 3 params / 200-line files)
-apply to new code; the template's script block is already exempt by
-convention.
+Coverage stays ≥ 80 %. Quality gates apply to new module code; the
+template's script block is exempt by convention.
 
 ## Open decisions
 
-| Decision | Options | Default in this spec |
+| Decision | Options | Default |
 | --- | --- | --- |
-| Client view shows scores | yes / hide | yes — they are the clear-vs-assumed split |
+| Client view shows scores | yes / hide | yes |
 | `XL` default band | `400–800` / other | `400–800` |
-| Score backfill on live leads | on next re-estimate / proactively now | on next re-estimate (§9) |
 | Edge marker thresholds | Σ = 11, 17, 22 exactly / ±1 | exactly |
+| Who drafts the cards | main interview agent inline / a fresh subagent per batch (rubric at top of a ~10k context, accepted scores passed in for sibling consistency) | subagent per batch — inline drifts past ~10 features |
 
 ## Out of scope
 
-- Feeding actuals back into the calibration table (belongs with
-  `record-task`, deferred).
-- A second compute path that reads bands directly (approach B in the
-  session — revisit only if the bridge task starts lying).
+- Any change to QUICK beyond the tier-scale constant it already shares.
+- Hard validator refusal on hours outside band (D7 keeps it soft).
+- Feeding actuals back into the calibration table.
 - Any change to scenarios, months, cost, roadmap, or `/proposal`.
