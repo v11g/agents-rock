@@ -15,6 +15,15 @@ test('the pass fixture passes', () => {
     checkDeliverables({ md: read('estimation-pass.md'), estimation: computeEstimation(inputs()) }), []);
 });
 
+// The fixtures are the worked example a reader copies from, and the skill
+// prices seats, not a named vendor plan (references.test.mjs holds the same
+// line for the reference docs).
+test('neither deliverable fixture names a vendor AI plan', () => {
+  for (const f of ['estimation-pass.md', 'estimation-fail.md']) {
+    assert.doesNotMatch(read(f), /Max 5x/, f);
+  }
+});
+
 test('each seeded violation is caught by name', () => {
   const findings = checkDeliverables({ md: read('estimation-fail.md'), estimation: computeEstimation(inputs()) });
   for (const needle of ['never 0', 'src', 'assumptions cell', 'assumptions register', 'buffer', 'out of scope', 'scenario', 'roadmap']) {

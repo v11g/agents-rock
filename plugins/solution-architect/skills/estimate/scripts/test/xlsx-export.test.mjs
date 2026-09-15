@@ -69,6 +69,30 @@ test('rows land ordered by milestone with the interview scores verbatim', skip, 
   } finally { page.close(); }
 });
 
+// Row 6 is the sample workbook's own header row — the export never writes it,
+// it writes scores into B–F underneath. Pin the seam: if the sample's score
+// columns are ever reordered or renamed, every exported score lands under the
+// wrong heading and nothing else would notice. The sample keeps these as
+// shared strings, unlike the cells the export writes inline.
+function sharedText(files, frag) {
+  const idx = Number(/<v>(\d+)<\/v>/.exec(frag)?.[1]);
+  const items = [...files.get('xl/sharedStrings.xml').toString('utf8').matchAll(/<si>([\s\S]*?)<\/si>/g)];
+  return [...items[idx][1].matchAll(/<t[^>]*>([^<]*)<\/t>/g)].map((m) => m[1]).join('');
+}
+
+const headerText = (files, frag) => inlineText(frag) ?? sharedText(files, frag);
+
+test('the score columns sit under the sample workbook\'s five score headers', skip, async () => {
+  const page = await openPage(buildPage());
+  try {
+    const files = await exportedFiles(page);
+    const xml = sheet1(files);
+    assert.deepEqual(['B', 'C', 'D', 'E', 'F'].map((c) => headerText(files, cell(xml, `${c}6`))),
+      ['TECH\nCOMPLEXITY\n(1–5)', 'FEATURE\nSIZE\n(1–5)', 'DEPEND-\nENCIES\n(1–5)',
+        'UNCER-\nTAINTY\n(1–5)', 'RISK\n(1–5)']);
+  } finally { page.close(); }
+});
+
 test('column N carries the plain-words note for sales readers', skip, async () => {
   const page = await openPage(buildPage());
   try {

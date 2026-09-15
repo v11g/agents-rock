@@ -7,7 +7,7 @@
 | User can book appointment | M | 40–120 | stated |
 | Email reminders | S | 12–36 | proposed |
 
-Recommended delivery: 2 engineers (1 senior, 1 mid) + Claude Code Max 5x — see detail.
+Recommended delivery: 2 engineers (1 senior, 1 mid), AI-assisted — see detail.
 
 ### Assumptions
 
