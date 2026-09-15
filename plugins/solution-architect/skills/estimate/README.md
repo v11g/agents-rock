@@ -13,8 +13,11 @@ doc is hand-totaled).
 
 **An interactive page** (`estimate.html`) — the same data rendered as a
 self-contained, offline-capable HTML file: a Summary (recommended team, months,
-cost, and the committed alternatives), the feature breakdown, containers,
-roadmap and risks, served on `localhost:4173` (or the next free port).
+cost, and the committed alternatives), the feature breakdown (the interview's
+five factor scores per feature, Σ, tier and hours side by side; a
+spreadsheet export with a scoring tab, a Score Rationale tab and a task
+tab), containers, roadmap and risks, served on `localhost:4173` (or the
+next free port).
 
 ## Two run modes
 

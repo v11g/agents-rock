@@ -77,11 +77,82 @@ Ask one thing at a time, in this order:
    entirely (the `milestone` field stays off every feature). Ordering
    provenance is `proposed` unless the client stated the order — then
    `stated`, recorded in the deliverable's Roadmap section.
-3. **Factor scores per feature** — five factors, each scored 1-5: tech
-   complexity, feature size, dependencies, uncertainty, risk. (STANDARD/DEEP
-   also want task-level O/M/P — see `techniques.md`.) TRADITIONAL-only: in
-   AGENTIC mode this step is replaced entirely — ask shape + scope + seed
-   minutes per task instead (§2b, `task-shapes.md`).
+3. **Factor scores per feature** — all depths. Read
+   `references/scoring-guide.md` first; every anchor you show is quoted from
+   it verbatim, never paraphrased. TRADITIONAL-only: in AGENTIC mode this
+   step is replaced entirely — ask shape + scope + seed minutes per task
+   instead (§2b, `task-shapes.md`).
+
+   **Review channel** — ask once, before the first card, with a one-line
+   reason per option and a recommendation from the feature count
+   (≤ 8 → terminal, 9–14 → csv, 15+ → html; the human overrides freely):
+
+   ```text
+   25 features to score. How do you want to review them?
+     1. terminal   cards here, 4–6 per turn, reply "accept" or "F03 deps 4"
+                   — fastest for ≤ 8 features, no file to open
+     2. csv        I write scores-draft.csv, you edit in Sheets/Excel, say "done"
+                   — all rows on one screen, notes column, fits the workbook habit
+     3. html       I write scores-review.html, you open it, set dropdowns, copy
+                   the feedback block back here
+                   — anchor text on hover, edge/XL badges, best for 15+ features
+   Recommended: 2 (25 features).
+   ```
+
+   For csv and html, write your proposals as `draft.json` (`{ project,
+   features: [{ id, name, scores, scoreNote, scoreProvenance }] }`), then
+   `node scripts/score-review.mjs --write draft.json --format csv|html --out
+   <file>`. When the human says done, `node scripts/score-review.mjs --read
+   <file> --draft draft.json` prints the diff and the re-anchored features;
+   report the diff (`3 changes: F07 risk 5→4, … — all stated. Σ moves F12 to
+   L. Proceed?`) before writing them into `estimation-inputs.json`.
+
+   **Cards** (terminal channel, and the shape every channel's row carries):
+   one per feature, 4–6 per turn, every cell filled from evidence you already
+   read, cite inline. The human answers `accept`, `<factor> <n>`, `why
+   <text>`, or `split`.
+
+   ```text
+   ┌ F07  Payment reconciliation ──────────────────────────────────── proposed ┐
+   │  Tech  4  Non-trivial algorithms, real-time systems, ML inference,        │
+   │           complex data transforms                                         │
+   │           ← ARCHITECTURE.md §6: fuzzy match bank rows to invoices         │
+   │  Size  3  Medium feature with multiple components and backend logic       │
+   │           ← PRD §4.2: 3 screens + nightly job                             │
+   │  Deps  4  Multiple third-party APIs or tightly coupled internal systems   │
+   │           ← Stripe API + bank CSV import                                  │
+   │  Unc   3  Some open questions, design decisions to be made during build   │
+   │           ← PRD §4.2: "reconciliation rules TBD"                          │
+   │  Risk  5  Core infrastructure, compliance requirements, irreversible ops  │
+   │           ← payments; rubric puts payments at 4–5, chose 5: irreversible  │
+   │  Σ 19  →  L  →  160–400 h                                                 │
+   │  Why (client): handles payments and two outside services; matching       │
+   │                rules still to be decided                                  │
+   │  accept · change <factor> <n> · why <text> · split                        │
+   └───────────────────────────────────────────────────────────────────────────┘
+   ```
+
+   Rules: the anchor is the guide's full sentence for that factor and score;
+   the cite quotes the fact it rests on; no evidence for a factor → the cell
+   is `?` and you ask, never a silent 3. Σ at 11, 17 or 22 shows `one point
+   from <tier>; <factor> +1 moves this to <band>`; Σ > 22 recommends `split`
+   before `accept`; any 5 shows `review`. `Why` is one plain sentence for a
+   non-technical reader — what the feature touches and what is still
+   unknown; no file names, no factor names, no rubric wording. `split`
+   returns to the clear-vs-assumed gate (§5).
+
+   **Writing it down.** STANDARD/DEEP: every feature gets `scores` (per
+   factor `{ n, anchor, cite }`), `scoreNote` (the `Why` sentence) and
+   `scoreProvenance` — `proposed` when accepted as offered, `stated` when
+   any cell or the note was changed. QUICK: use the scores for the tier and
+   the calibration band as today; do not write them (`schema.mjs` refuses
+   them at QUICK).
+
+3b. **Tasks + O/M/P** — STANDARD/DEEP only, per `techniques.md` §3. After a
+   feature's tasks are sized, compare `Σ pert(e)` with its tier's calibration
+   band. Outside the band, say so once — `Σ19 → L → 160–400 h, tasks sum to
+   85 h; tasks missing or scores high?` — and let the human decide. Nothing
+   is refused and nothing new is written; the page marks the row ⚠.
 4. **Team + rates + seniority mix** — how many engineers, what they cost
    per hour, and whether each is junior/mid/senior. Default is **one team**
    → one scenario; ask "compare staffing options?" and only then collect
@@ -98,7 +169,7 @@ Ask one thing at a time, in this order:
    an AI-assisted scenario without that assumption.
 6. **Deadline / constraints** — any hard date or budget ceiling.
 7. **calibration table** — ask for the org's own tier → hour-band history; if
-   none exists, offer the defaults `S 20-60h, M 60-160h, L 160-400h`.
+   none exists, offer the defaults `S 20-60h, M 60-160h, L 160-400h, XL 400-800h`.
 8. **Expose-rates-to-client** — y/n; controls whether the client-facing render
    shows labor rates or only totals.
 

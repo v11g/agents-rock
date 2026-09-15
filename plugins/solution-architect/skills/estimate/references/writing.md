@@ -14,9 +14,18 @@ top-level `project`, `technique`, `depth`, `calibration`, `overheadPct`,
 `verificationPct`, `exposeRatesToClient`, `features` (each with `id`, `name`,
 `provenance`, `tasks`), `risks`, `assumptions`, `scenarios`, and
 `recommendedScenario`. Every task carries `id`, `name`, `category`, `o`,
-`m`, `p`, `confidence`, `assumptions`, `provenance`. Optional top-level
-`recommendedReason` (non-empty string) says why the recommended scenario
-wins when several are compared. `schema.mjs` is the
+`m`, `p`, `confidence`, `assumptions`, `provenance`.
+
+At `STANDARD`/`DEEP` every feature also carries `scores` — one entry per
+factor `tech`, `size`, `deps`, `unc`, `risk`, each `{ "n": 1–5, "anchor":
+"<the scoring-guide.md sentence for that factor and score, verbatim>",
+"cite": "<the evidence it rests on>" }` — a `scoreNote` (one plain sentence
+for a non-technical reader: no file names, factor names or `§`) and a
+`scoreProvenance` of `stated` or `proposed`. `schema.mjs` checks the anchor
+against the guide byte for byte. At `QUICK` these fields must be absent.
+
+Optional top-level `recommendedReason` (non-empty string) says why the
+recommended scenario wins when several are compared. `schema.mjs` is the
 enforced half of this contract (`checkInputs`) — this doc is the readable
 half; if the two ever disagree, the code wins.
 
@@ -139,6 +148,11 @@ column but no `Task` column):
 11. `src` is `stated` or `proposed` only — this table is the clear-vs-assumed
     split itself, so it does not carry the full four-word provenance
     vocabulary.
+
+11b. At `STANDARD`/`DEEP` the scope table has a `Tier` column and every
+    row's Tier must match `computed.features[<id>].tier` (the letter the
+    scores produced — `scoring-checks.mjs`). At `QUICK` the Tier cell is
+    the agent's own call, unchecked.
 
 JSON-side (checked against `estimation.json`, not the prose):
 

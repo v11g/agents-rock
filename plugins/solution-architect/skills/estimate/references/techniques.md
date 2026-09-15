@@ -38,6 +38,12 @@ supplied during the interview, or the defaults `S 20-60h, M 60-160h, L
 160-400h, XL 400-800h` if not. The calibration table is what turns "this is an M" into a
 number; never assign hours from the tier letter directly.
 
+At STANDARD/DEEP the five scores are persisted on every feature (`scores`,
+`scoreNote`, `scoreProvenance` — `interview.md` §4 step 3) and the PERT
+total per feature is a soft cross-check against the tier's band: outside it,
+the interviewer says so once and the page marks the row ⚠; nothing is
+refused. Scores are never derived from hours.
+
 At QUICK depth this is the only technique in play, so the tier still has to
 reach `compute.mjs` through the normal task-shaped path: for each feature,
 write exactly one synthetic task whose `o`/`m`/`p` are the calibration

@@ -30,9 +30,11 @@ interactive page served on localhost.
 2. **Depth and delivery mode**: ask QUICK / STANDARD / DEEP, then TRADITIONAL
    / AGENTIC (`references/interview.md` §2b). Delivery mode decides step 4.
 3. **Interview**: follow `references/interview.md` — pre-fill from evidence,
-   ask only holes, run the clear-vs-assumed gate before sizing. Before
-   proposing milestones, read `references/slicing.md` — slices are judged
-   there, not computed.
+   ask only holes, run the clear-vs-assumed gate before sizing. Read
+   `references/scoring-guide.md` before proposing any score; offer the
+   review channel (terminal cards, csv, or html via
+   `node scripts/score-review.mjs`). Before proposing milestones, read
+   `references/slicing.md` — slices are judged there, not computed.
 4. **Technique**: TRADITIONAL-only — recommend from `references/techniques.md`,
    state why, cite the method's sources (its §Sources — attribution + link,
    never quoted text), confirm. AGENTIC reads

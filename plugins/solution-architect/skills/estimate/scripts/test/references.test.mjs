@@ -9,7 +9,14 @@ const ALL = ['interview.md', 'techniques.md', 'ai-multipliers.md', 'writing.md',
   'task-shapes.md', 'agentic-estimation.md', 'scoring-guide.md'];
 
 test('no reference doc carries placeholders', () => {
-  for (const f of ALL) assert.doesNotMatch(ref(f), /\bTBD\b|\bTODO\b/, f);
+  // interview.md's sample card quotes a fictional PRD line ("reconciliation
+  // rules TBD") as cited evidence of uncertainty, not an unfinished doc
+  // section — strip that one quoted example before scanning for real
+  // placeholders.
+  for (const f of ALL) {
+    const doc = ref(f).replace('"reconciliation rules TBD"', '');
+    assert.doesNotMatch(doc, /\bTBD\b|\bTODO\b/, f);
+  }
 });
 
 test('interview.md carries its five required parts', () => {
@@ -116,4 +123,35 @@ test('scoring-guide.md carries five rows of five anchors and the tier scale', ()
   assert.match(doc, /S ≤ 11 · M 12–17 · L 18–22 · XL 23\+/);
   assert.match(doc, /XL 400–800 h/);
   assert.doesNotMatch(doc, /derived:/);
+});
+
+test('interview.md scores before tasks, names the three review channels and the plain-words note', () => {
+  const doc = ref('interview.md');
+  for (const needle of ['scoring-guide.md', 'scores', 'scoreNote', 'scoreProvenance', 'terminal', 'csv', 'html',
+    'score-review.mjs', 'accept', 'split', 'outside', 'plain']) {
+    assert.ok(doc.includes(needle), `interview.md missing: ${needle}`);
+  }
+  assert.ok(doc.indexOf('Factor scores per feature') < doc.indexOf('Tasks + O/M/P'), 'scores come before tasks');
+});
+
+test('techniques.md says scores persist at STANDARD/DEEP and the band is a soft cross-check', () => {
+  const doc = ref('techniques.md');
+  assert.match(doc, /STANDARD\/DEEP/);
+  assert.match(doc, /persist/i);
+  assert.match(doc, /cross-check/i);
+  assert.match(doc, /XL 400-800h|XL 400–800 h/);
+});
+
+test('writing.md documents the score fields and the Tier rule', () => {
+  const doc = ref('writing.md');
+  for (const needle of ['`scores`', '`scoreNote`', '`scoreProvenance`', 'anchor', 'cite', 'Tier']) {
+    assert.ok(doc.includes(needle), `writing.md missing: ${needle}`);
+  }
+  assert.match(doc, /Tier.*must (equal|match)/);
+});
+
+test('SKILL.md points the interview at the scoring guide and the review script', () => {
+  const skill = readFileSync(new URL('../../SKILL.md', import.meta.url), 'utf8');
+  assert.match(skill, /scoring-guide\.md/);
+  assert.match(skill, /score-review\.mjs/);
 });
