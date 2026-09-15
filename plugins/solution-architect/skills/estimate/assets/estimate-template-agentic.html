@@ -277,7 +277,7 @@ tr.conf-uncalibrated .conf { color:var(--warn); }
 #detail table { min-width:720px; }
 .task-assump { font-size:.76rem; color:var(--ink-dim); }
 #register > div + table, #register > table + table { margin-top:1.4rem; }
-/* compact rail: the team roster, the plan select, the sliders, and the
+/* compact rail: the team roster, the AI-assisted select, the sliders, and the
    readout stack full-width. Keeps the rail near the height of the two
    scenario sections beside it. */
 #controls {
@@ -359,7 +359,7 @@ tr.conf-uncalibrated .conf { color:var(--warn); }
     <p>The levers re-run the exact same formulas as the committed numbers, in your browser. Nothing here changes the committed estimate — it answers "what would it look like if&hellip;". The readout below updates live.</p></details></div>
   <div id="controls" data-internal>
     <div id="ctl-team" class="team" role="group" aria-label="team"></div>
-    <label>claude plan <select id="ctl-plan"><option>none</option><option>max5x</option><option>max20x</option></select></label>
+    <label>AI-assisted <select id="ctl-ai-assisted"><option value="true">yes</option><option value="false">no</option></select></label>
     <label><span class="lab">risk buffer <output></output></span><input id="ctl-buffer" type="range" min="0" max="2" step="0.1"></label>
     <label><span class="lab">overhead % <output></output></span><input id="ctl-overhead" type="range" min="0" max="0.6" step="0.05"></label>
     <div id="whatif-readout" aria-live="polite"></div>
@@ -404,7 +404,7 @@ function recompute(p) {
   const dev = DATA.computed.devHours;
   const buffers = (DATA.computed.riskBufferHours + DATA.computed.spreadBufferHours) * p.bufferScale;
   const hours = dev + dev * p.overheadPct + buffers;
-  return { hours, ...scenarioRollup({ hours, team: p.team, plan: p.plan }) };
+  return { hours, ...scenarioRollup({ hours, team: p.team, toolingCostPerSeat: p.toolingCostPerSeat }) };
 }
 window.__recompute = recompute;
 
@@ -412,7 +412,8 @@ function defaultsFromRecommended() {
   const rec = DATA.inputs.scenarios.find((s) => s.id === DATA.inputs.recommendedScenario);
   return {
     team: rec.team.map((m) => ({ ...m })),
-    plan: rec.plan,
+    aiAssisted: rec.aiAssisted,
+    toolingCostPerSeat: rec.toolingCostPerSeat,
     bufferScale: 1,
     overheadPct: DATA.inputs.overheadPct,
   };
@@ -421,7 +422,7 @@ function defaultsFromRecommended() {
 // Control ids are assembled at runtime (never one static "ctl-*" literal)
 // so the client-only render, which keeps this whole script but drops the
 // controls markup, never carries an internal control id as page text.
-const CTL_SUFFIX = { plan: 'plan', bufferScale: 'buffer', overheadPct: 'overhead' };
+const CTL_SUFFIX = { aiAssisted: 'ai-assisted', bufferScale: 'buffer', overheadPct: 'overhead' };
 const CTL_KEYS = Object.keys(CTL_SUFFIX);
 const ctlId = (key) => `ctl-${CTL_SUFFIX[key]}`;
 // The roster container is found by its class — its id is internal-only page
@@ -502,8 +503,9 @@ function currentParams(defaults) {
   const p = { team: currentTeam(defaults) };
   CTL_KEYS.forEach((key) => {
     const raw = document.getElementById(ctlId(key))?.value ?? defaults[key];
-    p[key] = key === 'plan' ? raw : Number(raw);
+    p[key] = key === 'aiAssisted' ? raw === 'true' : Number(raw);
   });
+  p.toolingCostPerSeat = defaults.toolingCostPerSeat;  // priced, not a control
   return p;
 }
 
@@ -547,7 +549,7 @@ function scenarioCard(id, s) {
       <div class="gauge"><span style="width:${Math.round((s.months / max) * 100)}%"></span></div>
       ${deltaChip(id, s)}</div>
     <dl class="facts"><div><dt>team</dt><dd>${teamSummary(input.team)}</dd></div>
-      <div><dt>claude plan</dt><dd>${input.plan}</dd></div>
+      <div><dt>AI-assisted</dt><dd>${input.aiAssisted ? 'yes' : 'no'}</dd></div>
       <div><dt>effort</dt><dd>${s.hours.toFixed(1)}h</dd></div>
       <div><dt>total cost</dt><dd>${fmtMoney(s.totalCost)}</dd></div></dl></article>`;
 }
@@ -569,7 +571,7 @@ function renderBars() {
   const entries = Object.entries(DATA.computed.scenarios);
   const max = Math.max(...entries.map(([, s]) => s.totalCost));
   el.innerHTML = secHead('Total cost by scenario',
-    'Labor (months × team rates) plus Claude plan seats, per scenario. Bar lengths are '
+    'Labor (months × team rates) plus AI tooling seats, per scenario. Bar lengths are '
     + 'proportional to the most expensive scenario.')
     + `<div class="bar-group">${entries.map(([id, s]) => barRow({ label: id, value: s.totalCost,
       max, text: fmtMoney(s.totalCost),

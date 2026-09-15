@@ -11,7 +11,7 @@ import { deriveFigures, formatMoney } from '../lib/figures.mjs';
 const estimation = {
   inputs: {
     scenarios: [{
-      id: 's1', plan: 'max5x',
+      id: 's1', aiAssisted: true, toolingCostPerSeat: 100,
       team: [{ seniority: 'senior', rate: 50 }, { seniority: 'mid', rate: 40 }],
     }],
   },

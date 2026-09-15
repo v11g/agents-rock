@@ -49,10 +49,10 @@ Technique: three-point PERT — detailed backlog available.
 
 ### Scenario comparison
 
-| Scenario | Team | Plan | Months | Cost | Notes |
+| Scenario | Team | AI-assisted | Months | Cost | Notes |
 | --- | --- | --- | --- | --- | --- |
-| 3eng-noai | 2 mid + 1 junior | none | 0.43 | $7,266 | — |
-| 2eng-max5x | 1 senior + 1 mid | Max 5x | 0.40 | $5,993 | recommended |
+| 3eng-noai | 2 mid + 1 junior | no | 0.43 | $7,266 | — |
+| 2eng-max5x | 1 senior + 1 mid | yes | 0.40 | $5,993 | recommended |
 
 ### Calibration
 

@@ -8,8 +8,8 @@ import { JARGON } from '../lib/jargon.mjs';
 const estimation = {
   inputs: {
     scenarios: [
-      { id: 's1', plan: 'max5x', team: [{ seniority: 'senior', rate: 50 }] },
-      { id: 's2-secret', plan: 'none', team: [{ seniority: 'mid', rate: 40 }] },
+      { id: 's1', aiAssisted: true, toolingCostPerSeat: 100, team: [{ seniority: 'senior', rate: 50 }] },
+      { id: 's2-secret', aiAssisted: false, toolingCostPerSeat: null, team: [{ seniority: 'mid', rate: 40 }] },
     ],
   },
   computed: {

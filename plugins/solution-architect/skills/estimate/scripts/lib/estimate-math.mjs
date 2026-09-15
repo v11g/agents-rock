@@ -10,7 +10,6 @@ export const AI_CATEGORIES = {
 export const SENIORITY_FACTOR = { junior: 1.15, mid: 1.0, senior: 0.85 };
 export const HOURS_PER_MONTH = 140;
 export const COORDINATION_TAX = 0.10;
-export const PLAN_PRICES = { none: 0, max5x: 100, max20x: 200 };
 export const TIER_BREAKS = [
   { max: 10, tier: 'S' }, { max: 17, tier: 'M' }, { max: Infinity, tier: 'L' },
 ];
@@ -41,9 +40,9 @@ export function aiAdjust({ e, category, verificationPct, scale = 1 }) {
 // Seniority scales the base effort on every path; the AI reduction is a
 // property of the task category alone. Scaling the reduction by seniority
 // instead made juniors come out faster than seniors on AI plans.
-export function taskHours({ e, seniority, plan, category, verificationPct, scale = 1 }) {
+export function taskHours({ e, seniority, aiAssisted, category, verificationPct, scale = 1 }) {
   const base = e * SENIORITY_FACTOR[seniority];
-  return plan === 'none' ? base : aiAdjust({ e: base, category, verificationPct, scale });
+  return aiAssisted ? aiAdjust({ e: base, category, verificationPct, scale }) : base;
 }
 
 // One seniority drives effort for a whole team: the most common level wins,
@@ -64,11 +63,13 @@ export function effectiveCapacity(engineers) {
   return Math.max(1, engineers * (1 - COORDINATION_TAX * (engineers - 1)));
 }
 
-export function scenarioRollup({ hours, team, plan }) {
+// Tooling is priced per seat per month, vendor-neutral. A null seat cost is
+// a recorded gap (the schema demands an assumption for it) and prices as 0.
+export function scenarioRollup({ hours, team, toolingCostPerSeat }) {
   const months = hours / (effectiveCapacity(team.length) * HOURS_PER_MONTH);
   const laborCost = months * team.reduce((sum, t) => sum + t.rate * HOURS_PER_MONTH, 0);
-  const planCost = months * PLAN_PRICES[plan] * team.length;
-  return { months, laborCost, planCost, totalCost: laborCost + planCost };
+  const toolingCost = months * (toolingCostPerSeat ?? 0) * team.length;
+  return { months, laborCost, toolingCost, totalCost: laborCost + toolingCost };
 }
 
 // Sequential roadmap: each milestone's band width is its share of total task

@@ -27,19 +27,19 @@ function nodeRecompute(p) {
   const inputs = JSON.parse(readFileSync(fixture, 'utf8'));
   const tasks = inputs.features.flatMap((f) => f.tasks);
   const seniority = dominantSeniority(p.team);
-  const hoursOf = (t) => taskHours({ e: pert(t).e, seniority, plan: p.plan,
+  const hoursOf = (t) => taskHours({ e: pert(t).e, seniority, aiAssisted: p.aiAssisted,
     category: t.category, verificationPct: inputs.verificationPct, scale: p.aiScale });
   const dev = tasks.reduce((s, t) => s + hoursOf(t), 0);
   const buffers = (riskBufferHours(inputs.risks) + projectBuffer(tasks.map((t) => pert(t).sigma))) * p.bufferScale;
   const hours = dev + dev * p.overheadPct + buffers;
-  return { hours, ...scenarioRollup({ hours, team: p.team, plan: p.plan }) };
+  return { hours, ...scenarioRollup({ hours, team: p.team, toolingCostPerSeat: p.toolingCostPerSeat }) };
 }
 
 // A mixed roster on purpose: effort follows the dominant seniority (mid),
 // labor cost follows each member's own rate.
 const PARAMS = {
   team: [{ seniority: 'senior', rate: 60 }, { seniority: 'mid', rate: 45 }, { seniority: 'mid', rate: 45 }],
-  plan: 'max5x', aiScale: 1, bufferScale: 1, overheadPct: 0.35,
+  aiAssisted: true, toolingCostPerSeat: 100, aiScale: 1, bufferScale: 1, overheadPct: 0.35,
 };
 
 test('page boots without console errors and browser math equals node math', skip, async () => {
@@ -62,7 +62,7 @@ test('the rail at rest reproduces the committed recommended scenario', skip, asy
   try {
     const { got, want } = await page.eval(`(() => {
       const rec = DATA.inputs.scenarios.find((s) => s.id === DATA.inputs.recommendedScenario);
-      return { got: window.__recompute({ team: rec.team, plan: rec.plan,
+      return { got: window.__recompute({ team: rec.team, aiAssisted: rec.aiAssisted, toolingCostPerSeat: rec.toolingCostPerSeat,
         aiScale: 1, bufferScale: 1, overheadPct: DATA.inputs.overheadPct }),
       want: DATA.computed.scenarios[rec.id] };
     })()`);

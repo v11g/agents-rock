@@ -79,16 +79,12 @@ overall. The CRUD tasks might be 20% of total hours; the other 80% is
 `logic` and `novel` work where AI barely moves the needle. Blending at the
 project level erases that mix and produces a number nobody can defend.
 
-## Claude Code plan pricing (checked 2026-08, update on renewal)
+## Tooling seat cost
 
-| Plan | USD/seat/month | Constant |
-| --- | --- | --- |
-| none | 0 | PLAN_PRICES.none |
-| Max 5x | 100 | PLAN_PRICES.max5x |
-| Max 20x | 200 | PLAN_PRICES.max20x |
-
-Prices are a manually maintained snapshot. When they change, update BOTH this
-table and PLAN_PRICES in scripts/lib/estimate-math.mjs in the same commit.
+Seat pricing is an interview input (`toolingCostPerSeat`, per seat per
+month, any vendor), not a constant — see `interview.md` §4 question 5. It
+prices `toolingCost = months × seat cost × team size` and never touches
+hours; only `aiAssisted` gates the per-category reduction above.
 
 ## Sources
 

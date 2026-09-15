@@ -11,7 +11,7 @@ import { redactForClient } from './lib/redact.mjs';
 // task hours are constants from the estimation data, not recomputed from
 // PERT/AI-category inputs — so it needs only these exports inlined.
 const AGENTIC_MATH_EXPORTS = [
-  'HOURS_PER_MONTH', 'COORDINATION_TAX', 'PLAN_PRICES', 'SENIORITY_FACTOR',
+  'HOURS_PER_MONTH', 'COORDINATION_TAX', 'SENIORITY_FACTOR',
   'effectiveCapacity', 'scenarioRollup',
 ];
 

@@ -34,14 +34,14 @@ test('zero estimates are refused — the honest absence is "not estimated"', () 
 
 test('anything compute would turn into NaN is refused up front', () => {
   const bad = fixture();
-  bad.scenarios[1].plan = 'ghost-plan';
+  bad.scenarios[1].aiAssisted = 'yes';
   bad.scenarios[0].team[0].seniority = 'staff';
   bad.scenarios[0].team[1].rate = -5;
   bad.overheadPct = 1.4;
   bad.verificationPct = 'lots';
   bad.risks[0].probability = 7;
   const findings = checkInputs(bad);
-  assert.ok(findings.some((f) => f.includes('2eng-max5x') && f.includes('plan')));
+  assert.ok(findings.some((f) => f.includes('2eng-max5x') && f.includes('aiAssisted')));
   assert.ok(findings.some((f) => f.includes('3eng-noai') && f.includes('seniority')));
   assert.ok(findings.some((f) => f.includes('3eng-noai') && f.includes('rate')));
   assert.ok(findings.some((f) => f.includes('overheadPct')));
@@ -67,11 +67,49 @@ test('inherited object keys do not pass the enum checks', () => {
   const bad = fixture();
   bad.features[0].tasks[0].category = 'toString';
   bad.scenarios[0].team[0].seniority = 'toString';
-  bad.scenarios[1].plan = 'toString';
   const findings = checkInputs(bad);
   assert.ok(findings.some((f) => f.includes('booking-api') && f.includes('category')));
   assert.ok(findings.some((f) => f.includes('3eng-noai') && f.includes('seniority')));
-  assert.ok(findings.some((f) => f.includes('2eng-max5x') && f.includes('plan')));
+});
+
+// The Claude-plan enum is gone: a scenario says whether the team has AI
+// help (drives hours) and what a tooling seat costs (drives cost, nullable).
+test('a legacy "plan" key is refused and the finding names its replacement', () => {
+  const bad = fixture();
+  bad.scenarios[1].plan = 'max5x';
+  const findings = checkInputs(bad);
+  assert.ok(findings.some((f) => f.includes('2eng-max5x') && f.includes('plan') && f.includes('aiAssisted')));
+});
+
+test('aiAssisted must be a boolean and toolingCostPerSeat a positive number or null', () => {
+  const bad = fixture();
+  delete bad.scenarios[0].aiAssisted;
+  bad.scenarios[1].toolingCostPerSeat = '100';
+  let findings = checkInputs(bad);
+  assert.ok(findings.some((f) => f.includes('3eng-noai') && f.includes('aiAssisted')));
+  assert.ok(findings.some((f) => f.includes('2eng-max5x') && f.includes('toolingCostPerSeat')));
+  const zero = fixture();
+  zero.scenarios[1].toolingCostPerSeat = 0;
+  assert.ok(checkInputs(zero).some((f) => f.includes('2eng-max5x') && f.includes('toolingCostPerSeat')));
+  const missing = fixture();
+  delete missing.scenarios[1].toolingCostPerSeat;
+  assert.ok(checkInputs(missing).some((f) => f.includes('2eng-max5x') && f.includes('toolingCostPerSeat')));
+});
+
+// Skipping the seat price is allowed — the client may mandate a vendor — but
+// only as a recorded gap: an AI-assisted scenario with a null seat cost needs
+// an assumption that says so, or the page would show a total silently missing
+// a line item.
+test('a null seat cost on an AI-assisted scenario needs a tooling assumption', () => {
+  const gap = fixture();
+  gap.scenarios[1].toolingCostPerSeat = null;
+  assert.ok(checkInputs(gap).some((f) => f.includes('2eng-max5x') && f.includes('tooling') && f.includes('assumption')));
+  gap.assumptions.push({ text: 'AI tooling cost per seat not yet set — client may mandate a vendor',
+    impactIfWrong: 'adds ~2% to total at $100-200/seat/month' });
+  assert.deepEqual(checkInputs(gap), []);
+  const unaided = fixture();
+  unaided.scenarios[0].toolingCostPerSeat = null;   // 3eng-noai is aiAssisted: false — no gap to record
+  assert.deepEqual(checkInputs(unaided), []);
 });
 
 test('milestones are all-or-nothing across features', () => {

@@ -32,7 +32,7 @@ before scope confirmation and before any factor scoring.
 | --- | --- | --- |
 | QUICK | feature-level factor-scored tiering only | ±wide |
 | STANDARD | task-level three-point PERT | ± moderate |
-| DEEP | STANDARD plus per-scenario detail (multiple team/plan combinations sized individually) | ± narrower |
+| DEEP | STANDARD plus per-scenario detail (multiple team/AI-assistance combinations sized individually) | ± narrower |
 
 ## 2b. Delivery mode — ask second
 
@@ -84,7 +84,14 @@ Ask one thing at a time, in this order:
    minutes per task instead (§2b, `task-shapes.md`).
 4. **Team options + rates + seniority mix** — how many engineers, what they
    cost per hour, and whether each is junior/mid/senior.
-5. **Claude plan availability** — none / Max 5x / Max 20x, per scenario.
+5. **AI-assisted delivery** — per scenario, default **yes**; ask only
+   "humans unaided?" as the opt-out. Then **tooling cost per seat per
+   month** — one number, vendor-neutral (a Claude Max seat, Codex, Cursor —
+   whatever the client will actually run), written to `toolingCostPerSeat`.
+   The human may skip it: write `null` and add an assumption to the gate
+   whose text names the tooling cost gap and its impact-if-wrong (~2% of
+   total at typical seat prices). The validator refuses a null seat cost on
+   an AI-assisted scenario without that assumption.
 6. **Deadline / constraints** — any hard date or budget ceiling.
 7. **calibration table** — ask for the org's own tier → hour-band history; if
    none exists, offer the defaults `S 20-60h, M 60-160h, L 160-400h`.

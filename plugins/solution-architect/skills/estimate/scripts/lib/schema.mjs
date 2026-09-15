@@ -1,7 +1,8 @@
 // Shape checks for estimation-inputs.json — the agent writes that file, so the
 // checks here are the contract that keeps interview output honest before any
 // arithmetic happens. Findings are strings with the offending id in them.
-import { AI_CATEGORIES, SENIORITY_FACTOR, PLAN_PRICES } from './estimate-math.mjs';
+import { AI_CATEGORIES } from './estimate-math.mjs';
+import { checkScenarios } from './scenario-schema.mjs';
 import { TASK_SHAPES } from './measurements.mjs';
 
 const PROVENANCE = ['observed', 'stated', 'researched', 'proposed'];
@@ -112,19 +113,6 @@ function checkComponents(inputs, out) {
     else if (!ids.has(f.component)) out.push(`feature ${f.id}: component "${f.component}" not in roster`);
   }
   checkComponentCoverage(inputs.components, features, out);
-}
-
-function checkScenarios(inputs, out) {
-  const ids = (inputs.scenarios ?? []).map((s) => s.id);
-  if (!ids.includes(inputs.recommendedScenario)) out.push('recommendedScenario names no scenario');
-  for (const s of inputs.scenarios ?? []) {
-    if (!s.team?.length) out.push(`scenario ${s.id}: empty team`);
-    if (!Object.hasOwn(PLAN_PRICES, s.plan)) out.push(`scenario ${s.id}: unknown plan "${s.plan}"`);
-    for (const member of s.team ?? []) {
-      if (!Object.hasOwn(SENIORITY_FACTOR, member.seniority)) out.push(`scenario ${s.id}: unknown seniority "${member.seniority}"`);
-      if (!(typeof member.rate === 'number' && member.rate > 0)) out.push(`scenario ${s.id}: rate must be a positive number`);
-    }
-  }
 }
 
 // Anything compute.mjs would turn into NaN gets refused here instead: the

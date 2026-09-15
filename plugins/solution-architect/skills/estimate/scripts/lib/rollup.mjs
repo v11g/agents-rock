@@ -21,7 +21,7 @@ export function taskHoursFor(scenario, tasks) {
   const entries = Object.keys(tasks).map((id) => [id, tasks[id].evidence !== undefined
     ? tasks[id].e
     : taskHours({
-      e: tasks[id].e, seniority, plan: scenario.plan,
+      e: tasks[id].e, seniority, aiAssisted: scenario.aiAssisted,
       category: tasks[id].category, verificationPct: tasks[id].verificationPct,
     })]);
   return sortedMap(entries);
@@ -31,7 +31,7 @@ export function scenarioBlock(scenario, ctx) {
   const taskHours = taskHoursFor(scenario, ctx.tasks);
   const sumTaskHours = Object.values(taskHours).reduce((a, b) => a + b, 0);
   const hours = sumTaskHours + sumTaskHours * ctx.overheadPct + ctx.spreadBufferHours + ctx.riskBufferHours;
-  const rollup = scenarioRollup({ hours, team: scenario.team, plan: scenario.plan });
+  const rollup = scenarioRollup({ hours, team: scenario.team, toolingCostPerSeat: scenario.toolingCostPerSeat });
   const roadmap = roadmapFor({ features: ctx.features, taskHours, months: rollup.months })
     ?.map((b) => ({ ...b, startMonths: round2(b.startMonths), endMonths: round2(b.endMonths) }));
   const notes = [];
@@ -42,7 +42,7 @@ export function scenarioBlock(scenario, ctx) {
     hours: round2(hours),
     months: round2(rollup.months),
     laborCost: round2(rollup.laborCost),
-    planCost: round2(rollup.planCost),
+    toolingCost: round2(rollup.toolingCost),
     totalCost: round2(rollup.totalCost),
     notes,
     ...(roadmap ? { roadmap } : {}),

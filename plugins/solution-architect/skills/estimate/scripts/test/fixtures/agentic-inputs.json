@@ -38,8 +38,8 @@
     }
   ],
   "scenarios": [
-    { "id": "solo", "plan": "max5x", "team": [{ "seniority": "senior", "rate": 90 }] },
-    { "id": "pair", "plan": "max20x", "team": [{ "seniority": "senior", "rate": 90 }, { "seniority": "mid", "rate": 60 }] }
+    { "id": "solo", "aiAssisted": true, "toolingCostPerSeat": 100, "team": [{ "seniority": "senior", "rate": 90 }] },
+    { "id": "pair", "aiAssisted": true, "toolingCostPerSeat": 200, "team": [{ "seniority": "senior", "rate": 90 }, { "seniority": "mid", "rate": 60 }] }
   ],
   "recommendedScenario": "solo"
 }

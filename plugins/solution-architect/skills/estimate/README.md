@@ -7,13 +7,13 @@ interactive what-if page.
 
 **`estimation.md`** — scope split into `stated` vs `proposed` items, a task-level
 backlog with confidence and assumptions per row, an AI-aware scenario comparison
-(team composition × Claude Code plan), and the technique used, all backed by
+(team composition × AI assistance), and the technique used, all backed by
 `estimation.json` (the numbers every table cell comes from — nothing in the
 doc is hand-totaled).
 
 **An interactive page** (`estimate.html`) — the same data rendered as a
 self-contained, offline-capable HTML file with live what-if controls (swap
-team/plan, see months and cost recompute), served on `localhost:4173` (or the
+team/AI assistance, see months and cost recompute), served on `localhost:4173` (or the
 next free port).
 
 ## Two run modes
@@ -42,7 +42,7 @@ node scripts/render.mjs --json estimation.json --md estimation.md --out .
 
 `validate.mjs` must exit 0 before `render.mjs` will produce a page — an
 unvalidated estimate cannot ship. Add `--client-only` to `render.mjs` for a
-client-safe file with rates and the labor/plan cost breakdown stripped from
+client-safe file with rates and the labor/tooling cost breakdown stripped from
 both the embedded data and the task register (totals and months stay) —
 unless `exposeRatesToClient: true` is set in `estimation-inputs.json`, which
 keeps them.

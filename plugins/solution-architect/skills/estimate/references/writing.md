@@ -53,7 +53,7 @@ sections, in this order:
 | --- | --- | --- | --- |
 | <feature name> | S/M/L | <low>–<high> | stated|proposed |
 
-Recommended delivery: <team + plan summary> — see detail.
+Recommended delivery: <team + AI-assisted summary> — see detail.
 
 | Line | Hours |
 | --- | --- |
@@ -93,9 +93,9 @@ Technique: <technique name> — <one line on why>.
 
 ### Scenario comparison
 
-| Scenario | Team | Plan | Months | Cost | Notes |
+| Scenario | Team | AI-assisted | Months | Cost | Notes |
 | --- | --- | --- | --- | --- | --- |
-| <scenario id> | <team summary> | <plan> | <months> | <cost> | <"recommended" or "—"> |
+| <scenario id> | <team summary> | yes|no | <months> | <cost> | <"recommended" or "—"> |
 
 ### Calibration
 

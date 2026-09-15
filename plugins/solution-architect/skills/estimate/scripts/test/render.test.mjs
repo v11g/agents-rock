@@ -105,11 +105,11 @@ test('--client-only strips every internal range', () => {
 test('--client-only redacts rates and cost breakdown unless exposeRatesToClient is set', () => {
   // Matched as quoted JSON keys, not bare identifiers: estimate-math.mjs is
   // inlined verbatim for the what-if engine and legitimately declares
-  // `laborCost`/`planCost` as plain JS locals in every render, client or not.
+  // `laborCost`/`toolingCost` as plain JS locals in every render, client or not.
   const html = renderedPage(['--client-only']);
   assert.doesNotMatch(html, /"rate":/);
   assert.doesNotMatch(html, /"laborCost":/);
-  assert.doesNotMatch(html, /"planCost":/);
+  assert.doesNotMatch(html, /"toolingCost":/);
 });
 
 test('--client-only keeps rates when exposeRatesToClient is true', () => {

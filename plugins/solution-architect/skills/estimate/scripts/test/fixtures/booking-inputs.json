@@ -49,9 +49,9 @@
     { "text": "single timezone", "impactIfWrong": "recompute booking-api at logic category, +30%" }
   ],
   "scenarios": [
-    { "id": "3eng-noai", "plan": "none",
+    { "id": "3eng-noai", "aiAssisted": false, "toolingCostPerSeat": null,
       "team": [{ "seniority": "mid", "rate": 45 }, { "seniority": "mid", "rate": 45 }, { "seniority": "junior", "rate": 30 }] },
-    { "id": "2eng-max5x", "plan": "max5x",
+    { "id": "2eng-max5x", "aiAssisted": true, "toolingCostPerSeat": 100,
       "team": [{ "seniority": "senior", "rate": 60 }, { "seniority": "mid", "rate": 45 }] }
   ],
   "recommendedScenario": "2eng-max5x"

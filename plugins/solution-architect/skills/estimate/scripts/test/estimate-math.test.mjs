@@ -39,26 +39,26 @@ test('aiAdjust clamps reduction at 0.9 for outsized scale', () => {
 });
 
 test('taskHours: seniority scales base effort on the traditional path', () => {
-  const base = { e: 100, plan: 'none', category: 'logic', verificationPct: 0.12 };
+  const base = { e: 100, aiAssisted: false, category: 'logic', verificationPct: 0.12 };
   close(taskHours({ ...base, seniority: 'senior' }), 85);
   close(taskHours({ ...base, seniority: 'mid' }), 100);
   close(taskHours({ ...base, seniority: 'junior' }), 115);
 });
 
 test('taskHours: a senior is never slower than a junior, with or without AI', () => {
-  for (const plan of ['none', 'max5x']) {
+  for (const aiAssisted of [false, true]) {
     for (const category of ['boilerplate', 'logic', 'novel']) {
-      const at = (seniority) => taskHours({ e: 100, seniority, plan, category, verificationPct: 0.12 });
+      const at = (seniority) => taskHours({ e: 100, seniority, aiAssisted, category, verificationPct: 0.12 });
       assert.ok(at('senior') < at('mid') && at('mid') < at('junior'),
-        `${plan}/${category}: ${at('senior')} < ${at('mid')} < ${at('junior')} violated`);
+        `${aiAssisted}/${category}: ${at('senior')} < ${at('mid')} < ${at('junior')} violated`);
     }
   }
 });
 
-test('taskHours: AI plan reduces hours versus the same seniority without AI', () => {
+test('taskHours: AI assistance reduces hours versus the same seniority unaided', () => {
   for (const seniority of Object.keys(SENIORITY_FACTOR)) {
-    const at = (plan) => taskHours({ e: 100, seniority, plan, category: 'boilerplate', verificationPct: 0.12 });
-    assert.ok(at('max5x') < at('none'), `${seniority}: AI ${at('max5x')} !< ${at('none')}`);
+    const at = (aiAssisted) => taskHours({ e: 100, seniority, aiAssisted, category: 'boilerplate', verificationPct: 0.12 });
+    assert.ok(at(true) < at(false), `${seniority}: AI ${at(true)} !< ${at(false)}`);
   }
 });
 
@@ -83,13 +83,22 @@ test('capacity pays a coordination tax per added engineer, floored at one', () =
   close(effectiveCapacity(12), 1); // raw formula goes negative past 10 — floor holds
 });
 
-test('scenarioRollup: 1008h, 2 mid @45, max5x → 4.0mo, $51,200', () => {
+test('scenarioRollup: 1008h, 2 mid @45, $100/seat tooling → 4.0mo, $51,200', () => {
   const team = [{ seniority: 'mid', rate: 45 }, { seniority: 'mid', rate: 45 }];
-  const got = scenarioRollup({ hours: 1008, team, plan: 'max5x' });
+  const got = scenarioRollup({ hours: 1008, team, toolingCostPerSeat: 100 });
   close(got.months, 4);
   close(got.laborCost, 50400);
-  close(got.planCost, 800);
+  close(got.toolingCost, 800);
   close(got.totalCost, 51200);
+});
+
+// A null seat cost is an open gap, not free tooling — it prices as zero and
+// the interview records the assumption; the math must not turn null into NaN.
+test('scenarioRollup: null toolingCostPerSeat prices tooling at zero', () => {
+  const team = [{ seniority: 'mid', rate: 45 }];
+  const got = scenarioRollup({ hours: 140, team, toolingCostPerSeat: null });
+  close(got.toolingCost, 0);
+  close(got.totalCost, got.laborCost);
 });
 
 test('roadmapBands tiles [0, months] proportionally to hours, in order', () => {

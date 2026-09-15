@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { AI_CATEGORIES, PLAN_PRICES, TIER_BREAKS } from '../lib/estimate-math.mjs';
+import { AI_CATEGORIES, TIER_BREAKS } from '../lib/estimate-math.mjs';
 import { TASK_SHAPES } from '../lib/measurements.mjs';
 
 const ref = (f) => readFileSync(new URL(`../../references/${f}`, import.meta.url), 'utf8');
@@ -34,10 +34,17 @@ test('ai-multipliers.md agrees with the code constants', () => {
   for (const category of Object.keys(AI_CATEGORIES)) {
     assert.ok(doc.includes(category), `ai-multipliers.md missing category: ${category}`);
   }
-  for (const [plan, price] of Object.entries(PLAN_PRICES)) {
-    if (plan !== 'none') assert.ok(doc.includes(String(price)), `pricing table missing ${plan}=${price}`);
-  }
   assert.match(doc, /blanket/i, 'the blanket-multiplier prohibition must be stated');
+  // The Claude-plan price table lived here; seat cost is now an interview input.
+  assert.doesNotMatch(doc, /PLAN_PRICES|max5x|max20x/, 'vendor plan pricing must not be documented as a constant');
+});
+
+test('interview.md asks AI-assisted (default yes) and a nullable seat cost, never a Claude plan', () => {
+  const doc = ref('interview.md');
+  for (const needle of ['AI-assisted', 'toolingCostPerSeat', 'default']) {
+    assert.ok(doc.includes(needle), `interview.md missing: ${needle}`);
+  }
+  assert.doesNotMatch(doc, /Max 5x|Max 20x|Claude plan/);
 });
 
 test('writing.md states every validator rule family', () => {

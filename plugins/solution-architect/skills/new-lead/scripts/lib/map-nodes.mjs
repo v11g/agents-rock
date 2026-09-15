@@ -127,6 +127,6 @@ function scenarioNodes(est) {
     id: `scenario-${s.id ?? s.name}`,
     type: 'scenario',
     position: { x: 0, y: 0 },
-    data: { label: s.label ?? s.plan ?? String(s.id ?? s.name), status: 'ready', href: null, detail: null },
+    data: { label: s.label ?? String(s.id ?? s.name), status: 'ready', href: null, detail: null },
   }));
 }

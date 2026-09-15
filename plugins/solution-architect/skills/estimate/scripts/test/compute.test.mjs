@@ -23,7 +23,12 @@ test('golden numbers for the booking fixture', () => {
   assert.equal(computed.projectConfidence, 'MED');      // critical path = booking, worst row MED
   const rec = computed.scenarios['2eng-max5x'];
   assert.ok(rec.months > 0 && rec.totalCost > 0);
-  assert.equal(rec.totalCost, rec.laborCost + rec.planCost);
+  assert.equal(rec.totalCost, rec.laborCost + rec.toolingCost);
+  assert.equal('planCost' in rec, false);
+  // Same team math as before the plan→aiAssisted rename: hours and seat cost pinned
+  assert.equal(computed.scenarios['3eng-noai'].hours, 145.31);
+  assert.equal(rec.hours, 101.35);
+  assert.equal(rec.toolingCost, 80.44);                 // 0.4022 mo × $100 × 2 seats
   // AI hours strictly below traditional on every task in an AI scenario
   for (const id of Object.keys(computed.tasks)) {
     assert.ok(rec.taskHours[id] < computed.tasks[id].e);
