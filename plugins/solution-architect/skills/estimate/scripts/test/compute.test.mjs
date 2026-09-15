@@ -135,3 +135,22 @@ test('compute.mjs CLI resolves measurementsPath itself', () => {
   const estimation = JSON.parse(readFileSync(outPath, 'utf8'));
   assert.equal(estimation.computed.tasks['swap-refactor'].samples, 7);
 });
+
+test('computed features carry the scores\' total and tier, copied not derived', () => {
+  const { computed } = computeEstimation(fixture());
+  assert.equal(computed.features.booking.scoreTotal, 14);
+  assert.equal(computed.features.booking.tier, 'M');
+  assert.equal(computed.features.reminders.scoreTotal, 11);
+  assert.equal(computed.features.reminders.tier, 'S');
+  // hours are untouched by scoring
+  assert.equal(computed.features.booking.hours, 69.33);
+});
+
+test('QUICK inputs get no score fields in computed features', () => {
+  const quick = fixture();
+  quick.depth = 'QUICK';
+  for (const f of quick.features) { delete f.scores; delete f.scoreNote; delete f.scoreProvenance; }
+  const { computed } = computeEstimation(quick);
+  assert.equal('tier' in computed.features.booking, false);
+  assert.equal('scoreTotal' in computed.features.booking, false);
+});

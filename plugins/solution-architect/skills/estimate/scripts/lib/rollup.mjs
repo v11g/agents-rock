@@ -7,6 +7,7 @@ import {
 import { roadmapFor } from './roadmap.mjs';
 import { componentHoursFor } from './components.mjs';
 import { agenticTask } from './baselines.mjs';
+import { scoreSummary } from './scoring.mjs';
 
 function sortedMap(entries) {
   return Object.fromEntries(entries.sort(([a], [b]) => a.localeCompare(b)));
@@ -99,7 +100,7 @@ function buildFeatures(inputs, tasks) {
     const hours = taskIds.reduce((sum, id) => sum + tasks[id].e, 0);
     const low = taskIds.reduce((sum, id) => sum + tasks[id].o, 0);
     const high = taskIds.reduce((sum, id) => sum + tasks[id].p, 0);
-    features[feature.id] = { hours: round2(hours), low: round2(low), high: round2(high) };
+    features[feature.id] = { hours: round2(hours), low: round2(low), high: round2(high), ...scoreSummary(feature) };
     summaries.push({ hours, taskIds });
   }
   return { features: sortedMap(Object.entries(features)), summaries };
