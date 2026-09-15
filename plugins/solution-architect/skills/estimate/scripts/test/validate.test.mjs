@@ -115,3 +115,24 @@ test('missing Delivery header line is a finding', () => {
   const findings = checkDeliverables({ md, estimation: agenticEstimation() });
   assert.ok(findings.some((f) => /Delivery:/.test(f)));
 });
+
+test('a Summary Tier cell that disagrees with the scores is refused at STANDARD depth', () => {
+  const md = read('estimation-pass.md').replace('| User can book appointment | M |', '| User can book appointment | L |');
+  const findings = checkDeliverables({ md, estimation: computeEstimation(inputs()) });
+  assert.ok(findings.some((f) => f === 'scope row "User can book appointment": Tier L does not match scores (M)'), findings.join('\n'));
+});
+
+test('the Tier column is required at STANDARD depth and ignored at QUICK', () => {
+  const noTier = read('estimation-pass.md')
+    .replace('| Feature | Tier | Range (h) | src |', '| Feature | Range (h) | src |')
+    .replace('| --- | --- | --- | --- |\n| User', '| --- | --- | --- |\n| User')
+    .replace('| User can book appointment | M | 40–120 |', '| User can book appointment | 40–120 |')
+    .replace('| Email reminders | S | 12–36 |', '| Email reminders | 12–36 |');
+  assert.ok(checkDeliverables({ md: noTier, estimation: computeEstimation(inputs()) })
+    .some((f) => f.includes('Tier column')));
+  const quick = inputs();
+  quick.depth = 'QUICK';
+  for (const f of quick.features) { delete f.scores; delete f.scoreNote; delete f.scoreProvenance; }
+  const md = read('estimation-pass.md').replace('| User can book appointment | M |', '| User can book appointment | XL |');
+  assert.ok(!checkDeliverables({ md, estimation: computeEstimation(quick) }).some((f) => f.includes('Tier')));
+});
