@@ -1,15 +1,31 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
+import { execFileSync } from 'node:child_process';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { pathToFileURL } from 'node:url';
 import { toCsv, parseCsv, fromCsv, CSV_HEADERS } from '../lib/score-csv.mjs';
 import { diffScores, applyDiff } from '../lib/score-diff.mjs';
 import { loadGuide } from '../lib/scoring.mjs';
+import { findChrome } from '../../../analyze-requirements/scripts/lib/chrome.mjs';
+import { openPage } from '../../../analyze-requirements/scripts/lib/cdp.mjs';
+
+const cli = new URL('../score-review.mjs', import.meta.url).pathname;
+const skip = { skip: !findChrome() && 'no chrome on PATH' };
 
 const inputs = () => JSON.parse(readFileSync(new URL('./fixtures/booking-inputs.json', import.meta.url), 'utf8'));
 const draft = () => {
   const { project, features } = inputs();
   return { project, features: features.map(({ id, name, scores, scoreNote, scoreProvenance }) => ({ id, name, scores, scoreNote, scoreProvenance })) };
 };
+
+function writeDraft() {
+  const dir = mkdtempSync(join(tmpdir(), 'score-review-'));
+  const path = join(dir, 'draft.json');
+  writeFileSync(path, JSON.stringify(draft()));
+  return { dir, path };
+}
 
 test('toCsv writes one row per feature with anchor and cite beside every score', () => {
   const csv = toCsv(draft());
@@ -60,4 +76,49 @@ test('applyDiff re-anchors a changed score from the guide and marks the feature 
   assert.equal(features[1].scoreProvenance, 'stated');
   assert.equal(features[0].scoreProvenance, 'stated', 'untouched features keep their provenance');
   assert.deepEqual(d.features[1].scores.tech.n, 2, 'draft is not mutated');
+});
+
+test('CLI: --write csv then --read reports the diff and the re-anchored features', () => {
+  const { dir, path } = writeDraft();
+  const csvPath = join(dir, 'scores-draft.csv');
+  execFileSync('node', [cli, '--write', path, '--format', 'csv', '--out', csvPath]);
+  const edited = readFileSync(csvPath, 'utf8').replace(/^(reminders,[^,]*,)2,/m, (m, head) => `${head}4,`);
+  writeFileSync(csvPath, edited);
+  const out = JSON.parse(execFileSync('node', [cli, '--read', csvPath, '--draft', path], { encoding: 'utf8' }));
+  assert.deepEqual(out.diff, [{ id: 'reminders', field: 'tech', from: 2, to: 4 }]);
+  assert.equal(out.features[1].scores.tech.anchor, loadGuide().tech[3]);
+  assert.equal(out.features[1].scoreProvenance, 'stated');
+});
+
+test('CLI: --write html renders one select per score with the anchor as its title', skip, async () => {
+  const { dir, path } = writeDraft();
+  const htmlPath = join(dir, 'scores-review.html');
+  execFileSync('node', [cli, '--write', path, '--format', 'html', '--out', htmlPath]);
+  const page = await openPage(pathToFileURL(htmlPath).href);
+  try {
+    assert.deepEqual(page.errors, []);
+    assert.equal(await page.eval(`document.querySelectorAll('select[data-id][data-key]').length`), 10);
+    assert.equal(await page.eval(`document.querySelector('select[data-id="booking"][data-key="tech"]').value`), '3');
+    assert.match(await page.eval(`document.querySelector('select[data-id="booking"][data-key="tech"]').title`), /Custom business logic/);
+    assert.equal(await page.eval(`document.querySelector('[data-total="reminders"]').textContent`), '11');
+    assert.equal(await page.eval(`document.querySelector('[data-tier="reminders"]').textContent`), 'S');
+    assert.match(await page.eval(`document.querySelector('details.guide').textContent`), /Tech complexity/);
+  } finally { page.close(); }
+});
+
+test('review page: changing a select updates Σ/tier live and the feedback block round-trips', skip, async () => {
+  const { dir, path } = writeDraft();
+  const htmlPath = join(dir, 'scores-review.html');
+  execFileSync('node', [cli, '--write', path, '--format', 'html', '--out', htmlPath]);
+  const page = await openPage(pathToFileURL(htmlPath).href);
+  try {
+    await page.eval(`(() => { const s = document.querySelector('select[data-id="reminders"][data-key="tech"]'); s.value = '4'; s.dispatchEvent(new Event('change', { bubbles: true })); })()`);
+    assert.equal(await page.eval(`document.querySelector('[data-total="reminders"]').textContent`), '13');
+    assert.equal(await page.eval(`document.querySelector('[data-tier="reminders"]').textContent`), 'M');
+    const feedback = JSON.parse(await page.eval(`document.getElementById('feedback').value`));
+    const fbPath = join(dir, 'feedback.json');
+    writeFileSync(fbPath, JSON.stringify(feedback));
+    const out = JSON.parse(execFileSync('node', [cli, '--read', fbPath, '--draft', path], { encoding: 'utf8' }));
+    assert.deepEqual(out.diff, [{ id: 'reminders', field: 'tech', from: 2, to: 4 }]);
+  } finally { page.close(); }
 });

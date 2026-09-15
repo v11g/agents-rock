@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title><!-- slot:TITLE --> — score review</title>
+<style>
+:root {
+  color-scheme:light;
+  --bg:#f7f5f0; --ink:#1c1b18; --ink-dim:#6f6a5e;
+  --accent:#0f766e; --accent-ink:#0b5a54; --accent-soft:rgba(15,118,110,.08);
+  --warn:#b45309; --warn-soft:rgba(180,83,9,.1);
+  --bad:#b91c1c; --card:#fffdf9; --border:#e6e1d5;
+}
+* { box-sizing:border-box; }
+body { margin:0; padding:1.5rem; font-family:system-ui,sans-serif; font-size:.9rem; background:var(--bg); color:var(--ink); }
+h1 { font-size:1.2rem; margin:0 0 .3rem; }
+p.lead { color:var(--ink-dim); margin:0 0 1rem; max-width:60rem; }
+table { border-collapse:collapse; width:100%; background:var(--card); }
+th, td { border-bottom:1px solid var(--border); padding:.4rem .5rem; text-align:left; vertical-align:top; }
+th.score, td.score { text-align:center; width:3.6rem; }
+td.score select { font:inherit; font-family:ui-monospace,monospace; width:3.2rem; text-align:center; }
+td.score select.hot { color:var(--bad); font-weight:600; }
+.tier { font-family:ui-monospace,monospace; font-size:.72rem; font-weight:600; padding:.12rem .45rem; border-radius:.25rem; background:var(--border); }
+.tier.l { background:var(--warn-soft); color:var(--warn); }
+.tier.xl { background:rgba(185,28,28,.1); color:var(--bad); }
+.edge { color:var(--warn); cursor:help; margin-left:.15rem; }
+.cite { color:var(--ink-dim); font-size:.78rem; }
+td.note textarea { width:100%; min-height:2.6rem; font:inherit; font-size:.82rem; }
+details.guide { margin:1.2rem 0; }
+details.guide summary { cursor:pointer; font-weight:600; color:var(--ink-dim); }
+.guide-table { font-size:.8rem; margin-top:.6rem; }
+.guide-table td.dim { font-weight:600; white-space:nowrap; }
+#feedback-wrap { margin-top:1.2rem; }
+#feedback { width:100%; min-height:7rem; font-family:ui-monospace,monospace; font-size:.75rem; }
+button { font:inherit; padding:.35rem .8rem; border:1px solid var(--border); border-radius:.3rem; background:var(--card); cursor:pointer; }
+button:hover { border-color:var(--accent); color:var(--accent-ink); }
+</style>
+</head>
+<body>
+<h1><!-- slot:TITLE --> — score review</h1>
+<p class="lead">Each score is the agent's proposal; hover a dropdown for the rubric sentence it matched, read the evidence beside it. Change any cell, rewrite the plain-words note if it reads wrong, then copy the feedback block back into the chat.</p>
+<div id="review"></div>
+<details class="guide" open><summary>Scoring guide — what each 1–5 means</summary><!-- slot:GUIDE --></details>
+<div id="feedback-wrap">
+  <button type="button" id="copy">copy feedback</button> <span id="copied" hidden>copied</span>
+  <textarea id="feedback" readonly aria-label="feedback JSON"></textarea>
+</div>
+<script type="application/json" id="draft-data"><!-- slot:DATA --></script>
+<script>
+<!-- slot:MATH -->
+const DRAFT = JSON.parse(document.getElementById('draft-data').textContent);
+const KEYS = ['tech', 'size', 'deps', 'unc', 'risk'];
+const LABELS = { tech: 'Tech', size: 'Size', deps: 'Deps', unc: 'Unc', risk: 'Risk' };
+const EDGE = [11, 17, 22];
+const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;');
+const state = Object.fromEntries(DRAFT.features.map((f) => [f.id, {
+  scores: Object.fromEntries(KEYS.map((k) => [k, f.scores[k].n])), scoreNote: f.scoreNote,
+}]));
+
+function scoreCell(f, k) {
+  const s = f.scores[k];
+  const opts = [1, 2, 3, 4, 5].map((n) => `<option value="${n}"${n === s.n ? ' selected' : ''}>${n}</option>`).join('');
+  return `<td class="score"><select data-id="${f.id}" data-key="${k}" class="${s.n === 5 ? 'hot' : ''}"
+    title="${esc(s.anchor)}">${opts}</select><div class="cite">${esc(s.cite)}</div></td>`;
+}
+
+function row(f) {
+  const { total, tier } = tierFor(state[f.id].scores);
+  const edge = EDGE.includes(total) ? ' <span class="edge" title="one point from the next tier">&#9873;</span>' : '';
+  return `<tr><td><strong>${esc(f.name)}</strong><div class="cite">${f.id} · ${f.scoreProvenance}</div></td>
+    ${KEYS.map((k) => scoreCell(f, k)).join('')}
+    <td class="score"><span data-total="${f.id}">${total}</span>${edge}</td>
+    <td class="score"><span class="tier ${tier.toLowerCase()}" data-tier="${f.id}">${tier}</span></td>
+    <td class="note"><textarea data-note="${f.id}" aria-label="why this tier">${esc(state[f.id].scoreNote)}</textarea></td></tr>`;
+}
+
+function render() {
+  const head = `<tr><th>Feature</th>${KEYS.map((k) => `<th class="score">${LABELS[k]}</th>`).join('')}
+    <th class="score">&Sigma;</th><th class="score">Tier</th><th>Why this tier (plain words, for the client)</th></tr>`;
+  document.getElementById('review').innerHTML = `<table><thead>${head}</thead><tbody>${DRAFT.features.map(row).join('')}</tbody></table>`;
+  document.getElementById('feedback').value = JSON.stringify(window.__feedback(), null, 1);
+}
+
+window.__feedback = () => ({ features: DRAFT.features.map((f) => ({ id: f.id, ...state[f.id] })) });
+
+function onChange(e) {
+  const sel = e.target.closest('select[data-id]');
+  const note = e.target.closest('textarea[data-note]');
+  if (sel) state[sel.dataset.id].scores[sel.dataset.key] = Number(sel.value);
+  if (note) state[note.dataset.note].scoreNote = note.value;
+  if (sel || note) render();
+}
+
+document.getElementById('review').addEventListener('change', onChange);
+document.getElementById('review').addEventListener('input', (e) => {
+  if (e.target.matches('textarea[data-note]')) state[e.target.dataset.note].scoreNote = e.target.value;
+});
+document.getElementById('copy').addEventListener('click', async () => {
+  const text = JSON.stringify(window.__feedback());
+  document.getElementById('feedback').value = text;
+  try { await navigator.clipboard.writeText(text); document.getElementById('copied').hidden = false; } catch { /* file:// may refuse; the textarea holds it */ }
+});
+render();
+</script>
+</body>
+</html>
