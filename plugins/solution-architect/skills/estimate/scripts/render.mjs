@@ -6,6 +6,7 @@ import { escapeHtml } from '../../analyze-requirements/scripts/lib/md-inline.mjs
 import { checkDeliverables } from './lib/checks.mjs';
 import { inlineModule, stripInternal, extractExports } from './lib/inline.mjs';
 import { redactForClient } from './lib/redact.mjs';
+import { loadGuide, guideTableHtml } from './lib/scoring.mjs';
 
 function parseArgs(argv) {
   const args = {};
@@ -62,7 +63,12 @@ const html = embed({
     VIEWER: viewerSlot,
     // The team page computes nothing except a task's PERT expected hours for
     // its breakdown rows; the agentic page reads measured numbers only.
-    ...(isAgentic ? {} : { MATH: inlineModule(extractExports(mathSrc, ['pert'])) }),
+    ...(isAgentic ? {} : {
+      MATH: inlineModule(extractExports(mathSrc, ['pert'])),
+      // The rubric lives in references/scoring-guide.md; the page shows the
+      // same sentences the interviewer read, so a score means one thing.
+      GUIDE: guideTableHtml(loadGuide()),
+    }),
   },
 });
 

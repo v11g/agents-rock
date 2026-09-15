@@ -310,8 +310,8 @@ test('a roadmap click groups the breakdown rows by container', skip, async () =>
     assert.deepEqual(await ids(), ['audit', 'reminders']);
     // no header may claim a sort the grouping just overrode
     assert.deepEqual(await page.eval(
-      `[...document.querySelectorAll('#feature-table th')].map((t) => t.getAttribute('aria-sort'))`),
-    ['none', 'none', 'none', 'none']);
+      `[...document.querySelectorAll('${BD_HEAD}')].map((t) => t.getAttribute('aria-sort'))`),
+    Array(11).fill('none'));
     // an explicit header sort takes control back from the grouping, starting
     // fresh at the column's default direction — not toggling a stale one
     await page.eval(`document.querySelector('#feature-table th button[data-sort="hours"]').click()`);
@@ -418,72 +418,83 @@ test('no milestones → the roadmap section is absent, no placeholder', skip, as
   } finally { page.close(); }
 });
 
-// --- breakdown scoring mode: the workbook's five scores rendered in-page ---
+// --- breakdown scores: the interview's five judgments rendered in-page ---
 
-const HEADS = `[...document.querySelectorAll('#feature-table th')].map((h) => h.textContent.trim())`;
-const enterScoring = (page) => page.eval(`document.querySelector('#feature-table [data-mode="scores"]').click()`);
+const cellTexts = (sel) => `[...document.querySelectorAll('${sel}')].map((n) => n.textContent.trim())`;
+// The breakdown table is the direct .bd-scroll child — the scoring-guide fold
+// sits inside #feature-table too and carries its own header row. The active
+// column's label ends in a sort arrow, which is not part of the column name.
+const BD_HEAD = '#feature-table > .bd-scroll th';
+const headTexts = `${cellTexts(BD_HEAD)}.map((t) => t.replace(/ [▲▼]$/, ''))`;
 
-test('a columns pill swaps the breakdown to workbook scores and back', skip, async () => {
+test('scored breakdown: five score columns, Σ, tier, then effort; values verbatim from inputs', skip, async () => {
   const page = await openPage(buildPage());
   try {
-    assert.ok((await page.eval(HEADS)).includes('Confidence'), 'estimate columns by default');
-    await enterScoring(page);
-    const heads = await page.eval(HEADS);
-    for (const h of ['Tech', 'Size', 'Deps', 'Unc', 'Risk', 'Σ', 'Tier']) {
-      assert.ok(heads.includes(h), `scoring header ${h} missing: ${heads}`);
+    const heads = await page.eval(headTexts);
+    assert.deepEqual(heads, ['Feature', 'Tech', 'Size', 'Deps', 'Unc', 'Risk', 'Σ', 'Tier', 'Effort (h)', 'Confidence', 'Source']);
+    const booking = await page.eval(cellTexts('#feature-table tr[data-id="booking"] td.score'));
+    assert.deepEqual(booking.slice(0, 5), ['3', '3', '2', '3', '3']);
+    assert.equal(booking[5], '14');
+    assert.equal(booking[6], 'M');
+    assert.equal(await page.eval(`document.querySelector('#feature-table [data-mode]')`), null, 'mode toggle is gone');
+  } finally { page.close(); }
+});
+
+test('score cells explain themselves: anchor + cite on hover, note under the name, ⚑ on a tier edge', skip, async () => {
+  const page = await openPage(buildPage());
+  try {
+    const title = await page.eval(`document.querySelector('#feature-table tr[data-id="reminders"] td.score').title`);
+    assert.match(title, /Minor customisation of standard patterns/);
+    assert.match(title, /scheduled job \+ template/);
+    const note = await page.eval(`document.querySelector('#feature-table tr[data-id="booking"] .feat-note').textContent`);
+    assert.match(note, /open questions/);
+    assert.ok(await page.eval(`!!document.querySelector('#feature-table tr[data-id="reminders"] .edge')`), 'Σ 11 sits on a tier edge');
+    assert.equal(await page.eval(`!!document.querySelector('#feature-table tr[data-id="booking"] .edge')`), false);
+  } finally { page.close(); }
+});
+
+test('⚠ marks a feature whose PERT hours fall outside its tier band', skip, async () => {
+  const page = await openPage(buildPageWith((inputs) => {
+    // reminders is S (20–60 h); push its only task to ~120 h
+    inputs.features[1].tasks[0] = { ...inputs.features[1].tasks[0], o: 90, m: 120, p: 160 };
+  }));
+  try {
+    const warn = await page.eval(`document.querySelector('#feature-table tr[data-id="reminders"] .oob')?.title ?? ''`);
+    assert.match(warn, /outside S band 20–60 h/);
+    assert.equal(await page.eval(`!!document.querySelector('#feature-table tr[data-id="booking"] .oob')`), false);
+  } finally { page.close(); }
+});
+
+test('the scoring guide fold shows the reference table, open on first view', skip, async () => {
+  const page = await openPage(buildPage());
+  try {
+    assert.equal(await page.eval(`document.querySelector('#feature-table details.guide').open`), true);
+    assert.match(await page.eval(`document.querySelector('#feature-table details.guide').textContent`), /Tech complexity/);
+  } finally { page.close(); }
+});
+
+test('QUICK inputs render today\'s four columns and no guide', skip, async () => {
+  const page = await openPage(buildPageWith((inputs) => {
+    inputs.depth = 'QUICK';
+    for (const f of inputs.features) {
+      delete f.scores; delete f.scoreNote; delete f.scoreProvenance;
+      f.tasks = [{ ...f.tasks[0], id: `${f.id}-band`, o: 60, m: 110, p: 160 }];
     }
-    assert.ok(!heads.includes('Confidence'), 'estimate columns must swap out');
-    const booking = await page.eval(
-      `[...document.querySelectorAll('#feature-table tr.feat-row')[0].querySelectorAll('td.score')].map((c) => c.textContent.trim())`);
-    assert.deepEqual(booking, ['2', '4', '2', '4', '3', '15', 'M']);
-    await page.eval(`document.querySelector('#feature-table [data-mode="estimate"]').click()`);
-    assert.ok((await page.eval(HEADS)).includes('Confidence'), 'estimate pill must swap back');
-    assert.deepEqual(page.errors, []);
+  }));
+  try {
+    assert.deepEqual(await page.eval(headTexts), ['Feature', 'Effort (h)', 'Confidence', 'Source']);
+    assert.equal(await page.eval(`document.querySelector('#feature-table details.guide')`), null);
   } finally { page.close(); }
 });
 
-test('scoring-mode task rows show each task\'s input to every score', skip, async () => {
+test('expanded task rows line up under the scored header', skip, async () => {
   const page = await openPage(buildPage());
   try {
-    await enterScoring(page);
-    await page.eval(`document.querySelector('#feature-table tr.feat-row .expand').click()`);
-    const rows = await page.eval(
-      `[...document.querySelectorAll('#feature-table tr.task-row')].map((r) => r.textContent.replace(/\\s+/g, ' ').trim())`);
-    assert.equal(rows.length, 2);
-    assert.match(rows[0], /boilerplate ×1\.5/);
-    assert.match(rows[0], /25\.3h/);
-    assert.match(rows[1], /logic ×3/);
-    assert.match(rows[1], /44(\.0)?h/);
-  } finally { page.close(); }
-});
-
-test('the scoring guide fold explains the anchors in the workbook\'s words', skip, async () => {
-  const page = await openPage(buildPage());
-  try {
-    assert.equal(await page.eval(`document.querySelector('#feature-table details.guide')`), null,
-      'no guide fold in estimate mode');
-    await enterScoring(page);
-    assert.ok(await page.eval(`document.querySelector('#feature-table details.guide').open`),
-      'guide must open on first switch');
-    const text = await page.eval(`document.querySelector('#feature-table details.guide').textContent`);
-    for (const anchor of ['Standard CRUD, well-documented library usage',
-      'Epic-scale feature', 'Deep cross-system dependencies', 'Highly experimental',
-      'Core infrastructure, compliance requirements']) {
-      assert.ok(text.includes(anchor), `guide missing workbook anchor: ${anchor}`);
-    }
-    assert.match(text, /hours-weighted/); // each dimension states its derivation
-  } finally { page.close(); }
-});
-
-test('scoring mode is internal-only: client view resets and hides the pill', skip, async () => {
-  const page = await openPage(buildPage());
-  try {
-    await enterScoring(page);
-    await page.eval(`document.getElementById('view-toggle').click()`);
-    assert.ok((await page.eval(HEADS)).includes('Confidence'), 'client view must reset to estimate columns');
-    assert.equal(await page.eval(
-      `getComputedStyle(document.querySelector('#feature-table [data-mode="scores"]').closest('.bd-filter-group')).display`),
-    'none');
+    await page.eval(`document.querySelector('#feature-table tr[data-id="booking"] button.expand').click()`);
+    const cells = await page.eval(`document.querySelectorAll('#feature-table tr.task-row td').length`);
+    // name + spacer(colspan 7 counts as one td) + o/m/p + confidence + category = 5 per row × 2 tasks
+    assert.equal(cells, 10);
+    assert.equal(await page.eval(`document.querySelector('#feature-table tr.task-row td:nth-child(2)').colSpan`), 7);
   } finally { page.close(); }
 });
 

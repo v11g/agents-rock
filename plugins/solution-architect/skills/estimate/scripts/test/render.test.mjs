@@ -57,7 +57,7 @@ test('render refuses a deliverable that fails validation', () => {
 
 test('template carries exactly the five slots and no external URLs', () => {
   const markers = [...tpl().matchAll(/<!-- slot:(\w+) -->/g)].map((m) => m[1]).sort();
-  assert.deepEqual([...new Set(markers)], ['DATA', 'FONTS', 'MATH', 'TITLE', 'VIEWER']);
+  assert.deepEqual([...new Set(markers)], ['DATA', 'FONTS', 'GUIDE', 'MATH', 'TITLE', 'VIEWER']);
   // openxmlformats URIs are XML namespace identifiers the xlsx export writes
   // into generated sheets — never fetched, so the page stays self-contained.
   assert.doesNotMatch(tpl(), /https?:\/\/(?!www\.w3\.org|schemas\.openxmlformats\.org)/);
@@ -225,4 +225,18 @@ test('agentic client render strips the measurements path, repository, and eviden
   assert.doesNotMatch(client, /"repository":/);
   assert.doesNotMatch(client, /Refactor A/);
   assert.doesNotMatch(client, />undefined</); // renderEvidence tolerates a stripped description
+});
+
+test('the page never derives scores and carries the guide from the reference file', () => {
+  const html = renderedPage();
+  for (const gone of ['deriveScores', 'TECH_CATEGORY_SCORE', 'scoreTier', 'SCORE_GUIDE', 'bdModePill', 'bdMode(', 'derived:']) {
+    assert.equal(html.includes(gone), false, `${gone} must not be in the page`);
+  }
+  assert.match(html, /<template id="scoring-guide"><table class="guide-table">/);
+  assert.ok(html.includes('Payments, auth, data migrations, or PII — high business impact'));
+});
+
+test('the agentic page has no guide slot and no score code', () => {
+  const html = renderAgentic();
+  assert.doesNotMatch(html, /scoring-guide/);
 });

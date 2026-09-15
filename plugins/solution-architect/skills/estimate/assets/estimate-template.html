@@ -252,8 +252,7 @@ td.ct-edge { box-shadow:inset 4px 0 0 var(--ct-color); }
   color:var(--accent-ink);
 }
 #feature-table td.num { white-space:nowrap; }
-/* scoring mode: centred mono score cells; a 5 reads hot (review it), the tier
-   pill warms with size. Task-row .wt cells are that task's score inputs. */
+/* score cells: centred mono; a 5 reads hot (review it), the tier pill warms with size. */
 #feature-table th.score, #feature-table td.score { text-align:center; }
 #feature-table td.score { font-family:'IBM Plex Mono',monospace; font-variant-numeric:tabular-nums; }
 #feature-table td.score.hot { color:var(--bad); font-weight:600; }
@@ -264,17 +263,15 @@ td.ct-edge { box-shadow:inset 4px 0 0 var(--ct-color); }
 }
 .tier.l { background:var(--warn-soft); color:var(--warn); }
 .tier.xl { background:rgba(185,28,28,.1); color:var(--bad); }
-.wt, #feature-table td.score .wt { font-family:'IBM Plex Mono',monospace; font-size:.7rem; color:var(--ink-dim); }
+#feature-table .edge { color:var(--warn); font-size:.7rem; margin-left:.15rem; cursor:help; }
+#feature-table .oob { color:var(--warn); margin-left:.3rem; cursor:help; }
+#feature-table .feat-note { margin-left:1.4rem; }
 #feature-table details.guide { margin:.9rem 0 0; border-top:1px solid var(--border); padding-top:.7rem; }
 #feature-table details.guide summary { cursor:pointer; font-size:.78rem; font-weight:600; color:var(--ink-dim); }
 #feature-table details.guide summary:hover { color:var(--accent-ink); }
 .guide-table { min-width:860px; font-size:.78rem; margin-top:.6rem; }
 .guide-table td { color:var(--ink-dim); vertical-align:top; }
 .guide-table td.dim { color:var(--ink); font-weight:600; white-space:nowrap; }
-.guide-table td.dim small {
-  display:block; font-weight:400; color:var(--ink-dim); font-size:.7rem;
-  max-width:15rem; white-space:normal; margin-top:.15rem;
-}
 /* hanging indent: the chevron is its own flex item, so 2-line names wrap
    against their own left edge instead of sliding under the button. */
 .feat-cell { display:flex; align-items:baseline; gap:.45rem; }
@@ -331,6 +328,7 @@ tr.task-row .bd-cell { justify-content:flex-end; }
     <section id="containers"></section>
     <section id="roadmap"></section>
     <section id="feature-table"></section>
+    <template id="scoring-guide"><!-- slot:GUIDE --></template>
     <section id="register"></section>
     <section id="method"></section>
   </div>
@@ -488,63 +486,45 @@ function ctEdge(component) {
   const id = containerOf(component);
   return ` class="ct-edge" style="--ct-color:${ctColor(id)}" title="${esc(CT_NAMES[id] ?? id)}"`;
 }
-// Each 1–5 score is the count of thresholds the metric clears, plus one.
-function band(value, thresholds) {
-  return thresholds.reduce((s, t) => s + (value > t ? 1 : 0), 1);
+// Scores are the interview's judgments (features[].scores), never derived
+// from hours; Σ and tier were copied into computed.features by rollup.mjs.
+// A page with no scored feature (QUICK depth) shows the four estimate columns.
+const SCORED = DATA.inputs.features.some((f) => f.scores);
+const SCORE_KEYS = ['tech', 'size', 'deps', 'unc', 'risk'];
+const SCORE_LABELS = { tech: 'Tech', size: 'Size', deps: 'Deps', unc: 'Unc', risk: 'Risk' };
+const EDGE_TOTALS = [11, 17, 22];
+
+const bdState = { sortKey: 'hours', dir: -1, milestone: '', component: '', prov: '', group: false, expanded: new Set(), guideSeen: false };
+
+const BASE_COLS = {
+  name: { key: 'name', label: 'Feature', val: (f) => f.name, hint: 'sort by name' },
+  hours: { key: 'hours', label: 'Effort (h)', val: (f) => f.hours, hint: 'sort by expected hours' },
+  conf: { key: 'conf', label: 'Confidence', val: (f) => CONF_RANK[f.conf], hint: 'sort by confidence' },
+  prov: { key: 'provenance', label: 'Source', val: (f) => f.provenance, hint: 'sort by source' },
+};
+
+function bdCols() {
+  if (!SCORED) return [BASE_COLS.name, BASE_COLS.hours, BASE_COLS.conf, BASE_COLS.prov];
+  const scoreCols = SCORE_KEYS.map((k) => ({
+    key: k, label: SCORE_LABELS[k], cls: 'score', val: (f) => f.scores[k].n, hint: `sort by ${SCORE_LABELS[k]} score`,
+  }));
+  return [BASE_COLS.name, ...scoreCols,
+    { key: 'total', label: '&Sigma;', cls: 'score', val: (f) => f.scoreTotal, hint: 'sum of the five scores' },
+    { key: 'tier', label: 'Tier', cls: 'score', val: (f) => f.scoreTotal, hint: 'S ≤ 11 / M ≤ 17 / L ≤ 22 / XL above' },
+    BASE_COLS.hours, BASE_COLS.conf, BASE_COLS.prov];
 }
-
-// The workbook's five scoring dimensions, derived from what the estimate
-// already knows and matching its Scoring Guide tab: tech is the
-// hours-weighted task-category score (CRUD → custom logic → R&D), size is
-// absolute expected-hour bands (<1 day → epic). Shared by the page's
-// scoring mode and the xlsx export, so table and sheet cannot drift.
-const TECH_CATEGORY_SCORE = { boilerplate: 1.5, logic: 3, novel: 5 };
-function deriveScores(f) {
-  const weighted = f.tasks.reduce((s, t) => s + TECH_CATEGORY_SCORE[t.category] * pert(t).e, 0);
-  const totalE = f.tasks.reduce((s, t) => s + pert(t).e, 0);
-  const assumptions = f.tasks.reduce((s, t) => s + t.assumptions.length, 0);
-  return [Math.round(weighted / totalE), band(f.hours, [8, 24, 64, 128]),
-    band(assumptions, [0, 2, 4, 6]), band(f.spread / f.hours, [0.3, 0.6, 0.9, 1.2]),
-    { HIGH: 2, MED: 3, LOW: 5 }[f.conf]];
-}
-
-// The workbook's tier scale (its sheet-1 formula verbatim), not the QUICK-depth
-// technique breaks in estimate-math — the page mirrors what it exports.
-const bdTotal = (f) => f.scores.reduce((a, b) => a + b, 0);
-const scoreTier = (total) => ['S', 'M', 'L', 'XL'][band(total, [11, 17, 22]) - 1];
-
-const bdState = { sortKey: 'hours', dir: -1, milestone: '', component: '', prov: '', group: false, expanded: new Set(), mode: 'estimate', guideSeen: false };
-const BD_COLS = [
-  { key: 'name', label: 'Feature', val: (f) => f.name, hint: 'sort by name' },
-  { key: 'hours', label: 'Effort (h)', val: (f) => f.hours, hint: 'sort by expected hours' },
-  { key: 'conf', label: 'Confidence', val: (f) => CONF_RANK[f.conf], hint: 'sort by confidence' },
-  { key: 'provenance', label: 'Source', val: (f) => f.provenance, hint: 'sort by source' },
-];
-
-// Scoring mode swaps the estimate columns for the workbook's five scores plus
-// total and tier; Feature and Effort stay put in both modes.
-const SCORE_COLS = [BD_COLS[0], BD_COLS[1],
-  { key: 'tech', label: 'Tech', val: (f) => f.scores[0], cls: 'score',
-    hint: 'hours-weighted task category: boilerplate 1.5 / logic 3 / novel 5' },
-  { key: 'size', label: 'Size', val: (f) => f.scores[1], cls: 'score',
-    hint: 'expected hours banded at 8 / 24 / 64 / 128' },
-  { key: 'deps', label: 'Deps', val: (f) => f.scores[2], cls: 'score', hint: 'assumption count across tasks' },
-  { key: 'unc', label: 'Unc', val: (f) => f.scores[3], cls: 'score', hint: 'estimate spread ÷ expected hours' },
-  { key: 'risk', label: 'Risk', val: (f) => f.scores[4], cls: 'score', hint: 'worst task confidence' },
-  { key: 'total', label: 'Σ', val: bdTotal, cls: 'score', hint: 'sum of the five scores' },
-  { key: 'tier', label: 'Tier', val: bdTotal, cls: 'score', hint: 'S ≤ 11 / M ≤ 17 / L ≤ 22 / XL above' },
-];
-const activeCols = () => (bdState.mode === 'scores' ? SCORE_COLS : BD_COLS);
 
 function breakdownData() {
   return DATA.inputs.features.map((f) => {
     const c = DATA.computed.features[f.id];
     const conf = f.tasks.reduce(
       (w, t) => (CONF_RANK[t.confidence] > CONF_RANK[w] ? t.confidence : w), 'HIGH');
-    const row = { id: f.id, name: f.name, milestone: f.milestone, component: f.component, provenance: f.provenance,
-      tasks: f.tasks, conf, hours: c.hours, low: c.low, high: c.high, spread: c.high - c.low };
-    row.scores = deriveScores(row);
-    return row;
+    const band = c.tier ? DATA.inputs.calibration?.[c.tier] : undefined;
+    return { id: f.id, name: f.name, milestone: f.milestone, component: f.component, provenance: f.provenance,
+      tasks: f.tasks, conf, hours: c.hours, low: c.low, high: c.high, spread: c.high - c.low,
+      scores: f.scores, scoreNote: f.scoreNote, scoreProvenance: f.scoreProvenance,
+      scoreTotal: c.scoreTotal, tier: c.tier,
+      outOfBand: band && (c.hours < band[0] || c.hours > band[1]) ? band : null };
   });
 }
 
@@ -552,7 +532,7 @@ function breakdownData() {
 // container (roster order — the palette's order) so the stripes read as the
 // same blocks of color as the roadmap band that set the filter.
 function bdSorted(list) {
-  const col = activeCols().find((c) => c.key === bdState.sortKey);
+  const col = bdCols().find((c) => c.key === bdState.sortKey);
   const ctRank = (f) => CT_TOPS.indexOf(containerOf(f.component));
   return list.slice().sort((a, b) => {
     const byGroup = bdState.group ? ctRank(a) - ctRank(b) : 0;
@@ -577,15 +557,6 @@ function bdExpandControls() {
   return `<span class="bd-filter-group" ${INTERNAL_ATTR} role="group" aria-label="tasks">
     <button type="button" data-expand="all">expand all</button>
     <button type="button" data-expand="none">collapse all</button></span>`;
-}
-
-// Internal-only, like the drill-down it re-maps: the client render keeps the
-// estimate columns and never sees this switch.
-function bdModePill() {
-  return `<span class="bd-filter-group" ${INTERNAL_ATTR} role="group" aria-label="columns">${
-    [['estimate', 'estimate'], ['scores', 'scoring']].map(([v, text]) =>
-    `<button type="button" data-mode="${v}" aria-pressed="${v === bdState.mode}"
-      title="${text} columns">${text}</button>`).join('')}</span>`;
 }
 
 // The handler lives in a separate internal-only script (the embedded workbook
@@ -619,11 +590,11 @@ function bdFilters(all) {
   }
   const source = pillGroup({ name: 'source', attr: 'data-prov', current: bdState.prov,
     pairs: [['', 'all sources'], ['stated', 'stated'], ['proposed', 'proposed']] });
-  return `<div class="bd-filters">${milestones}${components}<span class="bd-right">${bdModePill()}${bdExpandControls()}${bdDownloadBtn()}${source}</span></div>`;
+  return `<div class="bd-filters">${milestones}${components}<span class="bd-right">${bdExpandControls()}${bdDownloadBtn()}${source}</span></div>`;
 }
 
 function bdHead() {
-  return `<thead><tr>${activeCols().map((c) => {
+  return `<thead><tr>${bdCols().map((c) => {
     // grouping overrides the column order, so no header may claim its sort
     const active = !bdState.group && bdState.sortKey === c.key;
     const aria = active ? (bdState.dir === 1 ? 'ascending' : 'descending') : 'none';
@@ -643,11 +614,20 @@ function bdBar(f, max) {
 // A feature row's score cells: the five 1–5s, their sum, and the tier. A 5 is
 // flagged hot — the score a human should eyeball before the sheet goes out.
 function scoreCells(f) {
-  const total = bdTotal(f);
-  const tier = scoreTier(total);
-  return f.scores.map((v) => `<td class="score${v === 5 ? ' hot' : ''}">${v}</td>`).join('')
-    + `<td class="score total">${total}</td>
-    <td class="score"><span class="tier ${tier.toLowerCase()}">${tier}</span></td>`;
+  const cells = SCORE_KEYS.map((k) => {
+    const s = f.scores[k];
+    return `<td class="score${s.n === 5 ? ' hot' : ''}" title="${esc(s.anchor)} — ${esc(s.cite)}">${s.n}</td>`;
+  });
+  const edge = EDGE_TOTALS.includes(f.scoreTotal)
+    ? ' <span class="edge" title="one point from the next tier">&#9873;</span>' : '';
+  return `${cells.join('')}<td class="score total">${f.scoreTotal}${edge}</td>
+    <td class="score"><span class="tier ${f.tier.toLowerCase()}">${f.tier}</span></td>`;
+}
+
+function hoursCell(f, max) {
+  const warn = f.outOfBand
+    ? `<span class="oob" title="PERT ${f.hours} h outside ${f.tier} band ${f.outOfBand[0]}–${f.outOfBand[1]} h">&#9888;</span>` : '';
+  return `<td><span class="bd-cell">${bdBar(f, max)}<span class="bd-num">${f.hours}</span>${warn}</span></td>`;
 }
 
 function estimateCells(f) {
@@ -657,91 +637,34 @@ function estimateCells(f) {
 
 function featRow(f, max) {
   const open = bdState.expanded.has(f.id);
+  const note = f.scoreNote ? `<div class="task-assump feat-note">${esc(f.scoreNote)}</div>` : '';
   return `<tr class="feat-row ${confLevel(f.conf)}" data-id="${f.id}">
     <td${ctEdge(f.component)}><span class="feat-cell"><button type="button" class="expand" ${INTERNAL_ATTR}
       aria-expanded="${open}" aria-label="show tasks">&#9656;</button>
-      <span>${f.name}</span></span></td>
-    <td><span class="bd-cell">${bdBar(f, max)}<span class="bd-num">${f.hours}</span></span></td>
-    ${bdState.mode === 'scores' ? scoreCells(f) : estimateCells(f)}</tr>`;
+      <span>${f.name}</span></span>${note}</td>
+    ${SCORED ? scoreCells(f) : ''}${hoursCell(f, max)}${estimateCells(f)}</tr>`;
 }
 
-// In scoring mode a task row shows its inputs to each score column above it:
-// category × weight under Tech, expected hours under Size, assumption count
-// under Deps, o–p span under Unc, its confidence under Risk. Σ and Tier only
-// exist per feature, so those cells stay blank.
-function taskScoreCells(t) {
-  return `<td class="score"><span class="tag">${t.category}</span> <span class="wt">&times;${TECH_CATEGORY_SCORE[t.category]}</span></td>
-    <td class="score wt">${pert(t).e.toFixed(1)}h</td>
-    <td class="score wt">${t.assumptions.length}</td>
-    <td class="score wt">${t.o}&ndash;${t.p}h</td>
-    <td class="score"><span class="conf">${t.confidence}</span></td><td class="score"></td><td class="score"></td>`;
-}
-
-function taskEstimateCells(t) {
-  return `<td><span class="conf">${t.confidence}</span></td>
-    <td><span class="tag">${t.category}</span></td>`;
-}
-
+// Task rows sit under the feature's name; the seven score columns have no
+// per-task meaning (scores are a feature judgment), so one spacer spans them.
 function taskRows(f) {
+  const spacer = SCORED ? '<td colspan="7"></td>' : '';
   return f.tasks.map((t) => `<tr class="task-row ${confLevel(t.confidence)}" ${INTERNAL_ATTR}>
-    <td${ctEdge(f.component)}>${t.name}<div class="task-assump">${t.assumptions.join('; ') || 'none'}</div></td>
+    <td${ctEdge(f.component)}>${t.name}<div class="task-assump">${t.assumptions.join('; ') || 'none'}</div></td>${spacer}
     <td><span class="bd-cell"><span class="bd-num">${t.o}/${t.m}/${t.p}</span></span></td>
-    ${bdState.mode === 'scores' ? taskScoreCells(t) : taskEstimateCells(t)}</tr>`).join('');
+    <td><span class="conf">${t.confidence}</span></td>
+    <td><span class="tag">${t.category}</span></td></tr>`).join('');
 }
 
-function bdMode(mode) {
-  bdState.mode = mode;
-  // a sort keyed to the other mode's columns has nothing to point at
-  if (!activeCols().some((c) => c.key === bdState.sortKey)) bdState.sortKey = 'hours';
-  renderBreakdown();
-}
-
-// The workbook's Scoring Guide tab, verbatim, so page and sheet explain a
-// score in the same words; each row also states how the page derives it.
-const SCORE_GUIDE = [
-  ['Tech complexity', 'derived: hours-weighted task category — boilerplate 1.5, logic 3, novel 5',
-    'Standard CRUD, well-documented library usage, copy-paste patterns',
-    'Minor customisation of standard patterns, simple state management',
-    'Custom business logic, moderate algorithm complexity, multiple states',
-    'Non-trivial algorithms, real-time systems, ML inference, complex data transforms',
-    'Novel architecture, distributed systems, low-level optimisation, R&amp;D territory'],
-  ['Feature size', 'derived: expected hours banded at 8 / 24 / 64 / 128',
-    'Single UI element or micro-function, &lt;1 day of work',
-    'Small self-contained feature, simple form or display component',
-    'Medium feature with multiple components and backend logic',
-    'Large feature spanning frontend, backend, DB, and tests',
-    'Epic-scale feature, multiple sub-features or screens'],
-  ['Dependencies', 'derived: assumption count across the feature&rsquo;s tasks',
-    'Fully standalone, no external services or shared state',
-    'One internal dependency (e.g. auth check)',
-    '2&ndash;3 internal services or one third-party API',
-    'Multiple third-party APIs or tightly coupled internal systems',
-    'Deep cross-system dependencies, legacy integrations, or shared infrastructure changes'],
-  ['Uncertainty', 'derived: estimate spread &divide; expected hours',
-    'Fully defined spec, clear acceptance criteria, precedent exists',
-    'Minor ambiguities, can be resolved with one clarifying question',
-    'Some open questions, design decisions to be made during build',
-    'Significant unknowns, exploratory work needed, spec may change',
-    'Highly experimental, no clear solution path, outcomes unclear'],
-  ['Risk', 'derived: worst task confidence — review by hand, no business-impact input yet',
-    'Fully reversible, no user data, isolated module',
-    'Low stakes, easy rollback, minimal user impact',
-    'Moderate impact if broken, requires testing, affects multiple users',
-    'Payments, auth, data migrations, or PII &mdash; high business impact',
-    'Core infrastructure, compliance requirements, irreversible operations'],
-];
-
-const bdGuideRow = ([dim, how, ...anchors]) => `<tr><td class="dim">${dim}<small>${how}</small></td>
-  ${anchors.map((a) => `<td>${a}</td>`).join('')}</tr>`;
-
+// The rubric comes from references/scoring-guide.md through the GUIDE slot,
+// so the page and the interviewer explain a score in the same sentences.
 function bdGuide() {
-  if (bdState.mode !== 'scores') return '';
+  const guide = document.getElementById('scoring-guide');
+  if (!SCORED || !guide) return '';
   const open = bdState.guideSeen ? '' : ' open';
   bdState.guideSeen = true;
   return `<details class="guide"${open}><summary>Scoring guide &mdash; what each 1&ndash;5 means</summary>
-    <div class="bd-scroll"><table class="guide-table"><thead><tr><th>Dimension</th>
-    ${[1, 2, 3, 4, 5].map((n) => `<th class="score">${n}</th>`).join('')}</tr></thead>
-    <tbody>${SCORE_GUIDE.map(bdGuideRow).join('')}</tbody></table></div></details>`;
+    <div class="bd-scroll">${guide.innerHTML}</div></details>`;
 }
 
 function renderBreakdown() {
@@ -755,7 +678,9 @@ function renderBreakdown() {
     'Hours is the PERT expected value E = (O + 4M + P) / 6 summed over the feature’s tasks; '
     + 'the bar shows E with a lighter tail to the pessimistic bound, so a long tail means an '
     + 'uncertain feature. Sort any column, filter by milestone or source, and expand a row '
-    + 'for the tasks behind its number.')
+    + 'for the tasks behind its number. Score cells are the interview\'s five factor '
+    + 'judgments (hover for the rubric sentence and the evidence); Σ and tier follow '
+    + 'the scoring guide below.')
     + bdFilters(all) + `<div class="bd-scroll"><table>${bdHead()}<tbody>${rows}</tbody></table></div>` + bdGuide();
 }
 
@@ -785,7 +710,6 @@ function onBreakdownClick(e) {
   const btn = e.target.closest('button');
   if (!btn) return;
   if (btn.dataset.sort) bdSort(btn.dataset.sort);
-  else if (btn.dataset.mode) bdMode(btn.dataset.mode);
   else if (btn.dataset.expand) bdExpandAll(btn.dataset.expand);
   else if (btn.dataset.download !== undefined) window.__downloadXlsx?.();
   else if (btn.dataset.prov !== undefined) { bdState.prov = btn.dataset.prov; renderBreakdown(); }
@@ -1034,10 +958,7 @@ document.getElementById('containers')?.addEventListener('mouseover', onPieHover)
 document.getElementById('containers')?.addEventListener('mouseout', onPieHover);
 
 document.getElementById('view-toggle')?.addEventListener('click', () => {
-  const client = document.body.classList.toggle('view-client');
-  // scoring mode is internal-only; the client view falls back to the estimate
-  // columns rather than showing scores with their switch hidden.
-  if (client && bdState.mode !== 'estimate') bdMode('estimate');
+  document.body.classList.toggle('view-client');
 });
 
 document.getElementById('theme-toggle')?.addEventListener('click', () => {
@@ -1070,10 +991,6 @@ function xmlEsc(s) {
 const fCell = (ref, s, f) => `<c r="${ref}" s="${s}"><f>${xmlEsc(f)}</f></c>`;
 const sCell = (ref, s, text) => `<c r="${ref}" s="${s}" t="inlineStr"><is><t>${xmlEsc(text)}</t></is></c>`;
 const nCell = (ref, s, v) => `<c r="${ref}" s="${s}"><v>${v}</v></c>`;
-
-// deriveScores lives with the breakdown table in the main script (the page's
-// scoring mode renders the same five dimensions); rows arrive here with
-// .scores already derived.
 
 // The sample's own formulas, re-emitted per row (explicit, not shared, so a
 // regenerated row never dangles a shared-formula anchor).
