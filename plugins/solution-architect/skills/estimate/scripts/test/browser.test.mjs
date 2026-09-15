@@ -437,6 +437,7 @@ test('scored breakdown: five score columns, Σ, tier, then effort; values verbat
     assert.equal(booking[5], '14');
     assert.equal(booking[6], 'M');
     assert.equal(await page.eval(`document.querySelector('#feature-table [data-mode]')`), null, 'mode toggle is gone');
+    assert.deepEqual(page.errors, []);
   } finally { page.close(); }
 });
 
@@ -450,6 +451,7 @@ test('score cells explain themselves: anchor + cite on hover, note under the nam
     assert.match(note, /open questions/);
     assert.ok(await page.eval(`!!document.querySelector('#feature-table tr[data-id="reminders"] .edge')`), 'Σ 11 sits on a tier edge');
     assert.equal(await page.eval(`!!document.querySelector('#feature-table tr[data-id="booking"] .edge')`), false);
+    assert.deepEqual(page.errors, []);
   } finally { page.close(); }
 });
 
@@ -462,6 +464,7 @@ test('⚠ marks a feature whose PERT hours fall outside its tier band', skip, as
     const warn = await page.eval(`document.querySelector('#feature-table tr[data-id="reminders"] .oob')?.title ?? ''`);
     assert.match(warn, /outside S band 20–60 h/);
     assert.equal(await page.eval(`!!document.querySelector('#feature-table tr[data-id="booking"] .oob')`), false);
+    assert.deepEqual(page.errors, []);
   } finally { page.close(); }
 });
 
@@ -470,6 +473,7 @@ test('the scoring guide fold shows the reference table, open on first view', ski
   try {
     assert.equal(await page.eval(`document.querySelector('#feature-table details.guide').open`), true);
     assert.match(await page.eval(`document.querySelector('#feature-table details.guide').textContent`), /Tech complexity/);
+    assert.deepEqual(page.errors, []);
   } finally { page.close(); }
 });
 
@@ -484,6 +488,7 @@ test('QUICK inputs render today\'s four columns and no guide', skip, async () =>
   try {
     assert.deepEqual(await page.eval(headTexts), ['Feature', 'Effort (h)', 'Confidence', 'Source']);
     assert.equal(await page.eval(`document.querySelector('#feature-table details.guide')`), null);
+    assert.deepEqual(page.errors, []);
   } finally { page.close(); }
 });
 
@@ -495,6 +500,7 @@ test('expanded task rows line up under the scored header', skip, async () => {
     // name + spacer(colspan 7 counts as one td) + o/m/p + confidence + category = 5 per row × 2 tasks
     assert.equal(cells, 10);
     assert.equal(await page.eval(`document.querySelector('#feature-table tr.task-row td:nth-child(2)').colSpan`), 7);
+    assert.deepEqual(page.errors, []);
   } finally { page.close(); }
 });
 
