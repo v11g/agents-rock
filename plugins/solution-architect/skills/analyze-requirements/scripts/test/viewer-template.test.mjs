@@ -835,8 +835,9 @@ test('the measure is the column it sits in, not the viewport minus the rail', ()
 // Without a declared scheme the browser paints the canvas white before the boot
 // script runs, so a dark-mode reader gets a flash — and the UA scrollbar and the
 // search field's clear button stay light inside a dark page.
-test('the head states its colour scheme, its icon and its description', () => {
-  assert.match(tpl, /<meta name="color-scheme" content="light dark">/);
+test('the head states its colour scheme (dark first), its icon and its description', () => {
+  assert.match(tpl, /<meta name="color-scheme" content="dark light">/);
+  assert.match(tpl, /<html lang="en" data-theme="dark">/);
   assert.match(tpl, /<link rel="icon"[^>]*data:image\/svg\+xml/);
   assert.match(tpl, /<meta name="description"/);
 });

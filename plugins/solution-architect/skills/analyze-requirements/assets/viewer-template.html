@@ -1,5 +1,7 @@
 <!DOCTYPE html>
-<html lang="en">
+<!-- data-theme="dark" in the markup: the page opens dark for everyone; the
+     toggle (persisted in localStorage) can still switch it to light. -->
+<html lang="en" data-theme="dark">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,7 +9,7 @@
      before the boot script runs, so without this a dark-mode reader gets a white
      flash — and the UA scrollbar and the search field's own clear button stay
      light inside a dark page. -->
-<meta name="color-scheme" content="light dark">
+<meta name="color-scheme" content="dark light">
 <meta name="description" content="Architecture documentation — one self-contained page, no network.">
 <!-- The rail's own mark, inline. A linked file would be a second request from a
      viewer whose whole premise is one offline file. -->

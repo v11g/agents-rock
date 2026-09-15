@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- new-lead-dashboard v2 -->
+<!-- new-lead-dashboard v3 -->
 <html lang="en">
 <head>
 <meta charset="utf-8">
@@ -8,50 +8,30 @@
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' rx='3' fill='%230f766e'/%3E%3C/svg%3E">
 <title>Leads</title>
 <style>
-/* Tokens: same vocabulary as the lead detail page. Full light palette on bare
-   :root, dark redefines only. No [data-theme] override block because this page
-   ships no theme control. */
+/* Tokens: same vocabulary as the lead detail page. Dark by default on bare
+   :root. No light block and no [data-theme] override because this page ships
+   no theme control. */
 :root {
-  color-scheme:light;
-  --bg:#f6f4ef; --bg-sunk:#edeae1; --card:#fffdf9; --card-raised:#fff;
-  --ink:#1c1b18; --ink-soft:#45423a; --ink-dim:#6c6759;
-  --border:#e4dfd3; --border-strong:#cec7b6;
-  --accent:#0f766e; --accent-ink:#0a544f; --accent-soft:rgba(15,118,110,.09); --accent-line:rgba(15,118,110,.38);
-  --ok:#15803d; --ok-soft:rgba(21,128,61,.1);
-  --warn:#a55708; --warn-soft:rgba(165,87,8,.1);
-  --pending-bg:#eae7dd; --pending-ink:#857f70;
-  --focus:#0f766e;
+  color-scheme:dark;
+  --bg:#0f1413; --bg-sunk:#0a0e0d; --card:#171d1c; --card-raised:#1c2322;
+  --ink:#e9e7e2; --ink-soft:#bdc4c0; --ink-dim:#8d9a95;
+  --border:#26312f; --border-strong:#3a4946;
+  --accent:#3fb3a8; --accent-ink:#74d6cc; --accent-soft:rgba(63,179,168,.13); --accent-line:rgba(63,179,168,.42);
+  --ok:#62c082; --ok-soft:rgba(98,192,130,.13);
+  --warn:#dd9247; --warn-soft:rgba(221,146,71,.13);
+  --pending-bg:#1f2726; --pending-ink:#8d9a95;
+  --focus:#74d6cc;
   /* Opaque: sticky cells paint over scrolling content, so these two cannot be tints. */
-  --row-hover:#f2efe7; --th-active:#e6e9e4;
-  --scroll-thumb:#cec7b6; --scroll-thumb-hover:#b3aa95; --scroll-track:transparent;
+  --row-hover:#1d2523; --th-active:#152321;
+  --scroll-thumb:#3a4946; --scroll-thumb-hover:#4f6360; --scroll-track:transparent;
   /* Depth tiers: layered transparent shadows instead of borders. */
-  --tier-flat:0 0 0 1px rgba(0,0,0,.06);
-  --tier-raised:0 0 0 1px rgba(0,0,0,.06), 0 1px 2px -1px rgba(0,0,0,.06), 0 2px 4px 0 rgba(0,0,0,.04);
-  --tier-raised-hover:0 0 0 1px rgba(0,0,0,.08), 0 1px 2px -1px rgba(0,0,0,.08), 0 2px 4px 0 rgba(0,0,0,.06);
-  --tier-hero:0 0 0 1px rgba(15,118,110,.16), 0 2px 6px -2px rgba(0,0,0,.07), 0 10px 26px -8px rgba(0,0,0,.09);
-  --tier-sunk:inset 0 1px 3px rgba(0,0,0,.05), 0 0 0 1px rgba(0,0,0,.04);
+  --tier-flat:0 0 0 1px rgba(255,255,255,.08);
+  --tier-raised:0 0 0 1px rgba(255,255,255,.08);
+  --tier-raised-hover:0 0 0 1px rgba(255,255,255,.13);
+  --tier-hero:0 0 0 1px rgba(116,214,204,.22), 0 10px 30px -12px rgba(0,0,0,.7);
+  --tier-sunk:inset 0 1px 3px rgba(0,0,0,.45), 0 0 0 1px rgba(255,255,255,.05);
   --r-lg:.875rem; --r-md:.625rem; --r-sm:.5rem; --r-xs:.375rem; --r-pill:999px;
   --topbar-h:3.5rem; --ease:cubic-bezier(.16, 1, .3, 1);
-}
-@media (prefers-color-scheme:dark) {
-  :root {
-    color-scheme:dark;
-    --bg:#0f1413; --bg-sunk:#0a0e0d; --card:#171d1c; --card-raised:#1c2322;
-    --ink:#e9e7e2; --ink-soft:#bdc4c0; --ink-dim:#8d9a95;
-    --border:#26312f; --border-strong:#3a4946;
-    --accent:#3fb3a8; --accent-ink:#74d6cc; --accent-soft:rgba(63,179,168,.13); --accent-line:rgba(63,179,168,.42);
-    --ok:#62c082; --ok-soft:rgba(98,192,130,.13);
-    --warn:#dd9247; --warn-soft:rgba(221,146,71,.13);
-    --pending-bg:#1f2726; --pending-ink:#8d9a95;
-    --focus:#74d6cc;
-    --row-hover:#1d2523; --th-active:#152321;
-    --scroll-thumb:#3a4946; --scroll-thumb-hover:#4f6360;
-    --tier-flat:0 0 0 1px rgba(255,255,255,.08);
-    --tier-raised:0 0 0 1px rgba(255,255,255,.08);
-    --tier-raised-hover:0 0 0 1px rgba(255,255,255,.13);
-    --tier-hero:0 0 0 1px rgba(116,214,204,.22), 0 10px 30px -12px rgba(0,0,0,.7);
-    --tier-sunk:inset 0 1px 3px rgba(0,0,0,.45), 0 0 0 1px rgba(255,255,255,.05);
-  }
 }
 
 /* base */
