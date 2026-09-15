@@ -286,6 +286,15 @@ test('a roadmap click groups the breakdown rows by container', skip, async () =>
   inputs.features.push({
     id: 'audit', name: 'Booking audit log', provenance: 'proposed',
     component: 'api', milestone: 'M2 - Notifications',
+    scores: {
+      tech: { n: 1, anchor: 'Standard CRUD, well-documented library usage, copy-paste patterns', cite: 'append-only log write' },
+      size: { n: 1, anchor: 'Single UI element or micro-function, <1 day of work', cite: 'one write call' },
+      deps: { n: 2, anchor: 'One internal dependency (e.g. auth check)', cite: 'writes to the booking API' },
+      unc: { n: 1, anchor: 'Fully defined spec, clear acceptance criteria, precedent exists', cite: 'standard audit log shape' },
+      risk: { n: 2, anchor: 'Low stakes, easy rollback, minimal user impact', cite: 'log-only, no user-facing effect' },
+    },
+    scoreNote: 'Writes an append-only audit log entry alongside booking changes',
+    scoreProvenance: 'proposed',
     tasks: [{ id: 'audit-log', name: 'Audit log writes', category: 'boilerplate',
       o: 4, m: 6, p: 10, confidence: 'MED', assumptions: [], provenance: 'proposed' }],
   });

@@ -3,7 +3,7 @@
   "currency": "USD",
   "technique": "three-point-pert",
   "depth": "STANDARD",
-  "calibration": { "S": [20, 60], "M": [60, 160], "L": [160, 400] },
+  "calibration": { "S": [20, 60], "M": [60, 160], "L": [160, 400], "XL": [400, 800] },
   "overheadPct": 0.35,
   "verificationPct": 0.12,
   "exposeRatesToClient": false,
@@ -20,6 +20,15 @@
       "provenance": "stated",
       "component": "api",
       "milestone": "M1 - Booking core",
+      "scores": {
+        "tech": { "n": 3, "anchor": "Custom business logic, moderate algorithm complexity, multiple states", "cite": "slot conflict + cancellation rules" },
+        "size": { "n": 3, "anchor": "Medium feature with multiple components and backend logic", "cite": "CRUD API + rules engine" },
+        "deps": { "n": 2, "anchor": "One internal dependency (e.g. auth check)", "cite": "reads the user session" },
+        "unc": { "n": 3, "anchor": "Some open questions, design decisions to be made during build", "cite": "recurring bookings undecided" },
+        "risk": { "n": 3, "anchor": "Moderate impact if broken, requires testing, affects multiple users", "cite": "double booking hits every customer" }
+      },
+      "scoreNote": "Core booking rules with a few open questions; touches every customer if it breaks",
+      "scoreProvenance": "stated",
       "tasks": [
         { "id": "booking-api", "name": "Booking CRUD API", "category": "boilerplate",
           "o": 16, "m": 24, "p": 40, "confidence": "HIGH",
@@ -35,6 +44,15 @@
       "provenance": "proposed",
       "component": "notify.jobs",
       "milestone": "M2 - Notifications",
+      "scores": {
+        "tech": { "n": 2, "anchor": "Minor customisation of standard patterns, simple state management", "cite": "scheduled job + template" },
+        "size": { "n": 2, "anchor": "Small self-contained feature, simple form or display component", "cite": "one job, one template" },
+        "deps": { "n": 3, "anchor": "2–3 internal services or one third-party API", "cite": "transactional email provider" },
+        "unc": { "n": 2, "anchor": "Minor ambiguities, can be resolved with one clarifying question", "cite": "send-time rule to confirm" },
+        "risk": { "n": 2, "anchor": "Low stakes, easy rollback, minimal user impact", "cite": "a missed reminder is recoverable" }
+      },
+      "scoreNote": "Sends reminder emails through an outside provider; low stakes if one is missed",
+      "scoreProvenance": "proposed",
       "tasks": [
         { "id": "reminder-jobs", "name": "Scheduled reminder jobs", "category": "logic",
           "o": 12, "m": 20, "p": 36, "confidence": "MED",

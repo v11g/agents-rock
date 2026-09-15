@@ -233,3 +233,57 @@ test('deliveryMode vocabulary is enforced; team inputs stay valid', () => {
   assert.ok(checkInputs(inputs).some((f) => f.includes('deliveryMode')));
   assert.deepEqual(checkInputs(fixture()), []); // existing booking fixture untouched
 });
+
+const GUIDE_RISK_4 = 'Payments, auth, data migrations, or PII — high business impact';
+
+test('scores are required at STANDARD depth, complete, 1–5, anchored to the guide, cited', () => {
+  const bad = fixture();
+  delete bad.features[1].scores;
+  bad.features[0].scores.risk = { n: 6, anchor: GUIDE_RISK_4, cite: 'x' };
+  bad.features[0].scores.tech.anchor = 'hard';
+  bad.features[0].scores.size.cite = '';
+  const findings = checkInputs(bad);
+  assert.ok(findings.some((f) => f.includes('reminders') && f.includes('scores object is required')));
+  assert.ok(findings.some((f) => f.includes('booking') && f.includes('scores.risk.n must be an integer 1–5')));
+  assert.ok(findings.some((f) => f.includes('booking') && f.includes('scores.tech.anchor is not the guide')));
+  assert.ok(findings.some((f) => f.includes('booking') && f.includes('scores.size.cite is required')));
+});
+
+test('an anchor must be the guide sentence for that factor and score, not another score', () => {
+  const bad = fixture();
+  bad.features[0].scores.risk = { n: 3, anchor: GUIDE_RISK_4, cite: 'payments' }; // risk 4's sentence on a 3
+  assert.ok(checkInputs(bad).some((f) => f.includes("scores.risk.anchor is not the guide's sentence for risk = 3")));
+});
+
+test('the plain-words note refuses jargon and provenance is stated|proposed', () => {
+  const bad = fixture();
+  bad.features[0].scoreNote = 'Risk 4 per ARCHITECTURE.md §6';
+  bad.features[1].scoreNote = '';
+  bad.features[1].scoreProvenance = 'observed';
+  const findings = checkInputs(bad);
+  assert.equal(findings.filter((f) => f.includes('scoreNote must be one plain sentence')).length, 2);
+  assert.ok(findings.some((f) => f.includes('reminders') && f.includes('scoreProvenance must be stated|proposed')));
+});
+
+test('scores must have exactly the five factors', () => {
+  const bad = fixture();
+  bad.features[0].scores.extra = { n: 1, anchor: 'x', cite: 'y' };
+  assert.ok(checkInputs(bad).some((f) => f.includes('exactly tech, size, deps, unc, risk')));
+});
+
+test('QUICK depth refuses persisted scores and needs no scores', () => {
+  const quick = fixture();
+  quick.depth = 'QUICK';
+  for (const f of quick.features) {
+    f.tasks = [{ ...f.tasks[0], id: `${f.id}-band`, o: 60, m: 110, p: 160 }];
+  }
+  assert.ok(checkInputs(quick).some((f) => f.includes('booking') && f.includes('scores is not persisted at QUICK depth')));
+  for (const f of quick.features) { delete f.scores; delete f.scoreNote; delete f.scoreProvenance; }
+  assert.deepEqual(checkInputs(quick), []);
+});
+
+test('depth must be one of the three named depths', () => {
+  const bad = fixture();
+  bad.depth = 'SCORING';
+  assert.ok(checkInputs(bad).some((f) => f === 'depth must be QUICK|STANDARD|DEEP'));
+});

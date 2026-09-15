@@ -3,6 +3,7 @@
 // arithmetic happens. Findings are strings with the offending id in them.
 import { AI_CATEGORIES } from './estimate-math.mjs';
 import { checkScenarios } from './scenario-schema.mjs';
+import { checkScoring } from './scoring-schema.mjs';
 import { TASK_SHAPES } from './measurements.mjs';
 
 const PROVENANCE = ['observed', 'stated', 'researched', 'proposed'];
@@ -156,6 +157,7 @@ export function checkInputs(inputs) {
   checkMilestones(inputs.features ?? [], out);
   checkComponents(inputs, out);
   checkScenarios(inputs, out);
+  checkScoring(inputs, out);
   checkGlobals(inputs, out, agentic);
   return out;
 }
