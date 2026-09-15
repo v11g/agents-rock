@@ -144,7 +144,9 @@ scoring, only serialisation and diff. The HTML page reuses the estimate
 template's palette and table CSS, embeds the scoring guide table under a
 fold, and has no internal/client split. A `note` from csv or html lands in
 the feature's `assumptions` only if the human says so; by default it is
-shown in the diff and discarded.
+shown in the diff and discarded. The free-text `note` column exists in the
+CSV channel only; the HTML page has the `scoreNote` textarea and the chat for
+anything else, so `window.__feedback()` never carries a `note`.
 
 ## 2. Scoring guide (`references/scoring-guide.md`)
 

@@ -139,7 +139,7 @@ Ask one thing at a time, in this order:
    before `accept`; any 5 shows `review`. `Why` is one plain sentence for a
    non-technical reader — what the feature touches and what is still
    unknown; no file names, no factor names, no rubric wording. `split`
-   returns to the clear-vs-assumed gate (§5).
+   returns to the clear-vs-assumed gate (the loop rule, §5).
 
    **Writing it down.** STANDARD/DEEP: every feature gets `scores` (per
    factor `{ n, anchor, cite }`), `scoreNote` (the `Why` sentence) and
