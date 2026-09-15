@@ -8,7 +8,7 @@ The leads dashboard serves documents at the lead root — `requirements.md`,
 `rfp.md`, a client PDF (`.md`, `.txt`, `.csv`, `.json`, `.pdf`; one level deep,
 same traversal and symlink guards) — and evidence nodes on the lineage map now
 link to them, so a click opens the file in the browser.
-(`solution-architect` 1.1.0)
+(`solution-architect` 1.1.1)
 
 The business-analyst validator ships a Python port, `scripts/validate.py`,
 parity-tested against the Node validator, so the skill also runs where Node is
@@ -18,7 +18,7 @@ unavailable — e.g. the claude.ai sandbox. (`business-analyst` 0.2.0)
 
 The leads dashboard and the architecture viewer open in dark mode by default.
 Pages with a theme toggle still switch to light and the viewer remembers the
-choice; the print-ready proposal page stays light. (`solution-architect` 1.1.0)
+choice; the print-ready proposal page stays light. (`solution-architect` 1.1.1)
 
 The `npx` installer now asks before it writes. Running it bare shows prompts for
 plugins, agents, and install scope, then a summary you confirm — built on
