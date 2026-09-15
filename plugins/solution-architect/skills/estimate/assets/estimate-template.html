@@ -616,7 +616,10 @@ function bdBar(f, max) {
 function scoreCells(f) {
   const cells = SCORE_KEYS.map((k) => {
     const s = f.scores[k];
-    return `<td class="score${s.n === 5 ? ' hot' : ''}" title="${esc(s.anchor)} — ${esc(s.cite)}">${s.n}</td>`;
+    // A client render carries no cites (redact.mjs blanks them), so the title
+    // is the anchor alone rather than a sentence with a dangling dash.
+    const title = s.cite ? `${esc(s.anchor)} — ${esc(s.cite)}` : esc(s.anchor);
+    return `<td class="score${s.n === 5 ? ' hot' : ''}" title="${title}">${s.n}</td>`;
   });
   const edge = EDGE_TOTALS.includes(f.scoreTotal)
     ? ' <span class="edge" title="one point from the next tier">&#9873;</span>' : '';

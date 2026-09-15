@@ -28,6 +28,16 @@ function redactAgenticInputs({ measurementsPath, agentContext, ...rest }) {
   return { ...rest, agentContext: clientAgentContext };
 }
 
+// A score's cite is internal shorthand — the ticket phrase, file name or
+// meeting wording the judgment rests on — so it is blanked unconditionally,
+// like the agentic fields above. The rubric anchor is the sentence the client
+// can read and it stays, so the page still explains every score.
+function blankCites(feature) {
+  if (!feature.scores) return feature;
+  const scores = Object.entries(feature.scores).map(([k, s]) => [k, { ...s, cite: '' }]);
+  return { ...feature, scores: Object.fromEntries(scores) };
+}
+
 function redactComputedTasks(tasks) {
   return Object.fromEntries(Object.entries(tasks).map(([id, t]) => [
     id,
@@ -36,7 +46,8 @@ function redactComputedTasks(tasks) {
 }
 
 export function redactForClient(estimation) {
-  const inputs = redactAgenticInputs(estimation.inputs);
+  const agentic = redactAgenticInputs(estimation.inputs);
+  const inputs = { ...agentic, features: agentic.features.map(blankCites) };
   const computed = { ...estimation.computed, tasks: redactComputedTasks(estimation.computed.tasks) };
   if (estimation.inputs.exposeRatesToClient) return { ...estimation, inputs, computed };
   return {

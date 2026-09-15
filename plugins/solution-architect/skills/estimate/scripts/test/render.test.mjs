@@ -172,6 +172,16 @@ test('--client-only redacts rates and cost breakdown unless exposeRatesToClient 
   assert.doesNotMatch(html, /"toolingCost":/);
 });
 
+// The cite is internal shorthand — ticket phrases, file names, meeting
+// wording — so it never ships, rates opt-out or not. The anchor is the guide
+// sentence the client can read, and it stays.
+test('--client-only blanks the evidence cites and keeps the anchors', () => {
+  const client = renderedPage(['--client-only']);
+  assert.doesNotMatch(client, /slot conflict \+ cancellation rules/);
+  assert.match(client, /Custom business logic, moderate algorithm complexity, multiple states/);
+  assert.match(renderedPage(), /slot conflict \+ cancellation rules/);
+});
+
 test('--client-only keeps rates when exposeRatesToClient is true', () => {
   const dir = mkdtempSync(join(tmpdir(), 'estimate-render-'));
   const inputs = JSON.parse(readFileSync(fixture, 'utf8'));
