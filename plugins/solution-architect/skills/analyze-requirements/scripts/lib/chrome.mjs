@@ -60,7 +60,10 @@ export async function launch(fileUrl) {
     wsUrl,
     kill() {
       proc.kill('SIGKILL');
-      rmSync(dir, { recursive: true, force: true });
+      // SIGKILL is asynchronous: Chrome can still be flushing its profile dir
+      // when rm starts, which surfaces as ENOTEMPTY in CI. Node retries
+      // ENOTEMPTY/EBUSY when maxRetries is set.
+      rmSync(dir, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 });
     },
   };
 }
