@@ -29,6 +29,33 @@ function writeDraft(mutate) {
   return { dir, path };
 }
 
+// The CLI runs unattended inside the skill, so a half-written flag set has to
+// stop it rather than quietly write the wrong file.
+function cliFails(args) {
+  try {
+    execFileSync('node', [cli, ...args], { encoding: 'utf8', stdio: 'pipe' });
+  } catch (err) { return err; }
+  throw new Error(`expected a non-zero exit from: ${args.join(' ')}`);
+}
+
+test('CLI: an incomplete flag set prints usage and exits 1', () => {
+  const { dir, path } = writeDraft();
+  for (const args of [
+    ['--read', join(dir, 'scores.csv')],
+    ['--write', path, '--format', 'pdf', '--out', join(dir, 'out.pdf')],
+    ['--write', path, '--format', 'csv'],
+  ]) {
+    const err = cliFails(args);
+    assert.equal(err.status, 1, args.join(' '));
+    assert.match(err.stderr, /usage:/, args.join(' '));
+  }
+});
+
+test('fromCsv refuses a header that lost a score column', () => {
+  const csv = toCsv(draft()).replace('deps,deps_why,deps_cite', 'dependencies,deps_why,deps_cite');
+  assert.throws(() => fromCsv(csv), /missing score columns: deps/);
+});
+
 test('toCsv writes one row per feature with anchor and cite beside every score', () => {
   const csv = toCsv(draft());
   const [head, booking] = csv.trim().split('\n');

@@ -42,9 +42,13 @@ export function parseCsv(text) {
   return rows.filter((r) => r.length && (r.length > 1 || r[0] !== ''));
 }
 
+// A renamed or deleted score column would read back as NaN for every feature
+// and land in the diff as a change the human never made.
 export function fromCsv(text) {
   const [head, ...rows] = parseCsv(text);
   const col = (name) => head.indexOf(name);
+  const missing = SCORE_FACTORS.filter((k) => col(k) === -1);
+  if (missing.length) throw new Error(`csv is missing score columns: ${missing.join(', ')}`);
   return { features: rows.map((r) => ({
     id: r[col('id')],
     scores: Object.fromEntries(SCORE_FACTORS.map((k) => [k, Number(r[col(k)])])),

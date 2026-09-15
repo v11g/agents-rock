@@ -16,10 +16,15 @@ const cells = (line) => line.split('|').slice(1, -1).map((c) => c.trim());
 
 // Returns { tech: [a1..a5], ... } from the guide's one table. Rows are found
 // by their label, so the doc may reorder them; anchors may not contain `|`.
+// A renamed, short or deleted row is named here, not left to surface as an
+// undefined anchor halfway through a render.
 export function loadGuide(path = GUIDE_PATH) {
   const rows = readFileSync(path, 'utf8').split('\n').filter((l) => /^\|/.test(l) && !/^\|\s*-/.test(l));
   const byLabel = Object.fromEntries(rows.map(cells).map((c) => [c[0], c.slice(1)]));
-  return Object.fromEntries(SCORE_FACTORS.map((k) => [k, byLabel[FACTOR_LABELS[k]]]));
+  const guide = Object.fromEntries(SCORE_FACTORS.map((k) => [k, byLabel[FACTOR_LABELS[k]]]));
+  const missing = SCORE_FACTORS.filter((k) => !(guide[k]?.length === 5));
+  if (missing.length) throw new Error(`scoring-guide.md: no 5-anchor row for ${missing.join(', ')}`);
+  return guide;
 }
 
 export function guideTableHtml(guide) {

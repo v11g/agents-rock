@@ -37,10 +37,18 @@ function read(args) {
   console.log(JSON.stringify({ diff, features }, null, 2));
 }
 
-const args = parseArgs(process.argv.slice(2));
-if (args.write) write(args);
-else if (args.read) read(args);
-else {
+function usage() {
   console.error('usage: score-review.mjs --write draft.json --format csv|html --out <file>\n       score-review.mjs --read <csv|feedback.json> --draft draft.json');
   process.exit(1);
 }
+
+// A missing --out or --draft would otherwise fail somewhere inside fs, and an
+// unknown --format would silently write a CSV under the asked-for name.
+const args = parseArgs(process.argv.slice(2));
+if (args.write) {
+  if (!args.out || (args.format && !['csv', 'html'].includes(args.format))) usage();
+  write(args);
+} else if (args.read) {
+  if (!args.draft) usage();
+  read(args);
+} else usage();
