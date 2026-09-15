@@ -1,7 +1,8 @@
 // The math module is written once as ESM and shipped twice: imported by
-// compute.mjs, and inlined into the team page as a plain script. The page
-// needs only pert() — task expected hours for the breakdown rows — so
-// render.mjs extracts that one export before inlining.
+// compute.mjs, and inlined into a page as a plain script. Only the score
+// review page needs any of it — score-html.mjs extracts TIER_BREAKS and
+// tierFor so the page can re-tier an edited row — so the extraction is
+// by name, never the whole module.
 export function inlineModule(src) {
   return src.replaceAll(/^export /gm, '');
 }

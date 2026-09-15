@@ -4,7 +4,7 @@ import { embed } from '../../analyze-requirements/scripts/lib/embed.mjs';
 import { buildFontFaces } from '../../analyze-requirements/scripts/lib/fonts.mjs';
 import { escapeHtml } from '../../analyze-requirements/scripts/lib/md-inline.mjs';
 import { checkDeliverables } from './lib/checks.mjs';
-import { inlineModule, stripInternal, extractExports } from './lib/inline.mjs';
+import { stripInternal } from './lib/inline.mjs';
 import { redactForClient } from './lib/redact.mjs';
 import { loadGuide, guideTableHtml } from './lib/scoring.mjs';
 
@@ -22,7 +22,6 @@ function parseArgs(argv) {
 }
 
 const archFontsDir = new URL('../../analyze-requirements/assets/fonts/', import.meta.url).pathname;
-const mathPath = new URL('./lib/estimate-math.mjs', import.meta.url).pathname;
 const assetsDir = new URL('../assets/', import.meta.url).pathname;
 
 const args = parseArgs(process.argv.slice(2));
@@ -52,7 +51,6 @@ const viewerSlot = typeof args.viewer === 'string'
   ? `<a id="viewer-link" data-internal href="${escapeHtml(args.viewer)}">architecture docs</a>`
   : '';
 const template = readFileSync(templatePath, 'utf8');
-const mathSrc = readFileSync(mathPath, 'utf8');
 const html = embed({
   template,
   slots: {
@@ -61,14 +59,12 @@ const html = embed({
     // Escaped so a literal </script in the JSON can't close the data tag early.
     DATA: JSON.stringify(dataForEmbed).replaceAll('</script', '<\\/script'),
     VIEWER: viewerSlot,
-    // The team page computes nothing except a task's PERT expected hours for
-    // its breakdown rows; the agentic page reads measured numbers only.
-    ...(isAgentic ? {} : {
-      MATH: inlineModule(extractExports(mathSrc, ['pert'])),
-      // The rubric lives in references/scoring-guide.md; the page shows the
-      // same sentences the interviewer read, so a score means one thing.
-      GUIDE: guideTableHtml(loadGuide()),
-    }),
+    // The team page computes nothing — every number it shows is committed in
+    // estimation.json; the agentic page reads measured numbers only. The team
+    // page's one extra slot is the rubric, which lives in
+    // references/scoring-guide.md: the page shows the same sentences the
+    // interviewer read, so a score means one thing.
+    ...(isAgentic ? {} : { GUIDE: guideTableHtml(loadGuide()) }),
   },
 });
 

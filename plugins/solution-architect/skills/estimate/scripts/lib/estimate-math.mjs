@@ -1,6 +1,7 @@
 // Every formula the estimate ships — imported by compute.mjs at build time.
-// render.mjs inlines pert() alone into the team page (task expected hours in
-// the breakdown); every month and cost the page shows is a committed number.
+// The estimate pages inline nothing: every number they show is committed in
+// estimation.json. The score review page inlines TIER_BREAKS and tierFor
+// alone, so an edited score re-tiers in the browser on the same scale.
 
 export const AI_CATEGORIES = {
   boilerplate: { min: 0.5, max: 0.8 },

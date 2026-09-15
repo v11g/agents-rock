@@ -57,7 +57,7 @@ test('render refuses a deliverable that fails validation', () => {
 
 test('template carries exactly the five slots and no external URLs', () => {
   const markers = [...tpl().matchAll(/<!-- slot:(\w+) -->/g)].map((m) => m[1]).sort();
-  assert.deepEqual([...new Set(markers)], ['DATA', 'FONTS', 'GUIDE', 'MATH', 'TITLE', 'VIEWER']);
+  assert.deepEqual([...new Set(markers)], ['DATA', 'FONTS', 'GUIDE', 'TITLE', 'VIEWER']);
   // openxmlformats URIs are XML namespace identifiers the xlsx export writes
   // into generated sheets — never fetched, so the page stays self-contained.
   assert.doesNotMatch(tpl(), /https?:\/\/(?!www\.w3\.org|schemas\.openxmlformats\.org)/);
@@ -87,9 +87,8 @@ test('rendered page is self-contained and carries parseable data', () => {
   assert.match(html, /@font-face/);
   const data = html.match(/<script type="application\/json" id="estimation-data">([\s\S]*?)<\/script>/)[1];
   assert.equal(JSON.parse(data).inputs.project, 'Booking App');
-  // Only pert() is inlined (task expected hours in the breakdown); the
-  // scenario math stays in Node — every month and cost shown is committed.
-  assert.match(html, /function pert\(/);
+  // No formula is inlined any more: the page reads committed numbers only.
+  assert.doesNotMatch(html, /function pert\(/);
   assert.doesNotMatch(html, /function scenarioRollup\(|function taskHours\(/);
 });
 
@@ -246,7 +245,7 @@ test('the page never derives scores and carries the guide from the reference fil
   assert.ok(html.includes('Payments, auth, data migrations, or PII — high business impact'));
 });
 
-test('the agentic page has no guide slot and no score code', () => {
+test('the agentic page has no guide slot', () => {
   const html = renderAgentic();
   assert.doesNotMatch(html, /scoring-guide/);
 });
