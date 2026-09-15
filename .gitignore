@@ -9,7 +9,8 @@ dist/
 
 openspec/
 
-.claude
+.claude/*
+!.claude/skills/
 AGENTS.md
 CLAUDE.md
 
