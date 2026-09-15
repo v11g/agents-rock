@@ -14,7 +14,7 @@
       "name": "solution-architect",
       "source": "./plugins/solution-architect",
       "description": "Solution-architecture toolkit: interview-driven architecture documentation with interactive diagrams and provenance-tagged facts, AI-aware project estimation, and client-ready proposals.",
-      "version": "1.0.0",
+      "version": "1.1.0",
       "author": {
         "name": "Truong Vu",
         "email": "vukhanhtruong@gmail.com"
@@ -40,7 +40,7 @@
       "name": "business-analyst",
       "source": "./plugins/business-analyst",
       "description": "Business-analysis toolkit: interview-driven requirements discovery that turns raw client input into a validated, traceable requirements package ready for solution architecture.",
-      "version": "0.1.0",
+      "version": "0.2.0",
       "author": {
         "name": "Truong Vu",
         "email": "vukhanhtruong@gmail.com"

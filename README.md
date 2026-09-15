@@ -81,8 +81,8 @@ rather than a hang.
 
 | Plugin               | Description                                                                                                                                                                                   | Version |
 | -------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------- |
-| `business-analyst`   | Business-analysis toolkit: interview-driven requirements discovery that turns raw client input into a validated, traceable requirements package ready for solution architecture.               | 0.1.0   |
-| `solution-architect` | Solution-architecture toolkit: interview-driven architecture documentation with interactive diagrams and provenance-tagged facts, AI-aware project estimation, and client-ready proposals.    | 1.0.0   |
+| `business-analyst`   | Business-analysis toolkit: interview-driven requirements discovery that turns raw client input into a validated, traceable requirements package ready for solution architecture.               | 0.2.0   |
+| `solution-architect` | Solution-architecture toolkit: interview-driven architecture documentation with interactive diagrams and provenance-tagged facts, AI-aware project estimation, and client-ready proposals.    | 1.1.0   |
 | `lmk`                | Terminal-native visual explainer: explains the current topic with cheap diagrams (flowcharts, sequences, timelines, tables) rendered directly in the terminal via a bundled Mermaid renderer. | 0.1.0   |
 
 ## Skills
