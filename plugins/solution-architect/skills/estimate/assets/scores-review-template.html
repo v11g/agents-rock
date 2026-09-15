@@ -58,21 +58,26 @@ const state = Object.fromEntries(DRAFT.features.map((f) => [f.id, {
   scores: Object.fromEntries(KEYS.map((k) => [k, f.scores[k].n])), scoreNote: f.scoreNote,
 }]));
 
+// The number comes from `state`, never from the draft: render() rebuilds the
+// whole table, so a select that re-read f.scores[k].n would snap back to the
+// agent's proposal and disagree with the Σ beside it. The anchor and cite stay
+// the draft's — re-anchoring a changed score is the CLI's job, not the page's.
 function scoreCell(f, k) {
   const s = f.scores[k];
-  const opts = [1, 2, 3, 4, 5].map((n) => `<option value="${n}"${n === s.n ? ' selected' : ''}>${n}</option>`).join('');
-  return `<td class="score"><select data-id="${f.id}" data-key="${k}" class="${s.n === 5 ? 'hot' : ''}"
+  const n = state[f.id].scores[k];
+  const opts = [1, 2, 3, 4, 5].map((v) => `<option value="${v}"${v === n ? ' selected' : ''}>${v}</option>`).join('');
+  return `<td class="score"><select data-id="${esc(f.id)}" data-key="${k}" class="${n === 5 ? 'hot' : ''}"
     title="${esc(s.anchor)}">${opts}</select><div class="cite">${esc(s.cite)}</div></td>`;
 }
 
 function row(f) {
   const { total, tier } = tierFor(state[f.id].scores);
   const edge = EDGE.includes(total) ? ' <span class="edge" title="one point from the next tier">&#9873;</span>' : '';
-  return `<tr><td><strong>${esc(f.name)}</strong><div class="cite">${f.id} · ${f.scoreProvenance}</div></td>
+  return `<tr><td><strong>${esc(f.name)}</strong><div class="cite">${esc(f.id)} · ${esc(f.scoreProvenance)}</div></td>
     ${KEYS.map((k) => scoreCell(f, k)).join('')}
-    <td class="score"><span data-total="${f.id}">${total}</span>${edge}</td>
-    <td class="score"><span class="tier ${tier.toLowerCase()}" data-tier="${f.id}">${tier}</span></td>
-    <td class="note"><textarea data-note="${f.id}" aria-label="why this tier">${esc(state[f.id].scoreNote)}</textarea></td></tr>`;
+    <td class="score"><span data-total="${esc(f.id)}">${total}</span>${edge}</td>
+    <td class="score"><span class="tier ${tier.toLowerCase()}" data-tier="${esc(f.id)}">${tier}</span></td>
+    <td class="note"><textarea data-note="${esc(f.id)}" aria-label="why this tier">${esc(state[f.id].scoreNote)}</textarea></td></tr>`;
 }
 
 function render() {

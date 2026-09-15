@@ -20,10 +20,12 @@ const draft = () => {
   return { project, features: features.map(({ id, name, scores, scoreNote, scoreProvenance }) => ({ id, name, scores, scoreNote, scoreProvenance })) };
 };
 
-function writeDraft() {
+function writeDraft(mutate) {
   const dir = mkdtempSync(join(tmpdir(), 'score-review-'));
   const path = join(dir, 'draft.json');
-  writeFileSync(path, JSON.stringify(draft()));
+  const d = draft();
+  mutate?.(d);
+  writeFileSync(path, JSON.stringify(d));
   return { dir, path };
 }
 
@@ -115,10 +117,28 @@ test('review page: changing a select updates Σ/tier live and the feedback block
     await page.eval(`(() => { const s = document.querySelector('select[data-id="reminders"][data-key="tech"]'); s.value = '4'; s.dispatchEvent(new Event('change', { bubbles: true })); })()`);
     assert.equal(await page.eval(`document.querySelector('[data-total="reminders"]').textContent`), '13');
     assert.equal(await page.eval(`document.querySelector('[data-tier="reminders"]').textContent`), 'M');
+    assert.equal(await page.eval(`document.querySelector('select[data-id="reminders"][data-key="tech"]').value`), '4',
+      'the rebuilt select shows the edited score, not the draft one');
     const feedback = JSON.parse(await page.eval(`document.getElementById('feedback').value`));
     const fbPath = join(dir, 'feedback.json');
     writeFileSync(fbPath, JSON.stringify(feedback));
     const out = JSON.parse(execFileSync('node', [cli, '--read', fbPath, '--draft', path], { encoding: 'utf8' }));
     assert.deepEqual(out.diff, [{ id: 'reminders', field: 'tech', from: 2, to: 4 }]);
+    await page.eval(`(() => { const s = document.querySelector('select[data-id="reminders"][data-key="tech"]'); s.value = '5'; s.dispatchEvent(new Event('change', { bubbles: true })); })()`);
+    assert.equal(await page.eval(`document.querySelector('select[data-id="reminders"][data-key="tech"]').value`), '5');
+    assert.match(await page.eval(`document.querySelector('select[data-id="reminders"][data-key="tech"]').className`), /hot/,
+      'a 5 is flagged after the re-render, not only on first paint');
+  } finally { page.close(); }
+});
+
+test('review page: a feature id with a quote in it cannot inject attributes', skip, async () => {
+  const { dir, path } = writeDraft((d) => { d.features[1].id = 'bad" onfocus="window.__pwned=1'; });
+  const htmlPath = join(dir, 'scores-review.html');
+  execFileSync('node', [cli, '--write', path, '--format', 'html', '--out', htmlPath]);
+  const page = await openPage(pathToFileURL(htmlPath).href);
+  try {
+    assert.deepEqual(page.errors, []);
+    assert.equal(await page.eval(`document.querySelectorAll('[onfocus]').length`), 0);
+    assert.equal(await page.eval(`window.__pwned === undefined`), true);
   } finally { page.close(); }
 });
