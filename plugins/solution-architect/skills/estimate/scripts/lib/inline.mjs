@@ -1,6 +1,7 @@
 // The math module is written once as ESM and shipped twice: imported by
-// compute.mjs, and inlined here as a plain script so the page's what-if
-// controls run the very same formulas the committed numbers came from.
+// compute.mjs, and inlined into the team page as a plain script. The page
+// needs only pert() — task expected hours for the breakdown rows — so
+// render.mjs extracts that one export before inlining.
 export function inlineModule(src) {
   return src.replaceAll(/^export /gm, '');
 }
@@ -9,12 +10,8 @@ export function stripInternal(html) {
   return html.replaceAll(/<!-- internal:start -->[\s\S]*?<!-- internal:end -->/g, '');
 }
 
-// The agentic what-if rail only needs a handful of the math module's
-// exports (team/plan capacity and cost, not the AI-category/PERT machinery
-// the agentic page never uses) — inlining the whole file would leak
-// AI_CATEGORIES' category names onto a page that must never show them.
-// Anchors on `export const NAME` / `export function NAME` at line start,
-// same declaration shapes estimate-math.mjs uses throughout.
+// Anchors on `export const NAME` / `export function NAME` at line start, the
+// declaration shapes estimate-math.mjs uses throughout.
 export function extractExports(src, names) {
   const starts = [...src.matchAll(/^export (?:const|function) (\w+)/gm)];
   return starts

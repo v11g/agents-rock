@@ -22,6 +22,14 @@ test('each seeded violation is caught by name', () => {
   }
 });
 
+// One team is the default interview answer now; a comparison table with a
+// single row is a complete deliverable, not a missing comparison.
+test('a scenario table with one row validates', () => {
+  const md = read('estimation-pass.md').replace(/\n\| 3eng-noai \|[^\n]*/, '');
+  const findings = checkDeliverables({ md, estimation: computeEstimation(inputs()) });
+  assert.ok(!findings.some((f) => f.includes('scenario')), findings.join('\n'));
+});
+
 test('hand-edited totals are refused', () => {
   const est = computeEstimation(inputs());
   est.computed.devHours += 10;

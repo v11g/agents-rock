@@ -14,7 +14,9 @@ top-level `project`, `technique`, `depth`, `calibration`, `overheadPct`,
 `verificationPct`, `exposeRatesToClient`, `features` (each with `id`, `name`,
 `provenance`, `tasks`), `risks`, `assumptions`, `scenarios`, and
 `recommendedScenario`. Every task carries `id`, `name`, `category`, `o`,
-`m`, `p`, `confidence`, `assumptions`, `provenance`. `schema.mjs` is the
+`m`, `p`, `confidence`, `assumptions`, `provenance`. Optional top-level
+`recommendedReason` (non-empty string) says why the recommended scenario
+wins when several are compared. `schema.mjs` is the
 enforced half of this contract (`checkInputs`) — this doc is the readable
 half; if the two ever disagree, the code wins.
 
@@ -118,7 +120,7 @@ Structure:
 4. Summary must contain a line item matching `/buffer/i` (the buffer table
    row above).
 5. Estimation detail must contain a table with a `Scenario` column and at
-   least 2 rows.
+   least 1 row.
 6. Estimation detail must contain a line matching `/calibration/i`.
 
 Row-level, on the task table (found by header, needs `Task`, `Confidence`,

@@ -47,6 +47,13 @@ test('interview.md asks AI-assisted (default yes) and a nullable seat cost, neve
   assert.doesNotMatch(doc, /Max 5x|Max 20x|Claude plan/);
 });
 
+test('interview.md defaults to one team and asks why when several are compared', () => {
+  const doc = ref('interview.md');
+  for (const needle of ['one team', 'recommendedReason']) {
+    assert.ok(doc.includes(needle), `interview.md missing: ${needle}`);
+  }
+});
+
 test('writing.md states every validator rule family', () => {
   const doc = ref('writing.md');
   for (const needle of ['not estimated', 'stated', 'proposed', 'Out of scope',

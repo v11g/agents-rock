@@ -82,8 +82,12 @@ Ask one thing at a time, in this order:
    also want task-level O/M/P — see `techniques.md`.) TRADITIONAL-only: in
    AGENTIC mode this step is replaced entirely — ask shape + scope + seed
    minutes per task instead (§2b, `task-shapes.md`).
-4. **Team options + rates + seniority mix** — how many engineers, what they
-   cost per hour, and whether each is junior/mid/senior.
+4. **Team + rates + seniority mix** — how many engineers, what they cost
+   per hour, and whether each is junior/mid/senior. Default is **one team**
+   → one scenario; ask "compare staffing options?" and only then collect
+   more rosters. With two or more, ask why the recommended one wins and
+   write it to `recommendedReason` — the page shows a choice it must be
+   able to explain.
 5. **AI-assisted delivery** — per scenario, default **yes**; ask only
    "humans unaided?" as the opt-out. Then **tooling cost per seat per
    month** — one number, vendor-neutral (a Claude Max seat, Codex, Cursor —

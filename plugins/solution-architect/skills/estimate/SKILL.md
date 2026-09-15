@@ -7,7 +7,7 @@ description: Interview-driven project estimation with AI-aware delivery scenario
 
 Produce an honest, validated estimate: confirmed scope split from assumptions,
 a technique that fits the evidence, AI-assisted staffing scenarios, and an
-interactive what-if page served on localhost.
+interactive page served on localhost.
 
 ## Hard rules
 
@@ -46,7 +46,9 @@ interactive what-if page served on localhost.
    — fix findings, re-run until clean.
 9. **Render + serve**:
    `node scripts/render.mjs --json estimation.json --md estimation.md --out <dir>`
-   (add `--client-only` for a client-safe file) — render re-runs the validation
+   (add `--client-only` for a client-safe file; add `--figures proposal-figures.json`
+   once `/proposal` has written it, so the Summary shows the client's quoted
+   range) — render re-runs the validation
    checks itself and refuses on findings, so an unvalidated page cannot ship.
    `deliveryMode: "agentic"` routes rendering to the agentic HTML template
    automatically; nothing to choose here. Then serve with the

@@ -13,8 +13,8 @@
 /* color-scheme is declared, not left at `normal`: a page that never states its
    scheme is the page a force-dark browser rewrites, and then the toggle flips
    data-theme with nothing visible changing — the button reads as broken. Stated
-   per theme, forced dark is off and the native controls in the what-if rail
-   (number, range, select) follow the page instead of fighting it.
+   per theme, forced dark is off and the native controls (the breakdown's
+   selects and buttons) follow the page instead of fighting it.
 
    The light palette is unconditional and the dark one is scoped to @media screen
    below, so this block doubles as the paper palette: the page opens dark on a
@@ -83,12 +83,6 @@ header h1 {
 #confidence-badge.high { color:var(--ok); border-color:var(--ok); background:rgba(21,128,61,.08); }
 #confidence-badge.med { color:var(--warn); border-color:var(--warn); background:var(--warn-soft); }
 #confidence-badge.low { color:var(--bad); border-color:var(--bad); background:rgba(185,28,28,.08); }
-#modified-banner {
-  margin:0; padding:.5rem max(1.25rem, calc((100% - 1160px) / 2));
-  background:var(--warn-soft); color:var(--warn); font-size:.85rem;
-  border-bottom:1px solid var(--border);
-}
-#modified-banner button { margin-left:.5rem; }
 main {
   display:grid; grid-template-columns:1fr; gap:1.1rem;
   max-width:1160px; margin:0 auto; padding:1.25rem 1.25rem 3rem;
@@ -99,17 +93,35 @@ main section h2, main aside h2 {
   font-size:.82rem; font-weight:600; color:var(--ink-dim);
   margin:0 0 .8rem; letter-spacing:.01em;
 }
-/* panels: every section except the scenario card grid reads as one surface */
+/* panels: every section reads as one surface */
 .col > section {
   background:var(--card); border:1px solid var(--border); border-radius:.6rem;
   padding:1.1rem 1.2rem; box-shadow:var(--shadow);
 }
-#scenario-cards { background:none; border:none; box-shadow:none; padding:0; display:flex; flex-direction:column; }
-#scenario-cards .cards {
-  flex:1; display:grid; grid-template-columns:repeat(auto-fit, minmax(190px, 1fr)); gap:.9rem;
-}
 .sec-head { display:flex; align-items:center; gap:.45rem; margin:0 0 .8rem; }
 .sec-head h2 { margin:0; }
+/* summary: the estimate's headline — team, months and cost stated once, then
+   the committed alternatives as one small table (internal view only). */
+#summary .lead { font-size:1.02rem; font-weight:600; margin:0 0 .25rem; }
+#summary .figures {
+  font-size:1.7rem; font-weight:600; letter-spacing:-.02em; line-height:1.15;
+  font-variant-numeric:tabular-nums; margin:0 0 .4rem;
+}
+#summary .sep { color:var(--ink-dim); margin:0 .4rem; font-weight:400; }
+#summary .range, #summary .meta {
+  margin:.15rem 0; font-family:'IBM Plex Mono',monospace; font-size:.78rem; color:var(--ink-dim);
+}
+#summary .alts { margin-top:.9rem; padding-top:.7rem; border-top:1px solid var(--border); }
+#summary .alts caption {
+  text-align:left; font-size:.72rem; text-transform:uppercase; letter-spacing:.05em;
+  color:var(--ink-dim); margin-bottom:.3rem;
+}
+#summary .why { font-size:.84rem; margin:0 0 .5rem; }
+#summary .delta {
+  font-family:'IBM Plex Mono',monospace; font-size:.72rem; color:var(--warn);
+  background:var(--warn-soft); padding:.12rem .4rem; border-radius:.25rem;
+}
+#summary .insight { font-size:.86rem; margin:.6rem 0 0; }
 details.help { position:relative; display:inline-block; line-height:1; }
 details.help summary {
   list-style:none; cursor:help; width:1.05rem; height:1.05rem; border-radius:50%;
@@ -126,7 +138,7 @@ details.help > p {
   color:var(--ink); text-transform:none; letter-spacing:normal; text-align:left;
   box-shadow:var(--shadow);
 }
-#controls details.help > p, td details.help > p, caption details.help > p { left:auto; right:0; }
+td details.help > p, caption details.help > p { left:auto; right:0; }
 #method summary { list-style:none; display:flex; align-items:baseline; gap:.6rem; cursor:pointer; }
 #method summary::-webkit-details-marker { display:none; }
 #method summary h2 { margin:0; }
@@ -137,69 +149,6 @@ details.help > p {
 #method li { margin-bottom:.35rem; }
 #method .sources { font-size:.78rem; color:var(--ink-dim); margin:0; }
 #method .sources span { display:block; margin-bottom:.2rem; }
-.card {
-  position:relative; background:var(--card); border:1px solid var(--border);
-  border-radius:.6rem; padding:1rem 1.1rem; box-shadow:var(--shadow);
-}
-/* card anatomy: header, hero (top-aligned so the months figures sit on the
-   same line across cards), facts pinned to the bottom. */
-.scenario { display:flex; flex-direction:column; gap:.7rem; padding:1.2rem; }
-.scenario h3 {
-  font-family:'IBM Plex Mono',monospace; font-size:.78rem; font-weight:600;
-  color:var(--ink-dim); margin:0; overflow-wrap:anywhere;
-}
-.hero { flex:1; display:flex; flex-direction:column; justify-content:flex-start; gap:.55rem; }
-.hero .num {
-  font-size:2.2rem; font-weight:600; line-height:1.05; letter-spacing:-.02em;
-  font-variant-numeric:tabular-nums;
-}
-.hero .unit { font-size:.8rem; color:var(--ink-dim); }
-.gauge { height:.45rem; background:var(--border); border-radius:.3rem; overflow:hidden; }
-.gauge span { display:block; height:100%; background:var(--accent); border-radius:.3rem; }
-.delta {
-  align-self:flex-start; font-family:'IBM Plex Mono',monospace; font-size:.68rem;
-  color:var(--warn); background:var(--warn-soft); padding:.14rem .45rem; border-radius:.25rem;
-}
-.facts {
-  display:grid; grid-template-columns:1fr 1fr; gap:.7rem 1.1rem;
-  border-top:1px solid var(--border); padding-top:.8rem; margin:0;
-}
-.facts dt { font-size:.66rem; text-transform:uppercase; letter-spacing:.05em; color:var(--ink-dim); }
-.facts dd { margin:.1rem 0 0; font-family:'IBM Plex Mono',monospace; font-size:.86rem; }
-.scenario.recommended { border-color:var(--accent); background:linear-gradient(var(--accent-soft), transparent 55%) var(--card); }
-.flag {
-  position:absolute; top:.7rem; right:.8rem; font-size:.62rem; font-weight:600;
-  letter-spacing:.04em; color:var(--accent-ink); background:var(--accent-soft);
-  padding:.14rem .4rem; border-radius:.25rem;
-}
-.months { margin:.2rem 0 .9rem; font-size:.8rem; color:var(--ink-dim); }
-.months .num {
-  display:block; font-size:2.4rem; font-weight:600; line-height:1.15;
-  color:var(--ink); font-variant-numeric:tabular-nums; letter-spacing:-.02em;
-}
-#whatif-readout dl { display:flex; gap:1.2rem; margin:0; }
-#whatif-readout dt { font-size:.66rem; text-transform:uppercase; letter-spacing:.05em; color:var(--ink-dim); }
-#whatif-readout dd { margin:0; font-family:'IBM Plex Mono',monospace; font-size:.88rem; }
-#whatif-readout { border-top:1px solid var(--border); padding-top:.7rem; }
-#whatif-readout .months { display:flex; align-items:baseline; gap:.4rem; margin:0 0 .4rem; }
-#whatif-readout .months .num { font-size:1.3rem; color:var(--accent-ink); }
-/* bars are styled divs — width set inline from data, no canvas, printable */
-/* when the section is stretched to match the rail beside it, the bars float
-   to the vertical center instead of leaving a dead band at the bottom. */
-#cost-bars { display:flex; flex-direction:column; }
-#cost-bars .bar-group { flex:1; display:flex; flex-direction:column; justify-content:center; }
-.bar-row { display:flex; align-items:center; gap:.6rem; margin-bottom:.85rem; }
-.bar-label {
-  flex:0 0 170px; font-size:.78rem; color:var(--ink-dim);
-  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
-}
-.bar-track { flex:1; height:1.05rem; background:var(--border); border-radius:.3rem; overflow:hidden; }
-.bar-fill { display:block; height:100%; background:var(--accent); opacity:.5; border-radius:.3rem; }
-.bar-fill.is-rec { opacity:1; }
-.bar-val {
-  flex:0 0 auto; min-width:5.5rem; text-align:right;
-  font-family:'IBM Plex Mono',monospace; font-size:.76rem; font-variant-numeric:tabular-nums;
-}
 /* roadmap: Gantt-style shared axis. Every row is a flex triple (label |
    track | months) with the same label/months widths as the axis strip below
    it, so a given month lines up under the same x-position in every row's
@@ -357,39 +306,12 @@ tr.task-row td:first-child { padding-left:2.1rem; }
 tr.task-row .bd-cell { justify-content:flex-end; }
 .task-assump { font-size:.76rem; color:var(--ink-dim); }
 #register > div + table, #register > table + table { margin-top:1.4rem; }
-/* compact rail: the team roster, the AI-assisted select, the sliders, and the
-   readout stack full-width. Keeps the rail near the height of the two
-   scenario sections beside it. */
-#controls {
-  background:var(--card); border:1px solid var(--border); border-radius:.6rem;
-  padding:1.1rem 1.2rem; box-shadow:var(--shadow);
-  display:grid; grid-template-columns:1fr; gap:.7rem; align-content:start;
-}
-#controls label { display:flex; flex-direction:column; font-size:.76rem; gap:.3rem; color:var(--ink-dim); }
-/* the roster: one row per engineer (seniority + rate + remove), plus add.
-   Styled by class — the container id is internal-only page text and must
-   never appear in the head CSS a client render keeps. */
-#controls .team { display:flex; flex-direction:column; gap:.4rem; font-size:.76rem; color:var(--ink-dim); }
-#controls .team-row { display:flex; gap:.4rem; align-items:center; }
-#controls .team-row .cur { margin-right:-.15rem; }
-#controls .team-row select { flex:1; min-width:0; }
-#controls .team-row input { width:4.6rem; }
-#controls .team button { font-size:.76rem; padding:.3rem .5rem; background:var(--bg); color:var(--ink-dim); }
-#controls .team button:disabled { opacity:.4; cursor:default; }
-#controls .lab { display:flex; justify-content:space-between; align-items:baseline; }
-#controls output { font-family:'IBM Plex Mono',monospace; font-size:.74rem; color:var(--ink); }
-#controls input, #controls select {
-  font:inherit; padding:.35rem .45rem; border:1px solid var(--border-strong);
-  border-radius:.35rem; background:var(--bg); color:var(--ink);
-}
-#controls input:hover, #controls select:hover { border-color:var(--accent); }
-#controls input[type="range"] { padding:0; border:none; background:none; accent-color:var(--accent); }
 .view-client [data\2d internal] { display:none !important; }
 @media print {
   header { position:static; }
-  header button, #viewer-link, #controls, #modified-banner, details.help, .bd-filters, .expand { display:none; }
+  header button, #viewer-link, details.help, .bd-filters, .expand { display:none; }
   main { grid-template-columns:1fr; }
-  main > section, .card { box-shadow:none; }
+  main > section { box-shadow:none; }
 }
 </style>
 </head>
@@ -403,61 +325,21 @@ tr.task-row .bd-cell { justify-content:flex-end; }
   <button id="theme-toggle" type="button">theme</button>
   <!-- internal:start --><!-- slot:VIEWER --><button id="view-toggle" type="button" data-internal>client view</button><!-- internal:end -->
 </header>
-<p id="modified-banner" role="status" hidden>modified from committed estimate — <button id="reset" type="button">reset</button></p>
 <main>
-  <div class="col col-wide">
-    <section id="method"></section>
-  </div>
   <div class="col">
-    <section id="scenario-cards"></section>
-    <section id="cost-bars"></section>
-  </div>
-  <!-- internal:start -->
-  <style>
-  /* internal-only layout: the what-if rail sits beside the scenario sections
-     only — its readout (months, cost, effort) is comparable to nothing below
-     the cost bars, so the lower sections take the full width instead of
-     reserving an empty rail column. Lives in the internal range so the
-     client-only render collapses back to one column. @media screen so the
-     print rules in the head keep winning on paper. */
-  @media screen {
-    main { grid-template-columns:minmax(0, 1fr) 300px; }
-    .col-wide { grid-column:1 / -1; }
-    /* no hole under the cost bars: the scenario-cards row stretches so the
-       left column always ends level with the rail beside it, and the cards
-       stay the dominant section. */
-    .col:not(.col-wide) { grid-template-rows:1fr auto; }
-    .view-client main { grid-template-columns:1fr; }
-  }
-  @media screen and (max-width:900px) {
-    main { grid-template-columns:1fr; }
-  }
-  </style>
-  <aside class="rail" data-internal>
-  <div class="sec-head"><h2>What-if</h2><details class="help"><summary aria-label="explain this panel">?</summary>
-    <p>The levers re-run the exact same formulas as the committed numbers, in your browser. Nothing here changes the committed estimate — it answers "what would it look like if&hellip;". The readout below updates live.</p></details></div>
-  <div id="controls" data-internal>
-    <div id="ctl-team" class="team" role="group" aria-label="team"></div>
-    <label>AI-assisted <select id="ctl-ai-assisted"><option value="true">yes</option><option value="false">no</option></select></label>
-    <label><span class="lab">AI multiplier <output></output></span><input id="ctl-ai" type="range" min="0" max="1.5" step="0.05"></label>
-    <label><span class="lab">risk buffer <output></output></span><input id="ctl-buffer" type="range" min="0" max="2" step="0.1"></label>
-    <label><span class="lab">overhead % <output></output></span><input id="ctl-overhead" type="range" min="0" max="0.6" step="0.05"></label>
-    <div id="whatif-readout" aria-live="polite"></div>
-  </div>
-  </aside>
-  <!-- internal:end -->
-  <div class="col col-wide">
+    <section id="summary"></section>
     <section id="containers"></section>
     <section id="roadmap"></section>
     <section id="feature-table"></section>
     <section id="register"></section>
+    <section id="method"></section>
   </div>
 </main>
 <script type="application/json" id="estimation-data"><!-- slot:DATA --></script>
 <script>
 <!-- slot:MATH -->
-/* boot: parse the data island, stamp the title + confidence badge, then wire
-   the sections, what-if controls, and view/theme toggles. */
+/* boot: parse the data island, stamp the title + confidence badge, then
+   render the sections and wire the view/theme toggles. */
 const DATA = JSON.parse(document.getElementById('estimation-data').textContent);
 document.querySelector('header h1').textContent = DATA.inputs.project;
 const confLevel = (c) => `conf-${c.toLowerCase()}`;
@@ -465,124 +347,109 @@ const badge = document.getElementById('confidence-badge');
 badge.textContent = DATA.computed.projectConfidence;
 badge.className = `${DATA.computed.projectConfidence.toLowerCase()} ${confLevel(DATA.computed.projectConfidence)}`;
 
-// Same math path as the committed numbers: recompute() is both the page's
-// what-if engine and the parity hook the browser tests call directly.
-// p.team is a real roster ([{seniority, rate}, …]) — effort follows the
-// dominant seniority exactly like the committed rollup, cost follows each
-// member's own rate.
-function recompute(p) {
-  const tasks = DATA.inputs.features.flatMap((f) => f.tasks);
-  const seniority = dominantSeniority(p.team);
-  const hoursOf = (t) => taskHours({ e: pert(t).e, seniority, aiAssisted: p.aiAssisted,
-    category: t.category, verificationPct: DATA.inputs.verificationPct, scale: p.aiScale });
-  const dev = tasks.reduce((s, t) => s + hoursOf(t), 0);
-  const buffers = (riskBufferHours(DATA.inputs.risks)
-    + projectBuffer(tasks.map((t) => pert(t).sigma))) * p.bufferScale;
-  const hours = dev + dev * p.overheadPct + buffers;
-  return { hours, ...scenarioRollup({ hours, team: p.team, toolingCostPerSeat: p.toolingCostPerSeat }) };
-}
-window.__recompute = recompute;
+// Summary: the recommended scenario stated once — team, AI assistance,
+// months, cost — then the committed alternatives as one small table. Every
+// number is read from estimation.json; nothing is recomputed on the page.
+const recScenario = () => DATA.inputs.scenarios.find((s) => s.id === DATA.inputs.recommendedScenario);
+const sameTeam = (a, b) => a.team.length === b.team.length
+  && a.team.every((m, i) => m.seniority === b.team[i].seniority && m.rate === b.team[i].rate);
+const byMonths = (a, b) => DATA.computed.scenarios[a.id].months - DATA.computed.scenarios[b.id].months;
 
-function defaultsFromRecommended() {
-  const rec = DATA.inputs.scenarios.find((s) => s.id === DATA.inputs.recommendedScenario);
-  return {
-    team: rec.team.map((m) => ({ ...m })),
-    aiAssisted: rec.aiAssisted,
-    toolingCostPerSeat: rec.toolingCostPerSeat,
-    aiScale: 1,
-    bufferScale: 1,
-    overheadPct: DATA.inputs.overheadPct,
-  };
+function scenarioLabel(s) {
+  const n = s.team.length;
+  const who = n === 1 ? `1 ${s.team[0].seniority} engineer`
+    : `${n} engineers (${s.team.map((m) => m.seniority).join(' · ')})`;
+  return `${who}, ${s.aiAssisted ? 'AI-assisted' : 'humans unaided'}`;
 }
 
-// Control ids are assembled at runtime (never one static "ctl-*" literal)
-// so the client-only render, which keeps this whole script but drops the
-// controls markup, never carries an internal control id as page text.
-const CTL_SUFFIX = { aiAssisted: 'ai-assisted', aiScale: 'ai', bufferScale: 'buffer', overheadPct: 'overhead' };
-const CTL_KEYS = Object.keys(CTL_SUFFIX);
-const ctlId = (key) => `ctl-${CTL_SUFFIX[key]}`;
-// The roster container is found by its class — its id is internal-only page
-// text, and the class already ships in the head CSS either way.
-const teamBox = () => document.querySelector('#controls .team');
-const TEAM_MAX = 8;
-
-function setControls(values) {
-  CTL_KEYS.forEach((key) => {
-    const el = document.getElementById(ctlId(key));
-    if (el) el.value = values[key];
-  });
+// Signed month and cost deltas against the recommended scenario.
+function deltaText(c, rec) {
+  const dm = c.months - rec.months;
+  const dc = c.totalCost - rec.totalCost;
+  const sign = (v) => (v >= 0 ? '+' : '−');
+  return `${sign(dm)}${Math.abs(dm).toFixed(2)} mo · ${sign(dc)}${fmtMoney(Math.abs(dc))}`;
 }
 
-function syncOutputs() {
-  CTL_KEYS.forEach((key) => {
-    const el = document.getElementById(ctlId(key));
-    const out = el?.parentElement.querySelector('output');
-    if (out) out.textContent = el.value;
-  });
+function altRow(s, rec) {
+  const c = DATA.computed.scenarios[s.id];
+  return `<tr><td>${scenarioLabel(s)}</td><td class="num">${c.months.toFixed(2)}</td>
+    <td class="num">${fmtMoney(c.totalCost)}</td><td><span class="delta">${deltaText(c, rec)}</span></td></tr>`;
 }
 
-// The committed scenarios are the page's only rate table: the first rate
-// seen per seniority re-seeds a row's rate when its level changes.
-const RATE_BY_SENIORITY = {};
-for (const s of DATA.inputs.scenarios) {
-  for (const m of s.team) if (m.rate != null) RATE_BY_SENIORITY[m.seniority] ??= m.rate;
+// A same-roster scenario that differs only in AI assistance is one line, not
+// a row: the roster is what a reader chooses between.
+function aiVariantLine(s, rec) {
+  const c = DATA.computed.scenarios[s.id];
+  return `<p class="meta">${s.aiAssisted ? 'With' : 'Without'} AI assistance: ${c.months.toFixed(2)} months · `
+    + `${fmtMoney(c.totalCost)} (${deltaText(c, rec)})</p>`;
 }
 
-function teamRow({ seniority, rate }) {
-  const row = document.createElement('div');
-  row.className = 'team-row';
-  const sel = document.createElement('select');
-  for (const s of Object.keys(SENIORITY_FACTOR)) sel.add(new Option(s, s));
-  sel.value = seniority;
-  const cur = Object.assign(document.createElement('span'), { className: 'cur', textContent: '$' });
-  const rateEl = Object.assign(document.createElement('input'),
-    { type: 'number', min: 10, max: 300, step: 5, value: rate });
-  rateEl.setAttribute('aria-label', 'hourly rate');
-  const del = Object.assign(document.createElement('button'),
-    { type: 'button', className: 'team-del', textContent: '×' });
-  del.setAttribute('aria-label', 'remove engineer');
-  row.append(sel, cur, rateEl, del);
-  return row;
+// One sentence, only when an alternative beats the recommendation on both
+// axes — the page must not bury a dominated choice.
+function insightLine(alts, rec) {
+  const c = (s) => DATA.computed.scenarios[s.id];
+  const win = alts.find((s) => c(s).months < rec.months && c(s).totalCost < rec.totalCost);
+  if (!win) return '';
+  return `<p class="insight">&#9656; ${scenarioLabel(win)} finishes ${(rec.months - c(win).months).toFixed(2)} months `
+    + `sooner for ${fmtMoney(rec.totalCost - c(win).totalCost)} less than the recommended plan.</p>`;
 }
 
-function syncTeamButtons() {
-  const box = teamBox();
-  const rows = box.querySelectorAll('.team-row');
-  box.querySelector('.team-add').disabled = rows.length >= TEAM_MAX;
-  rows.forEach((r) => { r.querySelector('.team-del').disabled = rows.length <= 1; });
+function summaryAlts(rec, recC) {
+  const others = DATA.inputs.scenarios.filter((s) => s.id !== rec.id);
+  if (!others.length) return '';
+  const teams = others.filter((s) => !sameTeam(s, rec)).sort(byMonths);
+  const variants = others.filter((s) => sameTeam(s, rec)).map((s) => aiVariantLine(s, recC)).join('');
+  const table = teams.length ? `<table><caption>Alternatives</caption><thead><tr><th>Team</th>
+    <th class="num">Months</th><th class="num">Cost</th><th></th></tr></thead>
+    <tbody>${teams.map((s) => altRow(s, recC)).join('')}</tbody></table>` : '';
+  const why = DATA.inputs.recommendedReason
+    ? `<p class="why">Recommended because ${esc(DATA.inputs.recommendedReason)}.</p>` : '';
+  return `<div class="alts" ${INTERNAL_ATTR}>${why}${variants}${table}${insightLine(teams, recC)}</div>`;
 }
 
-// Rebuild-from-array is the only write path (boot, reset), so reset can
-// never leave stale rows behind.
-function renderTeam(team) {
-  const box = teamBox();
-  if (!box) return;
-  box.replaceChildren(
-    Object.assign(document.createElement('span'), { textContent: 'team' }),
-    ...team.map(teamRow),
-    Object.assign(document.createElement('button'),
-      { type: 'button', className: 'team-add', textContent: '+ engineer' }),
-  );
-  syncTeamButtons();
+// The client-facing range from proposal-figures.json, when render.mjs was
+// handed it — the number the client is actually quoted.
+function summaryRange() {
+  const f = DATA.figures;
+  if (!f?.cost || !f?.months) return '';
+  return `<p class="range">range ${f.months.low} – ${f.months.high} months · ${fmtMoney(f.cost.low)} – ${fmtMoney(f.cost.high)}</p>`;
 }
 
-function currentTeam(defaults) {
-  const box = teamBox();
-  if (!box) return defaults.team;
-  return [...box.querySelectorAll('.team-row')].map((r) => ({
-    seniority: r.querySelector('select').value,
-    rate: Number(r.querySelector('input').value),
-  }));
+function summarySize(recC) {
+  const feats = DATA.inputs.features;
+  const tasks = feats.reduce((n, f) => n + f.tasks.length, 0);
+  const milestones = new Set(feats.map((f) => f.milestone).filter(Boolean)).size;
+  const parts = [`${Math.round(recC.hours).toLocaleString()} h`, `${feats.length} features`, `${tasks} tasks`];
+  if (milestones) parts.push(`${milestones} milestones`);
+  return parts.join(' · ');
 }
 
-function currentParams(defaults) {
-  const p = { team: currentTeam(defaults) };
-  CTL_KEYS.forEach((key) => {
-    const raw = document.getElementById(ctlId(key))?.value ?? defaults[key];
-    p[key] = key === 'aiAssisted' ? raw === 'true' : Number(raw);
-  });
-  p.toolingCostPerSeat = defaults.toolingCostPerSeat;  // priced, not a control
-  return p;
+function summaryMethod() {
+  const feats = DATA.inputs.features;
+  const stated = feats.filter((f) => f.provenance === 'stated').length;
+  return `${DATA.inputs.technique}, ${DATA.inputs.depth} depth · scope ${stated}/${feats.length} stated`;
+}
+
+function summaryRisks() {
+  return `${DATA.inputs.risks.length} risks priced in (${DATA.computed.riskBufferHours} h) · `
+    + `${DATA.inputs.assumptions.length} assumptions`;
+}
+
+function renderSummary() {
+  const el = document.getElementById('summary');
+  if (!el) return;
+  const rec = recScenario();
+  const recC = DATA.computed.scenarios[rec.id];
+  el.innerHTML = secHead('Summary',
+    'The recommended way to deliver this scope, stated once: team, months and cost from the '
+    + 'committed estimate. Alternatives compare other rosters against it.')
+    + `<p class="lead">${scenarioLabel(rec)}</p>
+    <p class="figures">${recC.months.toFixed(2)} months<span class="sep">&middot;</span>${fmtMoney(recC.totalCost)}</p>
+    ${summaryRange()}
+    <p class="meta">${summarySize(recC)}</p>
+    <p class="meta">${summaryMethod()}</p>
+    <p class="meta">${summaryRisks()}</p>
+    ${summaryAlts(rec, recC)}`;
 }
 
 const fmtMoney = (v) => `$${Math.round(v).toLocaleString()}`;
@@ -590,73 +457,15 @@ const fmtMoney = (v) => `$${Math.round(v).toLocaleString()}`;
 const help = (text) => `<details class="help"><summary aria-label="explain this section">?</summary><p>${text}</p></details>`;
 const secHead = (title, text) => `<div class="sec-head"><h2>${title}</h2>${help(text)}</div>`;
 
-function barRow({ label, value, max, text, cls }) {
-  const pct = max > 0 ? Math.round((value / max) * 100) : 0;
-  return `<div class="bar-row"><span class="bar-label" title="${label}">${label}</span>
-    <span class="bar-track"><span class="bar-fill${cls ? ` ${cls}` : ''}" style="width:${pct}%"></span></span>
-    <span class="bar-val">${text}</span></div>`;
-}
 
-function teamSummary(team) {
-  const counts = new Map();
-  for (const m of team) counts.set(m.seniority, (counts.get(m.seniority) ?? 0) + 1);
-  return [...counts].map(([s, n]) => `${n}&times; ${s}`).join(' &middot; ');
-}
 
-// Derived in-browser from committed numbers, like every bar width on the
-// page — never written into the JSON.
-function deltaChip(id, s) {
-  if (id === DATA.inputs.recommendedScenario) return '';
-  const rec = DATA.computed.scenarios[DATA.inputs.recommendedScenario];
-  if (!rec) return '';
-  const dm = s.months - rec.months;
-  const dc = s.totalCost - rec.totalCost;
-  return `<span class="delta">${dm >= 0 ? '+' : '-'}${Math.abs(dm).toFixed(2)} mo &middot; `
-    + `${dc >= 0 ? '+' : '-'}$${Math.round(Math.abs(dc)).toLocaleString()} vs recommended</span>`;
-}
 
-function scenarioCard(id, s) {
-  const rec = id === DATA.inputs.recommendedScenario;
-  const input = DATA.inputs.scenarios.find((x) => x.id === id);
-  const max = Math.max(...Object.values(DATA.computed.scenarios).map((x) => x.months));
-  return `<article class="card scenario${rec ? ' recommended' : ''}">
-    ${rec ? '<span class="flag">recommended</span>' : ''}<h3>${id}</h3>
-    <div class="hero"><div><span class="num">${s.months.toFixed(2)}</span> <span class="unit">months</span></div>
-      <div class="gauge"><span style="width:${Math.round((s.months / max) * 100)}%"></span></div>
-      ${deltaChip(id, s)}</div>
-    <dl class="facts"><div><dt>team</dt><dd>${teamSummary(input.team)}</dd></div>
-      <div><dt>AI-assisted</dt><dd>${input.aiAssisted ? 'yes' : 'no'}</dd></div>
-      <div><dt>effort</dt><dd>${s.hours.toFixed(1)}h</dd></div>
-      <div><dt>total cost</dt><dd>${fmtMoney(s.totalCost)}</dd></div></dl></article>`;
-}
 
-function renderCards() {
-  const el = document.getElementById('scenario-cards');
-  if (!el) return;
-  const entries = Object.entries(DATA.computed.scenarios);
-  el.innerHTML = secHead('Delivery scenarios',
-    'Each card is one committed way to staff and deliver the same scope. Months and cost are '
-    + 'computed from the same task hours; the highlighted card is the recommended estimate. '
-    + 'Sandbox variations live in the what-if panel.')
-    + `<div class="cards">${entries.map(([id, s]) => scenarioCard(id, s)).join('')}</div>`;
-}
 
-function renderBars() {
-  const el = document.getElementById('cost-bars');
-  if (!el) return;
-  const entries = Object.entries(DATA.computed.scenarios);
-  const max = Math.max(...entries.map(([, s]) => s.totalCost));
-  el.innerHTML = secHead('Total cost by scenario',
-    'Labor (months × team rates) plus AI tooling seats, per scenario. Bar lengths are '
-    + 'proportional to the most expensive scenario.')
-    + `<div class="bar-group">${entries.map(([id, s]) => barRow({ label: id, value: s.totalCost,
-      max, text: fmtMoney(s.totalCost),
-      cls: id === DATA.inputs.recommendedScenario ? 'is-rec' : '' })).join('')}</div>`;
-}
 
 // One interactive section owns the feature story: bar-in-cell effort (was the
 // effort chart), the sortable feature table, and the per-task drill-down (was
-// the flat task register). Committed numbers only — never the what-if rail's.
+// the flat task register). Committed numbers only.
 const CONF_RANK = { HIGH: 0, MED: 1, LOW: 2 };
 // Two levels max (schema-enforced), so a component's container is one parent
 // hop at most; a top-level id is its own container.
@@ -708,8 +517,6 @@ const bdState = { sortKey: 'hours', dir: -1, milestone: '', component: '', prov:
 const BD_COLS = [
   { key: 'name', label: 'Feature', val: (f) => f.name, hint: 'sort by name' },
   { key: 'hours', label: 'Effort (h)', val: (f) => f.hours, hint: 'sort by expected hours' },
-  { key: 'spread', label: 'Range', val: (f) => f.spread, cls: 'num',
-    hint: 'sort by spread (pessimistic minus optimistic)' },
   { key: 'conf', label: 'Confidence', val: (f) => CONF_RANK[f.conf], hint: 'sort by confidence' },
   { key: 'provenance', label: 'Source', val: (f) => f.provenance, hint: 'sort by source' },
 ];
@@ -844,8 +651,7 @@ function scoreCells(f) {
 }
 
 function estimateCells(f) {
-  return `<td class="num">${f.low}&ndash;${f.high}</td>
-    <td><span class="conf">${f.conf}</span></td>
+  return `<td><span class="conf">${f.conf}</span></td>
     <td><span class="tag ${f.provenance}">${f.provenance}</span></td>`;
 }
 
@@ -872,14 +678,13 @@ function taskScoreCells(t) {
 }
 
 function taskEstimateCells(t) {
-  return `<td class="task-assump">${t.assumptions.join('; ') || 'none'}</td>
-    <td><span class="conf">${t.confidence}</span></td>
+  return `<td><span class="conf">${t.confidence}</span></td>
     <td><span class="tag">${t.category}</span></td>`;
 }
 
 function taskRows(f) {
   return f.tasks.map((t) => `<tr class="task-row ${confLevel(t.confidence)}" ${INTERNAL_ATTR}>
-    <td${ctEdge(f.component)}>${t.name}</td>
+    <td${ctEdge(f.component)}>${t.name}<div class="task-assump">${t.assumptions.join('; ') || 'none'}</div></td>
     <td><span class="bd-cell"><span class="bd-num">${t.o}/${t.m}/${t.p}</span></span></td>
     ${bdState.mode === 'scores' ? taskScoreCells(t) : taskEstimateCells(t)}</tr>`).join('');
 }
@@ -959,7 +764,7 @@ function bdSort(key) {
   // fresh at the column's default direction, since no sort was showing.
   const fresh = bdState.group || bdState.sortKey !== key;
   bdState.group = false;
-  if (fresh) { bdState.sortKey = key; bdState.dir = key === 'hours' || key === 'spread' ? -1 : 1; }
+  if (fresh) { bdState.sortKey = key; bdState.dir = key === 'hours' ? -1 : 1; }
   else bdState.dir = -bdState.dir;
   renderBreakdown();
 }
@@ -1099,7 +904,7 @@ function roadmapAxis({ total, ticks }) {
 }
 
 // Committed numbers only: the roadmap draws the recommended scenario as
-// computed — the what-if rail owns every live number on this page.
+// computed — nothing on this page recomputes a month or a cost.
 function renderRoadmap() {
   const el = document.getElementById('roadmap');
   if (!el) return;
@@ -1160,7 +965,8 @@ function renderContainers() {
       <ul class="pie-legend">${entries.map((e) => pieLegendRow(e, { ...ctx, acc: 0 })).join('')}</ul></div>${pieNote()}`;
 }
 
-// Assembled at runtime for the same reason as CTL_SUFFIX above: the task
+// Assembled at runtime (never one static literal, so the client-only render's
+// page text can't carry it): the task
 // drill-down is per-task WBS detail, not meant for the client view, so its
 // rows and expand buttons carry the internal-hide attribute — but that
 // attribute name must never appear as page text in a --client-only export.
@@ -1211,69 +1017,15 @@ function renderMethod() {
       github.com/Modular-Earth-LLC/solutions-architecture-agent.</span></p></details>`;
 }
 
-// Live feedback at the point of interaction: the sticky rail is usually on
-// screen while the custom card is not, so the rail repeats the custom rollup.
-function renderReadout(custom) {
-  const el = document.getElementById('whatif-readout');
-  if (!el) return;
-  el.innerHTML = Number.isFinite(custom.totalCost)
-    ? `<p class="months"><span class="num">${custom.months.toFixed(2)}</span>months</p>
-      <dl><div><dt>total cost</dt><dd>${fmtMoney(custom.totalCost)}</dd></div>
-      <div><dt>effort</dt><dd>${custom.hours.toFixed(1)}h</dd></div></dl>`
-    : '';
-}
-
-function renderAll(defaults) {
-  renderCards();
-  renderBars();
+function renderAll() {
+  renderSummary();
   renderRoadmap();
   renderContainers();
   renderBreakdown();
   renderRegister();
   renderMethod();
-  renderReadout(recompute(currentParams(defaults)));
 }
-
-const defaults = defaultsFromRecommended();
-
-function applyDefaults() {
-  setControls(defaults);
-  renderTeam(defaults.team);
-  syncOutputs();
-  renderAll(defaults);
-}
-applyDefaults();
-
-function onWhatIfChange() {
-  syncOutputs();
-  renderAll(defaults);
-  const banner = document.getElementById('modified-banner');
-  if (banner) banner.hidden = false;
-}
-
-CTL_KEYS.forEach((key) => document.getElementById(ctlId(key))?.addEventListener('input', onWhatIfChange));
-teamBox()?.addEventListener('input', (e) => {
-  if (e.target.matches('select')) {
-    const rate = RATE_BY_SENIORITY[e.target.value];
-    if (rate != null) e.target.closest('.team-row').querySelector('input').value = rate;
-  }
-  onWhatIfChange();
-});
-teamBox()?.addEventListener('click', (e) => {
-  if (e.target.matches('.team-add')) {
-    e.target.before(teamRow(currentTeam(defaults).at(-1)));
-  } else if (e.target.matches('.team-del')) {
-    e.target.closest('.team-row').remove();
-  } else return;
-  syncTeamButtons();
-  onWhatIfChange();
-});
-
-document.getElementById('reset')?.addEventListener('click', () => {
-  applyDefaults();
-  const banner = document.getElementById('modified-banner');
-  if (banner) banner.hidden = true;
-});
+renderAll();
 
 document.getElementById('feature-table')?.addEventListener('click', onBreakdownClick);
 document.getElementById('feature-table')?.addEventListener('change', onBreakdownChange);

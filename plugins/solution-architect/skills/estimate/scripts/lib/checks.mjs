@@ -48,7 +48,7 @@ function checkStructure(md) {
   if (assumptionRows.length < 1) out.push('assumptions register is empty (### Assumptions needs >= 1 row)');
   if (!/\|.*buffer.*\|/i.test(summary ?? '')) out.push('no buffer line item found in Summary (/buffer/i)');
   const scenarioTable = tables(detail ?? '').find((t) => t.header.includes('Scenario'));
-  if (!scenarioTable || scenarioTable.rows.length < 2) out.push('scenario comparison table missing or has fewer than 2 rows');
+  if (!scenarioTable || scenarioTable.rows.length < 1) out.push('scenario comparison table missing or empty');
   if (!/calibration/i.test(detail ?? '')) out.push('no calibration line found in Estimation detail');
   return out;
 }

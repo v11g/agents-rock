@@ -7,177 +7,35 @@ import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { findChrome } from '../../../analyze-requirements/scripts/lib/chrome.mjs';
 import { openPage } from '../../../analyze-requirements/scripts/lib/cdp.mjs';
-import {
-  pert, taskHours, scenarioRollup, riskBufferHours, projectBuffer, dominantSeniority,
-} from '../lib/estimate-math.mjs';
 
 const skip = { skip: !findChrome() && 'no chrome on PATH' };
 const fixture = new URL('./fixtures/booking-inputs.json', import.meta.url).pathname;
 
-function buildPage(extra = []) {
+function buildPage(extra = [], inputsPath = fixture) {
   const dir = mkdtempSync(join(tmpdir(), 'estimate-browser-'));
   const scripts = new URL('..', import.meta.url).pathname;
   const passMd = join(scripts, 'test/fixtures/estimation-pass.md');
-  execFileSync('node', [join(scripts, 'compute.mjs'), '--inputs', fixture, '--out', join(dir, 'estimation.json')]);
+  execFileSync('node', [join(scripts, 'compute.mjs'), '--inputs', inputsPath, '--out', join(dir, 'estimation.json')]);
   execFileSync('node', [join(scripts, 'render.mjs'), '--json', join(dir, 'estimation.json'), '--md', passMd, '--out', dir, ...extra]);
   return pathToFileURL(join(dir, 'estimate.html')).href;
 }
 
-function nodeRecompute(p) {
+// The booking inputs with a mutation applied, for pages whose shape depends
+// on the scenarios.
+function buildPageWith(mutate) {
+  const dir = mkdtempSync(join(tmpdir(), 'estimate-browser-inputs-'));
   const inputs = JSON.parse(readFileSync(fixture, 'utf8'));
-  const tasks = inputs.features.flatMap((f) => f.tasks);
-  const seniority = dominantSeniority(p.team);
-  const hoursOf = (t) => taskHours({ e: pert(t).e, seniority, aiAssisted: p.aiAssisted,
-    category: t.category, verificationPct: inputs.verificationPct, scale: p.aiScale });
-  const dev = tasks.reduce((s, t) => s + hoursOf(t), 0);
-  const buffers = (riskBufferHours(inputs.risks) + projectBuffer(tasks.map((t) => pert(t).sigma))) * p.bufferScale;
-  const hours = dev + dev * p.overheadPct + buffers;
-  return { hours, ...scenarioRollup({ hours, team: p.team, toolingCostPerSeat: p.toolingCostPerSeat }) };
+  mutate(inputs);
+  writeFileSync(join(dir, 'inputs.json'), JSON.stringify(inputs));
+  return buildPage([], join(dir, 'inputs.json'));
 }
 
-// A mixed roster on purpose: effort follows the dominant seniority (mid),
-// labor cost follows each member's own rate.
-const PARAMS = {
-  team: [{ seniority: 'senior', rate: 60 }, { seniority: 'mid', rate: 45 }, { seniority: 'mid', rate: 45 }],
-  aiAssisted: true, toolingCostPerSeat: 100, aiScale: 1, bufferScale: 1, overheadPct: 0.35,
-};
 
-test('page boots without console errors and browser math equals node math', skip, async () => {
-  const page = await openPage(buildPage());
-  try {
-    const got = await page.eval(`window.__recompute(${JSON.stringify(PARAMS)})`);
-    const want = nodeRecompute(PARAMS);
-    for (const key of ['hours', 'months', 'totalCost']) {
-      assert.ok(Math.abs(got[key] - want[key]) < 1e-6, `${key}: ${got[key]} != ${want[key]}`);
-    }
-    assert.deepEqual(page.errors, []);
-  } finally { page.close(); }
-});
-
-// The bug this guards against: the old rail replicated team[0].rate across
-// the whole team, so its resting numbers disagreed with the committed card
-// it claims to reproduce (2×$60 instead of $60+$45 on the fixture).
-test('the rail at rest reproduces the committed recommended scenario', skip, async () => {
-  const page = await openPage(buildPage());
-  try {
-    const { got, want } = await page.eval(`(() => {
-      const rec = DATA.inputs.scenarios.find((s) => s.id === DATA.inputs.recommendedScenario);
-      return { got: window.__recompute({ team: rec.team, aiAssisted: rec.aiAssisted, toolingCostPerSeat: rec.toolingCostPerSeat,
-        aiScale: 1, bufferScale: 1, overheadPct: DATA.inputs.overheadPct }),
-      want: DATA.computed.scenarios[rec.id] };
-    })()`);
-    for (const key of ['hours', 'months', 'totalCost']) {
-      // committed numbers are round2'd — compare at that grain
-      assert.ok(Math.abs(got[key] - want[key]) < 0.005, `${key}: ${got[key]} != ${want[key]}`);
-    }
-  } finally { page.close(); }
-});
-
-const readRoster = (page) => page.eval(`[...document.querySelectorAll('#ctl-team .team-row')].map((r) => ({
-  seniority: r.querySelector('select').value, rate: Number(r.querySelector('input').value) }))`);
-
-test('the roster boots as the recommended team, one row per member', skip, async () => {
-  const page = await openPage(buildPage());
-  try {
-    const inputs = JSON.parse(readFileSync(fixture, 'utf8'));
-    const rec = inputs.scenarios.find((s) => s.id === inputs.recommendedScenario);
-    assert.deepEqual(await readRoster(page), rec.team);
-    // seniority options come from SENIORITY_FACTOR, not a hand-written triple
-    assert.deepEqual(await page.eval(
-      `[...document.querySelector('#ctl-team select').options].map((o) => o.value)`),
-    ['junior', 'mid', 'senior']);
-  } finally { page.close(); }
-});
-
-// Rates ride with seniority: the committed scenarios are the page's only
-// rate table (booking fixture: junior 30, mid 45, senior 60), so switching
-// a row's level re-seeds its rate — still hand-editable afterwards.
-test('switching a row seniority re-seeds its rate from the committed scenarios', skip, async () => {
-  const page = await openPage(buildPage());
-  try {
-    const readout = () => page.eval(`document.getElementById('whatif-readout').textContent`);
-    const before = await readout();
-    await page.eval(`(() => {
-      const sel = document.querySelector('#ctl-team .team-row select');
-      sel.value = 'junior'; sel.dispatchEvent(new Event('input', { bubbles: true }));
-    })()`);
-    assert.deepEqual((await readRoster(page))[0], { seniority: 'junior', rate: 30 });
-    assert.notEqual(await readout(), before, 'the readout must follow the re-seeded rate');
-  } finally { page.close(); }
-});
-
-test('every rate input carries a dollar-sign prefix', skip, async () => {
-  const page = await openPage(buildPage());
-  try {
-    const cur = await page.eval(
-      `[...document.querySelectorAll('#ctl-team .team-row .cur')].map((c) => c.textContent)`);
-    assert.deepEqual(cur, ['$', '$']);
-  } finally { page.close(); }
-});
-
-test('adding and removing a row recalculates with the coordination tax', skip, async () => {
-  const page = await openPage(buildPage());
-  try {
-    const months = () => page.eval(
-      `parseFloat(document.querySelector('#whatif-readout .num').textContent)`);
-    const before = await months();
-    await page.eval(`document.querySelector('#ctl-team .team-add').click()`);
-    const rows = await readRoster(page);
-    assert.equal(rows.length, 3);
-    assert.deepEqual(rows[2], rows[1], 'a new row clones the last one');
-    assert.ok(await months() < before, `three engineers must finish sooner than two`);
-    await page.eval(`document.querySelector('#ctl-team .team-row:last-of-type .team-del').click()`);
-    assert.equal(await months(), before);
-  } finally { page.close(); }
-});
-
-test('the roster is capped between one and eight engineers', skip, async () => {
-  const page = await openPage(buildPage());
-  try {
-    const count = () => page.eval(`document.querySelectorAll('#ctl-team .team-row').length`);
-    // clicks are synchronous in-page; a disabled button ignores them, so
-    // over-clicking in one eval is exactly the user mashing the button
-    await page.eval(`for (let i = 0; i < 10; i++) document.querySelector('#ctl-team .team-add').click()`);
-    assert.equal(await count(), 8);
-    assert.equal(await page.eval(`document.querySelector('#ctl-team .team-add').disabled`), true);
-    await page.eval(
-      `for (let i = 0; i < 10; i++) document.querySelector('#ctl-team .team-row:last-of-type .team-del').click()`);
-    assert.equal(await count(), 1);
-    assert.equal(await page.eval(`document.querySelector('#ctl-team .team-del').disabled`), true);
-  } finally { page.close(); }
-});
-
-test('the scenario cards show only committed scenarios — the rail owns what-if', skip, async () => {
-  const page = await openPage(buildPage());
-  try {
-    const inputs = JSON.parse(readFileSync(fixture, 'utf8'));
-    const cards = await page.eval(`[...document.querySelectorAll('#scenario-cards .scenario h3')].map((h) => h.textContent)`);
-    assert.deepEqual(cards.sort(), inputs.scenarios.map((s) => s.id).sort());
-    const bars = await page.eval(`[...document.querySelectorAll('#cost-bars .bar-label')].map((b) => b.textContent)`);
-    assert.ok(!bars.some((b) => b.startsWith('custom')), `custom bar leaked: ${bars}`);
-  } finally { page.close(); }
-});
-
-test('moving a control shows the banner; reset rebuilds the default roster', skip, async () => {
-  const page = await openPage(buildPage());
-  try {
-    await page.eval(`(() => {
-      const ctl = document.querySelector('#ctl-team .team-row input');
-      ctl.value = '80'; ctl.dispatchEvent(new Event('input', { bubbles: true }));
-    })()`);
-    assert.equal(await page.eval(`document.getElementById('modified-banner').hidden`), false);
-    await page.eval(`document.querySelector('#ctl-team .team-add').click()`);
-    await page.eval(`document.getElementById('reset').click()`);
-    assert.equal(await page.eval(`document.getElementById('modified-banner').hidden`), true);
-    assert.equal(await page.eval(`document.querySelectorAll('#ctl-team .team-row').length`), 2);
-    assert.equal(await page.eval(`document.querySelector('#ctl-team .team-row input').value`), '60');
-  } finally { page.close(); }
-});
 
 test('every section explains itself: help icons plus a rendered method section', skip, async () => {
   const page = await openPage(buildPage());
   try {
-    assert.ok(await page.eval(`document.querySelectorAll('details.help').length >= 6`),
+    assert.ok(await page.eval(`document.querySelectorAll('details.help').length >= 5`),
       'expected a help icon per section');
     const method = await page.eval(`document.getElementById('method').textContent`);
     assert.match(method, /three-point-pert/); // technique named from inputs
@@ -190,26 +48,12 @@ test('every section explains itself: help icons plus a rendered method section',
   } finally { page.close(); }
 });
 
-test('the what-if rail shows a live readout that tracks control changes', skip, async () => {
-  const page = await openPage(buildPage());
-  try {
-    const read = () => page.eval(`document.getElementById('whatif-readout').textContent`);
-    const before = await read();
-    assert.match(before, /months/);
-    await page.eval(`(() => {
-      const sel = document.querySelector('#ctl-team .team-row select');
-      sel.value = 'junior'; sel.dispatchEvent(new Event('input', { bubbles: true }));
-    })()`);
-    assert.notEqual(await read(), before);
-  } finally { page.close(); }
-});
-
 test('client view hides internals; theme toggle flips the root attribute', skip, async () => {
   const page = await openPage(buildPage());
   try {
     await page.eval(`document.getElementById('view-toggle').click()`);
     assert.equal(await page.eval(
-      `getComputedStyle(document.getElementById('controls')).display`), 'none');
+      `getComputedStyle(document.querySelector('#summary .alts')).display`), 'none');
     await page.eval(`document.getElementById('theme-toggle').click()`);
     assert.equal(await page.eval(`document.documentElement.dataset.theme`), 'light');
   } finally { page.close(); }
@@ -220,7 +64,7 @@ test('the --client-only page boots clean without its stripped controls', skip, a
   try {
     assert.deepEqual(page.errors, []); // stripped nodes must be null-guarded, not assumed
     assert.equal(await page.eval(`document.getElementById('ctl-team')`), null);
-    for (const id of ['scenario-cards', 'feature-table', 'register', 'method', 'roadmap', 'containers']) {
+    for (const id of ['summary', 'feature-table', 'register', 'method', 'roadmap', 'containers']) {
       assert.ok(await page.eval(`document.getElementById('${id}').children.length > 0`),
         `${id} empty on client-only page`);
     }
@@ -269,7 +113,7 @@ test('expanding a feature reveals its tasks; client view hides the drill-down', 
     assert.equal(await page.eval(`document.querySelectorAll('#feature-table tr.task-row').length`), 0);
     await page.eval(`document.querySelector('#feature-table tr.feat-row .expand').click()`);
     const tasks = await page.eval(
-      `[...document.querySelectorAll('#feature-table tr.task-row td:first-child')].map((c) => c.textContent.trim())`);
+      `[...document.querySelectorAll('#feature-table tr.task-row td:first-child')].map((c) => c.childNodes[0].textContent.trim())`);
     assert.deepEqual(tasks, ['Booking CRUD API', 'Slot conflict + cancellation rules']);
     await page.eval(`document.getElementById('view-toggle').click()`);
     assert.equal(await page.eval(
@@ -279,26 +123,6 @@ test('expanding a feature reveals its tasks; client view hides the drill-down', 
   } finally { page.close(); }
 });
 
-test('scenario cards carry a month gauge, facts grid, and delta on non-recommended', skip, async () => {
-  const page = await openPage(buildPage());
-  try {
-    assert.equal(await page.eval(
-      `document.querySelectorAll('#scenario-cards .scenario .gauge span').length`), 2);
-    const widths = await page.eval(
-      `[...document.querySelectorAll('#scenario-cards .gauge span')].map((s) => s.style.width)`);
-    assert.ok(widths.includes('100%'), `longest scenario must fill its gauge: ${widths}`);
-    assert.equal(await page.eval(
-      `document.querySelectorAll('#scenario-cards .scenario.recommended .facts dt').length`), 4);
-    const facts = await page.eval(
-      `[...document.querySelectorAll('#scenario-cards .scenario:not(.recommended) .facts dd')].map((d) => d.textContent)`);
-    assert.ok(facts.some((t) => t.includes('2× mid · 1× junior')), `team summary missing: ${facts}`);
-    assert.equal(await page.eval(
-      `document.querySelectorAll('#scenario-cards .scenario.recommended .delta').length`), 0);
-    assert.match(await page.eval(
-      `document.querySelector('#scenario-cards .scenario:not(.recommended) .delta').textContent`),
-    /mo · [+-]\$[\d,]+ vs recommended/);
-  } finally { page.close(); }
-});
 
 test('expand all / collapse all toggle every task row and stay internal-only', skip, async () => {
   const page = await openPage(buildPage());
@@ -313,36 +137,6 @@ test('expand all / collapse all toggle every task row and stay internal-only', s
   } finally { page.close(); }
 });
 
-test('the what-if rail is not sticky and lower sections span the full width', skip, async () => {
-  const page = await openPage(buildPage());
-  try {
-    assert.notEqual(await page.eval(
-      `getComputedStyle(document.getElementById('controls')).position`), 'sticky');
-    const width = (id) => page.eval(
-      `document.getElementById('${id}').getBoundingClientRect().width`);
-    const narrow = await width('cost-bars');
-    for (const id of ['method', 'roadmap', 'feature-table', 'register']) {
-      assert.ok(await width(id) > narrow + 100,
-        `${id} should outspan the rail-adjacent sections (${await width(id)} vs ${narrow})`);
-    }
-    // no hole under the cost bars: the left column stretches to the rail's end
-    const bottom = (id) => page.eval(
-      `document.getElementById('${id}').getBoundingClientRect().bottom`);
-    assert.ok(await bottom('cost-bars') >= await bottom('controls') - 1,
-      `left column ends above the rail (${await bottom('cost-bars')} vs ${await bottom('controls')})`);
-    // the rail panel starts level with the scenario cards, not their heading
-    const railTop = await page.eval(
-      `document.getElementById('controls').getBoundingClientRect().top`);
-    const cardTop = await page.eval(
-      `document.querySelector('#scenario-cards .scenario').getBoundingClientRect().top`);
-    assert.ok(Math.abs(railTop - cardTop) < 2, `rail top ${railTop} != card top ${cardTop}`);
-    // the scenario cards own the tall row; the cost bars stay content-sized
-    const height = (id) => page.eval(
-      `document.getElementById('${id}').getBoundingClientRect().height`);
-    assert.ok(await height('scenario-cards') > await height('cost-bars'),
-      'scenario cards should be the taller section');
-  } finally { page.close(); }
-});
 
 const pickOption = (key, value) => `(() => {
   const sel = document.querySelector('#feature-table select[data-select="${key}"]');
@@ -508,7 +302,7 @@ test('a roadmap click groups the breakdown rows by container', skip, async () =>
     // no header may claim a sort the grouping just overrode
     assert.deepEqual(await page.eval(
       `[...document.querySelectorAll('#feature-table th')].map((t) => t.getAttribute('aria-sort'))`),
-    ['none', 'none', 'none', 'none', 'none']);
+    ['none', 'none', 'none', 'none']);
     // an explicit header sort takes control back from the grouping, starting
     // fresh at the column's default direction — not toggling a stale one
     await page.eval(`document.querySelector('#feature-table th button[data-sort="hours"]').click()`);
@@ -529,7 +323,7 @@ test('the container donut and roadmap sit directly above the feature breakdown',
   } finally { page.close(); }
 });
 
-test('roadmap renders committed bands and ignores the what-if rail', skip, async () => {
+test('roadmap renders the committed milestone bands', skip, async () => {
   const page = await openPage(buildPage());
   try {
     const labels = await page.eval(
@@ -537,13 +331,6 @@ test('roadmap renders committed bands and ignores the what-if rail', skip, async
     assert.equal(labels.length, 2);
     assert.match(labels[0], /M1 - Booking core/);
     assert.match(labels[1], /M2 - Notifications/);
-    const before = await page.eval(`document.getElementById('roadmap').innerHTML`);
-    await page.eval(`(() => {
-      const ctl = document.querySelector('#ctl-team .team-row input');
-      ctl.value = '90'; ctl.dispatchEvent(new Event('input', { bubbles: true }));
-    })()`);
-    assert.equal(await page.eval(`document.getElementById('roadmap').innerHTML`), before,
-      'roadmap must stay frozen at the committed estimate');
   } finally { page.close(); }
 });
 
@@ -630,18 +417,18 @@ const enterScoring = (page) => page.eval(`document.querySelector('#feature-table
 test('a columns pill swaps the breakdown to workbook scores and back', skip, async () => {
   const page = await openPage(buildPage());
   try {
-    assert.ok((await page.eval(HEADS)).includes('Range'), 'estimate columns by default');
+    assert.ok((await page.eval(HEADS)).includes('Confidence'), 'estimate columns by default');
     await enterScoring(page);
     const heads = await page.eval(HEADS);
     for (const h of ['Tech', 'Size', 'Deps', 'Unc', 'Risk', 'Σ', 'Tier']) {
       assert.ok(heads.includes(h), `scoring header ${h} missing: ${heads}`);
     }
-    assert.ok(!heads.includes('Range'), 'estimate columns must swap out');
+    assert.ok(!heads.includes('Confidence'), 'estimate columns must swap out');
     const booking = await page.eval(
       `[...document.querySelectorAll('#feature-table tr.feat-row')[0].querySelectorAll('td.score')].map((c) => c.textContent.trim())`);
     assert.deepEqual(booking, ['2', '4', '2', '4', '3', '15', 'M']);
     await page.eval(`document.querySelector('#feature-table [data-mode="estimate"]').click()`);
-    assert.ok((await page.eval(HEADS)).includes('Range'), 'estimate pill must swap back');
+    assert.ok((await page.eval(HEADS)).includes('Confidence'), 'estimate pill must swap back');
     assert.deepEqual(page.errors, []);
   } finally { page.close(); }
 });
@@ -684,9 +471,55 @@ test('scoring mode is internal-only: client view resets and hides the pill', ski
   try {
     await enterScoring(page);
     await page.eval(`document.getElementById('view-toggle').click()`);
-    assert.ok((await page.eval(HEADS)).includes('Range'), 'client view must reset to estimate columns');
+    assert.ok((await page.eval(HEADS)).includes('Confidence'), 'client view must reset to estimate columns');
     assert.equal(await page.eval(
       `getComputedStyle(document.querySelector('#feature-table [data-mode="scores"]').closest('.bd-filter-group')).display`),
     'none');
+  } finally { page.close(); }
+});
+
+// The Summary is the one place team, months and cost appear. The booking
+// fixture recommends the AI-assisted senior+mid pair; the unaided trio is a
+// different roster, so it is an alternative row, not a collapsed line.
+test('the summary states the recommended scenario once and lists team alternatives', skip, async () => {
+  const page = await openPage(buildPage());
+  try {
+    const lead = await page.eval(`document.querySelector('#summary .lead').textContent`);
+    assert.equal(lead, '2 engineers (senior · mid), AI-assisted');
+    const figures = await page.eval(`document.querySelector('#summary .figures').textContent`);
+    assert.match(figures, /0\.40 months/);
+    assert.match(figures, /\$5,993/);
+    const alts = await page.eval(`[...document.querySelectorAll('#summary .alts tbody tr td:first-child')].map((c) => c.textContent)`);
+    assert.deepEqual(alts, ['3 engineers (mid · mid · junior), humans unaided']);
+    assert.equal(await page.eval(`document.querySelector('#summary .insight')`), null); // slower and pricier: no insight
+    assert.deepEqual(page.errors, []);
+  } finally { page.close(); }
+});
+
+// Same roster, AI on vs off: not a staffing choice, so it collapses to one
+// line under the recommendation instead of an alternatives table.
+test('a same-team AI-only variant collapses to one line, not a table', skip, async () => {
+  const page = await openPage(buildPageWith((inputs) => {
+    const rec = inputs.scenarios.find((s) => s.id === inputs.recommendedScenario);
+    const other = inputs.scenarios.find((s) => s.id !== rec.id);
+    other.team = rec.team.map((m) => ({ ...m }));
+  }));
+  try {
+    assert.equal(await page.eval(`document.querySelector('#summary .alts table')`), null);
+    const line = await page.eval(`document.querySelector('#summary .alts .meta').textContent`);
+    assert.match(line, /^Without AI assistance: 0\.\d\d months · \$[\d,]+ \(\+0\.\d\d mo · \+\$[\d,]+\)$/);
+    assert.deepEqual(page.errors, []);
+  } finally { page.close(); }
+});
+
+// One scenario is the default interview answer: no alternatives block at all.
+test('a single-scenario estimate shows the summary with no alternatives block', skip, async () => {
+  const page = await openPage(buildPageWith((inputs) => {
+    inputs.scenarios = inputs.scenarios.filter((s) => s.id === inputs.recommendedScenario);
+  }));
+  try {
+    assert.equal(await page.eval(`document.querySelector('#summary .alts')`), null);
+    assert.equal(await page.eval(`document.querySelector('#summary .lead').textContent`), '2 engineers (senior · mid), AI-assisted');
+    assert.deepEqual(page.errors, []);
   } finally { page.close(); }
 });

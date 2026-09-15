@@ -1,6 +1,6 @@
-// Every formula the estimate ships — imported by compute.mjs at build time and
-// inlined verbatim into estimate-template.html at render time, so the browser's
-// what-if math and the committed numbers cannot drift apart.
+// Every formula the estimate ships — imported by compute.mjs at build time.
+// render.mjs inlines pert() alone into the team page (task expected hours in
+// the breakdown); every month and cost the page shows is a committed number.
 
 export const AI_CATEGORIES = {
   boilerplate: { min: 0.5, max: 0.8 },

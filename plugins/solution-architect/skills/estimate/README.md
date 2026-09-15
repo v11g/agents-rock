@@ -1,7 +1,7 @@
 # estimate
 
 Produce an honest, validated project estimate, then serve it on localhost as an
-interactive what-if page.
+interactive page.
 
 ## What it produces
 
@@ -12,9 +12,9 @@ backlog with confidence and assumptions per row, an AI-aware scenario comparison
 doc is hand-totaled).
 
 **An interactive page** (`estimate.html`) — the same data rendered as a
-self-contained, offline-capable HTML file with live what-if controls (swap
-team/AI assistance, see months and cost recompute), served on `localhost:4173` (or the
-next free port).
+self-contained, offline-capable HTML file: a Summary (recommended team, months,
+cost, and the committed alternatives), the feature breakdown, containers,
+roadmap and risks, served on `localhost:4173` (or the next free port).
 
 ## Two run modes
 

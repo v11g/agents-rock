@@ -25,6 +25,9 @@ function checkScenarioAi(s, inputs, out) {
 export function checkScenarios(inputs, out) {
   const ids = (inputs.scenarios ?? []).map((s) => s.id);
   if (!ids.includes(inputs.recommendedScenario)) out.push('recommendedScenario names no scenario');
+  if ('recommendedReason' in inputs && !(typeof inputs.recommendedReason === 'string' && inputs.recommendedReason.trim())) {
+    out.push('recommendedReason must be a non-empty string when present');
+  }
   for (const s of inputs.scenarios ?? []) {
     if (!s.team?.length) out.push(`scenario ${s.id}: empty team`);
     checkScenarioAi(s, inputs, out);

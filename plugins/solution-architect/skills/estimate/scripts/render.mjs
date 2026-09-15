@@ -7,14 +7,6 @@ import { checkDeliverables } from './lib/checks.mjs';
 import { inlineModule, stripInternal, extractExports } from './lib/inline.mjs';
 import { redactForClient } from './lib/redact.mjs';
 
-// The agentic template's what-if rail only prices team/plan capacity —
-// task hours are constants from the estimation data, not recomputed from
-// PERT/AI-category inputs — so it needs only these exports inlined.
-const AGENTIC_MATH_EXPORTS = [
-  'HOURS_PER_MONTH', 'COORDINATION_TAX', 'SENIORITY_FACTOR',
-  'effectiveCapacity', 'scenarioRollup',
-];
-
 function parseArgs(argv) {
   const args = {};
   for (let i = 0; i < argv.length; i += 1) {
@@ -46,7 +38,12 @@ if (findings.length) {
   process.exit(1);
 }
 
-const dataForEmbed = args['client-only'] ? redactForClient(estimation) : estimation;
+// --figures: the proposal's client-facing range (proposal-figures.json), when
+// the proposal exists. Client-safe by definition — it is what the client is
+// quoted — so it rides along in both renders.
+const figures = typeof args.figures === 'string' ? JSON.parse(readFileSync(args.figures, 'utf8')) : null;
+const base = args['client-only'] ? redactForClient(estimation) : estimation;
+const dataForEmbed = figures ? { ...base, figures: { cost: figures.cost, months: figures.months } } : base;
 // Companion mode: --viewer carries the caller-known path back to the analyze-requirements
 // viewer. It sits in the header's internal range, so the client render (which
 // must not point at an internal document set) strips it with everything else.
@@ -62,8 +59,10 @@ const html = embed({
     FONTS: buildFontFaces(archFontsDir),
     // Escaped so a literal </script in the JSON can't close the data tag early.
     DATA: JSON.stringify(dataForEmbed).replaceAll('</script', '<\\/script'),
-    MATH: inlineModule(isAgentic ? extractExports(mathSrc, AGENTIC_MATH_EXPORTS) : mathSrc),
     VIEWER: viewerSlot,
+    // The team page computes nothing except a task's PERT expected hours for
+    // its breakdown rows; the agentic page reads measured numbers only.
+    ...(isAgentic ? {} : { MATH: inlineModule(extractExports(mathSrc, ['pert'])) }),
   },
 });
 

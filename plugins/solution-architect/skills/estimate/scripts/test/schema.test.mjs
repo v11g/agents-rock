@@ -112,6 +112,15 @@ test('a null seat cost on an AI-assisted scenario needs a tooling assumption', (
   assert.deepEqual(checkInputs(unaided), []);
 });
 
+test('recommendedReason, when present, is a non-empty string', () => {
+  const ok = fixture();
+  ok.recommendedReason = 'client has one senior available';
+  assert.deepEqual(checkInputs(ok), []);
+  const bad = fixture();
+  bad.recommendedReason = '  ';
+  assert.ok(checkInputs(bad).some((f) => f.includes('recommendedReason')));
+});
+
 test('milestones are all-or-nothing across features', () => {
   const bad = fixture();
   delete bad.features[1].milestone;   // features[0] has one, features[1] doesn't
