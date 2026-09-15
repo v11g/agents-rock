@@ -29,12 +29,13 @@ yet. This is also the technique QUICK depth commits to. Score each feature
 - uncertainty
 - risk
 
-Sum the five scores per feature. Tier breaks: ≤10 S / 11-17 M / ≥18 L.
+Sum the five scores per feature. Tier breaks: ≤11 S / 12–17 M / 18–22 L / 23+ XL
+(the team workbook's scale; `TIER_BREAKS` in `estimate-math.mjs`).
 
 A tier is not itself an hour figure. It is looked up against the
 **calibration table** — the org's own historical tier → hour-band data if
 supplied during the interview, or the defaults `S 20-60h, M 60-160h, L
-160-400h` if not. The calibration table is what turns "this is an M" into a
+160-400h, XL 400-800h` if not. The calibration table is what turns "this is an M" into a
 number; never assign hours from the tier letter directly.
 
 At QUICK depth this is the only technique in play, so the tier still has to

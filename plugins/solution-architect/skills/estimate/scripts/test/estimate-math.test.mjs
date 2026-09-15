@@ -26,6 +26,16 @@ test('factor scores map to tiers at the documented breaks', () => {
   assert.equal(tierFor({ complexity: 5, size: 4, dependencies: 4, uncertainty: 3, risk: 2 }).tier, 'L');
 });
 
+test('tier breaks are the workbook scale: S ≤ 11, M ≤ 17, L ≤ 22, XL above', () => {
+  const at = (total) => tierFor({ a: total }).tier;
+  assert.equal(at(11), 'S');
+  assert.equal(at(12), 'M');
+  assert.equal(at(17), 'M');
+  assert.equal(at(18), 'L');
+  assert.equal(at(22), 'L');
+  assert.equal(at(23), 'XL');
+});
+
 test('aiAdjust applies (AO + 2AR + TR)/4 plus verification overhead', () => {
   const e = 152 / 6; // boilerplate: red=0.65, redMax=0.8 — category only, no seniority term
   const want = ((e * 0.2 + 2 * (e * 0.35) + e) / 4) * 1.12;

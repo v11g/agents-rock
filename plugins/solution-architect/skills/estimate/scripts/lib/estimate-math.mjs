@@ -10,8 +10,10 @@ export const AI_CATEGORIES = {
 export const SENIORITY_FACTOR = { junior: 1.15, mid: 1.0, senior: 0.85 };
 export const HOURS_PER_MONTH = 140;
 export const COORDINATION_TAX = 0.10;
+// The team workbook's tier scale (its sheet-1 formula and Tier Reference tab):
+// one scale for the interview, the validator, the page and the xlsx export.
 export const TIER_BREAKS = [
-  { max: 10, tier: 'S' }, { max: 17, tier: 'M' }, { max: Infinity, tier: 'L' },
+  { max: 11, tier: 'S' }, { max: 17, tier: 'M' }, { max: 22, tier: 'L' }, { max: Infinity, tier: 'XL' },
 ];
 
 export function pert({ o, m, p }) {

@@ -6,7 +6,7 @@ import { TASK_SHAPES } from '../lib/measurements.mjs';
 
 const ref = (f) => readFileSync(new URL(`../../references/${f}`, import.meta.url), 'utf8');
 const ALL = ['interview.md', 'techniques.md', 'ai-multipliers.md', 'writing.md', 'slicing.md',
-  'task-shapes.md', 'agentic-estimation.md'];
+  'task-shapes.md', 'agentic-estimation.md', 'scoring-guide.md'];
 
 test('no reference doc carries placeholders', () => {
   for (const f of ALL) assert.doesNotMatch(ref(f), /\bTBD\b|\bTODO\b/, f);
@@ -25,7 +25,7 @@ test('techniques.md names every technique and the real tier breaks', () => {
   for (const needle of ['factor-scored tiering', 'three-point PERT', 'analogy']) {
     assert.ok(doc.includes(needle), `techniques.md missing: ${needle}`);
   }
-  assert.ok(doc.includes('11-17 M') || doc.includes('11–17 M'), 'tier breaks must match TIER_BREAKS');
+  assert.ok(doc.includes('12–17 M') || doc.includes('12-17 M'), 'tier breaks must match TIER_BREAKS');
   assert.equal(TIER_BREAKS[1].max, 17); // the doc claim above is only honest while this holds
 });
 
@@ -106,4 +106,14 @@ test('method sources are cited where techniques are recommended', () => {
       assert.ok(doc.includes(needle), `${f} missing source: ${needle}`);
     }
   }
+});
+
+test('scoring-guide.md carries five rows of five anchors and the tier scale', () => {
+  const doc = ref('scoring-guide.md');
+  const rows = doc.split('\n').filter((l) => /^\| (Tech complexity|Feature size|Dependencies|Uncertainty|Risk) \|/.test(l));
+  assert.equal(rows.length, 5);
+  for (const r of rows) assert.equal(r.split('|').length - 2, 6, r); // label + 5 anchors
+  assert.match(doc, /S ≤ 11 · M 12–17 · L 18–22 · XL 23\+/);
+  assert.match(doc, /XL 400–800 h/);
+  assert.doesNotMatch(doc, /derived:/);
 });
