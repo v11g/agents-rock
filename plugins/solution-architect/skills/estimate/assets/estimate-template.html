@@ -488,12 +488,12 @@ function ctEdge(component) {
 // Scores are the interview's judgments (features[].scores), never derived
 // from hours; Σ and tier were copied into computed.features by rollup.mjs.
 // A page with no scored feature (QUICK depth) shows the four estimate columns.
-const SCORED = DATA.inputs.features.some((f) => f.scores);
+const SCORED = DATA.inputs.features.length > 0 && DATA.inputs.features.every((f) => f.scores);
 const SCORE_KEYS = ['tech', 'size', 'deps', 'unc', 'risk'];
 const SCORE_LABELS = { tech: 'Tech', size: 'Size', deps: 'Deps', unc: 'Unc', risk: 'Risk' };
 const EDGE_TOTALS = [11, 17, 22];
 
-const bdState = { sortKey: 'hours', dir: -1, milestone: '', component: '', prov: '', group: false, expanded: new Set(), guideSeen: false };
+const bdState = { sortKey: 'hours', dir: -1, milestone: '', component: '', prov: '', group: false, expanded: new Set(), guideOpen: true };
 
 const BASE_COLS = {
   name: { key: 'name', label: 'Feature', val: (f) => f.name, hint: 'sort by name' },
@@ -640,17 +640,18 @@ function estimateCells(f) {
 function featRow(f, max) {
   const open = bdState.expanded.has(f.id);
   const note = f.scoreNote ? `<div class="task-assump feat-note">${esc(f.scoreNote)}</div>` : '';
-  return `<tr class="feat-row ${confLevel(f.conf)}" data-id="${f.id}">
+  return `<tr class="feat-row ${confLevel(f.conf)}" data-id="${esc(f.id)}">
     <td${ctEdge(f.component)}><span class="feat-cell"><button type="button" class="expand" ${INTERNAL_ATTR}
       aria-expanded="${open}" aria-label="show tasks">&#9656;</button>
       <span>${f.name}</span></span>${note}</td>
     ${SCORED ? scoreCells(f) : ''}${hoursCell(f, max)}${estimateCells(f)}</tr>`;
 }
 
-// Task rows sit under the feature's name; the seven score columns have no
-// per-task meaning (scores are a feature judgment), so one spacer spans them.
+// Task rows sit under the feature's name; the score columns (five factors,
+// Σ and tier) have no per-task meaning (scores are a feature judgment), so
+// one spacer spans them.
 function taskRows(f) {
-  const spacer = SCORED ? '<td colspan="7"></td>' : '';
+  const spacer = SCORED ? `<td colspan="${SCORE_KEYS.length + 2}"></td>` : '';
   return f.tasks.map((t) => `<tr class="task-row ${confLevel(t.confidence)}" ${INTERNAL_ATTR}>
     <td${ctEdge(f.component)}>${t.name}<div class="task-assump">${t.assumptions.join('; ') || 'none'}</div></td>${spacer}
     <td><span class="bd-cell"><span class="bd-num">${t.o}/${t.m}/${t.p}</span></span></td>
@@ -659,13 +660,14 @@ function taskRows(f) {
 }
 
 // The rubric comes from references/scoring-guide.md through the GUIDE slot,
-// so the page and the interviewer explain a score in the same sentences.
+// so the page and the interviewer explain a score in the same sentences. The
+// fold opens on first view and then keeps whatever the reader chose: every
+// sort and filter rebuilds this markup, so its state lives in bdState.
 function bdGuide() {
   const guide = document.getElementById('scoring-guide');
   if (!SCORED || !guide) return '';
-  const open = bdState.guideSeen ? '' : ' open';
-  bdState.guideSeen = true;
-  return `<details class="guide"${open}><summary>Scoring guide &mdash; what each 1&ndash;5 means</summary>
+  const open = bdState.guideOpen ? ' open' : '';
+  return `<details class="guide" data-guide${open}><summary>Scoring guide &mdash; what each 1&ndash;5 means</summary>
     <div class="bd-scroll">${guide.innerHTML}</div></details>`;
 }
 
@@ -955,6 +957,10 @@ renderAll();
 
 document.getElementById('feature-table')?.addEventListener('click', onBreakdownClick);
 document.getElementById('feature-table')?.addEventListener('change', onBreakdownChange);
+// `toggle` does not bubble, so this one listens in the capture phase instead.
+document.getElementById('feature-table')?.addEventListener('toggle', (e) => {
+  if (e.target.matches('[data-guide]')) bdState.guideOpen = e.target.open;
+}, true);
 document.getElementById('roadmap')?.addEventListener('click', onRoadmapClick);
 document.getElementById('containers')?.addEventListener('mouseover', onPieHover);
 document.getElementById('containers')?.addEventListener('mouseout', onPieHover);

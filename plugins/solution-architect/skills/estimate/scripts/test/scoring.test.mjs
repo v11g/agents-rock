@@ -4,7 +4,7 @@ import { mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import {
-  SCORE_FACTORS, FACTOR_LABELS, loadGuide, guideTableHtml, scoreNumbers, scoreSummary, bandFor,
+  SCORE_FACTORS, FACTOR_LABELS, loadGuide, guideTableHtml, scoreNumbers, scoreSummary,
 } from '../lib/scoring.mjs';
 
 test('the guide loads five factors with five anchors each, in factor order', () => {
@@ -47,9 +47,3 @@ test('scoreNumbers strips anchors and cites; scoreSummary sums and tiers', () =>
   assert.deepEqual(scoreSummary({ id: 'q', tasks: [] }), {});
 });
 
-test('bandFor reads the calibration table by tier', () => {
-  const cal = { S: [20, 60], M: [60, 160], L: [160, 400], XL: [400, 800] };
-  assert.deepEqual(bandFor('L', cal), [160, 400]);
-  assert.equal(bandFor('XL', { S: [20, 60] }), undefined);
-  assert.equal(bandFor(undefined, cal), undefined);
-});

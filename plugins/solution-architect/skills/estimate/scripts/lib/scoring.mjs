@@ -43,5 +43,3 @@ export function scoreSummary(feature) {
   const { total, tier } = tierFor(scoreNumbers(feature.scores));
   return { scoreTotal: total, tier };
 }
-
-export const bandFor = (tier, calibration) => (tier ? calibration?.[tier] : undefined);

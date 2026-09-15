@@ -477,6 +477,23 @@ test('the scoring guide fold shows the reference table, open on first view', ski
   } finally { page.close(); }
 });
 
+// Sorting rebuilds the whole section, so the fold's open state has to live in
+// bdState — otherwise every click either slams it shut or re-opens it.
+test('the scoring guide fold keeps its open state across a re-render', skip, async () => {
+  const page = await openPage(buildPage());
+  const fold = `document.querySelector('#feature-table details.guide')`;
+  const sort = `document.querySelector('#feature-table th button[data-sort="name"]').click()`;
+  try {
+    assert.equal(await page.eval(`${fold}.open`), true);
+    await page.eval(sort);
+    assert.equal(await page.eval(`${fold}.open`), true, 'a sort must not fold the guide shut');
+    await page.eval(`(() => { const d = ${fold}; d.open = false; d.dispatchEvent(new Event('toggle')); })()`);
+    await page.eval(sort);
+    assert.equal(await page.eval(`${fold}.open`), false, 'a closed guide stays closed');
+    assert.deepEqual(page.errors, []);
+  } finally { page.close(); }
+});
+
 test('QUICK inputs render today\'s four columns and no guide', skip, async () => {
   const page = await openPage(buildPageWith((inputs) => {
     inputs.depth = 'QUICK';

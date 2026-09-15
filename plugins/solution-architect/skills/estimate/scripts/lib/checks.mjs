@@ -7,8 +7,6 @@ import { agenticFindings } from './agentic-checks.mjs';
 import { heading, tables } from './md-tables.mjs';
 import { scoringFindings } from './scoring-checks.mjs';
 
-export { heading, tables }; // agentic-checks.mjs imports them from here
-
 const PROVENANCE = ['observed', 'stated', 'researched', 'proposed'];
 const CONFIDENCE = ['HIGH', 'MED', 'LOW'];
 

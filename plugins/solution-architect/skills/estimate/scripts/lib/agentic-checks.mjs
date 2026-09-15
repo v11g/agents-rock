@@ -3,7 +3,7 @@
 // masked as measured, invented evidence, missing planning work, and the
 // mandatory "Delivery: agentic" header line. Split out of checks.mjs to stay
 // under the file's function/line quality gates.
-import { heading, tables } from './checks.mjs';
+import { heading, tables } from './md-tables.mjs';
 
 const VAGUE_PATTERNS = [
   /\b\d+\s*[–—-]\s*\d+\s*(hours?|hrs|minutes?|mins)\b/i,
