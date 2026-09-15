@@ -9,14 +9,7 @@ const ALL = ['interview.md', 'techniques.md', 'ai-multipliers.md', 'writing.md',
   'task-shapes.md', 'agentic-estimation.md', 'scoring-guide.md'];
 
 test('no reference doc carries placeholders', () => {
-  // interview.md's sample card quotes a fictional PRD line ("reconciliation
-  // rules TBD") as cited evidence of uncertainty, not an unfinished doc
-  // section — strip that one quoted example before scanning for real
-  // placeholders.
-  for (const f of ALL) {
-    const doc = ref(f).replace('"reconciliation rules TBD"', '');
-    assert.doesNotMatch(doc, /\bTBD\b|\bTODO\b/, f);
-  }
+  for (const f of ALL) assert.doesNotMatch(ref(f), /\bTBD\b|\bTODO\b/, f);
 });
 
 test('interview.md carries its five required parts', () => {

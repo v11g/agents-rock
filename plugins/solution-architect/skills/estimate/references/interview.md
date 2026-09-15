@@ -122,7 +122,7 @@ Ask one thing at a time, in this order:
    │  Deps  4  Multiple third-party APIs or tightly coupled internal systems   │
    │           ← Stripe API + bank CSV import                                  │
    │  Unc   3  Some open questions, design decisions to be made during build   │
-   │           ← PRD §4.2: "reconciliation rules TBD"                          │
+   │           ← PRD §4.2: "reconciliation rules undecided"                    │
    │  Risk  5  Core infrastructure, compliance requirements, irreversible ops  │
    │           ← payments; rubric puts payments at 4–5, chose 5: irreversible  │
    │  Σ 19  →  L  →  160–400 h                                                 │
