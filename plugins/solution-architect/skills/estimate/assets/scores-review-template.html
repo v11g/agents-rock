@@ -26,6 +26,7 @@ td.score select.hot { color:var(--bad); font-weight:600; }
 .tier.xl { background:rgba(185,28,28,.1); color:var(--bad); }
 .edge { color:var(--warn); cursor:help; margin-left:.15rem; }
 .cite { color:var(--ink-dim); font-size:.78rem; }
+.cite.stale { opacity:.5; }
 td.note textarea { width:100%; min-height:2.6rem; font:inherit; font-size:.82rem; }
 details.guide { margin:1.2rem 0; }
 details.guide summary { cursor:pointer; font-weight:600; color:var(--ink-dim); }
@@ -61,13 +62,18 @@ const state = Object.fromEntries(DRAFT.features.map((f) => [f.id, {
 // The number comes from `state`, never from the draft: render() rebuilds the
 // whole table, so a select that re-read f.scores[k].n would snap back to the
 // agent's proposal and disagree with the Σ beside it. The anchor and cite stay
-// the draft's — re-anchoring a changed score is the CLI's job, not the page's.
+// the draft's — re-anchoring a changed score is the CLI's job, not the page's
+// — so an edited cell says so instead of showing the old score's sentence as
+// if it explained the new one.
+const STALE_TITLE = 'rubric sentence changes with the score — re-anchored when the agent reads this back';
+
 function scoreCell(f, k) {
   const s = f.scores[k];
   const n = state[f.id].scores[k];
+  const stale = n !== s.n;
   const opts = [1, 2, 3, 4, 5].map((v) => `<option value="${v}"${v === n ? ' selected' : ''}>${v}</option>`).join('');
   return `<td class="score"><select data-id="${esc(f.id)}" data-key="${k}" class="${n === 5 ? 'hot' : ''}"
-    title="${esc(s.anchor)}">${opts}</select><div class="cite">${esc(s.cite)}</div></td>`;
+    title="${stale ? STALE_TITLE : esc(s.anchor)}">${opts}</select><div class="cite${stale ? ' stale' : ''}">${esc(s.cite)}</div></td>`;
 }
 
 function row(f) {

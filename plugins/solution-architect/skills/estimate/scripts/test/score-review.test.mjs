@@ -119,6 +119,8 @@ test('review page: changing a select updates Σ/tier live and the feedback block
     assert.equal(await page.eval(`document.querySelector('[data-tier="reminders"]').textContent`), 'M');
     assert.equal(await page.eval(`document.querySelector('select[data-id="reminders"][data-key="tech"]').value`), '4',
       'the rebuilt select shows the edited score, not the draft one');
+    assert.doesNotMatch(await page.eval(`document.querySelector('select[data-id="reminders"][data-key="tech"]').title`),
+      /Minor customisation of standard patterns/, 'the anchor for the old score must not explain the new one');
     const feedback = JSON.parse(await page.eval(`document.getElementById('feedback').value`));
     const fbPath = join(dir, 'feedback.json');
     writeFileSync(fbPath, JSON.stringify(feedback));
