@@ -3,7 +3,7 @@
 // currently visible rows, and keeps every tier/price formula live in-cell.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtempSync } from 'node:fs';
+import { mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -15,11 +15,11 @@ import { readZip } from './zip.mjs';
 const skip = { skip: !findChrome() && 'no chrome on PATH' };
 const fixture = new URL('./fixtures/booking-inputs.json', import.meta.url).pathname;
 
-function buildPage() {
+function buildPage(inputsPath = fixture) {
   const dir = mkdtempSync(join(tmpdir(), 'estimate-xlsx-'));
   const scripts = new URL('..', import.meta.url).pathname;
   const passMd = join(scripts, 'test/fixtures/estimation-pass.md');
-  execFileSync('node', [join(scripts, 'compute.mjs'), '--inputs', fixture, '--out', join(dir, 'estimation.json')]);
+  execFileSync('node', [join(scripts, 'compute.mjs'), '--inputs', inputsPath, '--out', join(dir, 'estimation.json')]);
   execFileSync('node', [join(scripts, 'render.mjs'), '--json', join(dir, 'estimation.json'), '--md', passMd, '--out', dir]);
   return pathToFileURL(join(dir, 'estimate.html')).href;
 }
@@ -30,7 +30,7 @@ async function exportedFiles(page) {
 }
 
 const sheet1 = (files) => files.get('xl/worksheets/sheet1.xml').toString('utf8');
-const cell = (xml, ref) => new RegExp(`<c r="${ref}"[^>]*>(.*?)</c>`, 's').exec(xml)?.[1] ?? '';
+const cell = (xml, ref) => new RegExp(`<c r="${ref}"[^>]*?(?:/>|>(.*?)</c>)`, 's').exec(xml)?.[1] ?? '';
 const inlineText = (frag) => /<t[^>]*>([^<]*)<\/t>/.exec(frag)?.[1];
 const cellNumber = (frag) => Number(/<v>([^<]*)<\/v>/.exec(frag)?.[1]);
 const cellFormula = (frag) => /<f>([^<]*)<\/f>/.exec(frag)?.[1];
@@ -58,35 +58,66 @@ test('the export clones the sample workbook with its guide tabs intact', skip, a
   } finally { page.close(); }
 });
 
-test('rows land as inline strings ordered by milestone with derived 1-5 scores', skip, async () => {
+test('rows land ordered by milestone with the interview scores verbatim', skip, async () => {
   const page = await openPage(buildPage());
   try {
     const xml = sheet1(await exportedFiles(page));
-    // M1 feature before M2 feature regardless of the table's hour sort
     assert.equal(inlineText(cell(xml, 'A7')), 'User can book appointment');
     assert.equal(inlineText(cell(xml, 'A8')), 'Email reminders');
-    for (const row of [7, 8]) {
-      for (const col of ['B', 'C', 'D', 'E', 'F']) {
-        const v = cellNumber(cell(xml, `${col}${row}`));
-        assert.ok(Number.isInteger(v) && v >= 1 && v <= 5, `${col}${row} must be 1-5, got ${v}`);
-      }
-    }
+    assert.deepEqual(['B', 'C', 'D', 'E', 'F'].map((c) => cellNumber(cell(xml, `${c}7`))), [3, 3, 2, 3, 3]);
+    assert.deepEqual(['B', 'C', 'D', 'E', 'F'].map((c) => cellNumber(cell(xml, `${c}8`))), [2, 2, 3, 2, 2]);
   } finally { page.close(); }
 });
 
-test('tech and size scores follow the Scoring Guide definitions', skip, async () => {
+test('column N carries the plain-words note for sales readers', skip, async () => {
   const page = await openPage(buildPage());
   try {
     const xml = sheet1(await exportedFiles(page));
-    // TECH: hours-weighted category score (boilerplate 1.5, logic 3, novel 5).
-    // Booking mixes boilerplate(25.3h) + logic(44h) → 2.45 → 2; reminders is
-    // logic-only → 3.
-    assert.equal(cellNumber(cell(xml, 'B7')), 2);
-    assert.equal(cellNumber(cell(xml, 'B8')), 3);
-    // SIZE: absolute expected-hour bands [8, 24, 64, 128] per the guide's
-    // "<1 day → epic" scale. Booking ≈69h → 4; reminders ≈21h → 2.
-    assert.equal(cellNumber(cell(xml, 'C7')), 4);
-    assert.equal(cellNumber(cell(xml, 'C8')), 2);
+    assert.equal(inlineText(cell(xml, 'N6')), 'WHY THIS TIER');
+    assert.match(inlineText(cell(xml, 'N7')) ?? '', /open questions/);
+    assert.match(xml, /<autoFilter ref="A6:N26"\/>/);
+  } finally { page.close(); }
+});
+
+const sheetRationale = (files) => files.get('xl/worksheets/sheet5.xml')?.toString('utf8') ?? '';
+
+test('a Score Rationale tab lists anchor, evidence and provenance per factor', skip, async () => {
+  const page = await openPage(buildPage());
+  try {
+    const files = await exportedFiles(page);
+    assert.match(files.get('xl/workbook.xml').toString('utf8'), /name="Score Rationale"/);
+    assert.match(files.get('xl/_rels/workbook.xml.rels').toString('utf8'), /Target="worksheets\/sheet5\.xml"/);
+    assert.match(files.get('[Content_Types].xml').toString('utf8'), /PartName="\/xl\/worksheets\/sheet5\.xml"/);
+    const xml = sheetRationale(files);
+    assert.deepEqual(['A1', 'B1', 'C1', 'D1', 'E1', 'F1'].map((r) => inlineText(cell(xml, r))),
+      ['FEATURE', 'FACTOR', 'SCORE', 'ANCHOR', 'EVIDENCE', 'PROVENANCE']);
+    assert.equal(inlineText(cell(xml, 'A2')), 'User can book appointment');
+    assert.equal(inlineText(cell(xml, 'B2')), 'Tech');
+    assert.equal(cellNumber(cell(xml, 'C2')), 3);
+    assert.equal(inlineText(cell(xml, 'D2')), 'Custom business logic, moderate algorithm complexity, multiple states');
+    assert.equal(inlineText(cell(xml, 'E2')), 'slot conflict + cancellation rules');
+    assert.equal(inlineText(cell(xml, 'F2')), 'stated');
+    assert.match(xml, /<autoFilter ref="A1:F11"\/>/); // 2 features × 5 factors
+  } finally { page.close(); }
+});
+
+test('QUICK inputs export blank score cells and an empty rationale tab', skip, async () => {
+  const dir = mkdtempSync(join(tmpdir(), 'estimate-xlsx-quick-'));
+  const inputs = JSON.parse(readFileSync(fixture, 'utf8'));
+  inputs.depth = 'QUICK';
+  for (const f of inputs.features) {
+    delete f.scores; delete f.scoreNote; delete f.scoreProvenance;
+    f.tasks = [{ ...f.tasks[0], id: `${f.id}-band`, o: 60, m: 110, p: 160 }];
+  }
+  const inputsPath = join(dir, 'inputs.json');
+  writeFileSync(inputsPath, JSON.stringify(inputs));
+  const page = await openPage(buildPage(inputsPath));
+  try {
+    const files = await exportedFiles(page);
+    const xml = sheet1(files);
+    assert.equal(cell(xml, 'B7'), '', 'no score value at QUICK');
+    assert.match(xml, /<c r="B7" s="\d+"\/>/);
+    assert.match(sheetRationale(files), /<autoFilter ref="A1:F1"\/>/);
   } finally { page.close(); }
 });
 
@@ -113,7 +144,7 @@ test('milestone and container fill L/M under an autofiltered header', skip, asyn
     assert.equal(inlineText(cell(xml, 'L7')), 'M1 - Booking core');
     assert.equal(inlineText(cell(xml, 'M7')), 'Booking API');
     assert.equal(inlineText(cell(xml, 'M8')), 'Notification Service');
-    assert.match(xml, /<autoFilter ref="A6:M26"\/>/);
+    assert.match(xml, /<autoFilter ref="A6:N26"\/>/);
   } finally { page.close(); }
 });
 

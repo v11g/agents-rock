@@ -1005,12 +1005,15 @@ function rowFormulas(r) {
 const fxCells = (r) => Object.entries(rowFormulas(r))
   .map(([col, f]) => fCell(col + r, XLSX_STYLE[col], f)).join('');
 
+const blankCell = (ref) => `<c r="${ref}" s="${XLSX_STYLE.blank}"/>`;
+
 function featureRowXml(f, r) {
-  const scores = f.scores;
-  return `<row r="${r}" ht="29.25" customHeight="1">` + sCell(`A${r}`, XLSX_STYLE.A, f.name)
-    + ['B', 'C', 'D', 'E', 'F'].map((col, i) => nCell(col + r, XLSX_STYLE.score, scores[i])).join('')
+  const scoreCols = ['B', 'C', 'D', 'E', 'F'];
+  const scores = scoreCols.map((col, i) => (f.scores
+    ? nCell(col + r, XLSX_STYLE.score, f.scores[SCORE_KEYS[i]].n) : blankCell(col + r))).join('');
+  return `<row r="${r}" ht="29.25" customHeight="1">` + sCell(`A${r}`, XLSX_STYLE.A, f.name) + scores
     + fxCells(r) + sCell(`L${r}`, XLSX_STYLE.A, f.milestone ?? '')
-    + sCell(`M${r}`, XLSX_STYLE.A, xlsxContainer(f)) + '</row>';
+    + sCell(`M${r}`, XLSX_STYLE.A, xlsxContainer(f)) + sCell(`N${r}`, XLSX_STYLE.A, f.scoreNote ?? '') + '</row>';
 }
 
 function emptyRowXml(r) {
@@ -1051,8 +1054,8 @@ function buildSheet1(xml, rows) {
     + totalRowXml(total);
   return xml
     .replace(/<row r="7"[\s\S]*(?=<\/sheetData>)/, body)
-    .replace(/(<row r="6".*?)(<\/row>)/, `$1${sCell('L6', XLSX_STYLE.head, 'MILESTONE')}${sCell('M6', XLSX_STYLE.head, 'CONTAINER')}$2`)
-    .replace('</sheetData>', `</sheetData><autoFilter ref="A6:M${total - 1}"/>`)
+    .replace(/(<row r="6".*?)(<\/row>)/, `$1${sCell('L6', XLSX_STYLE.head, 'MILESTONE')}${sCell('M6', XLSX_STYLE.head, 'CONTAINER')}${sCell('N6', XLSX_STYLE.head, 'WHY THIS TIER')}$2`)
+    .replace('</sheetData>', `</sheetData><autoFilter ref="A6:N${total - 1}"/>`)
     .replace('"A27:F27"', `"A${total}:F${total}"`)
     .replaceAll('H7:H26', `H7:H${total - 1}`);
 }
@@ -1072,29 +1075,56 @@ function taskRowXml(f, t, r) {
     + Object.entries(texts).slice(3).map(([c, v]) => sCell(c + r, 0, v)).join('') + '</row>';
 }
 
-function buildTaskSheet(rows) {
-  const body = rows.flatMap((f) => f.tasks.map((t) => [f, t]))
-    .map(([f, t], i) => taskRowXml(f, t, i + 2)).join('');
-  const last = 1 + rows.reduce((s, f) => s + f.tasks.length, 0);
-  const head = `<row r="1">${TASK_HEADERS.map((h, i) =>
+// A generated tab: frozen header row, autofilter over the data, nothing else.
+function sheetXml({ headers, body, last }) {
+  const head = `<row r="1">${headers.map((h, i) =>
     sCell(String.fromCharCode(65 + i) + 1, XLSX_STYLE.head, h)).join('')}</row>`;
   return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
     + '<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">'
     + '<sheetViews><sheetView workbookViewId="0"><pane ySplit="1" topLeftCell="A2" '
     + 'activePane="bottomLeft" state="frozen"/></sheetView></sheetViews>'
-    + `<sheetData>${head}${body}</sheetData><autoFilter ref="A1:K${last}"/></worksheet>`;
+    + `<sheetData>${head}${body}</sheetData><autoFilter ref="A1:${String.fromCharCode(64 + headers.length)}${last}"/></worksheet>`;
 }
 
-// Registers sheet4 in the three package indexes the clone does not have yet.
-function registerTaskSheet(files, enc) {
+function buildTaskSheet(rows) {
+  const body = rows.flatMap((f) => f.tasks.map((t) => [f, t]))
+    .map(([f, t], i) => taskRowXml(f, t, i + 2)).join('');
+  const last = 1 + rows.reduce((s, f) => s + f.tasks.length, 0);
+  return sheetXml({ headers: TASK_HEADERS, body, last });
+}
+
+// --- Score Rationale tab: one row per feature × factor — the engineer's
+// view of why each score is what it is (Sheet 1's column N is the sales one).
+const RATIONALE_HEADERS = ['FEATURE', 'FACTOR', 'SCORE', 'ANCHOR', 'EVIDENCE', 'PROVENANCE'];
+
+function rationaleRowXml(f, key, r) {
+  const s = f.scores[key];
+  return `<row r="${r}">` + sCell(`A${r}`, 0, f.name) + sCell(`B${r}`, 0, SCORE_LABELS[key]) + nCell(`C${r}`, 0, s.n)
+    + sCell(`D${r}`, 0, s.anchor) + sCell(`E${r}`, 0, s.cite) + sCell(`F${r}`, 0, f.scoreProvenance) + '</row>';
+}
+
+function buildRationaleSheet(rows) {
+  const scored = rows.filter((f) => f.scores);
+  const body = scored.flatMap((f) => SCORE_KEYS.map((k) => [f, k]))
+    .map(([f, k], i) => rationaleRowXml(f, k, i + 2)).join('');
+  return sheetXml({ headers: RATIONALE_HEADERS, body, last: 1 + scored.length * SCORE_KEYS.length });
+}
+
+const EXTRA_SHEETS = [
+  { file: 'sheet4.xml', name: 'Task Breakdown', id: 100, rid: 'rIdTasks', build: buildTaskSheet },
+  { file: 'sheet5.xml', name: 'Score Rationale', id: 101, rid: 'rIdScores', build: buildRationaleSheet },
+];
+
+// Registers a generated sheet in the three package indexes the clone lacks.
+function registerSheet(files, enc, sheet) {
   const patch = (path, find, add) => files.set(path,
     enc.encode(new TextDecoder().decode(files.get(path)).replace(find, add + find)));
   patch('xl/workbook.xml', '</sheets>',
-    '<sheet state="visible" name="Task Breakdown" sheetId="100" r:id="rIdTasks"/>');
+    `<sheet state="visible" name="${sheet.name}" sheetId="${sheet.id}" r:id="${sheet.rid}"/>`);
   patch('xl/_rels/workbook.xml.rels', '</Relationships>',
-    '<Relationship Id="rIdTasks" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet4.xml"/>');
+    `<Relationship Id="${sheet.rid}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/${sheet.file}"/>`);
   patch('[Content_Types].xml', '</Types>',
-    '<Override PartName="/xl/worksheets/sheet4.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>');
+    `<Override PartName="/xl/worksheets/${sheet.file}" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>`);
 }
 
 // --- minimal zip: read the deflated template, write a stored archive ---
@@ -1197,8 +1227,10 @@ async function buildWorkbook() {
   const rows = exportRows();
   const xml = new TextDecoder().decode(files.get('xl/worksheets/sheet1.xml'));
   files.set('xl/worksheets/sheet1.xml', enc.encode(buildSheet1(xml, rows)));
-  files.set('xl/worksheets/sheet4.xml', enc.encode(buildTaskSheet(rows)));
-  registerTaskSheet(files, enc);
+  for (const sheet of EXTRA_SHEETS) {
+    files.set(`xl/worksheets/${sheet.file}`, enc.encode(sheet.build(rows)));
+    registerSheet(files, enc, sheet);
+  }
   return zipStore(files);
 }
 window.__buildWorkbook = async () => bytesB64(await buildWorkbook());
