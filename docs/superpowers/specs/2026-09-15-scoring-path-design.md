@@ -148,6 +148,16 @@ shown in the diff and discarded. The free-text `note` column exists in the
 CSV channel only; the HTML page has the `scoreNote` textarea and the chat for
 anything else, so `window.__feedback()` never carries a `note`.
 
+`--read` also prints `needsReason`: every changed score with its old cite.
+A changed score keeps a cite that argued for the old number, so the agent
+asks once per cell what makes it the new score (`AskUserQuestion` when
+available, one question per cell, options = the agent's best guesses at the
+reason + "keep it, no reason" + "agree — back to <old>"), writes the answer
+as `cite: "reviewer: <answer>"`, may push back once with quoted evidence,
+and writes `reviewer: no reason given` when the reviewer declines. The
+reviewer always wins; silence is recorded, never blocked. A rewritten
+`scoreNote` needs no reason.
+
 ## 2. Scoring guide (`references/scoring-guide.md`)
 
 New file. Content is `SCORE_GUIDE` from `estimate-template.html` — five

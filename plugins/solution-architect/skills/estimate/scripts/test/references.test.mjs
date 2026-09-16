@@ -121,7 +121,7 @@ test('scoring-guide.md carries five rows of five anchors and the tier scale', ()
 test('interview.md scores before tasks, names the three review channels and the plain-words note', () => {
   const doc = ref('interview.md');
   for (const needle of ['scoring-guide.md', 'scores', 'scoreNote', 'scoreProvenance', 'terminal', 'csv', 'html',
-    'score-review.mjs', 'accept', 'split', 'outside', 'plain']) {
+    'score-review.mjs', 'accept', 'split', 'outside', 'plain', 'needsReason', 'no reason given']) {
     assert.ok(doc.includes(needle), `interview.md missing: ${needle}`);
   }
   assert.ok(doc.indexOf('Factor scores per feature') < doc.indexOf('Tasks + O/M/P'), 'scores come before tasks');

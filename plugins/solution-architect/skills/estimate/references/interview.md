@@ -148,6 +148,20 @@ Ask one thing at a time, in this order:
    the calibration band as today; do not write them (`schema.mjs` refuses
    them at QUICK).
 
+   **Ask why.** A changed score keeps a cite that argued for the *old*
+   number, so every entry in `--read`'s `needsReason` list is a question you
+   owe the reviewer before writing: show the old anchor with its cite, the
+   new anchor, and ask what makes it that score. Use `AskUserQuestion` when
+   available — one question per changed cell, up to four per call, with
+   your best guesses at the reason as options plus "keep it, no reason" and
+   "agree — back to <old>" — and plain chat otherwise. The answer becomes
+   the cite as `reviewer: <answer>`. You may push back **once** when the
+   answer contradicts evidence you read (quote it); the reviewer's second
+   word is final. Declining is allowed: write `reviewer: no reason given` so
+   the gap is visible on the page and in the Score Rationale tab, and never
+   ask twice. A rewritten `Why` sentence needs no reason — it is the
+   reviewer's own words.
+
 3b. **Tasks + O/M/P** — STANDARD/DEEP only, per `techniques.md` §3. After a
    feature's tasks are sized, compare `Σ pert(e)` with its tier's calibration
    band. Outside the band, say so once — `Σ19 → L → 160–400 h, tasks sum to

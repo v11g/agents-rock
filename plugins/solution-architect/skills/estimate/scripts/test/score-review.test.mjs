@@ -117,6 +117,20 @@ test('CLI: --write csv then --read reports the diff and the re-anchored features
   assert.deepEqual(out.diff, [{ id: 'reminders', field: 'tech', from: 2, to: 4 }]);
   assert.equal(out.features[1].scores.tech.anchor, loadGuide().tech[3]);
   assert.equal(out.features[1].scoreProvenance, 'stated');
+  // every changed score is a question the agent must put to the reviewer;
+  // the old cite is what the question is argued against
+  assert.deepEqual(out.needsReason, [{ id: 'reminders', field: 'tech', from: 2, to: 4, oldCite: 'scheduled job + template' }]);
+});
+
+test('CLI: a rewritten plain note needs no reason — only score changes do', () => {
+  const { dir, path } = writeDraft();
+  const fb = { features: [{ id: 'booking', scores: { tech: 3, size: 3, deps: 2, unc: 3, risk: 3 }, scoreNote: 'Booking rules; a few open questions' }] };
+  const fbPath = join(dir, 'feedback.json');
+  writeFileSync(fbPath, JSON.stringify(fb));
+  const out = JSON.parse(execFileSync('node', [cli, '--read', fbPath, '--draft', path], { encoding: 'utf8' }));
+  assert.equal(out.diff.length, 1);
+  assert.equal(out.diff[0].field, 'scoreNote');
+  assert.deepEqual(out.needsReason, []);
 });
 
 test('CLI: --write html renders one select per score with the anchor as its title', skip, async () => {

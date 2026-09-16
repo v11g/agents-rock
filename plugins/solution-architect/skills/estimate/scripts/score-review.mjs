@@ -6,7 +6,7 @@ import { readFileSync, writeFileSync } from 'node:fs';
 import { toCsv, fromCsv } from './lib/score-csv.mjs';
 import { diffScores, applyDiff } from './lib/score-diff.mjs';
 import { toHtml } from './lib/score-html.mjs';
-import { loadGuide, guideTableHtml } from './lib/scoring.mjs';
+import { loadGuide, guideTableHtml, SCORE_FACTORS } from './lib/scoring.mjs';
 
 function parseArgs(argv) {
   const args = {};
@@ -34,7 +34,12 @@ function read(args) {
   const edited = args.read.endsWith('.json') ? json(args.read) : fromCsv(readFileSync(args.read, 'utf8'));
   const diff = diffScores(draft, edited);
   const features = applyDiff({ draft, diff, guide: loadGuide() });
-  console.log(JSON.stringify({ diff, features }, null, 2));
+  // Every changed score is a question the agent owes the reviewer ("what
+  // makes it a 4?"); the old cite is the evidence the answer argues against.
+  // A rewritten plain note is the reviewer's own words and needs no reason.
+  const needsReason = diff.filter((c) => SCORE_FACTORS.includes(c.field))
+    .map((c) => ({ ...c, oldCite: draft.features.find((f) => f.id === c.id).scores[c.field].cite }));
+  console.log(JSON.stringify({ diff, needsReason, features }, null, 2));
 }
 
 function usage() {
