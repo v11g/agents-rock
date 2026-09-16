@@ -542,9 +542,10 @@ const EDGE_TOTALS = [11, 17, 22];
 // they are questions about features rather than about either view.
 const TABS = [['estimate', 'Estimate'], ['scoring', 'Scoring']];
 const TAB_LABELS = Object.fromEntries(TABS);
+const SORT_DEFAULTS = { estimate: { key: 'hours', dir: -1 }, scoring: { key: 'total', dir: -1 } };
 const bdState = {
   tab: 'estimate',
-  sort: { estimate: { key: 'hours', dir: -1 }, scoring: { key: 'total', dir: -1 } },
+  sort: { estimate: { ...SORT_DEFAULTS.estimate }, scoring: { ...SORT_DEFAULTS.scoring } },
   milestone: '', component: '', prov: '', group: false, expanded: new Set(), guideOpen: true,
 };
 const DESC_FIRST = ['hours', 'total'];
@@ -603,6 +604,85 @@ function bdVisible(list) {
   return list.filter((f) => (!bdState.milestone || f.milestone === bdState.milestone)
     && (!bdState.component || containerOf(f.component) === bdState.component)
     && (!bdState.prov || f.provenance === bdState.prov));
+}
+
+// Which features someone is looking at is a question about the estimate, not
+// about their session, so the answer travels: every breakdown choice is
+// written into the fragment and a pasted link reopens that exact table. A
+// fragment rather than a query because the page is as often opened off a disk
+// copy as served, and a fragment survives both without reaching a server.
+// Defaults are never written, so an untouched page has no hash to copy.
+const FEAT_IDS = DATA.inputs.features.map((f) => f.id);
+
+function bdOpenParam() {
+  if (!bdState.expanded.size) return '';
+  return bdState.expanded.size === FEAT_IDS.length ? 'all'
+    : FEAT_IDS.filter((id) => bdState.expanded.has(id)).join(',');
+}
+
+function bdSortParams(p) {
+  bdTabs().forEach((tab) => {
+    const { key, dir } = bdState.sort[tab];
+    const d = SORT_DEFAULTS[tab];
+    if (key !== d.key || dir !== d.dir) p.append('sort', `${tab}:${key}:${dir}`);
+  });
+}
+
+function bdEncode() {
+  const p = new URLSearchParams();
+  const put = (k, v) => { if (v) p.append(k, v); };
+  put('tab', bdState.tab === 'estimate' ? '' : bdState.tab);
+  put('ms', bdState.milestone);
+  put('ct', bdState.component);
+  put('src', bdState.prov);
+  put('group', bdState.group ? '1' : '');
+  put('open', bdOpenParam());
+  put('guide', bdState.guideOpen ? '' : '0');
+  bdSortParams(p);
+  return p.toString();
+}
+
+// A colleague's copy can hold different features. A filter naming a milestone
+// that copy has never heard of would empty the table with no hint why, so
+// anything the data does not know is dropped rather than applied.
+const bdPick = (value, allowed) => (allowed.includes(value) ? value : '');
+
+function bdDecodeSort(p) {
+  p.getAll('sort').forEach((s) => {
+    const [tab, key, dir] = s.split(':');
+    if (!SORT_DEFAULTS[tab] || !bdCols(tab).some((c) => c.key === key)) return;
+    bdState.sort[tab] = { key, dir: dir === '1' ? 1 : -1 };
+  });
+}
+
+function bdDecodeOpen(value) {
+  if (value === 'all') return new Set(FEAT_IDS);
+  return new Set((value ?? '').split(',').filter((id) => FEAT_IDS.includes(id)));
+}
+
+function bdDecode(hash) {
+  const p = new URLSearchParams(hash);
+  const all = breakdownData();
+  bdState.tab = bdPick(p.get('tab'), bdTabs()) || 'estimate';
+  bdState.milestone = bdPick(p.get('ms'), all.map((f) => f.milestone));
+  bdState.component = bdPick(p.get('ct'), all.map((f) => containerOf(f.component)));
+  bdState.prov = bdPick(p.get('src'), all.map((f) => f.provenance));
+  bdState.group = p.get('group') === '1';
+  bdState.guideOpen = p.get('guide') !== '0';
+  bdState.expanded = bdDecodeOpen(p.get('open'));
+  bdDecodeSort(p);
+}
+
+// replaceState, not pushState: someone clicking through four sorts has not
+// asked for four back-button stops. A few browsers refuse a history write on
+// a file:// page, so the fragment is assigned directly when that throws — the
+// hashchange that assignment fires arrives at a state already matching this
+// one, and the guard below stops it there.
+function bdSyncUrl() {
+  const q = bdEncode();
+  if (q === location.hash.slice(1)) return;
+  try { history.replaceState(null, '', location.pathname + location.search + (q ? `#${q}` : '')); }
+  catch { location.hash = q; }
 }
 
 // The chevron opens tasks on the estimate tab and the scoring reasoning on
@@ -824,6 +904,7 @@ function renderBreakdown() {
   const panels = bdTabs().map((tab) => bdPanel(tab, all, max)).join('');
   el.innerHTML = secHead('Feature breakdown', BD_HELP, bdDownloadBtn())
     + bdTabStrip() + bdFilters(all, bdVisible(all).length) + panels;
+  bdSyncUrl();
 }
 
 function bdSort(key, tab) {
@@ -1121,14 +1202,26 @@ function renderAll() {
   renderRegister();
   renderMethod();
 }
+bdDecode(location.hash.slice(1));
 renderAll();
+
+// The back button, and a hash pasted into the address bar, both arrive here.
+// Our own writes use replaceState and so never fire this; the guard catches
+// the file:// fallback, which does.
+window.addEventListener('hashchange', () => {
+  if (bdEncode() === location.hash.slice(1)) return;
+  bdDecode(location.hash.slice(1));
+  renderBreakdown();
+});
 
 document.getElementById('feature-table')?.addEventListener('click', onBreakdownClick);
 document.getElementById('feature-table')?.addEventListener('change', onBreakdownChange);
 document.getElementById('feature-table')?.addEventListener('keydown', onBreakdownKeydown);
 // `toggle` does not bubble, so this one listens in the capture phase instead.
 document.getElementById('feature-table')?.addEventListener('toggle', (e) => {
-  if (e.target.matches('[data-guide]')) bdState.guideOpen = e.target.open;
+  if (!e.target.matches('[data-guide]')) return;
+  bdState.guideOpen = e.target.open;
+  bdSyncUrl(); // the fold does not re-render, so it syncs for itself
 }, true);
 document.getElementById('roadmap')?.addEventListener('click', onRoadmapClick);
 document.getElementById('containers')?.addEventListener('mouseover', onPieHover);
