@@ -170,3 +170,29 @@ test('the view parameter only ever switches the preview on', skip, async () => {
     assert.deepEqual(page.errors, []);
   } finally { page.close(); }
 });
+
+// The toggle is itself internal, so client view used to hide the one control
+// that leaves it — a one-way trip ending in a reload. It stays put now, and
+// says which way it goes.
+test('the client view can be left the way it was entered', skip, async () => {
+  const page = await openPage(buildPage());
+  const toggle = `document.getElementById('view-toggle')`;
+  try {
+    await page.eval(`${toggle}.click()`);
+    assert.notEqual(await page.eval(`getComputedStyle(${toggle}).display`), 'none');
+    assert.equal(await page.eval(`${toggle}.textContent`), 'internal view');
+    await page.eval(`${toggle}.click()`);
+    assert.equal(await page.eval(`document.body.classList.contains('view-client')`), false);
+    assert.equal(await page.eval(`${toggle}.textContent`), 'client view');
+    assert.equal(await page.eval('location.search'), '');
+    assert.deepEqual(page.errors, []);
+  } finally { page.close(); }
+});
+
+test('a client-view URL labels the toggle for the way back', skip, async () => {
+  const page = await openPage(`${buildPage()}?view=client`);
+  try {
+    assert.equal(await page.eval(`document.getElementById('view-toggle').textContent`), 'internal view');
+    assert.deepEqual(page.errors, []);
+  } finally { page.close(); }
+});

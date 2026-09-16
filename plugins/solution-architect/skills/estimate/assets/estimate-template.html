@@ -338,6 +338,9 @@ tr.rat-row td { background:var(--bg); }
 .rationale .cite { display:block; color:var(--ink-dim); font-size:.74rem; }
 #register > div + table, #register > table + table { margin-top:1.4rem; }
 .view-client [data\2d internal] { display:none !important; }
+/* every exception to the rule above: the control that leaves client view
+   cannot be one of the things client view hides. */
+.view-client #view-toggle { display:revert !important; }
 @media print {
   header { position:static; }
   header button, #viewer-link, details.help, .bd-filters, .bd-tabs, .expand { display:none; }
@@ -1245,13 +1248,24 @@ function setViewParam(on) {
   catch { /* the view is showing either way */ }
 }
 
-if (new URLSearchParams(location.search).get('view') === 'client') {
-  document.body.classList.add('view-client');
+// The button names where it goes, not where it is. Guarded on the button's
+// presence: a --client-only render has no toggle and its body class is the
+// render, not a preview, so nothing here may touch it.
+const viewToggle = document.getElementById('view-toggle');
+
+function applyView(on) {
+  document.body.classList.toggle('view-client', on);
+  viewToggle.textContent = on ? 'internal view' : 'client view';
 }
 
-document.getElementById('view-toggle')?.addEventListener('click', () => {
-  setViewParam(document.body.classList.toggle('view-client'));
-});
+if (viewToggle) {
+  if (new URLSearchParams(location.search).get('view') === 'client') applyView(true);
+  viewToggle.addEventListener('click', () => {
+    const on = !document.body.classList.contains('view-client');
+    applyView(on);
+    setViewParam(on);
+  });
+}
 
 document.getElementById('theme-toggle')?.addEventListener('click', () => {
   const root = document.documentElement;
