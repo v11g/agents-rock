@@ -76,13 +76,13 @@ test('feature breakdown absorbs the effort chart and the task register', skip, a
   try {
     assert.equal(await page.eval(`document.getElementById('timeline')`), null);
     const names = await page.eval(
-      `[...document.querySelectorAll('#feature-table tr.feat-row td:first-child')].map((c) => c.textContent.trim())`);
+      `[...document.querySelectorAll('#panel-estimate tr.feat-row td:first-child')].map((c) => c.textContent.trim())`);
     assert.equal(names.length, 2);
     assert.match(names[0], /book appointment/); // hours desc by default
-    assert.equal(await page.eval(`document.querySelectorAll('#feature-table .bd-fill').length`), 2);
+    assert.equal(await page.eval(`document.querySelectorAll('#panel-estimate .bd-fill').length`), 2);
     // per-feature confidence chip is the worst task confidence (booking: HIGH+MED → MED)
     const conf = await page.eval(
-      `[...document.querySelectorAll('#feature-table tr.feat-row .conf')].map((c) => c.textContent)`);
+      `[...document.querySelectorAll('#panel-estimate tr.feat-row .conf')].map((c) => c.textContent)`);
     assert.deepEqual(conf, ['MED', 'MED']);
     // the flat task register is gone; the risk register keeps its own section
     const captions = await page.eval(
@@ -97,12 +97,12 @@ test('breakdown headers sort: effort toggles to ascending on click', skip, async
   const page = await openPage(buildPage());
   try {
     const firstRow = () => page.eval(
-      `document.querySelector('#feature-table tr.feat-row td:first-child').textContent.trim()`);
+      `document.querySelector('#panel-estimate tr.feat-row td:first-child').textContent.trim()`);
     assert.match(await firstRow(), /book appointment/);
-    await page.eval(`document.querySelector('#feature-table th button[data-sort="hours"]').click()`);
+    await page.eval(`document.querySelector('#panel-estimate th button[data-sort="hours"]').click()`);
     assert.match(await firstRow(), /Email reminders/);
     assert.equal(await page.eval(
-      `document.querySelector('#feature-table th button[data-sort="hours"]').closest('th').getAttribute('aria-sort')`),
+      `document.querySelector('#panel-estimate th button[data-sort="hours"]').closest('th').getAttribute('aria-sort')`),
     'ascending');
   } finally { page.close(); }
 });
@@ -110,30 +110,16 @@ test('breakdown headers sort: effort toggles to ascending on click', skip, async
 test('expanding a feature reveals its tasks; client view hides the drill-down', skip, async () => {
   const page = await openPage(buildPage());
   try {
-    assert.equal(await page.eval(`document.querySelectorAll('#feature-table tr.task-row').length`), 0);
-    await page.eval(`document.querySelector('#feature-table tr.feat-row .expand').click()`);
+    assert.equal(await page.eval(`document.querySelectorAll('#panel-estimate tr.task-row').length`), 0);
+    await page.eval(`document.querySelector('#panel-estimate tr.feat-row .expand').click()`);
     const tasks = await page.eval(
-      `[...document.querySelectorAll('#feature-table tr.task-row td:first-child')].map((c) => c.childNodes[0].textContent.trim())`);
+      `[...document.querySelectorAll('#panel-estimate tr.task-row td:first-child')].map((c) => c.childNodes[0].textContent.trim())`);
     assert.deepEqual(tasks, ['Booking CRUD API', 'Slot conflict + cancellation rules']);
     await page.eval(`document.getElementById('view-toggle').click()`);
     assert.equal(await page.eval(
-      `getComputedStyle(document.querySelector('#feature-table tr.task-row')).display`), 'none');
+      `getComputedStyle(document.querySelector('#panel-estimate tr.task-row')).display`), 'none');
     assert.equal(await page.eval(
-      `getComputedStyle(document.querySelector('#feature-table .expand')).display`), 'none');
-  } finally { page.close(); }
-});
-
-
-test('expand all / collapse all toggle every task row and stay internal-only', skip, async () => {
-  const page = await openPage(buildPage());
-  try {
-    await page.eval(`document.querySelector('#feature-table button[data-expand="all"]').click()`);
-    assert.equal(await page.eval(`document.querySelectorAll('#feature-table tr.task-row').length`), 3);
-    await page.eval(`document.querySelector('#feature-table button[data-expand="none"]').click()`);
-    assert.equal(await page.eval(`document.querySelectorAll('#feature-table tr.task-row').length`), 0);
-    await page.eval(`document.getElementById('view-toggle').click()`);
-    assert.equal(await page.eval(
-      `getComputedStyle(document.querySelector('#feature-table button[data-expand="all"]').closest('.bd-filter-group')).display`), 'none');
+      `getComputedStyle(document.querySelector('#panel-estimate .expand')).display`), 'none');
   } finally { page.close(); }
 });
 
@@ -144,21 +130,17 @@ const pickOption = (key, value) => `(() => {
   sel.dispatchEvent(new Event('change', { bubbles: true }));
 })()`;
 
-test('milestone select and provenance pills scope rows without rescaling bars', skip, async () => {
+test('the milestone filter scopes rows without rescaling bars', skip, async () => {
   const page = await openPage(buildPage());
   try {
     const width = () => page.eval(
-      `document.querySelector('#feature-table tr.feat-row[data-id="reminders"] .bd-fill').style.width`);
+      `document.querySelector('#panel-estimate tr.feat-row[data-id="reminders"] .bd-fill').style.width`);
     const before = await width();
     await page.eval(pickOption('milestone', 'M2 - Notifications'));
     const visible = await page.eval(
-      `[...document.querySelectorAll('#feature-table tr.feat-row')].map((r) => r.dataset.id)`);
+      `[...document.querySelectorAll('#panel-estimate tr.feat-row')].map((r) => r.dataset.id)`);
     assert.deepEqual(visible, ['reminders']);
     assert.equal(await width(), before, 'bar must keep its global scale under filters');
-    await page.eval(pickOption('milestone', ''));
-    await page.eval(`document.querySelector('#feature-table button[data-prov="stated"]').click()`);
-    assert.deepEqual(await page.eval(
-      `[...document.querySelectorAll('#feature-table tr.feat-row')].map((r) => r.dataset.id)`), ['booking']);
   } finally { page.close(); }
 });
 
@@ -219,7 +201,7 @@ test('no roster → the containers section is absent, no placeholder', skip, asy
     assert.equal(await page.eval(`document.querySelectorAll('#roadmap .roadmap-seg').length`), 0);
     assert.ok(await page.eval(`document.querySelectorAll('#roadmap .roadmap-band').length > 0`));
     // and the breakdown rows carry no container stripes
-    assert.equal(await page.eval(`document.querySelectorAll('#feature-table td.ct-edge').length`), 0);
+    assert.equal(await page.eval(`document.querySelectorAll('#panel-estimate td.ct-edge').length`), 0);
     assert.deepEqual(page.errors, []);
   } finally { page.close(); }
 });
@@ -233,7 +215,7 @@ test('container select filters rows by container', skip, async () => {
     assert.deepEqual(options, ['all containers', 'Booking API', 'Notification Service']);
     // each row's first cell carries its container's stripe on the left edge,
     // named on hover — same palette as the donut
-    const stripes = await page.eval(`[...document.querySelectorAll('#feature-table tr.feat-row td.ct-edge')]
+    const stripes = await page.eval(`[...document.querySelectorAll('#panel-estimate tr.feat-row td.ct-edge')]
       .map((c) => ({ title: c.title, shadow: getComputedStyle(c).boxShadow, inline: c.style.boxShadow }))`);
     assert.deepEqual(stripes.map((s) => s.title), ['Booking API', 'Notification Service']);
     assert.ok(stripes.every((s) => /inset/.test(s.shadow)), 'stripe must be an inset edge, no gap');
@@ -242,13 +224,13 @@ test('container select filters rows by container', skip, async () => {
       'the shadow lives in the ct-edge class — inline style carries only the color variable');
     await page.eval(pickOption('component', 'notify'));
     assert.deepEqual(await page.eval(
-      `[...document.querySelectorAll('#feature-table tr.feat-row')].map((r) => r.dataset.id)`), ['reminders']);
+      `[...document.querySelectorAll('#panel-estimate tr.feat-row')].map((r) => r.dataset.id)`), ['reminders']);
     await page.eval(pickOption('component', ''));
-    assert.equal(await page.eval(`document.querySelectorAll('#feature-table tr.feat-row').length`), 2);
+    assert.equal(await page.eval(`document.querySelectorAll('#panel-estimate tr.feat-row').length`), 2);
     // expanded task rows belong to the feature's container — same stripe
-    await page.eval(`document.querySelector('#feature-table tr.feat-row .expand').click()`);
+    await page.eval(`document.querySelector('#panel-estimate tr.feat-row .expand').click()`);
     const taskStripe = await page.eval(
-      `getComputedStyle(document.querySelector('#feature-table tr.task-row td.ct-edge')).boxShadow`);
+      `getComputedStyle(document.querySelector('#panel-estimate tr.task-row td.ct-edge')).boxShadow`);
     assert.equal(taskStripe, stripes[0].shadow);
     assert.deepEqual(page.errors, []);
   } finally { page.close(); }
@@ -264,14 +246,14 @@ test('roadmap bands segment by container; clicking a row drives the breakdown', 
     await page.eval(pickOption('component', 'api'));
     await page.eval(`document.querySelector('#roadmap .roadmap-row[data-milestone="M2 - Notifications"]').click()`);
     assert.deepEqual(await page.eval(
-      `[...document.querySelectorAll('#feature-table tr.feat-row')].map((r) => r.dataset.id)`), ['reminders']);
+      `[...document.querySelectorAll('#panel-estimate tr.feat-row')].map((r) => r.dataset.id)`), ['reminders']);
     assert.equal(await page.eval(
       `document.querySelector('#feature-table select[data-select="milestone"]').value`), 'M2 - Notifications');
     assert.equal(await page.eval(
       `document.querySelector('#feature-table select[data-select="component"]').value`), '');
     // same row again → the filter clears, every feature returns
     await page.eval(`document.querySelector('#roadmap .roadmap-row[data-milestone="M2 - Notifications"]').click()`);
-    assert.equal(await page.eval(`document.querySelectorAll('#feature-table tr.feat-row').length`), 2);
+    assert.equal(await page.eval(`document.querySelectorAll('#panel-estimate tr.feat-row').length`), 2);
     assert.deepEqual(page.errors, []);
   } finally { page.close(); }
 });
@@ -304,20 +286,21 @@ test('a roadmap click groups the breakdown rows by container', skip, async () =>
   const page = await openPage(pathToFileURL(join(dir, 'estimate.html')).href);
   try {
     const ids = () => page.eval(
-      `[...document.querySelectorAll('#feature-table tr.feat-row')].map((r) => r.dataset.id)`);
+      `[...document.querySelectorAll('#panel-estimate tr.feat-row')].map((r) => r.dataset.id)`);
     await page.eval(`document.querySelector('#roadmap .roadmap-row[data-milestone="M2 - Notifications"]').click()`);
     // hours desc would put reminders first; container grouping puts the api row first
     assert.deepEqual(await ids(), ['audit', 'reminders']);
-    // no header may claim a sort the grouping just overrode
-    assert.deepEqual(await page.eval(
-      `[...document.querySelectorAll('${BD_HEAD}')].map((t) => t.getAttribute('aria-sort'))`),
-    Array(11).fill('none'));
+    // no header on either tab may claim a sort the grouping just overrode
+    const sortStates = (sel) => page.eval(
+      `[...document.querySelectorAll('${sel}')].map((t) => t.getAttribute('aria-sort'))`);
+    assert.deepEqual(await sortStates(BD_HEAD), Array(4).fill('none'));
+    assert.deepEqual(await sortStates(SCORE_HEAD), Array(8).fill('none'));
     // an explicit header sort takes control back from the grouping, starting
     // fresh at the column's default direction — not toggling a stale one
-    await page.eval(`document.querySelector('#feature-table th button[data-sort="hours"]').click()`);
+    await page.eval(`document.querySelector('#panel-estimate th button[data-sort="hours"]').click()`);
     assert.deepEqual(await ids(), ['reminders', 'audit']);
     assert.equal(await page.eval(
-      `document.querySelector('#feature-table th button[data-sort="hours"]').closest('th').getAttribute('aria-sort')`),
+      `document.querySelector('#panel-estimate th button[data-sort="hours"]').closest('th').getAttribute('aria-sort')`),
     'descending');
     assert.deepEqual(page.errors, []);
   } finally { page.close(); }
@@ -421,18 +404,23 @@ test('no milestones → the roadmap section is absent, no placeholder', skip, as
 // --- breakdown scores: the interview's five judgments rendered in-page ---
 
 const cellTexts = (sel) => `[...document.querySelectorAll('${sel}')].map((n) => n.textContent.trim())`;
-// The breakdown table is the direct .bd-scroll child — the scoring-guide fold
-// sits inside #feature-table too and carries its own header row. The active
-// column's label ends in a sort arrow, which is not part of the column name.
-const BD_HEAD = '#feature-table > .bd-scroll th';
-const headTexts = `${cellTexts(BD_HEAD)}.map((t) => t.replace(/ [▲▼]$/, ''))`;
+// Each tab's table is the direct .bd-scroll child of its panel — the
+// scoring-guide fold sits inside the scoring panel too and carries its own
+// header row. The active column's label ends in a sort arrow, which is not
+// part of the column name.
+const BD_HEAD = '#panel-estimate > .bd-scroll th';
+const SCORE_HEAD = '#panel-scoring > .bd-scroll th';
+const stripArrow = (sel) => `${cellTexts(sel)}.map((t) => t.replace(/ [▲▼]$/, ''))`;
+const headTexts = stripArrow(BD_HEAD);
+const scoreHeadTexts = stripArrow(SCORE_HEAD);
+const clickTab = (tab) => `document.querySelector('#feature-table [role="tab"][data-tab="${tab}"]').click()`;
 
-test('scored breakdown: five score columns, Σ, tier, then effort; values verbatim from inputs', skip, async () => {
+test('the scoring tab carries the five factors, Σ and tier; values verbatim from inputs', skip, async () => {
   const page = await openPage(buildPage());
   try {
-    const heads = await page.eval(headTexts);
-    assert.deepEqual(heads, ['Feature', 'Tech', 'Size', 'Deps', 'Unc', 'Risk', 'Σ', 'Tier', 'Effort (h)', 'Confidence', 'Source']);
-    const booking = await page.eval(cellTexts('#feature-table tr[data-id="booking"] td.score'));
+    assert.deepEqual(await page.eval(scoreHeadTexts),
+      ['Feature', 'Tech', 'Size', 'Deps', 'Unc', 'Risk', 'Σ', 'Tier']);
+    const booking = await page.eval(cellTexts('#panel-scoring tr[data-id="booking"] td.score'));
     assert.deepEqual(booking.slice(0, 5), ['3', '3', '2', '3', '3']);
     assert.equal(booking[5], '14');
     assert.equal(booking[6], 'M');
@@ -444,13 +432,13 @@ test('scored breakdown: five score columns, Σ, tier, then effort; values verbat
 test('score cells explain themselves: anchor + cite on hover, note under the name, ⚑ on a tier edge', skip, async () => {
   const page = await openPage(buildPage());
   try {
-    const title = await page.eval(`document.querySelector('#feature-table tr[data-id="reminders"] td.score').title`);
+    const title = await page.eval(`document.querySelector('#panel-scoring tr[data-id="reminders"] td.score').title`);
     assert.match(title, /Minor customisation of standard patterns/);
     assert.match(title, /scheduled job \+ template/);
-    const note = await page.eval(`document.querySelector('#feature-table tr[data-id="booking"] .feat-note').textContent`);
+    const note = await page.eval(`document.querySelector('#panel-scoring tr[data-id="booking"] .feat-note').textContent`);
     assert.match(note, /open questions/);
-    assert.ok(await page.eval(`!!document.querySelector('#feature-table tr[data-id="reminders"] .edge')`), 'Σ 11 sits on a tier edge');
-    assert.equal(await page.eval(`!!document.querySelector('#feature-table tr[data-id="booking"] .edge')`), false);
+    assert.ok(await page.eval(`!!document.querySelector('#panel-scoring tr[data-id="reminders"] .edge')`), 'Σ 11 sits on a tier edge');
+    assert.equal(await page.eval(`!!document.querySelector('#panel-scoring tr[data-id="booking"] .edge')`), false);
     assert.deepEqual(page.errors, []);
   } finally { page.close(); }
 });
@@ -461,9 +449,9 @@ test('⚠ marks a feature whose PERT hours fall outside its tier band', skip, as
     inputs.features[1].tasks[0] = { ...inputs.features[1].tasks[0], o: 90, m: 120, p: 160 };
   }));
   try {
-    const warn = await page.eval(`document.querySelector('#feature-table tr[data-id="reminders"] .oob')?.title ?? ''`);
+    const warn = await page.eval(`document.querySelector('#panel-estimate tr[data-id="reminders"] .oob')?.title ?? ''`);
     assert.match(warn, /outside S band 20–60 h/);
-    assert.equal(await page.eval(`!!document.querySelector('#feature-table tr[data-id="booking"] .oob')`), false);
+    assert.equal(await page.eval(`!!document.querySelector('#panel-estimate tr[data-id="booking"] .oob')`), false);
     assert.deepEqual(page.errors, []);
   } finally { page.close(); }
 });
@@ -471,8 +459,8 @@ test('⚠ marks a feature whose PERT hours fall outside its tier band', skip, as
 test('the scoring guide fold shows the reference table, open on first view', skip, async () => {
   const page = await openPage(buildPage());
   try {
-    assert.equal(await page.eval(`document.querySelector('#feature-table details.guide').open`), true);
-    assert.match(await page.eval(`document.querySelector('#feature-table details.guide').textContent`), /Tech complexity/);
+    assert.equal(await page.eval(`document.querySelector('#panel-scoring details.guide').open`), true);
+    assert.match(await page.eval(`document.querySelector('#panel-scoring details.guide').textContent`), /Tech complexity/);
     assert.deepEqual(page.errors, []);
   } finally { page.close(); }
 });
@@ -481,8 +469,8 @@ test('the scoring guide fold shows the reference table, open on first view', ski
 // bdState — otherwise every click either slams it shut or re-opens it.
 test('the scoring guide fold keeps its open state across a re-render', skip, async () => {
   const page = await openPage(buildPage());
-  const fold = `document.querySelector('#feature-table details.guide')`;
-  const sort = `document.querySelector('#feature-table th button[data-sort="name"]').click()`;
+  const fold = `document.querySelector('#panel-scoring details.guide')`;
+  const sort = `document.querySelector('#panel-estimate th button[data-sort="name"]').click()`;
   try {
     assert.equal(await page.eval(`${fold}.open`), true);
     await page.eval(sort);
@@ -494,7 +482,7 @@ test('the scoring guide fold keeps its open state across a re-render', skip, asy
   } finally { page.close(); }
 });
 
-test('QUICK inputs render today\'s four columns and no guide', skip, async () => {
+test('QUICK inputs render four columns, no tabs and no guide', skip, async () => {
   const page = await openPage(buildPageWith((inputs) => {
     inputs.depth = 'QUICK';
     for (const f of inputs.features) {
@@ -504,19 +492,242 @@ test('QUICK inputs render today\'s four columns and no guide', skip, async () =>
   }));
   try {
     assert.deepEqual(await page.eval(headTexts), ['Feature', 'Effort (h)', 'Confidence', 'Source']);
+    assert.equal(await page.eval(`document.querySelector('#feature-table [role="tablist"]')`), null,
+      'one view needs no tab strip');
+    assert.equal(await page.eval(`document.getElementById('panel-scoring')`), null);
     assert.equal(await page.eval(`document.querySelector('#feature-table details.guide')`), null);
     assert.deepEqual(page.errors, []);
   } finally { page.close(); }
 });
 
-test('expanded task rows line up under the scored header', skip, async () => {
+// Tasks live on the estimate tab, which never carries score columns, so a
+// task row fills the same four columns as the feature above it — the spacer
+// cell that used to span the scores is gone.
+test('expanded task rows line up under the estimate header', skip, async () => {
   const page = await openPage(buildPage());
   try {
-    await page.eval(`document.querySelector('#feature-table tr[data-id="booking"] button.expand').click()`);
-    const cells = await page.eval(`document.querySelectorAll('#feature-table tr.task-row td').length`);
-    // name + spacer(colspan 7 counts as one td) + o/m/p + confidence + category = 5 per row × 2 tasks
-    assert.equal(cells, 10);
-    assert.equal(await page.eval(`document.querySelector('#feature-table tr.task-row td:nth-child(2)').colSpan`), 7);
+    await page.eval(`document.querySelector('#panel-estimate tr[data-id="booking"] button.expand').click()`);
+    const cells = await page.eval(`document.querySelectorAll('#panel-estimate tr.task-row td').length`);
+    // name + o/m/p + confidence + category = 4 per row × 2 tasks
+    assert.equal(cells, 8);
+    assert.equal(await page.eval(
+      `document.querySelector('#panel-estimate tr.task-row td:nth-child(1)').colSpan`), 1);
+    assert.deepEqual(page.errors, []);
+  } finally { page.close(); }
+});
+
+// --- the two tabs: effort on one, judgment on the other ---
+
+test('estimate and scoring are real tabs, estimate selected first', skip, async () => {
+  const page = await openPage(buildPage());
+  try {
+    const tabs = await page.eval(`[...document.querySelectorAll('#feature-table [role="tab"]')]
+      .map((t) => ({ label: t.textContent.trim(), selected: t.getAttribute('aria-selected'),
+        controls: t.getAttribute('aria-controls'), tabindex: t.getAttribute('tabindex') }))`);
+    assert.deepEqual(tabs.map((t) => t.label), ['Estimate', 'Scoring']);
+    assert.deepEqual(tabs.map((t) => t.selected), ['true', 'false']);
+    assert.deepEqual(tabs.map((t) => t.controls), ['panel-estimate', 'panel-scoring']);
+    // roving tabindex: one stop in the strip, arrows move within it
+    assert.deepEqual(tabs.map((t) => t.tabindex), ['0', '-1']);
+    assert.equal(await page.eval(
+      `document.querySelector('#feature-table [role="tablist"]').children.length`), 2);
+    // every tab points at a panel that exists, and the idle one is hidden
+    assert.equal(await page.eval(`document.getElementById('panel-scoring').hidden`), true);
+    assert.equal(await page.eval(`document.getElementById('panel-estimate').hidden`), false);
+    assert.deepEqual(page.errors, []);
+  } finally { page.close(); }
+});
+
+test('each tab shows only its own columns', skip, async () => {
+  const page = await openPage(buildPage());
+  try {
+    assert.deepEqual(await page.eval(headTexts), ['Feature', 'Effort (h)', 'Confidence', 'Source']);
+    assert.deepEqual(await page.eval(scoreHeadTexts),
+      ['Feature', 'Tech', 'Size', 'Deps', 'Unc', 'Risk', 'Σ', 'Tier']);
+    await page.eval(clickTab('scoring'));
+    assert.equal(await page.eval(`document.getElementById('panel-scoring').hidden`), false);
+    assert.equal(await page.eval(`document.getElementById('panel-estimate').hidden`), true);
+    assert.equal(await page.eval(
+      `document.querySelector('#feature-table [role="tab"][data-tab="scoring"]').getAttribute('aria-selected')`), 'true');
+    assert.deepEqual(page.errors, []);
+  } finally { page.close(); }
+});
+
+test('arrow keys move between tabs and take the focus with them', skip, async () => {
+  const page = await openPage(buildPage());
+  const key = (k) => `(() => {
+    const on = document.querySelector('#feature-table [role="tab"][aria-selected="true"]');
+    on.focus();
+    on.dispatchEvent(new KeyboardEvent('keydown', { key: ${JSON.stringify(k)}, bubbles: true }));
+  })()`;
+  try {
+    await page.eval(key('ArrowRight'));
+    assert.equal(await page.eval(`document.activeElement.dataset.tab`), 'scoring');
+    assert.equal(await page.eval(`document.getElementById('panel-scoring').hidden`), false);
+    await page.eval(key('ArrowLeft'));
+    assert.equal(await page.eval(`document.activeElement.dataset.tab`), 'estimate');
+    assert.deepEqual(page.errors, []);
+  } finally { page.close(); }
+});
+
+// Every score carries a rubric anchor and the evidence it rests on; both were
+// tooltip-only, which never survived touch, print, or a find-in-page.
+test('expanding on the scoring tab prints each score\'s rubric sentence and evidence', skip, async () => {
+  const page = await openPage(buildPage());
+  try {
+    await page.eval(clickTab('scoring'));
+    assert.equal(await page.eval(`document.querySelectorAll('#panel-scoring tr.rat-row').length`), 0);
+    await page.eval(`document.querySelector('#panel-scoring tr[data-id="reminders"] button.expand').click()`);
+    const terms = await page.eval(cellTexts('#panel-scoring tr.rat-row dt'));
+    assert.deepEqual(terms, ['Tech 2', 'Size 2', 'Deps 3', 'Unc 2', 'Risk 2']);
+    const first = await page.eval(
+      `document.querySelector('#panel-scoring tr.rat-row dd').textContent`);
+    assert.match(first, /Minor customisation of standard patterns/);
+    assert.match(first, /scheduled job \+ template/);
+    // the block spans the whole row, stripe included
+    assert.equal(await page.eval(
+      `document.querySelector('#panel-scoring tr.rat-row td').colSpan`), 8);
+    assert.ok(await page.eval(
+      `document.querySelector('#panel-scoring tr.rat-row td').classList.contains('ct-edge')`));
+    assert.deepEqual(page.errors, []);
+  } finally { page.close(); }
+});
+
+// redact.mjs blanks a cite and keeps the anchor: the client still reads why
+// each score is what it is, without the internal shorthand behind it.
+test('a client render keeps the rubric sentences and drops the evidence', skip, async () => {
+  const page = await openPage(buildPage(['--client-only']));
+  try {
+    await page.eval(clickTab('scoring'));
+    await page.eval(`document.querySelector('#panel-scoring tr[data-id="reminders"] button.expand').click()`);
+    assert.equal(await page.eval(`document.querySelectorAll('#panel-scoring tr.rat-row dd').length`), 5);
+    assert.match(await page.eval(`document.querySelector('#panel-scoring tr.rat-row dd').textContent`),
+      /Minor customisation of standard patterns/);
+    assert.equal(await page.eval(`document.querySelectorAll('#panel-scoring tr.rat-row .cite').length`), 0);
+    assert.deepEqual(page.errors, []);
+  } finally { page.close(); }
+});
+
+// The view toggle previews the client render without re-rendering, so it has
+// to hide the evidence the client render would never have carried.
+test('the client view toggle hides the evidence under each anchor', skip, async () => {
+  const page = await openPage(buildPage());
+  try {
+    await page.eval(clickTab('scoring'));
+    await page.eval(`document.querySelector('#panel-scoring tr[data-id="reminders"] button.expand').click()`);
+    assert.equal(await page.eval(`document.querySelectorAll('#panel-scoring .rationale .cite').length`), 5);
+    await page.eval(`document.getElementById('view-toggle').click()`);
+    assert.equal(await page.eval(
+      `getComputedStyle(document.querySelector('#panel-scoring .rationale .cite')).display`), 'none');
+    assert.notEqual(await page.eval(
+      `getComputedStyle(document.querySelector('#panel-scoring .rationale dd')).display`), 'none',
+    'the rubric sentence is the client\'s to read');
+    assert.deepEqual(page.errors, []);
+  } finally { page.close(); }
+});
+
+// The chevron opens tasks on one tab and reasoning on the other, so it is
+// internal-only for tasks and visible for reasoning.
+test('expand all opens tasks on estimate and rationale on scoring', skip, async () => {
+  const page = await openPage(buildPage());
+  const expandAll = `document.querySelector('#feature-table button[data-expand="all"]').click()`;
+  try {
+    await page.eval(expandAll);
+    assert.equal(await page.eval(`document.querySelectorAll('#panel-estimate tr.task-row').length`), 3);
+    await page.eval(clickTab('scoring'));
+    // one expanded set: the features opened on estimate are open here too
+    assert.equal(await page.eval(`document.querySelectorAll('#panel-scoring tr.rat-row').length`), 2);
+    await page.eval(`document.querySelector('#feature-table button[data-expand="none"]').click()`);
+    assert.equal(await page.eval(`document.querySelectorAll('#panel-scoring tr.rat-row').length`), 0);
+    assert.deepEqual(page.errors, []);
+  } finally { page.close(); }
+});
+
+test('the expand controls hide in a client view on estimate and stay on scoring', skip, async () => {
+  const page = await openPage(buildPage());
+  const groupDisplay = `getComputedStyle(
+    document.querySelector('#feature-table button[data-expand="all"]').closest('.bd-filter-group')).display`;
+  try {
+    await page.eval(`document.getElementById('view-toggle').click()`);
+    assert.equal(await page.eval(groupDisplay), 'none', 'tasks are internal, so is the control that opens them');
+    await page.eval(clickTab('scoring'));
+    assert.notEqual(await page.eval(groupDisplay), 'none', 'the client may open the reasoning');
+    assert.deepEqual(page.errors, []);
+  } finally { page.close(); }
+});
+
+test('the three filters are selects in one row and scope both tabs', skip, async () => {
+  const page = await openPage(buildPage());
+  try {
+    assert.deepEqual(await page.eval(
+      `[...document.querySelectorAll('#feature-table .bd-filters select')].map((s) => s.dataset.select)`),
+    ['milestone', 'component', 'prov']);
+    assert.equal(await page.eval(`document.querySelector('#feature-table [data-prov]')`), null,
+      'source is a select now, not a pill group');
+    await page.eval(pickOption('prov', 'stated'));
+    const ids = (panel) => page.eval(`[...document.querySelectorAll('#panel-${panel} tr.feat-row')].map((r) => r.dataset.id)`);
+    assert.deepEqual(await ids('estimate'), ['booking']);
+    assert.deepEqual(await ids('scoring'), ['booking'], 'one filter bar, both tabs');
+    assert.deepEqual(page.errors, []);
+  } finally { page.close(); }
+});
+
+test('the filter row counts what survives and clears back to everything', skip, async () => {
+  const page = await openPage(buildPage());
+  const count = `document.querySelector('#feature-table .bd-count').textContent.trim()`;
+  try {
+    assert.match(await page.eval(count), /^2 features$/);
+    await page.eval(pickOption('prov', 'stated'));
+    assert.match(await page.eval(count), /^1 of 2 features$/);
+    await page.eval(`document.querySelector('#feature-table button[data-clear]').click()`);
+    assert.match(await page.eval(count), /^2 features$/);
+    assert.equal(await page.eval(
+      `document.querySelector('#feature-table select[data-select="prov"]').value`), '');
+    assert.deepEqual(page.errors, []);
+  } finally { page.close(); }
+});
+
+// The workbook carries a Task Breakdown sheet and a Score Rationale sheet, so
+// the export belongs to the section, not to either tab.
+test('download xlsx sits on the section heading, outside both tabs', skip, async () => {
+  const page = await openPage(buildPage());
+  try {
+    assert.ok(await page.eval(`!!document.querySelector('#feature-table .sec-head button[data-download]')`));
+    assert.equal(await page.eval(`document.querySelector('#panel-estimate button[data-download]')`), null);
+    assert.equal(await page.eval(`document.querySelector('#panel-scoring button[data-download]')`), null);
+    assert.deepEqual(page.errors, []);
+  } finally { page.close(); }
+});
+
+test('each tab keeps its own sort', skip, async () => {
+  const page = await openPage(buildPage());
+  const firstOf = (panel) => page.eval(
+    `document.querySelector('#panel-${panel} tr.feat-row td:first-child').textContent.trim()`);
+  try {
+    assert.match(await firstOf('estimate'), /book appointment/, 'effort descending');
+    assert.match(await firstOf('scoring'), /book appointment/, 'Σ descending');
+    await page.eval(`document.querySelector('#panel-scoring th button[data-sort="total"]').click()`);
+    assert.match(await firstOf('scoring'), /Email reminders/, 'Σ ascending');
+    assert.match(await firstOf('estimate'), /book appointment/, 'the estimate sort is untouched');
+    assert.deepEqual(page.errors, []);
+  } finally { page.close(); }
+});
+
+// A tab is a screen affordance. On paper both tables print in full, each
+// named by its caption, with the guide open behind them.
+test('printing shows both tables, named', skip, async () => {
+  const page = await openPage(buildPage());
+  try {
+    await page.eval(`(() => {
+      const s = document.createElement('style');
+      s.textContent = '@media screen { .print-probe { display: none } }';
+      document.head.append(s);
+    })()`);
+    const captions = await page.eval(cellTexts('#feature-table caption'));
+    assert.deepEqual(captions, ['Estimate', 'Scoring']);
+    assert.equal(await page.eval(
+      `[...document.styleSheets].some((s) => [...s.cssRules].some((r) => /print/.test(r.conditionText ?? '')
+        && /tabpanel/.test(r.cssText)))`), true, 'print must unhide the idle panel');
     assert.deepEqual(page.errors, []);
   } finally { page.close(); }
 });

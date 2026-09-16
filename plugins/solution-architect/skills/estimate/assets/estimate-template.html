@@ -210,7 +210,25 @@ tr.conf-low .conf { color:var(--bad); }
 /* container stripe on a row's first cell: inset shadow — no gap to the table
    edge. The color arrives per row as --ct-color; the shadow lives here. */
 td.ct-edge { box-shadow:inset 4px 0 0 var(--ct-color); }
-.bd-filters { display:flex; flex-wrap:wrap; gap:.9rem; margin:0 0 .8rem; }
+.bd-filters { display:flex; flex-wrap:wrap; gap:.9rem; margin:0 0 .8rem; align-items:center; }
+/* the tab strip carries the rule under it; the selected tab paints over that
+   rule in the accent, so the two read as one edge rather than two lines. */
+.bd-tabs {
+  display:flex; flex-wrap:wrap; align-items:flex-end; gap:.9rem;
+  margin:0 0 .8rem; border-bottom:1px solid var(--border);
+}
+.tablist { display:flex; gap:1.1rem; margin-bottom:-1px; }
+.tablist [role="tab"] {
+  border:none; border-bottom:2px solid transparent; border-radius:0;
+  background:none; padding:.3rem .1rem; font-size:.84rem; font-weight:600; color:var(--ink-dim);
+}
+.tablist [role="tab"]:hover { color:var(--accent-ink); }
+.tablist [role="tab"][aria-selected="true"] { color:var(--ink); border-bottom-color:var(--accent); }
+.bd-tabs .bd-filter-group { margin-left:auto; padding-bottom:.35rem; }
+.bd-tabs .bd-filter-group button { font-size:.7rem; padding:.2rem .55rem; border-radius:1rem; }
+/* on screen a panel is named by its tab; the caption is for paper */
+#feature-table caption.panel-name { display:none; }
+.bd-count { font-size:.72rem; color:var(--ink-dim); font-variant-numeric:tabular-nums; }
 /* effort-by-container donut: slices are stroked circles (pathLength=100 turns
    stroke-dasharray into percent), legend carries the exact numbers. */
 #containers .pie-wrap { display:flex; flex-wrap:wrap; align-items:center; gap:1.8rem; }
@@ -256,7 +274,7 @@ td.ct-edge { box-shadow:inset 4px 0 0 var(--ct-color); }
 #feature-table th.score, #feature-table td.score { text-align:center; }
 #feature-table td.score { font-family:'IBM Plex Mono',monospace; font-variant-numeric:tabular-nums; }
 #feature-table td.score.hot { color:var(--bad); font-weight:600; }
-#feature-table td.score.total { font-weight:600; }
+#feature-table td.score.total { font-weight:600; white-space:nowrap; }
 .tier {
   font-family:'IBM Plex Mono',monospace; font-size:.68rem; font-weight:600;
   padding:.12rem .45rem; border-radius:.25rem; background:var(--border); color:var(--ink-dim);
@@ -302,13 +320,36 @@ tr.task-row td { background:var(--bg); }
 tr.task-row td:first-child { padding-left:2.1rem; }
 tr.task-row .bd-cell { justify-content:flex-end; }
 .task-assump { font-size:.76rem; color:var(--ink-dim); }
+/* a score's reasoning: the rubric sentence the number was anchored to, and
+   under it the evidence that sentence rests on. Indented to the name above,
+   two columns so the factor labels form their own edge. */
+tr.rat-row td { background:var(--bg); }
+/* justify-content pins the pair to the left: an `auto` track absorbs the free
+   width of a full-span cell, which opened a hand's width of nothing between
+   each factor and the sentence it labels. */
+.rationale {
+  display:grid; grid-template-columns:max-content minmax(0, 68ch); justify-content:start;
+  gap:.3rem .9rem; margin:0; padding:.1rem 0 .3rem 2.1rem; font-size:.78rem;
+}
+.rationale dt {
+  font-family:'IBM Plex Mono',monospace; font-size:.72rem; color:var(--ink-dim); white-space:nowrap;
+}
+.rationale dd { margin:0; }
+.rationale .cite { display:block; color:var(--ink-dim); font-size:.74rem; }
 #register > div + table, #register > table + table { margin-top:1.4rem; }
 .view-client [data\2d internal] { display:none !important; }
 @media print {
   header { position:static; }
-  header button, #viewer-link, details.help, .bd-filters, .expand { display:none; }
+  header button, #viewer-link, details.help, .bd-filters, .bd-tabs, .expand { display:none; }
   main { grid-template-columns:1fr; }
   main > section { box-shadow:none; }
+  /* a tab is a screen affordance: on paper both tables print, each under the
+     name its tab carried. */
+  [role="tabpanel"][hidden] { display:block !important; }
+  [role="tabpanel"] + [role="tabpanel"] { margin-top:1.4rem; }
+  #feature-table caption.panel-name {
+    display:table-caption; text-align:left; font-weight:600; padding-bottom:.4rem;
+  }
 }
 </style>
 </head>
@@ -452,7 +493,7 @@ function renderSummary() {
 const fmtMoney = (v) => `$${Math.round(v).toLocaleString()}`;
 
 const help = (text) => `<details class="help"><summary aria-label="explain this section">?</summary><p>${text}</p></details>`;
-const secHead = (title, text) => `<div class="sec-head"><h2>${title}</h2>${help(text)}</div>`;
+const secHead = (title, text, actions = '') => `<div class="sec-head"><h2>${title}</h2>${help(text)}${actions}</div>`;
 
 
 
@@ -493,7 +534,20 @@ const SCORE_KEYS = ['tech', 'size', 'deps', 'unc', 'risk'];
 const SCORE_LABELS = { tech: 'Tech', size: 'Size', deps: 'Deps', unc: 'Unc', risk: 'Risk' };
 const EDGE_TOTALS = [11, 17, 22];
 
-const bdState = { sortKey: 'hours', dir: -1, milestone: '', component: '', prov: '', group: false, expanded: new Set(), guideOpen: true };
+// Two tabs, two jobs: effort is arithmetic over tasks, scoring is the
+// interview's judgment of the feature. One grid holding both ran eleven
+// columns wide and scrolled sideways on every screen. Each tab keeps its own
+// sort — a reader ordering by Σ has not asked to lose their effort order —
+// while the filters, the grouping and the expanded set are shared, because
+// they are questions about features rather than about either view.
+const TABS = [['estimate', 'Estimate'], ['scoring', 'Scoring']];
+const TAB_LABELS = Object.fromEntries(TABS);
+const bdState = {
+  tab: 'estimate',
+  sort: { estimate: { key: 'hours', dir: -1 }, scoring: { key: 'total', dir: -1 } },
+  milestone: '', component: '', prov: '', group: false, expanded: new Set(), guideOpen: true,
+};
+const DESC_FIRST = ['hours', 'total'];
 
 const BASE_COLS = {
   name: { key: 'name', label: 'Feature', val: (f) => f.name, hint: 'sort by name' },
@@ -502,16 +556,19 @@ const BASE_COLS = {
   prov: { key: 'provenance', label: 'Source', val: (f) => f.provenance, hint: 'sort by source' },
 };
 
-function bdCols() {
-  if (!SCORED) return [BASE_COLS.name, BASE_COLS.hours, BASE_COLS.conf, BASE_COLS.prov];
+function bdCols(tab) {
+  if (!SCORED || tab === 'estimate') {
+    return [BASE_COLS.name, BASE_COLS.hours, BASE_COLS.conf, BASE_COLS.prov];
+  }
   const scoreCols = SCORE_KEYS.map((k) => ({
     key: k, label: SCORE_LABELS[k], cls: 'score', val: (f) => f.scores[k].n, hint: `sort by ${SCORE_LABELS[k]} score`,
   }));
   return [BASE_COLS.name, ...scoreCols,
     { key: 'total', label: '&Sigma;', cls: 'score', val: (f) => f.scoreTotal, hint: 'sum of the five scores' },
-    { key: 'tier', label: 'Tier', cls: 'score', val: (f) => f.scoreTotal, hint: 'S ≤ 11 / M ≤ 17 / L ≤ 22 / XL above' },
-    BASE_COLS.hours, BASE_COLS.conf, BASE_COLS.prov];
+    { key: 'tier', label: 'Tier', cls: 'score', val: (f) => f.scoreTotal, hint: 'S ≤ 11 / M ≤ 17 / L ≤ 22 / XL above' }];
 }
+
+const bdTabs = () => (SCORED ? TABS.map(([id]) => id) : ['estimate']);
 
 function breakdownData() {
   return DATA.inputs.features.map((f) => {
@@ -530,14 +587,15 @@ function breakdownData() {
 // group is a primary key layered over the column sort: rows cluster by
 // container (roster order — the palette's order) so the stripes read as the
 // same blocks of color as the roadmap band that set the filter.
-function bdSorted(list) {
-  const col = bdCols().find((c) => c.key === bdState.sortKey);
+function bdSorted(list, tab) {
+  const { key, dir } = bdState.sort[tab];
+  const col = bdCols(tab).find((c) => c.key === key);
   const ctRank = (f) => CT_TOPS.indexOf(containerOf(f.component));
   return list.slice().sort((a, b) => {
     const byGroup = bdState.group ? ctRank(a) - ctRank(b) : 0;
     if (byGroup) return byGroup;
     const [x, y] = [col.val(a), col.val(b)];
-    return (x < y ? -1 : x > y ? 1 : 0) * bdState.dir;
+    return (x < y ? -1 : x > y ? 1 : 0) * dir;
   });
 }
 
@@ -547,15 +605,30 @@ function bdVisible(list) {
     && (!bdState.prov || f.provenance === bdState.prov));
 }
 
-function pillGroup({ name, pairs, attr, current }) {
-  return `<span class="bd-filter-group" role="group" aria-label="${name}">${pairs.map(([v, text]) =>
-    `<button type="button" ${attr}="${v}" aria-pressed="${v === current}" title="${v || text}">${text}</button>`).join('')}</span>`;
-}
-
+// The chevron opens tasks on the estimate tab and the scoring reasoning on
+// the other, so the control that drives every chevron is internal-only for
+// the first and open to the client for the second — tasks and their
+// assumptions are ours, the rubric sentences are theirs to read.
 function bdExpandControls() {
-  return `<span class="bd-filter-group" ${INTERNAL_ATTR} role="group" aria-label="tasks">
+  const internal = bdState.tab === 'estimate' ? ` ${INTERNAL_ATTR}` : '';
+  const what = bdState.tab === 'estimate' ? 'tasks' : 'score reasoning';
+  return `<span class="bd-filter-group"${internal} role="group" aria-label="${what}">
     <button type="button" data-expand="all">expand all</button>
     <button type="button" data-expand="none">collapse all</button></span>`;
+}
+
+// A tab strip, not a pill filter: each tab owns a panel, arrow keys move
+// between them, and the selected one is the page's single source of truth for
+// which columns are on screen. One view needs no strip, so QUICK depth gets
+// the expand controls alone.
+function bdTabStrip() {
+  const strip = SCORED ? `<div class="tablist" role="tablist" aria-label="feature views">${
+    TABS.map(([id, label]) => {
+      const on = bdState.tab === id;
+      return `<button type="button" role="tab" id="tab-${id}" data-tab="${id}"
+        aria-selected="${on}" aria-controls="panel-${id}" tabindex="${on ? 0 : -1}">${label}</button>`;
+    }).join('')}</div>` : '';
+  return `<div class="bd-tabs">${strip}${bdExpandControls()}</div>`;
 }
 
 // The handler lives in a separate internal-only script (the embedded workbook
@@ -573,33 +646,47 @@ function selectBox({ name, key, current, pairs }) {
     `<option value="${esc(v)}"${v === current ? ' selected' : ''}>${esc(text)}</option>`).join('')}</select></label>`;
 }
 
-function bdFilters(all) {
-  let milestones = '';
+// Three filters, one widget, one row: source used to be a pill group beside
+// two selects, which read as three unrelated controls doing one job. They ask
+// the same question of both tabs, so they sit above the strip, not inside a
+// panel.
+function bdFilters(all, shown) {
+  const boxes = [];
   if (all.every((f) => f.milestone)) {
     const labels = [...new Set(all.map((f) => f.milestone))];
-    milestones = selectBox({ name: 'milestone', key: 'milestone', current: bdState.milestone,
-      pairs: [['', 'all milestones'], ...labels.map((l) => [l, l])] });
+    boxes.push(selectBox({ name: 'milestone', key: 'milestone', current: bdState.milestone,
+      pairs: [['', 'all milestones'], ...labels.map((l) => [l, l])] }));
   }
-  let components = '';
   if (DATA.inputs.components) {
     const names = Object.fromEntries(DATA.inputs.components.map((c) => [c.id, c.name]));
     const tops = [...new Set(all.map((f) => containerOf(f.component)))];
-    components = selectBox({ name: 'container', key: 'component', current: bdState.component,
-      pairs: [['', 'all containers'], ...tops.map((id) => [id, names[id] ?? id])] });
+    boxes.push(selectBox({ name: 'container', key: 'component', current: bdState.component,
+      pairs: [['', 'all containers'], ...tops.map((id) => [id, names[id] ?? id])] }));
   }
-  const source = pillGroup({ name: 'source', attr: 'data-prov', current: bdState.prov,
-    pairs: [['', 'all sources'], ['stated', 'stated'], ['proposed', 'proposed']] });
-  return `<div class="bd-filters">${milestones}${components}<span class="bd-right">${bdExpandControls()}${bdDownloadBtn()}${source}</span></div>`;
+  boxes.push(selectBox({ name: 'source', key: 'prov', current: bdState.prov,
+    pairs: [['', 'all sources'], ['stated', 'stated'], ['proposed', 'proposed']] }));
+  return `<div class="bd-filters">${boxes.join('')}${bdCount(all.length, shown)}</div>`;
 }
 
-function bdHead() {
-  return `<thead><tr>${bdCols().map((c) => {
+// Filters moved out of the table's own header row, so the count is how a
+// reader sees that rows are missing rather than absent. It states the plain
+// total until something is actually filtered.
+function bdCount(total, shown) {
+  const filtered = shown < total;
+  const text = filtered ? `${shown} of ${total} features` : `${total} features`;
+  const clear = filtered ? '<button type="button" data-clear>clear</button>' : '';
+  return `<span class="bd-right"><span class="bd-count">${text}</span>${clear}</span>`;
+}
+
+function bdHead(tab) {
+  const { key, dir } = bdState.sort[tab];
+  return `<thead><tr>${bdCols(tab).map((c) => {
     // grouping overrides the column order, so no header may claim its sort
-    const active = !bdState.group && bdState.sortKey === c.key;
-    const aria = active ? (bdState.dir === 1 ? 'ascending' : 'descending') : 'none';
-    const arrow = active ? (bdState.dir === 1 ? ' &#9650;' : ' &#9660;') : '';
+    const active = !bdState.group && key === c.key;
+    const aria = active ? (dir === 1 ? 'ascending' : 'descending') : 'none';
+    const arrow = active ? (dir === 1 ? ' &#9650;' : ' &#9660;') : '';
     return `<th aria-sort="${aria}"${c.cls ? ` class="${c.cls}"` : ''}>
-      <button type="button" data-sort="${c.key}" title="${c.hint}">${c.label}${arrow}</button></th>`;
+      <button type="button" data-sort="${c.key}" data-panel="${tab}" title="${c.hint}">${c.label}${arrow}</button></th>`;
   }).join('')}</tr></thead>`;
 }
 
@@ -637,26 +724,64 @@ function estimateCells(f) {
     <td><span class="tag ${f.provenance}">${f.provenance}</span></td>`;
 }
 
-function featRow(f, max) {
+// The name cell is the spine both tabs share: container stripe, the chevron
+// that opens this feature's detail, the name. What the chevron opens, and
+// whether a client may open it, is the caller's call.
+function nameCell(f, internal, note) {
   const open = bdState.expanded.has(f.id);
-  const note = f.scoreNote ? `<div class="task-assump feat-note">${esc(f.scoreNote)}</div>` : '';
-  return `<tr class="feat-row ${confLevel(f.conf)}" data-id="${esc(f.id)}">
-    <td${ctEdge(f.component)}><span class="feat-cell"><button type="button" class="expand" ${INTERNAL_ATTR}
-      aria-expanded="${open}" aria-label="show tasks">&#9656;</button>
-      <span>${f.name}</span></span>${note}</td>
-    ${SCORED ? scoreCells(f) : ''}${hoursCell(f, max)}${estimateCells(f)}</tr>`;
+  const label = internal ? 'show tasks' : 'show score reasoning';
+  return `<td${ctEdge(f.component)}><span class="feat-cell"><button type="button" class="expand"${internal ? ` ${INTERNAL_ATTR}` : ''}
+      aria-expanded="${open}" aria-label="${label}">&#9656;</button>
+      <span>${f.name}</span></span>${note}</td>`;
 }
 
-// Task rows sit under the feature's name; the score columns (five factors,
-// Σ and tier) have no per-task meaning (scores are a feature judgment), so
-// one spacer spans them.
+function featRow(f, max) {
+  return `<tr class="feat-row ${confLevel(f.conf)}" data-id="${esc(f.id)}">
+    ${nameCell(f, true, '')}${hoursCell(f, max)}${estimateCells(f)}</tr>`;
+}
+
+// The note is the plain sentence the interview wrote for the client about why
+// this tier — it belongs beside the scores it summarises, not under an
+// effort bar it never described.
+function scoreRow(f) {
+  const note = f.scoreNote ? `<div class="task-assump feat-note">${esc(f.scoreNote)}</div>` : '';
+  return `<tr class="feat-row" data-id="${esc(f.id)}">${nameCell(f, false, note)}${scoreCells(f)}</tr>`;
+}
+
+// Task rows sit under the feature's name and fill the estimate tab's four
+// columns exactly — tasks carry three-point hours, a confidence and a
+// category, never scores, which is why they have no home on the other tab.
 function taskRows(f) {
-  const spacer = SCORED ? `<td colspan="${SCORE_KEYS.length + 2}"></td>` : '';
   return f.tasks.map((t) => `<tr class="task-row ${confLevel(t.confidence)}" ${INTERNAL_ATTR}>
-    <td${ctEdge(f.component)}>${t.name}<div class="task-assump">${t.assumptions.join('; ') || 'none'}</div></td>${spacer}
+    <td${ctEdge(f.component)}>${t.name}<div class="task-assump">${t.assumptions.join('; ') || 'none'}</div></td>
     <td><span class="bd-cell"><span class="bd-num">${t.o}/${t.m}/${t.p}</span></span></td>
     <td><span class="conf">${t.confidence}</span></td>
     <td><span class="tag">${t.category}</span></td></tr>`).join('');
+}
+
+// Every score is required to carry the rubric sentence it was anchored to and
+// the evidence that sentence rests on. Both lived in a title attribute, which
+// no touch screen, printer or find-in-page has ever shown anyone. A client
+// render keeps the anchors and loses the cites (redact.mjs blanks them), so
+// the block degrades to five sentences rather than five empty quotes.
+function rationaleRows(f) {
+  const items = SCORE_KEYS.map((k) => {
+    const s = f.scores[k];
+    // A cite is internal shorthand twice over: redact.mjs blanks it for a
+    // --client-only render, and the view toggle — which previews that render
+    // without re-rendering — has to hide it too, or an internal ticket phrase
+    // stays on screen through a client call.
+    const cite = s.cite ? `<span class="cite" ${INTERNAL_ATTR}>${esc(s.cite)}</span>` : '';
+    return `<dt>${SCORE_LABELS[k]} ${s.n}</dt><dd>${esc(s.anchor)}${cite}</dd>`;
+  }).join('');
+  return `<tr class="rat-row"><td${ctEdge(f.component)} colspan="${SCORE_KEYS.length + 3}">
+    <dl class="rationale">${items}</dl></td></tr>`;
+}
+
+function bdRows(f, tab, max) {
+  const open = bdState.expanded.has(f.id);
+  if (tab === 'scoring') return scoreRow(f) + (open ? rationaleRows(f) : '');
+  return featRow(f, max) + (open ? taskRows(f) : '');
 }
 
 // The rubric comes from references/scoring-guide.md through the GUIDE slot,
@@ -671,30 +796,61 @@ function bdGuide() {
     <div class="bd-scroll">${guide.innerHTML}</div></details>`;
 }
 
+// Both panels render; the idle one is `hidden`. That keeps every tab's
+// aria-controls pointing at a node that exists, makes the switch instant, and
+// lets print simply unhide the pair — a tab is a screen affordance, and paper
+// has room for both tables.
+function bdPanel(tab, all, max) {
+  const rows = bdVisible(bdSorted(all, tab)).map((f) => bdRows(f, tab, max)).join('');
+  const tabbed = SCORED ? ` role="tabpanel" aria-labelledby="tab-${tab}" tabindex="0"` : '';
+  const caption = SCORED ? `<caption class="panel-name">${TAB_LABELS[tab]}</caption>` : '';
+  const guide = tab === 'scoring' ? bdGuide() : '';
+  return `<div id="panel-${tab}"${tabbed}${bdState.tab === tab ? '' : ' hidden'}>
+    <div class="bd-scroll"><table>${caption}${bdHead(tab)}<tbody>${rows}</tbody></table></div>${guide}</div>`;
+}
+
+const BD_HELP = 'Estimate is the arithmetic: hours is the PERT expected value '
+  + 'E = (O + 4M + P) / 6 summed over the feature’s tasks, and the bar shows E with a '
+  + 'lighter tail to the pessimistic bound, so a long tail means an uncertain feature. '
+  + 'Scoring is the judgment behind it: the interview’s five factors, their sum and the '
+  + 'tier they fall in. Filters apply to both tabs. Sort any column, and expand a row for '
+  + 'the tasks behind an estimate or the rubric sentence and evidence behind a score.';
+
 function renderBreakdown() {
   const el = document.getElementById('feature-table');
   if (!el) return;
   const all = breakdownData();
   const max = Math.max(...all.map((f) => f.high));
-  const rows = bdVisible(bdSorted(all))
-    .map((f) => featRow(f, max) + (bdState.expanded.has(f.id) ? taskRows(f) : '')).join('');
-  el.innerHTML = secHead('Feature breakdown',
-    'Hours is the PERT expected value E = (O + 4M + P) / 6 summed over the feature’s tasks; '
-    + 'the bar shows E with a lighter tail to the pessimistic bound, so a long tail means an '
-    + 'uncertain feature. Sort any column, filter by milestone or source, and expand a row '
-    + 'for the tasks behind its number. Score cells are the interview\'s five factor '
-    + 'judgments (hover for the rubric sentence and the evidence); Σ and tier follow '
-    + 'the scoring guide below.')
-    + bdFilters(all) + `<div class="bd-scroll"><table>${bdHead()}<tbody>${rows}</tbody></table></div>` + bdGuide();
+  const panels = bdTabs().map((tab) => bdPanel(tab, all, max)).join('');
+  el.innerHTML = secHead('Feature breakdown', BD_HELP, bdDownloadBtn())
+    + bdTabStrip() + bdFilters(all, bdVisible(all).length) + panels;
 }
 
-function bdSort(key) {
+function bdSort(key, tab) {
   // an explicit sort takes control back from the roadmap grouping — and starts
   // fresh at the column's default direction, since no sort was showing.
-  const fresh = bdState.group || bdState.sortKey !== key;
+  const s = bdState.sort[tab];
+  const fresh = bdState.group || s.key !== key;
   bdState.group = false;
-  if (fresh) { bdState.sortKey = key; bdState.dir = key === 'hours' ? -1 : 1; }
-  else bdState.dir = -bdState.dir;
+  if (fresh) { s.key = key; s.dir = DESC_FIRST.includes(key) ? -1 : 1; }
+  else s.dir = -s.dir;
+  renderBreakdown();
+}
+
+// Re-rendering replaces the strip, so the newly selected tab has to be handed
+// the focus back — otherwise a keyboard reader lands at the top of the page.
+function bdSelectTab(tab) {
+  if (bdState.tab === tab) return;
+  bdState.tab = tab;
+  renderBreakdown();
+  document.getElementById(`tab-${tab}`)?.focus();
+}
+
+function bdClearFilters() {
+  bdState.milestone = '';
+  bdState.component = '';
+  bdState.prov = '';
+  bdState.group = false;
   renderBreakdown();
 }
 
@@ -713,11 +869,23 @@ function bdExpandAll(mode) {
 function onBreakdownClick(e) {
   const btn = e.target.closest('button');
   if (!btn) return;
-  if (btn.dataset.sort) bdSort(btn.dataset.sort);
+  if (btn.dataset.sort) bdSort(btn.dataset.sort, btn.dataset.panel);
+  else if (btn.dataset.tab) bdSelectTab(btn.dataset.tab);
   else if (btn.dataset.expand) bdExpandAll(btn.dataset.expand);
+  else if (btn.dataset.clear !== undefined) bdClearFilters();
   else if (btn.dataset.download !== undefined) window.__downloadXlsx?.();
-  else if (btn.dataset.prov !== undefined) { bdState.prov = btn.dataset.prov; renderBreakdown(); }
   else if (btn.classList.contains('expand')) bdToggle(btn.closest('tr').dataset.id);
+}
+
+// Arrow keys move within the strip, as a tablist is expected to: the strip is
+// one tab stop and Left/Right choose inside it.
+function onBreakdownKeydown(e) {
+  const tab = e.target.closest?.('[role="tab"]');
+  const step = { ArrowRight: 1, ArrowLeft: -1 }[e.key];
+  if (!tab || !step) return;
+  e.preventDefault();
+  const ids = bdTabs();
+  bdSelectTab(ids[(ids.indexOf(tab.dataset.tab) + step + ids.length) % ids.length]);
 }
 
 function onBreakdownChange(e) {
@@ -957,6 +1125,7 @@ renderAll();
 
 document.getElementById('feature-table')?.addEventListener('click', onBreakdownClick);
 document.getElementById('feature-table')?.addEventListener('change', onBreakdownChange);
+document.getElementById('feature-table')?.addEventListener('keydown', onBreakdownKeydown);
 // `toggle` does not bubble, so this one listens in the capture phase instead.
 document.getElementById('feature-table')?.addEventListener('toggle', (e) => {
   if (e.target.matches('[data-guide]')) bdState.guideOpen = e.target.open;
@@ -1049,7 +1218,7 @@ function xlsxContainer(f) {
 // appearance), the table's current sort preserved within each milestone.
 function exportRows() {
   const msRank = [...new Set(DATA.inputs.features.map((f) => f.milestone))];
-  return bdVisible(bdSorted(breakdownData())).slice()
+  return bdVisible(bdSorted(breakdownData(), bdState.tab)).slice()
     .sort((a, b) => msRank.indexOf(a.milestone) - msRank.indexOf(b.milestone));
 }
 

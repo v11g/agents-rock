@@ -35,12 +35,14 @@ const inlineText = (frag) => /<t[^>]*>([^<]*)<\/t>/.exec(frag)?.[1];
 const cellNumber = (frag) => Number(/<v>([^<]*)<\/v>/.exec(frag)?.[1]);
 const cellFormula = (frag) => /<f>([^<]*)<\/f>/.exec(frag)?.[1];
 
-test('the breakdown filter bar carries an internal-only download button', skip, async () => {
+// The workbook carries a Task Breakdown sheet and a Score Rationale sheet, so
+// the export answers for the whole section rather than for either tab.
+test('the section heading carries an internal-only download button', skip, async () => {
   const page = await openPage(buildPage());
   try {
     assert.ok(await page.eval(
-      `!!document.querySelector('#feature-table .bd-filters button[data-download][data-internal]')`),
-    'expected a data-download button marked data-internal in the filter bar');
+      `!!document.querySelector('#feature-table .sec-head button[data-download][data-internal]')`),
+    'expected a data-download button marked data-internal on the section heading');
   } finally { page.close(); }
 });
 
@@ -175,7 +177,11 @@ test('milestone and container fill L/M under an autofiltered header', skip, asyn
 test('the export honours the active source filter', skip, async () => {
   const page = await openPage(buildPage());
   try {
-    await page.eval(`document.querySelector('#feature-table [data-prov="stated"]').click()`);
+    await page.eval(`(() => {
+      const sel = document.querySelector('#feature-table select[data-select="prov"]');
+      sel.value = 'stated';
+      sel.dispatchEvent(new Event('change', { bubbles: true }));
+    })()`);
     const xml = sheet1(await exportedFiles(page));
     assert.match(xml, /User can book appointment/);
     assert.doesNotMatch(xml, /Email reminders/);
@@ -199,7 +205,11 @@ test('the export adds a registered Task Breakdown tab', skip, async () => {
 test('task rows carry the PERT formula in-cell and ride the feature filter', skip, async () => {
   const page = await openPage(buildPage());
   try {
-    await page.eval(`document.querySelector('#feature-table [data-prov="stated"]').click()`);
+    await page.eval(`(() => {
+      const sel = document.querySelector('#feature-table select[data-select="prov"]');
+      sel.value = 'stated';
+      sel.dispatchEvent(new Event('change', { bubbles: true }));
+    })()`);
     const xml = sheetTasks(await exportedFiles(page));
     assert.equal(inlineText(cell(xml, 'A2')), 'User can book appointment');
     assert.equal(inlineText(cell(xml, 'B2')), 'Booking CRUD API');
