@@ -134,3 +134,39 @@ test('the breakdown follows the URL when the hash changes', skip, async () => {
     assert.deepEqual(page.errors, []);
   } finally { page.close(); }
 });
+
+// The header toggle previews the client render. Which view you were looking
+// at travels with the link like the filters do.
+test('the client view toggle writes itself into the query string', skip, async () => {
+  const page = await openPage(buildPage());
+  try {
+    await page.eval(clickTab('scoring'));
+    await page.eval(`document.getElementById('view-toggle').click()`);
+    assert.equal(await page.eval('location.search'), '?view=client');
+    assert.equal(await page.eval('location.hash'), '#tab=scoring'); // the filters survive it
+    assert.deepEqual(page.errors, []);
+  } finally { page.close(); }
+});
+
+test('a shared URL opens in the client view, filters and all', skip, async () => {
+  const page = await openPage(`${buildPage()}?view=client#tab=scoring&open=all`);
+  try {
+    assert.equal(await page.eval(`document.body.classList.contains('view-client')`), true);
+    assert.equal(await page.eval(
+      `getComputedStyle(document.querySelector('#panel-scoring .cite')).display`), 'none');
+    assert.equal(await page.eval(`document.querySelector('#panel-scoring').hidden`), false);
+    assert.equal(await page.eval(`document.querySelectorAll('#panel-scoring tr.rat-row').length`), 2);
+    assert.deepEqual(page.errors, []);
+  } finally { page.close(); }
+});
+
+// A --client-only render has already had its internal markup stripped. A URL
+// must never look like it can put that back, so the parameter only ever
+// switches the preview on.
+test('the view parameter only ever switches the preview on', skip, async () => {
+  const page = await openPage(`${buildPage()}?view=internal`);
+  try {
+    assert.equal(await page.eval(`document.body.classList.contains('view-client')`), false);
+    assert.deepEqual(page.errors, []);
+  } finally { page.close(); }
+});

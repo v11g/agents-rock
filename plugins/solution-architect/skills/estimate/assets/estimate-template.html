@@ -1227,8 +1227,30 @@ document.getElementById('roadmap')?.addEventListener('click', onRoadmapClick);
 document.getElementById('containers')?.addEventListener('mouseover', onPieHover);
 document.getElementById('containers')?.addEventListener('mouseout', onPieHover);
 
+// Which view you were reading travels with the link like the filters do. It
+// rides the query string rather than the fragment because it picks a
+// rendering of the whole page, not a position inside it — and it only ever
+// switches the preview ON. A --client-only render has already had its
+// internal markup stripped; no URL should look like it can put that back.
+// The preview is a preview: the internal text is still in an internal page's
+// DOM, hidden by CSS. `--client-only` is what actually removes it.
+function setViewParam(on) {
+  const p = new URLSearchParams(location.search);
+  if (on) p.set('view', 'client');
+  else p.delete('view');
+  const q = p.toString();
+  // A file:// page may refuse a history write; the toggle still works, the
+  // URL just does not record it.
+  try { history.replaceState(null, '', location.pathname + (q ? `?${q}` : '') + location.hash); }
+  catch { /* the view is showing either way */ }
+}
+
+if (new URLSearchParams(location.search).get('view') === 'client') {
+  document.body.classList.add('view-client');
+}
+
 document.getElementById('view-toggle')?.addEventListener('click', () => {
-  document.body.classList.toggle('view-client');
+  setViewParam(document.body.classList.toggle('view-client'));
 });
 
 document.getElementById('theme-toggle')?.addEventListener('click', () => {
