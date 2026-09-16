@@ -14,6 +14,32 @@ The business-analyst validator ships a Python port, `scripts/validate.py`,
 parity-tested against the Node validator, so the skill also runs where Node is
 unavailable — e.g. the claude.ai sandbox. (`business-analyst` 0.2.0)
 
+Features now carry real interview scores at STANDARD depth. Five factors —
+technology, size, dependencies, uncertainty and risk — are scored 1 to 5, each
+with the guide sentence that justified it and the evidence it came from. Their
+sum and the tier it lands in show on the estimate page and in the workbook, and
+the Summary's tier is cross-checked against them. The rubric lives in
+`references/scoring-guide.md`, so the interviewer and the page use the same
+sentences. (`solution-architect` 2.0.0)
+
+Scores can be reviewed outside the interview. `scores-review.html` and its CLI
+render every feature's scores for a second opinion, with a CSV round-trip and a
+diff for spreadsheet reviewers; changing a score asks why, and the answer is
+kept with it. (`solution-architect` 2.0.0)
+
+The feature breakdown is two tabs. Estimate holds the effort arithmetic,
+Scoring holds the interview's judgment, and each expands to the reasoning behind
+a row — tasks on one side, the rubric sentence and its evidence on the other.
+Both share the filters, the grouping and the expanded set. (`solution-architect`
+2.0.0)
+
+The estimate page is shareable. Every breakdown choice — tab, milestone,
+container and source filters, roadmap grouping, each tab's sort, which rows are
+expanded, the scoring guide — is written into the URL, and so is the client-view
+preview, so a link reopens exactly the table you were reading. Values the
+receiving copy does not recognise are dropped rather than applied.
+(`solution-architect` 2.0.0)
+
 ### Changed
 
 The leads dashboard and the architecture viewer open in dark mode by default.
@@ -32,6 +58,13 @@ not your current directory the installer shows both and asks. `--dir <path>`
 names the directory outright, `-y`/`--yes` skips confirmations and assumes
 `--project`.
 
+Scenarios describe AI help and what it costs instead of naming an Anthropic
+plan. `aiAssisted` gates the per-category hour reduction and
+`toolingCostPerSeat` prices it for any vendor; an AI-assisted scenario with no
+seat cost must record that as an assumption or the validator refuses. The
+estimate page's scenario cards, cost bars and what-if rail were replaced by a
+single Summary section. (`solution-architect` 2.0.0)
+
 ### Fixed
 
 Running `npx @v11g/agents-rock` with no `--plugin` left the picker unusable. It
@@ -43,12 +76,32 @@ than `return`, leaving the prompt stuck.
 Installing from a subdirectory no longer creates a stray skills directory there
 — project scope resolves to the repository root.
 
+Evidence cites stayed visible in a client render of the estimate page. They are
+internal shorthand — ticket and document references — and both the
+`--client-only` render and the in-page client preview now hide them.
+(`solution-architect` 2.0.0)
+
+The score review page lost edited scores on re-render and did not escape
+feature ids; it also had no way to show that an anchor no longer matched the
+score beside it. Edits survive, ids are escaped, and stale anchors are marked.
+(`solution-architect` 2.0.0)
+
+Switching the estimate page into the client view hid the button that leaves it,
+so returning meant reloading. The toggle now stays put and names the view it
+switches to. (`solution-architect` 2.0.0)
+
 ### BREAKING CHANGES
 
 An install or uninstall run without a terminal now requires an explicit scope.
 `npx @v11g/agents-rock -p lmk -a claude` errors naming `--global` and
 `--project`; add `--project` to keep the previous behavior. Interactive runs are
 unaffected — they ask.
+
+Scenarios in `estimation-inputs.json` must replace `plan` with `aiAssisted` and
+`toolingCostPerSeat`: `none` becomes `false`/`null`, `max5x` becomes
+`true`/`100`, `max20x` becomes `true`/`200`. Computed scenarios rename
+`planCost` to `toolingCost`. The numbers are unchanged under that mapping.
+(`solution-architect` 2.0.0)
 
 ## v3.0.0 (2026-08-10)
 
