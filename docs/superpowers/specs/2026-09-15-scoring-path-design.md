@@ -148,6 +148,15 @@ shown in the diff and discarded. The free-text `note` column exists in the
 CSV channel only; the HTML page has the `scoreNote` textarea and the chat for
 anything else, so `window.__feedback()` never carries a `note`.
 
+The html page written into a lead directory is a functional baseline: the
+interviewer then runs the `frontend-design:frontend-design` skill on that
+generated file, in the target project, so the reviewer gets a designed page.
+The template under `assets/` is never redesigned in place — it is the
+baseline every lead starts from — and the redesign must keep the read-back
+contract (`select[data-id][data-key]`, `[data-total]`, `[data-tier]`,
+`textarea[data-note]`, `window.__feedback()`, `#feedback`, `#copy`, guide
+visible) or `--read` cannot parse the feedback.
+
 `--read` also prints `needsReason`: every changed score with its old cite.
 A changed score keeps a cite that argued for the old number, so the agent
 asks once per cell what makes it the new score (`AskUserQuestion` when
