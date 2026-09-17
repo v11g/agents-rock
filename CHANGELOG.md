@@ -42,6 +42,25 @@ receiving copy does not recognise are dropped rather than applied.
 
 ### Changed
 
+The score review page is designed for the job it does. Each feature is a band —
+its name, total and tier on the left, the five factor scores across the right —
+so the evidence behind every score reads as a sentence instead of a column of
+stacked words. A plot at the top places every feature on the total scale, so the
+shape of the estimate and its outliers are visible before any scrolling, and a
+dot moves the moment you change a score. Scores you change are marked in one
+colour throughout, with the evidence they outdate struck through and the score
+they replaced named. The page follows the system theme and toggles from the
+header. (`solution-architect` 2.0.1)
+
+The agent no longer redesigns the score review page for each lead. The page ships
+designed, so every reviewer sees the same one and the read-back contract has a
+single version. (`solution-architect` 2.0.1)
+
+The estimate interview assumes AI coding agents write the code. It now asks only
+whether humans are writing it instead, the same shape as the AI-assistance
+question, and records the answer either way. Estimates written before this keep
+reading as traditional when the field is absent. (`solution-architect` 2.0.1)
+
 The leads dashboard and the architecture viewer open in dark mode by default.
 Pages with a theme toggle still switch to light and the viewer remembers the
 choice; the print-ready proposal page stays light. (`solution-architect` 1.1.1)
@@ -66,6 +85,14 @@ estimate page's scenario cards, cost bars and what-if rail were replaced by a
 single Summary section. (`solution-architect` 2.0.0)
 
 ### Fixed
+
+The workbook's Score Rationale tab named the wrong source. Its Provenance column
+carried who set the score while the estimate page's Source column carried where
+the feature came from, and the two share the words stated and proposed, so the
+same feature read differently in the two places. The tab now carries both, spelled
+out: FEATURE SOURCE matches the page row for row, and SCORE ORIGIN says whether
+the agent proposed the score or a reviewer changed it. (`solution-architect`
+2.0.1)
 
 Running `npx @v11g/agents-rock` with no `--plugin` left the picker unusable. It
 redrew by counting logical lines rather than wrapped terminal rows, so the long
