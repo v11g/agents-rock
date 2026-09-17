@@ -1401,12 +1401,21 @@ function buildTaskSheet(rows) {
 
 // --- Score Rationale tab: one row per feature × factor — the engineer's
 // view of why each score is what it is (Sheet 1's column N is the sales one).
-const RATIONALE_HEADERS = ['FEATURE', 'FACTOR', 'SCORE', 'ANCHOR', 'EVIDENCE', 'PROVENANCE'];
+// Two source columns, because `provenance` and `scoreProvenance` answer
+// different questions about different people: did the client ask for this
+// feature, and did a reviewer override the agent's score. They share the
+// vocabulary `stated`/`proposed`, which read side by side looks like the same
+// column disagreeing with itself — so the score's half is spelled out in the
+// words it actually means, while the feature's half keeps the page's wording.
+const RATIONALE_HEADERS = ['FEATURE', 'FACTOR', 'SCORE', 'ANCHOR', 'EVIDENCE',
+  'FEATURE SOURCE', 'SCORE ORIGIN'];
+const SCORE_ORIGIN = { proposed: 'agent proposed', stated: 'reviewer changed' };
 
 function rationaleRowXml(f, key, r) {
   const s = f.scores[key];
   return `<row r="${r}">` + sCell(`A${r}`, 0, f.name) + sCell(`B${r}`, 0, SCORE_LABELS[key]) + nCell(`C${r}`, 0, s.n)
-    + sCell(`D${r}`, 0, s.anchor) + sCell(`E${r}`, 0, s.cite) + sCell(`F${r}`, 0, f.scoreProvenance) + '</row>';
+    + sCell(`D${r}`, 0, s.anchor) + sCell(`E${r}`, 0, s.cite) + sCell(`F${r}`, 0, f.provenance)
+    + sCell(`G${r}`, 0, SCORE_ORIGIN[f.scoreProvenance] ?? '') + '</row>';
 }
 
 function buildRationaleSheet(rows) {

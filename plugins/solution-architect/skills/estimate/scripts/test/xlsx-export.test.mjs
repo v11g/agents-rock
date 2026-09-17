@@ -107,7 +107,7 @@ test('column N carries the plain-words note for sales readers', skip, async () =
 
 const sheetRationale = (files) => files.get('xl/worksheets/sheet5.xml')?.toString('utf8') ?? '';
 
-test('a Score Rationale tab lists anchor, evidence and provenance per factor', skip, async () => {
+test('a Score Rationale tab lists anchor, evidence and both sources per factor', skip, async () => {
   const page = await openPage(buildPage());
   try {
     const files = await exportedFiles(page);
@@ -115,15 +115,36 @@ test('a Score Rationale tab lists anchor, evidence and provenance per factor', s
     assert.match(files.get('xl/_rels/workbook.xml.rels').toString('utf8'), /Target="worksheets\/sheet5\.xml"/);
     assert.match(files.get('[Content_Types].xml').toString('utf8'), /PartName="\/xl\/worksheets\/sheet5\.xml"/);
     const xml = sheetRationale(files);
-    assert.deepEqual(['A1', 'B1', 'C1', 'D1', 'E1', 'F1'].map((r) => inlineText(cell(xml, r))),
-      ['FEATURE', 'FACTOR', 'SCORE', 'ANCHOR', 'EVIDENCE', 'PROVENANCE']);
+    assert.deepEqual(['A1', 'B1', 'C1', 'D1', 'E1', 'F1', 'G1'].map((r) => inlineText(cell(xml, r))),
+      ['FEATURE', 'FACTOR', 'SCORE', 'ANCHOR', 'EVIDENCE', 'FEATURE SOURCE', 'SCORE ORIGIN']);
     assert.equal(inlineText(cell(xml, 'A2')), 'User can book appointment');
     assert.equal(inlineText(cell(xml, 'B2')), 'Tech');
     assert.equal(cellNumber(cell(xml, 'C2')), 3);
     assert.equal(inlineText(cell(xml, 'D2')), 'Custom business logic, moderate algorithm complexity, multiple states');
     assert.equal(inlineText(cell(xml, 'E2')), 'slot conflict + cancellation rules');
+    assert.equal(inlineText(cell(xml, 'F2')), 'stated'); // the client asked for the feature
+    assert.equal(inlineText(cell(xml, 'G2')), 'reviewer changed'); // and a human edited its score
+    assert.match(xml, /<autoFilter ref="A1:G11"\/>/); // 2 features × 5 factors
+  } finally { page.close(); }
+});
+
+// The two columns answer different questions about different people — whether
+// the client asked for the feature, and whether a reviewer overrode the
+// agent's score. The booking fixture happens to agree on both, so this pins
+// them apart: one feature the client asked for, whose score nobody touched.
+test('feature source and score origin are read from separate fields', skip, async () => {
+  const dir = mkdtempSync(join(tmpdir(), 'estimate-xlsx-sources-'));
+  const inputs = JSON.parse(readFileSync(fixture, 'utf8'));
+  inputs.features[0].provenance = 'stated';
+  inputs.features[0].scoreProvenance = 'proposed';
+  const inputsPath = join(dir, 'inputs.json');
+  writeFileSync(inputsPath, JSON.stringify(inputs));
+  const page = await openPage(buildPage(inputsPath));
+  try {
+    const xml = sheetRationale(await exportedFiles(page));
     assert.equal(inlineText(cell(xml, 'F2')), 'stated');
-    assert.match(xml, /<autoFilter ref="A1:F11"\/>/); // 2 features × 5 factors
+    assert.equal(inlineText(cell(xml, 'G2')), 'agent proposed');
+    assert.deepEqual(page.errors, []);
   } finally { page.close(); }
 });
 
@@ -143,7 +164,7 @@ test('QUICK inputs export blank score cells and an empty rationale tab', skip, a
     const xml = sheet1(files);
     assert.equal(cell(xml, 'B7'), '', 'no score value at QUICK');
     assert.match(xml, /<c r="B7" s="\d+"\/>/);
-    assert.match(sheetRationale(files), /<autoFilter ref="A1:F1"\/>/);
+    assert.match(sheetRationale(files), /<autoFilter ref="A1:G1"\/>/);
   } finally { page.close(); }
 });
 
