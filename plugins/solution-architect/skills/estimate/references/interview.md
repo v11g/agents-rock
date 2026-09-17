@@ -104,7 +104,8 @@ Ask one thing at a time, in this order:
                    — all rows on one screen, notes column, fits the workbook habit
      3. html       I write scores-review.html, you open it, set dropdowns, copy
                    the feedback block back here
-                   — anchor text on hover, edge/XL badges, best for 15+ features
+                   — anchor on hover, a plot of where every feature lands,
+                     best for 15+ features
    Recommended: 2 (25 features).
    ```
 
@@ -116,11 +117,11 @@ Ask one thing at a time, in this order:
    report the diff (`3 changes: F07 risk 5→4, … — all stated. Σ moves F12 to
    L. Proceed?`) before writing them into `estimation-inputs.json`.
 
-   **html channel — design it there.** The page `--write --format html`
-   produces is a functional baseline, not the deliverable. After writing it
-   into the lead directory, invoke the `frontend-design:frontend-design`
-   skill on that file so the reviewer gets a page designed for the job.
-   Whatever the redesign does, it must keep the read-back contract or
+   **html channel — the page ships designed.** `--write --format html`
+   renders the reviewer page from `assets/scores-review-template.html`,
+   which is the deliverable, not a baseline to redesign. Write it into the
+   lead directory and hand the human the path; do not run a design pass on
+   it per lead. Any edit to the template keeps the read-back contract or
    `--read` cannot parse the feedback: one `<select data-id="<feature id>"
    data-key="<tech|size|deps|unc|risk>">` per score (values 1–5, `title` =
    the rubric anchor), `[data-total="<id>"]` and `[data-tier="<id>"]` text
@@ -128,8 +129,7 @@ Ask one thing at a time, in this order:
    `window.__feedback()` returning `{ features: [{ id, scores: { k: n },
    scoreNote }] }`, a `#feedback` textarea holding that JSON and a `#copy`
    button that puts it on the clipboard, and the scoring guide visible on
-   the page. Do not run the design skill on the template in this skill's
-   `assets/` — that copy stays the baseline every lead starts from.
+   the page.
 
    **Cards** (terminal channel, and the shape every channel's row carries):
    one per feature, 4–6 per turn, every cell filled from evidence you already

@@ -121,9 +121,12 @@ test('scoring-guide.md carries five rows of five anchors and the tier scale', ()
 test('interview.md scores before tasks, names the three review channels and the plain-words note', () => {
   const doc = ref('interview.md');
   for (const needle of ['scoring-guide.md', 'scores', 'scoreNote', 'scoreProvenance', 'terminal', 'csv', 'html',
-    'score-review.mjs', 'accept', 'split', 'outside', 'plain', 'needsReason', 'no reason given', 'frontend-design:frontend-design', 'window.__feedback()']) {
+    'score-review.mjs', 'accept', 'split', 'outside', 'plain', 'needsReason', 'no reason given', 'window.__feedback()']) {
     assert.ok(doc.includes(needle), `interview.md missing: ${needle}`);
   }
+  // The review page ships designed from assets/; a per-lead redesign would
+  // fork the read-back contract into as many versions as there are leads.
+  assert.doesNotMatch(doc, /frontend-design/);
   assert.ok(doc.indexOf('Factor scores per feature') < doc.indexOf('Tasks + O/M/P'), 'scores come before tasks');
 });
 
