@@ -34,12 +34,21 @@ before scope confirmation and before any factor scoring.
 | STANDARD | task-level three-point PERT | ± moderate |
 | DEEP | STANDARD plus per-scenario detail (multiple team/AI-assistance combinations sized individually) | ± narrower |
 
-## 2b. Delivery mode — ask second
+## 2b. Delivery mode — assume second, ask only to leave it
 
 | Mode | Meaning | Sizing path |
 | --- | --- | --- |
+| AGENTIC (default) | AI coding agents write the code, humans plan and review | measurement-based (`agentic-estimation.md`) |
 | TRADITIONAL | humans write the code | technique menu (`techniques.md`) |
-| AGENTIC | AI coding agents write the code, humans plan and review | measurement-based (`agentic-estimation.md`) |
+
+Assume **AGENTIC**; ask only "humans writing the code?" as the opt-out, the
+same shape as the AI-assistance question in §5. A client who is hand-writing
+the code will say so; one who is not should not have to answer for it every
+interview.
+
+Write `deliveryMode` into `estimation-inputs.json` either way, explicitly. An
+absent field still reads as traditional, which is what estimates written
+before this default relied on — the interview no longer leaves it to that.
 
 AGENTIC replaces the technique question and AI-category scoring entirely.
 Follow-ups it adds: which agent + model executes (calibration context,

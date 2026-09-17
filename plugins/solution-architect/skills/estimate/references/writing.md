@@ -16,6 +16,13 @@ top-level `project`, `technique`, `depth`, `calibration`, `overheadPct`,
 `recommendedScenario`. Every task carries `id`, `name`, `category`, `o`,
 `m`, `p`, `confidence`, `assumptions`, `provenance`.
 
+Add top-level `deliveryMode` — `"agentic"` or `"traditional"` — on every
+estimate you write, even though the field is optional and the booking fixture
+omits it. The interview defaults to agentic (`interview.md` §2b) while an
+absent field still reads as traditional, so leaving it out would record the
+opposite of what was agreed. The fixture keeps its silence on purpose: it is
+the traditional path's regression guard.
+
 At `STANDARD`/`DEEP` every feature also carries `scores` — one entry per
 factor `tech`, `size`, `deps`, `unc`, `risk`, each `{ "n": 1–5, "anchor":
 "<the scoring-guide.md sentence for that factor and score, verbatim>",

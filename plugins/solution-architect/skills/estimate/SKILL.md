@@ -27,8 +27,10 @@ interactive page served on localhost.
 
 1. **Detect evidence**: requirements/RFP? ARCHITECTURE.md? codebase? none?
    State findings; the user can override. (`references/interview.md` §1)
-2. **Depth and delivery mode**: ask QUICK / STANDARD / DEEP, then TRADITIONAL
-   / AGENTIC (`references/interview.md` §2b). Delivery mode decides step 4.
+2. **Depth and delivery mode**: ask QUICK / STANDARD / DEEP, then assume
+   AGENTIC and ask only "humans writing the code?" as the opt-out
+   (`references/interview.md` §2b). Delivery mode decides step 4, and is
+   written to `estimation-inputs.json` explicitly either way.
 3. **Interview**: follow `references/interview.md` — pre-fill from evidence,
    ask only holes, run the clear-vs-assumed gate before sizing. Read
    `references/scoring-guide.md` before proposing any score; offer the
