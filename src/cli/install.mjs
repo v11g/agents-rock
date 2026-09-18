@@ -13,6 +13,12 @@ export function installPlugin({ pluginDir, targets, agents, force = false }) {
   return result;
 }
 
+const NOT_SHIPPED = new Set(['evals']);
+
+function shipsToUsers(src) {
+  return !NOT_SHIPPED.has(path.basename(src));
+}
+
 function copyCanonical({ skill, targets, force, result }) {
   const dest = path.join(targets.canonical, skill.name);
   if (existsSync(dest) && !force) {
@@ -21,7 +27,7 @@ function copyCanonical({ skill, targets, force, result }) {
   }
   rmSync(dest, { recursive: true, force: true });
   mkdirSync(path.dirname(dest), { recursive: true });
-  cpSync(skill.dir, dest, { recursive: true });
+  cpSync(skill.dir, dest, { recursive: true, filter: shipsToUsers });
   return dest;
 }
 

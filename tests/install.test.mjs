@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtempSync, mkdirSync, writeFileSync, rmSync, lstatSync, readlinkSync, readFileSync, realpathSync } from 'node:fs';
+import { mkdtempSync, mkdirSync, writeFileSync, rmSync, lstatSync, readlinkSync, readFileSync, realpathSync, existsSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { installPlugin } from '../src/cli/install.mjs';
@@ -86,4 +86,19 @@ test('force replaces blocker and stale canonical', (t) => {
   assert.equal(result.skipped.length, 0);
   assert.equal(readFileSync(path.join(canonical, 'SKILL.md'), 'utf8'), '# demo v1');
   assert.ok(lstatSync(blocker).isSymbolicLink());
+});
+
+test('does not install eval suites into the canonical copy', (t) => {
+  const { pluginDir, targets } = setup(t);
+  const skillDir = path.join(pluginDir, 'skills', 'demo');
+  mkdirSync(path.join(skillDir, 'evals', 'fixtures', 'acme'), { recursive: true });
+  writeFileSync(path.join(skillDir, 'evals', 'evals.json'), '{"skill_name":"demo","evals":[]}');
+  writeFileSync(path.join(skillDir, 'evals', 'fixtures', 'acme', 'brief.md'), 'fixture');
+
+  installPlugin({ pluginDir, targets, agents: ['claude'] });
+
+  const canonical = path.join(targets.canonical, 'demo');
+  assert.equal(existsSync(path.join(canonical, 'evals')), false, 'evals/ must not ship to users');
+  assert.equal(readFileSync(path.join(canonical, 'SKILL.md'), 'utf8'), '# demo v1');
+  assert.equal(readFileSync(path.join(canonical, 'assets', 'a.txt'), 'utf8'), 'asset');
 });
