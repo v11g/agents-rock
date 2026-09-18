@@ -1,0 +1,35 @@
+{
+  "version": 1,
+  "leads": [
+    {
+      "id": "harborline-logistics-tms",
+      "client": "Harborline Logistics",
+      "title": "TMS Replacement",
+      "status": "active",
+      "created": "2026-07-02",
+      "closed": null,
+      "value": { "low": 180000, "high": 240000, "currency": "USD" },
+      "scenario": "3eng-balanced"
+    },
+    {
+      "id": "vellum-books-checkout",
+      "client": "Vellum Books",
+      "title": "Checkout Rebuild",
+      "status": "active",
+      "created": "2026-08-19",
+      "closed": null,
+      "value": null,
+      "scenario": null
+    },
+    {
+      "id": "zephyr-hr-portal",
+      "client": "Zephyr Group",
+      "title": "HR Self-Service Portal",
+      "status": "won",
+      "created": "2026-05-11",
+      "closed": "2026-06-30",
+      "value": { "low": 90000, "high": 120000, "currency": "USD" },
+      "scenario": "2eng-max5x"
+    }
+  ]
+}

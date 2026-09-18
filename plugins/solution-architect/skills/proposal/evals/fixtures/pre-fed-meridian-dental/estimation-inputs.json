@@ -1,0 +1,87 @@
+{
+  "project": "Meridian Dental Patient Portal",
+  "currency": "USD",
+  "technique": "three-point-pert",
+  "depth": "STANDARD",
+  "calibration": { "S": [20, 60], "M": [60, 160], "L": [160, 400], "XL": [400, 800] },
+  "overheadPct": 0.35,
+  "verificationPct": 0.12,
+  "exposeRatesToClient": false,
+  "components": [
+    { "id": "portal", "name": "Patient Portal" },
+    { "id": "records", "name": "Records Store" },
+    { "id": "recall", "name": "Recall Reminders" },
+    { "id": "insurance", "name": "Insurance Claims", "notEstimated": "phase 2, practice keeps its current claims desk" }
+  ],
+  "features": [
+    {
+      "id": "patient-login",
+      "name": "Patients sign in to see their own records",
+      "provenance": "stated",
+      "component": "portal",
+      "milestone": "M1 - Secure portal",
+      "scores": {
+        "tech": { "n": 3, "anchor": "Custom business logic, moderate algorithm complexity, multiple states", "cite": "identity checks plus consent states" },
+        "size": { "n": 3, "anchor": "Medium feature with multiple components and backend logic", "cite": "sign-in screens plus access rules" },
+        "deps": { "n": 2, "anchor": "One internal dependency (e.g. auth check)", "cite": "reads the practice staff directory" },
+        "unc": { "n": 2, "anchor": "Minor ambiguities, can be resolved with one clarifying question", "cite": "guardian access rule to confirm" },
+        "risk": { "n": 4, "anchor": "Payments, auth, data migrations, or PII — high business impact", "cite": "patient health records are protected data" }
+      },
+      "scoreNote": "The sign-in that keeps each patient's records visible only to them.",
+      "scoreProvenance": "stated",
+      "tasks": [
+        { "id": "login-identity", "name": "Patient sign-in and identity checks", "category": "boilerplate", "o": 40, "m": 60, "p": 100, "confidence": "HIGH", "assumptions": ["email and date of birth identify a patient"], "provenance": "stated" },
+        { "id": "login-access-rules", "name": "Record access and audit rules", "category": "logic", "o": 55, "m": 88, "p": 150, "confidence": "MED", "assumptions": ["every record view is logged for seven years"], "provenance": "stated" }
+      ]
+    },
+    {
+      "id": "records-view",
+      "name": "Patients read treatment history and bills",
+      "provenance": "stated",
+      "component": "records",
+      "milestone": "M1 - Secure portal",
+      "scores": {
+        "tech": { "n": 2, "anchor": "Minor customisation of standard patterns, simple state management", "cite": "read-only screens over existing data" },
+        "size": { "n": 2, "anchor": "Small self-contained feature, simple form or display component", "cite": "two display screens" },
+        "deps": { "n": 3, "anchor": "2–3 internal services or one third-party API", "cite": "reads the existing practice management export" },
+        "unc": { "n": 2, "anchor": "Minor ambiguities, can be resolved with one clarifying question", "cite": "export refresh frequency to confirm" },
+        "risk": { "n": 3, "anchor": "Moderate impact if broken, requires testing, affects multiple users", "cite": "a wrong record shown to a patient is a reportable incident" }
+      },
+      "scoreNote": "The screens where a patient reads their own treatment history.",
+      "scoreProvenance": "stated",
+      "tasks": [
+        { "id": "records-screens", "name": "Treatment history and billing screens", "category": "logic", "o": 42, "m": 64, "p": 105, "confidence": "MED", "assumptions": ["nightly export from the practice system"], "provenance": "stated" }
+      ]
+    },
+    {
+      "id": "recall-reminders",
+      "name": "Patients get their six-month check-up reminder",
+      "provenance": "proposed",
+      "component": "recall",
+      "milestone": "M2 - Recall reminders",
+      "scores": {
+        "tech": { "n": 2, "anchor": "Minor customisation of standard patterns, simple state management", "cite": "scheduled job plus message template" },
+        "size": { "n": 2, "anchor": "Small self-contained feature, simple form or display component", "cite": "one job, two templates" },
+        "deps": { "n": 3, "anchor": "2–3 internal services or one third-party API", "cite": "email and text message provider" },
+        "unc": { "n": 2, "anchor": "Minor ambiguities, can be resolved with one clarifying question", "cite": "opt-out wording to confirm" },
+        "risk": { "n": 2, "anchor": "Low stakes, easy rollback, minimal user impact", "cite": "a missed reminder is recoverable" }
+      },
+      "scoreNote": "The automatic six-month reminder that brings patients back in.",
+      "scoreProvenance": "proposed",
+      "tasks": [
+        { "id": "recall-jobs", "name": "Scheduled recall messages", "category": "logic", "o": 25, "m": 40, "p": 70, "confidence": "MED", "assumptions": ["messaging provider already chosen"], "provenance": "proposed" }
+      ]
+    }
+  ],
+  "risks": [
+    { "name": "practice management export format is undocumented", "probability": 0.4, "impactHours": 32 }
+  ],
+  "assumptions": [
+    { "text": "nightly export from the practice system", "impactIfWrong": "recompute records-screens at logic category, +40%" }
+  ],
+  "scenarios": [
+    { "id": "lean-2eng", "aiAssisted": true, "toolingCostPerSeat": 100, "team": [{ "seniority": "senior", "rate": 60 }, { "seniority": "mid", "rate": 45 }] },
+    { "id": "full-4eng", "aiAssisted": false, "toolingCostPerSeat": null, "team": [{ "seniority": "senior", "rate": 60 }, { "seniority": "mid", "rate": 45 }, { "seniority": "mid", "rate": 45 }, { "seniority": "junior", "rate": 30 }] }
+  ],
+  "recommendedScenario": "lean-2eng"
+}

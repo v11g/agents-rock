@@ -1,0 +1,67 @@
+{
+  "skill_name": "proposal",
+  "evals": [
+    {
+      "id": 0,
+      "name": "gate-check-no-estimate",
+      "prompt": "Marco from Rivet Gym is coming in tomorrow at 11 and he's already sat through two quotes he called \"a number on a page with nothing behind it\". Everything I've got is in plugins/solution-architect/skills/proposal/evals/fixtures/gate-check-rivet-gym/ — the architecture doc from our call and my notes in brief.md. Just write me something I can send them today. Proper proposal, price on it, I'll read it tonight and sign it off in the morning. Don't overthink it — three sites, class booking, a door-check screen, we've built this shape twice already.",
+      "expected_output": "The skill stops at the prerequisite gate. It reports that ARCHITECTURE.md is present but estimation.json is missing from the lead workspace, and tells the user to run the `estimate` skill before a proposal can be assembled. No proposal.md, no proposal-figures.json and no proposal.html are written, and no price, duration, scenario or milestone split is stated anywhere in the reply — those numbers only exist downstream of estimation.json.",
+      "files": [
+        "plugins/solution-architect/skills/proposal/evals/fixtures/gate-check-rivet-gym/ARCHITECTURE.md",
+        "plugins/solution-architect/skills/proposal/evals/fixtures/gate-check-rivet-gym/brief.md"
+      ],
+      "assertions": [
+        "stops-before-writing: after the turn, no proposal.md, proposal-figures.json, proposal.html or dist/ directory exists anywhere in or under the fixture lead directory - the skill stopped at the gate instead of producing a document",
+        "names-the-missing-upstream-input: the reply names estimation.json (or the `estimate` skill) specifically as the missing prerequisite, and does NOT claim analyze-requirements/ARCHITECTURE.md is missing - ARCHITECTURE.md is present in the fixture",
+        "no-invented-money: the reply contains zero currency amounts - no token matching [$€£] followed by digits, and no bare figure presented as a price, budget, day rate or total",
+        "no-invented-timeline: the reply states no delivery duration or date commitment (no 'N weeks', 'N months', milestone dates or a valid-until date) - the timeline is derived from estimation.json, which does not exist here",
+        "no-client-facing-document-emitted: the reply does not contain a proposal body in chat either - none of the section headings Executive Summary / Investment & Timeline / Next Steps appear, and nothing in the reply is framed as sendable to Marco as-is",
+        "no-invented-scenario: no staffing scenario, team composition, milestone list or per-milestone split is asserted - all four come from estimation.json"
+      ]
+    },
+    {
+      "id": 1,
+      "name": "pre-fed-non-tech-harborline",
+      "prompt": "Right, Harborline. Dale signs Friday and I'm on a plane Thursday so I want this done now. Everything's in plugins/solution-architect/skills/proposal/evals/fixtures/pre-fed-harborline-dispatch/ — ARCHITECTURE.md, estimation.json, estimation.md and Dale's brief.\n\nAnswering everything up front so you don't have to ask:\n\n- Client is Harborline Logistics. Dale Okonkwo, operations manager, decides; the owner countersigns.\n- He is completely non-technical. He asked me twice what an API was. Plain English, zero jargon, write it like you'd write it for my mum.\n- His problem in his own words: \"a screen that shows me where every van is supposed to be\" and \"customers stop ringing us\".\n- What he cares about most is reliability — the whiteboard got wiped once and he lost a whole day of routes.\n- Offer the 2eng-agentic scenario. That's the one I want on the table.\n- Valid 30 days from today.\n- Firm profile: Code Engine Studio, hello@codeenginestudio.com, https://codeenginestudio.com. Blurb: \"We build custom software for small operations teams and hand it over working.\" Relevant work: \"Clinic scheduler — replaced a paper diary for a six-site practice, live in seven weeks\" and \"Depot stock app — barcode stock counts for a regional wholesaler\". Save it project-level please, don't write anything into my home directory.\n- Nothing extra out of scope beyond what estimation.md already excludes.\n- The diagram bundle from the architecture viewer is already sitting in that folder at dist/mermaid.js, reuse it.\n\nWrite proposal.md, validate it, then render proposal.html into dist/. Don't start the local server — I just want the files on disk.",
+      "expected_output": "proposal.md beside the fixture's ARCHITECTURE.md carrying the ten named sections and the flat frontmatter contract (client: Harborline Logistics, client_tech_level: non-tech, scenario: 2eng-agentic, currency: USD, valid_until 30 days out, source_architecture, source_estimation), plus dist/proposal.html rendered from it. Exactly one scenario is offered and it is expressed as a range: $17,400 – $42,300 over 1.2–2.8 months, with the milestone table reading M1 - Dispatch core $14,200 – $34,500 over 1–2.3 months and M2 - Customer tracking $3,200 – $7,800 over 0.2–0.5 months. `node scripts/validate.mjs --md <fixture>/proposal.md --estimation <fixture>/estimation.json` exits 0. No server started, and .claude/proposal-profile.json is written project-level only.",
+      "files": [
+        "plugins/solution-architect/skills/proposal/evals/fixtures/pre-fed-harborline-dispatch/ARCHITECTURE.md",
+        "plugins/solution-architect/skills/proposal/evals/fixtures/pre-fed-harborline-dispatch/brief.md",
+        "plugins/solution-architect/skills/proposal/evals/fixtures/pre-fed-harborline-dispatch/estimation.json",
+        "plugins/solution-architect/skills/proposal/evals/fixtures/pre-fed-harborline-dispatch/estimation-inputs.json",
+        "plugins/solution-architect/skills/proposal/evals/fixtures/pre-fed-harborline-dispatch/estimation.md",
+        "plugins/solution-architect/skills/proposal/evals/fixtures/pre-fed-harborline-dispatch/dist/mermaid.js"
+      ],
+      "assertions": [
+        "both-artifacts-exist: proposal.md exists beside the fixture's ARCHITECTURE.md AND dist/proposal.html exists, and proposal.html's headline figures match proposal.md's (the .md is the source, the .html is rendered from it)",
+        "validator-exits-zero: `node scripts/validate.mjs --md <fixture>/proposal.md --estimation <fixture>/estimation.json` run from the skill directory exits 0 and prints 'proposal deliverable valid'",
+        "every-number-traces-upstream: every money amount and every month figure in proposal.md is one of the values derive.mjs produces from the fixture estimation.json for scenario 2eng-agentic - {17400, 42300, 14200, 34500, 3200, 7800} and {1.2, 2.8, 1, 2.3, 0.2, 0.5} - with no other figure and no drift (not 17,500, not '~$40k', not 3 months)",
+        "exactly-one-scenario-as-a-range: the document offers one option only, stated as a price range ($17,400 – $42,300) - there is no second tier, no good/better/best table, no 'option A vs option B', and the string '3eng-classic' and its $35,497 total appear nowhere in proposal.md or proposal.html",
+        "html-is-self-contained: proposal.html contains no `<script src=`, no `<link ... href=` stylesheet and no `url(` referencing an http(s):// address or a relative path - the fonts are inline `data:font/woff2;base64` URIs and the diagram bundle is inlined - so the file still renders when emailed as a single attachment",
+        "non-tech-language-and-no-leaks: outside the About section, proposal.md uses none of the deny-list jargon terms (api, backend, frontend, middleware, kubernetes, docker, microservice, ci/cd, oauth, sql, nosql, webhook, endpoint, orm, latency, schema, refactor, devops), and carries no hourly rate, no provenance cell (observed/stated/researched/proposed), no `src` column and no internal risk-register entry"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "pre-fed-budget-and-patient-data-meridian",
+      "prompt": "Meridian Dental — the partners meet in a fortnight and Dr Vogt told me flat out that if it comes in over their ceiling I should cut scope, not come back with a bigger number. Lead folder is plugins/solution-architect/skills/proposal/evals/fixtures/pre-fed-meridian-dental/ (architecture doc, estimation.json, estimation.md, her brief).\n\nPre-answering the interview:\n\n- Client: Meridian Dental Group. Dr Alina Vogt, managing partner — she and two other partners sign together, there's no IT person.\n- Tech level is low-tech. She's fine with website, app, database, login. Don't go past that.\n- Her words: \"patients should be able to look up their own history without ringing us\" and \"the six-month recall has to send itself\".\n- What she cares about most is price. Lead with that, and make it obvious what we've already cut out to hit it.\n- She also said, and this is the bit that will kill the deal if we fluff it: \"it is patient health data, I need to be able to show who looked at what\". Whatever we say about that has to be backed by what's actually in the architecture doc — do not promise her a certification.\n- Offer lean-2eng. Not the bigger team.\n- Valid two weeks from today.\n- Firm profile: Code Engine Studio, hello@codeenginestudio.com, https://codeenginestudio.com. Blurb: \"We build custom software for small practices and hand it over working.\" Relevant work: \"Clinic scheduler — replaced a paper diary for a six-site practice, live in seven weeks\" and \"Patient recall tool — automated six-month recalls for a two-site dental group\". Project-level, not my home dir.\n- Mermaid bundle is already at dist/mermaid.js in that folder.\n\nproposal.md first, validate, then render proposal.html into dist/. No local server.",
+      "expected_output": "proposal.md beside the fixture's ARCHITECTURE.md with client_tech_level: low-tech, scenario: lean-2eng and valid_until two weeks out, plus dist/proposal.html. One scenario offered as a range: $9,700 – $25,500 over 0.7–1.7 months, milestones M1 - Secure portal $8,000 – $20,900 over 0.5–1.4 months and M2 - Recall reminders $1,700 – $4,500 over 0.1–0.3 months. The Executive Summary leads on price; Out of Scope & Assumptions names the exclusions estimation.md already records (insurance claims, online booking, write-back to the practice management system, card payments). The audit/records-access commitment is stated only as far as ARCHITECTURE.md §12 and the inputs support it (per-patient access, audit entry per view, seven-year retention) with no compliance certification claimed. `node scripts/validate.mjs` exits 0.",
+      "files": [
+        "plugins/solution-architect/skills/proposal/evals/fixtures/pre-fed-meridian-dental/ARCHITECTURE.md",
+        "plugins/solution-architect/skills/proposal/evals/fixtures/pre-fed-meridian-dental/brief.md",
+        "plugins/solution-architect/skills/proposal/evals/fixtures/pre-fed-meridian-dental/estimation.json",
+        "plugins/solution-architect/skills/proposal/evals/fixtures/pre-fed-meridian-dental/estimation-inputs.json",
+        "plugins/solution-architect/skills/proposal/evals/fixtures/pre-fed-meridian-dental/estimation.md",
+        "plugins/solution-architect/skills/proposal/evals/fixtures/pre-fed-meridian-dental/dist/mermaid.js"
+      ],
+      "assertions": [
+        "validator-exits-zero-and-both-artifacts-exist: proposal.md exists beside the fixture's ARCHITECTURE.md, dist/proposal.html exists, and `node scripts/validate.mjs --md <fixture>/proposal.md --estimation <fixture>/estimation.json` exits 0",
+        "every-number-traces-upstream: every money amount and month figure in proposal.md is one of derive.mjs's outputs for scenario lean-2eng from the fixture estimation.json - {9700, 25500, 8000, 20900, 1700, 4500} and {0.7, 1.7, 0.5, 1.4, 0.1, 0.3} - and in particular the internal totals $15,928 (lean-2eng) and $25,355 (full-4eng) from estimation.md appear nowhere",
+        "exactly-one-scenario-as-a-range: one option only, expressed as $9,700 – $25,500 - no second tier, no cheaper/fuller comparison, and the string 'full-4eng' appears in neither proposal.md nor proposal.html even though the budget conversation invites offering a contrast",
+        "exclusions-come-from-upstream: Out of Scope & Assumptions names the four exclusions estimation.md already records (insurance claims, online booking, write-back to the practice management system, card payments in the portal) rather than a freshly invented exclusion list",
+        "data-handling-claim-is-backed-not-certified: any statement about patient-data handling is traceable to ARCHITECTURE.md §12 or the inputs' assumptions (per-patient access, an audit entry per record view, seven-year retention) - the document does NOT claim HIPAA/GDPR/ISO compliance, certification, encryption standards or a security audit that no upstream artifact supports",
+        "html-is-self-contained: proposal.html contains no `<script src=`, no `<link ... href=` stylesheet and no `url(` referencing an http(s):// address or relative path - every font is an inline `data:font/woff2;base64` URI and the diagram bundle is inlined into the page"
+      ]
+    }
+  ]
+}

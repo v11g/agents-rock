@@ -1,0 +1,60 @@
+{
+  "skill_name": "estimate",
+  "evals": [
+    {
+      "id": 0,
+      "name": "gate-check-thin-evidence",
+      "prompt": "Priya at Northgate Dental finally came back to us — I dropped her email in northgate-email.md, that's honestly the whole thing. Six practices, they want \"an app for patient bookings and reminders\". Their partners meet Thursday morning and they want to hear how long it takes and what we'd charge. Give me a ballpark I can put in the email tonight — weeks and a number is fine, we can tighten it after they sign the discovery.",
+      "expected_output": "No duration and no price. The skill reports what evidence exists (one vague email, nothing else), splits the handful of confirmed facts from the assumptions it would otherwise have to make (each with its impact if wrong), names the specific inputs it needs before sizing, and asks the depth question (QUICK/STANDARD/DEEP) plus the delivery-mode opt-out. No estimation-inputs.json, estimation.json, estimation.md or estimate.html is written.",
+      "files": [
+        "evals/fixtures/gate-check-northgate/northgate-email.md"
+      ],
+      "assertions": [
+        "no-committed-number: the reply offers no answer to \"how long / how much\" — no week or month figure, no currency amount, and no hour band presented as this project's size",
+        "no-artifacts-written: no estimation-inputs.json, estimation.json, estimation.md or estimate.html exists anywhere after the run — compute.mjs and render.mjs were never invoked",
+        "evidence-detection-reported: the reply names the evidence actually found (the one forwarded email, no requirements package, no ARCHITECTURE.md, no codebase) and lists the specific missing inputs it needs — feature list, integrations, team and rates, deadline — not a single vague \"tell me more\"",
+        "clear-vs-assumed-split: confirmed scope and assumptions are presented as two separate lists (interview.md §3), and every scope item named carries a stated/proposed label — nothing about bookings, reminders or the six-practice rollout is stated as confirmed scope when the email only implies it",
+        "assumptions-carry-impact: every assumption in the assumed list is paired with its impact-if-wrong (what changes and roughly by how much), never listed bare",
+        "asks-depth-and-delivery-mode: the reply asks the QUICK/STANDARD/DEEP depth question and the delivery-mode opt-out (\"humans writing the code?\", agentic assumed by default) before naming any technique or number"
+      ]
+    },
+    {
+      "id": 1,
+      "name": "pre-fed-traditional-trellis",
+      "prompt": "Trellis Garden Supply — the wholesale ordering portal. Lead folder has the BA package (requirements.json, requirements.md) and the architecture doc already, so please run the estimate. Answering everything up front so you don't have to ping me:\n\n- STANDARD depth.\n- Trellis's own two in-house devs write the code — that's in the contract, humans not agents.\n- Two staffing options to compare: (a) their two devs alone, 1 senior at $75/h and 1 mid at $55/h, working unaided; (b) the same two plus one of our mid engineers at $60/h, all three on AI coding seats at $40 per seat per month. We're recommending (b) because of the 1 March 2027 spring-season deadline.\n- Milestones: M1 catalogue + login, M2 ordering + contract pricing, M3 Sage sync. Reporting dashboards are not in v1.\n- We have no delivery history to calibrate against, use your default bands.\n- Out of scope: retail storefront, van route planning, the mobile app.\n- Client copy must not show rates.",
+      "expected_output": "estimation-inputs.json, estimation.json and estimation.md written beside ARCHITECTURE.md in the lead folder, with dist/estimate.html rendered from the team template. Technique is task-level three-point PERT (techniques.md §1 row 2). Features split stated vs proposed against the BA labels, per-feature five-factor scores with verbatim guide anchors, components roster seeded from §6 with the reporting component carrying a notEstimated reason, risks seeded from §15, milestones producing a roadmap, and two scenarios differing on AI assistance.",
+      "files": [
+        "evals/fixtures/pre-fed-traditional-trellis/requirements.json",
+        "evals/fixtures/pre-fed-traditional-trellis/requirements.md",
+        "evals/fixtures/pre-fed-traditional-trellis/ARCHITECTURE.md"
+      ],
+      "assertions": [
+        "validates-and-renders: `node scripts/validate.mjs --md <lead>/estimation.md --json <lead>/estimation.json` exits 0, and dist/estimate.html exists (render.mjs refuses to write on any finding)",
+        "technique-matches-evidence: inputs.technique is task-level three-point PERT and estimation.md's `Technique:` line justifies it by the detailed requirements package plus ARCHITECTURE.md — not factor-scored tiering, which techniques.md §1 reserves for a vague RFP with no breakdown",
+        "confirmed-vs-assumed-both-populated: at least one feature carries provenance `stated` traced to a confirmed requirement (FR-001/FR-002/FR-003) and at least one carries `proposed` traced to the assumed/recommended ones (FR-004/FR-005); inputs.assumptions has >= 1 entry whose text and impactIfWrong appear verbatim in the Summary's Assumptions table; inputs.components carries every §6 component with `trellis.reporting` excused by a notEstimated reason rather than dropped",
+        "per-task-ai-categories: every task carries a category of boilerplate|logic|novel with at least two distinct categories across the backlog, and no single project-wide or feature-wide AI speedup percentage appears anywhere in estimation.md or estimation-inputs.json (ai-multipliers.md §5)",
+        "scenario-arithmetic-consistent: for every entry in computed.scenarios, totalCost equals laborCost + toolingCost and hours equals (sum of that scenario's taskHours) × (1 + overheadPct) + spreadBufferHours + riskBufferHours within 0.01, and months equals hours / (effectiveCapacity(team size) × 140); the two scenarios differ on aiAssisted and recommendedScenario names the three-person AI-assisted one with a non-empty recommendedReason",
+        "scores-anchored-and-tiers-match: every feature carries scores for tech, size, deps, unc and risk whose `anchor` strings are byte-identical to the corresponding sentences in references/scoring-guide.md, and each Summary scope row's Tier cell equals computed.features[<id>].tier"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "pre-fed-agentic-halyard",
+      "prompt": "Halyard Marine, parts catalogue search revamp — repo is halyard-catalog, requirements package is in the lead folder. Need the estimate today. Everything you'd ask:\n\n- STANDARD depth.\n- Claude Code writes the code on sonnet; I do the planning passes with opus first. So no, humans aren't hand-writing this.\n- Use our own measurements file in the lead folder, measurements.jsonl, not the global one — 17 tasks we've actually logged on this repo.\n- Work is: fitment search by engine make/model/year, supersession chains resolving to the live replacement, the nightly index rebuild off the supplier CSV drop, and the depot stock filter which is a nice-to-have we'd probably still do.\n- Risks: supplier feed might not carry fitment for half the makes — call it 40% likely, about 180 minutes of rework; and supersession chains deeper than two hops, 30%, about 120 minutes.\n- Staffing: just me (senior, $95/h) or me plus one mid at $65/h doing review. Claude Max seats are $200 per seat per month either way. Recommend the solo one unless the numbers say otherwise.\n- No hard deadline. Out of scope: consumer storefront, supplier onboarding portal. Keep rates off the client copy.",
+      "expected_output": "estimation-inputs.json with deliveryMode \"agentic\", agentContext {agent: claude-code, model: sonnet, repository: halyard-catalog}, measurementsPath pointing at the fixture file, and tasks carrying shape + scope + seedMinutes only. estimation.json computed from the fixture measurements, estimation.md with the `Delivery: agentic` header line, the Baseline/Samples/Match task table, an Evidence table of script-matched rows and a minutes-based risks table, and dist/estimate.html rendered from the agentic template.",
+      "files": [
+        "evals/fixtures/pre-fed-agentic-halyard/requirements.json",
+        "evals/fixtures/pre-fed-agentic-halyard/requirements.md",
+        "evals/fixtures/pre-fed-agentic-halyard/measurements.jsonl"
+      ],
+      "assertions": [
+        "validates-and-renders-agentic: `node scripts/validate.mjs --md <lead>/estimation.md --json <lead>/estimation.json` exits 0, inputs.deliveryMode is \"agentic\", and the rendered dist/estimate.html came from assets/estimate-template-agentic.html (it carries the Baseline (min)/Samples/Match table and no `id=\"scoring-guide\"` block)",
+        "durations-not-agent-authored: every task carries a `shape` from TASK_SHAPES plus a `scope` object and `seedMinutes` with o <= m <= p, and no task carries `category`, `confidence`, `o`, `m` or `p` — the four fields schema.mjs bans in agentic mode because the script owns them",
+        "planning-task-present: at least one task has shape \"planning\" and is sized as real work in the backlog, not folded into overhead (agentic-estimation.md §5; agenticFindings refuses a decomposition without one)",
+        "confidence-tracks-samples: inputs.measurementsPath points at the fixture measurements.jsonl rather than ~/.agents-rock/measurements.jsonl, and every computed.tasks[*].confidence is what that file supports — ui_implementation 11 samples → HIGH, api_integration 4 samples → MED, planning (2 samples, global rung) → LOW, and any shape with no matching record → UNCALIBRATED with \"not estimated\" in the Baseline column",
+        "evidence-rows-script-matched: every row in estimation.md's `### Evidence` table has an Id and Actual (min) that appear in computed.tasks[*].evidence (ids drawn from h01–h17 in the fixture), and the Summary header line reports the same measurement count the evidence actually backs",
+        "agentic-arithmetic: computed.riskBufferHours equals the sum of probability × impactMinutes / 60 over inputs.risks (0.4 × 180 + 0.3 × 120 = 1.8 h) with each risk carrying probability, impactMinutes and a non-empty reason, and for every scenario totalCost equals laborCost + toolingCost with months equal to hours / (effectiveCapacity(team size) × 140)"
+      ]
+    }
+  ]
+}

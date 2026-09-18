@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "leads": [
+    {
+      "id": "meridian-freight-portal",
+      "client": "Meridian Freight",
+      "title": "Carrier Portal",
+      "status": "active",
+      "created": "2026-09-14",
+      "closed": null,
+      "value": null,
+      "scenario": null
+    }
+  ]
+}

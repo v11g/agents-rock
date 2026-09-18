@@ -1,0 +1,62 @@
+{
+  "schemaVersion": "1.0",
+  "lead": "halyard-catalog",
+  "status": "READY_FOR_ARCHITECTURE",
+  "depth": "STANDARD",
+  "updated": "2026-09-12",
+  "mode": "existing",
+  "context": {
+    "problem": "Halyard's parts catalogue search misses fitment matches, so counter staff fall back to paper microfiche and customers get sent the wrong impeller.",
+    "goals": [
+      { "id": "G-001", "goal": "Counter staff find the right part first time", "metric": "wrong-part returns down 50% in two quarters", "source": "discovery call 2026-09-05" }
+    ],
+    "successMetrics": ["wrong-part returns halved within two quarters"]
+  },
+  "actors": [
+    { "id": "ACT-001", "name": "Counter salesperson", "type": "human", "goal": "find a part by engine model, not part number", "painPoints": ["search only matches exact part codes", "falls back to paper microfiche"] },
+    { "id": "ACT-002", "name": "Trade customer", "type": "human", "goal": "check a part fits their engine before ordering", "painPoints": ["no fitment data on the public site"] }
+  ],
+  "workflows": [
+    { "id": "WF-001", "name": "Parts lookup", "state": "as-is", "trigger": "customer describes their engine at the counter", "steps": ["staff guesses a part code", "searches the catalogue", "falls back to microfiche", "phones the depot"], "exceptions": ["superseded part numbers are not linked to their replacement"] }
+  ],
+  "requirements": [
+    { "id": "FR-001", "text": "Search must match parts by engine make, model and year, not only by part number.", "label": "confirmed", "source": "discovery call 2026-09-05", "traces": { "goal": "G-001", "workflow": "WF-001", "rules": ["BR-001"] }, "scope": "in", "acceptance": ["SC-001"] },
+    { "id": "FR-002", "text": "Search results must show whether a part is superseded and link to its replacement.", "label": "confirmed", "source": "discovery call 2026-09-05", "traces": { "goal": "G-001", "workflow": "WF-001", "rules": ["BR-001"] }, "scope": "in", "acceptance": [] },
+    { "id": "FR-003", "text": "The fitment index must rebuild nightly from the supplier catalogue feed.", "label": "assumed", "source": "inferred from the weekly supplier feed mentioned in the call", "traces": { "goal": "G-001", "workflow": "WF-001", "rules": [] }, "scope": "in", "acceptance": [] },
+    { "id": "FR-004", "text": "Counter staff should be able to filter results by depot stock.", "label": "recommended", "source": "analyst recommendation — most call-backs are stock questions", "traces": { "goal": "G-001", "workflow": "WF-001", "rules": [] }, "scope": "in", "acceptance": [] }
+  ],
+  "businessRules": [
+    { "id": "BR-001", "rule": "A superseded part number always resolves to its newest live replacement, following the chain to the end.", "source": "discovery call 2026-09-05", "examples": ["PN-4412 -> PN-4412A -> PN-5001"], "openQuestion": "Q-001" }
+  ],
+  "scenarios": [
+    { "id": "SC-001", "requirement": "FR-001", "type": "happy", "given": "a 2011 Yanmar 4JH engine", "when": "staff search by make, model and year", "then": "fitting impellers are listed with fitment confidence" }
+  ],
+  "nfrs": [
+    { "id": "NFR-001", "area": "performance", "text": "Search must return within 400ms at the counter on 180,000 catalogue rows.", "label": "confirmed" }
+  ],
+  "integrations": [
+    { "id": "INT-001", "system": "Supplier catalogue feed (weekly CSV drop)", "direction": "read", "label": "confirmed" }
+  ],
+  "data": [
+    { "id": "DAT-001", "entity": "Part", "sensitivity": "public", "volume": "180,000 rows", "label": "confirmed" },
+    { "id": "DAT-002", "entity": "Fitment record", "sensitivity": "public", "volume": "about 1.2M rows once expanded", "label": "assumed" }
+  ],
+  "constraints": [
+    { "id": "CON-001", "text": "Work lands in the existing halyard-catalog repository — Next.js frontend, Postgres, no rewrite.", "source": "discovery call 2026-09-05" },
+    { "id": "CON-002", "text": "No new infrastructure: search stays on the existing Postgres instance.", "source": "discovery call 2026-09-05" }
+  ],
+  "assumptions": [
+    { "id": "ASM-001", "text": "The supplier feed carries fitment data for at least the top 20 engine makes.", "impact": "high", "status": "unconfirmed" }
+  ],
+  "openQuestions": [
+    { "id": "Q-001", "question": "How deep do supersession chains go in the current data?", "priority": "P2", "reason": "changes whether resolution is recursive or single-hop", "affects": ["BR-001", "FR-002"], "status": "open", "answer": null, "architectureBlocker": false }
+  ],
+  "conflicts": [],
+  "scope": { "out": ["public consumer storefront", "supplier onboarding portal"], "future": ["photo-based part identification"], "unconfirmed": ["depot stock filter"] },
+  "ai": null,
+  "readiness": {
+    "overall": 82,
+    "areas": { "businessContext": 90, "workflows": 85, "rules": 80, "integrations": 75, "data": 85, "nfrs": 80 },
+    "blockers": []
+  }
+}

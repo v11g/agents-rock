@@ -1,0 +1,407 @@
+{
+  "inputs": {
+    "project": "Harborline Dispatch Portal",
+    "currency": "USD",
+    "technique": "three-point-pert",
+    "depth": "STANDARD",
+    "calibration": {
+      "S": [
+        20,
+        60
+      ],
+      "M": [
+        60,
+        160
+      ],
+      "L": [
+        160,
+        400
+      ],
+      "XL": [
+        400,
+        800
+      ]
+    },
+    "overheadPct": 0.35,
+    "verificationPct": 0.12,
+    "exposeRatesToClient": false,
+    "components": [
+      {
+        "id": "dispatch",
+        "name": "Dispatch Service"
+      },
+      {
+        "id": "driver",
+        "name": "Driver App"
+      },
+      {
+        "id": "tracking",
+        "name": "Customer Tracking"
+      },
+      {
+        "id": "billing",
+        "name": "Billing Integration",
+        "notEstimated": "phase 2, client keeps current invoicing"
+      }
+    ],
+    "features": [
+      {
+        "id": "dispatch-board",
+        "name": "Dispatcher assigns jobs on a live board",
+        "provenance": "stated",
+        "component": "dispatch",
+        "milestone": "M1 - Dispatch core",
+        "scores": {
+          "tech": {
+            "n": 3,
+            "anchor": "Custom business logic, moderate algorithm complexity, multiple states",
+            "cite": "job states plus reassignment rules"
+          },
+          "size": {
+            "n": 3,
+            "anchor": "Medium feature with multiple components and backend logic",
+            "cite": "board UI plus assignment service"
+          },
+          "deps": {
+            "n": 2,
+            "anchor": "One internal dependency (e.g. auth check)",
+            "cite": "reads the dispatcher session"
+          },
+          "unc": {
+            "n": 3,
+            "anchor": "Some open questions, design decisions to be made during build",
+            "cite": "overnight shift handover undecided"
+          },
+          "risk": {
+            "n": 3,
+            "anchor": "Moderate impact if broken, requires testing, affects multiple users",
+            "cite": "a stuck board stops every route"
+          }
+        },
+        "scoreNote": "The live assignment board every dispatcher works from all day.",
+        "scoreProvenance": "stated",
+        "tasks": [
+          {
+            "id": "board-api",
+            "name": "Job and assignment service",
+            "category": "boilerplate",
+            "o": 70,
+            "m": 105,
+            "p": 170,
+            "confidence": "HIGH",
+            "assumptions": [
+              "one depot, one timezone"
+            ],
+            "provenance": "stated"
+          },
+          {
+            "id": "board-ui",
+            "name": "Live dispatch board screen",
+            "category": "logic",
+            "o": 100,
+            "m": 150,
+            "p": 240,
+            "confidence": "MED",
+            "assumptions": [
+              "desktop browser only"
+            ],
+            "provenance": "stated"
+          }
+        ]
+      },
+      {
+        "id": "driver-checkin",
+        "name": "Drivers check in and out from their phone",
+        "provenance": "stated",
+        "component": "driver",
+        "milestone": "M1 - Dispatch core",
+        "scores": {
+          "tech": {
+            "n": 2,
+            "anchor": "Minor customisation of standard patterns, simple state management",
+            "cite": "form plus photo upload"
+          },
+          "size": {
+            "n": 3,
+            "anchor": "Medium feature with multiple components and backend logic",
+            "cite": "mobile screens plus upload service"
+          },
+          "deps": {
+            "n": 2,
+            "anchor": "One internal dependency (e.g. auth check)",
+            "cite": "reads the driver session"
+          },
+          "unc": {
+            "n": 2,
+            "anchor": "Minor ambiguities, can be resolved with one clarifying question",
+            "cite": "offline behaviour to confirm"
+          },
+          "risk": {
+            "n": 3,
+            "anchor": "Moderate impact if broken, requires testing, affects multiple users",
+            "cite": "a missed check-in loses proof of delivery"
+          }
+        },
+        "scoreNote": "The phone screen drivers use at every pickup and drop-off.",
+        "scoreProvenance": "stated",
+        "tasks": [
+          {
+            "id": "checkin-mobile",
+            "name": "Driver check-in screens",
+            "category": "logic",
+            "o": 60,
+            "m": 95,
+            "p": 150,
+            "confidence": "MED",
+            "assumptions": [
+              "company-issued phones only"
+            ],
+            "provenance": "stated"
+          },
+          {
+            "id": "checkin-photos",
+            "name": "Proof-of-delivery photo upload",
+            "category": "boilerplate",
+            "o": 30,
+            "m": 45,
+            "p": 70,
+            "confidence": "HIGH",
+            "assumptions": [
+              "photos kept for 12 months"
+            ],
+            "provenance": "stated"
+          }
+        ]
+      },
+      {
+        "id": "customer-tracking",
+        "name": "Customers see where their delivery is",
+        "provenance": "proposed",
+        "component": "tracking",
+        "milestone": "M2 - Customer tracking",
+        "scores": {
+          "tech": {
+            "n": 2,
+            "anchor": "Minor customisation of standard patterns, simple state management",
+            "cite": "status page plus email link"
+          },
+          "size": {
+            "n": 2,
+            "anchor": "Small self-contained feature, simple form or display component",
+            "cite": "one public page"
+          },
+          "deps": {
+            "n": 3,
+            "anchor": "2–3 internal services or one third-party API",
+            "cite": "map provider plus email provider"
+          },
+          "unc": {
+            "n": 2,
+            "anchor": "Minor ambiguities, can be resolved with one clarifying question",
+            "cite": "refresh frequency to confirm"
+          },
+          "risk": {
+            "n": 2,
+            "anchor": "Low stakes, easy rollback, minimal user impact",
+            "cite": "a stale status is recoverable"
+          }
+        },
+        "scoreNote": "A tracking page customers open from the delivery email.",
+        "scoreProvenance": "proposed",
+        "tasks": [
+          {
+            "id": "tracking-page",
+            "name": "Public delivery tracking page",
+            "category": "logic",
+            "o": 50,
+            "m": 75,
+            "p": 125,
+            "confidence": "MED",
+            "assumptions": [
+              "map provider already chosen"
+            ],
+            "provenance": "proposed"
+          }
+        ]
+      }
+    ],
+    "risks": [
+      {
+        "name": "depot wifi blackspots delay driver rollout",
+        "probability": 0.3,
+        "impactHours": 40
+      }
+    ],
+    "assumptions": [
+      {
+        "text": "one depot, one timezone",
+        "impactIfWrong": "recompute board-api at logic category, +30%"
+      }
+    ],
+    "scenarios": [
+      {
+        "id": "3eng-classic",
+        "aiAssisted": false,
+        "toolingCostPerSeat": null,
+        "team": [
+          {
+            "seniority": "mid",
+            "rate": 45
+          },
+          {
+            "seniority": "mid",
+            "rate": 45
+          },
+          {
+            "seniority": "junior",
+            "rate": 30
+          }
+        ]
+      },
+      {
+        "id": "2eng-agentic",
+        "aiAssisted": true,
+        "toolingCostPerSeat": 100,
+        "team": [
+          {
+            "seniority": "senior",
+            "rate": 60
+          },
+          {
+            "seniority": "mid",
+            "rate": 45
+          }
+        ]
+      }
+    ],
+    "recommendedScenario": "2eng-agentic"
+  },
+  "computed": {
+    "tasks": {
+      "board-api": {
+        "e": 110,
+        "sigma": 16.67
+      },
+      "board-ui": {
+        "e": 156.67,
+        "sigma": 23.33
+      },
+      "checkin-mobile": {
+        "e": 98.33,
+        "sigma": 15
+      },
+      "checkin-photos": {
+        "e": 46.67,
+        "sigma": 6.67
+      },
+      "tracking-page": {
+        "e": 79.17,
+        "sigma": 12.5
+      }
+    },
+    "features": {
+      "customer-tracking": {
+        "hours": 79.17,
+        "low": 50,
+        "high": 125,
+        "scoreTotal": 11,
+        "tier": "S"
+      },
+      "dispatch-board": {
+        "hours": 266.67,
+        "low": 170,
+        "high": 410,
+        "scoreTotal": 14,
+        "tier": "M"
+      },
+      "driver-checkin": {
+        "hours": 145,
+        "low": 90,
+        "high": 220,
+        "scoreTotal": 12,
+        "tier": "M"
+      }
+    },
+    "components": {
+      "billing": 0,
+      "dispatch": 266.67,
+      "driver": 145,
+      "tracking": 79.17
+    },
+    "devHours": 490.83,
+    "overheadHours": 171.79,
+    "spreadBufferHours": 35.33,
+    "riskBufferHours": 12,
+    "scenarios": {
+      "2eng-agentic": {
+        "taskHours": {
+          "board-api": 49.74,
+          "board-ui": 111.86,
+          "checkin-mobile": 70.21,
+          "checkin-photos": 21.1,
+          "tracking-page": 56.53
+        },
+        "hours": 465.07,
+        "months": 1.85,
+        "laborCost": 27129.05,
+        "toolingCost": 369.1,
+        "totalCost": 27498.15,
+        "notes": [],
+        "roadmap": [
+          {
+            "milestone": "M1 - Dispatch core",
+            "features": [
+              "dispatch-board",
+              "driver-checkin"
+            ],
+            "startMonths": 0,
+            "endMonths": 1.51
+          },
+          {
+            "milestone": "M2 - Customer tracking",
+            "features": [
+              "customer-tracking"
+            ],
+            "startMonths": 1.51,
+            "endMonths": 1.85
+          }
+        ]
+      },
+      "3eng-classic": {
+        "taskHours": {
+          "board-api": 110,
+          "board-ui": 156.67,
+          "checkin-mobile": 98.33,
+          "checkin-photos": 46.67,
+          "tracking-page": 79.17
+        },
+        "hours": 709.95,
+        "months": 2.11,
+        "laborCost": 35497.54,
+        "toolingCost": 0,
+        "totalCost": 35497.54,
+        "notes": [],
+        "roadmap": [
+          {
+            "milestone": "M1 - Dispatch core",
+            "features": [
+              "dispatch-board",
+              "driver-checkin"
+            ],
+            "startMonths": 0,
+            "endMonths": 1.77
+          },
+          {
+            "milestone": "M2 - Customer tracking",
+            "features": [
+              "customer-tracking"
+            ],
+            "startMonths": 1.77,
+            "endMonths": 2.11
+          }
+        ]
+      }
+    },
+    "projectConfidence": "MED"
+  }
+}

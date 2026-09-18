@@ -1,0 +1,66 @@
+{
+  "skill_name": "new-lead",
+  "evals": [
+    {
+      "id": 0,
+      "name": "skips-to-proposal",
+      "prompt": "ok so Meridian Freight came back to us and they want a proposal by Friday. their RFP is already sitting in leads/meridian-freight-portal/. can you just run new-lead and hand me the finished proposal out the other end? I really don't have time to sit through the interview stuff today - make reasonable assumptions wherever you need to and fill the gaps in.",
+      "expected_output": "The fixture is staged as the working directory (an existing leads root). The skill refuses to jump to /proposal: it reports that /proposal hard-requires both ARCHITECTURE.md and estimation.json, neither of which exists for this lead, names the ordered chain, and stops and hands control back rather than running the chain unattended or inventing scope to fill the gaps. No document is written.",
+      "files": [
+        "plugins/solution-architect/skills/new-lead/evals/fixtures/skips-to-proposal/leads.json",
+        "plugins/solution-architect/skills/new-lead/evals/fixtures/skips-to-proposal/leads/meridian-freight-portal/rfp.md"
+      ],
+      "assertions": [
+        "no-artifacts-written: after the turn, leads/meridian-freight-portal/ still contains only rfp.md - no proposal.md, proposal-figures.json, estimation.json, ARCHITECTURE.md, requirements.json or dist/ was created",
+        "proposal-prerequisites-named: the response states that /proposal requires both ARCHITECTURE.md and estimation.json and that neither exists for this lead yet",
+        "chain-order-stated: the response names the ordered chain - /business-analyst (when installed) then /analyze-requirements, /estimate, /proposal - instead of offering to draft a proposal directly",
+        "chain-not-run-unattended: the transcript shows at most one sub-skill invoked; /analyze-requirements, /estimate and /proposal are not run back-to-back in the same turn",
+        "no-fabricated-lead-facts: no fact absent from rfp.md (auth approach, TMS API, go-live date, budget, data ownership) is stated as a decision or assumption of record, and leads.json is byte-identical to the fixture - no invented client, title, value or scenario written",
+        "hands-back-to-human: the turn ends by asking the human to confirm the next step, not by reporting the proposal as produced or partially produced"
+      ]
+    },
+    {
+      "id": 1,
+      "name": "fresh-lead-northwind",
+      "prompt": "new lead - Northwind Analytics. came in through Priya on the AWS partner team, she intro'd us to their CTO Marcus Feld (marcus.feld@northwindanalytics.com). rough scope: they want to kill their nightly SFTP CSV drop and give their grocery customers a real web app for the forecasts - Okta SSO, CSV + Parquet export, audit log on exports. their RFP is at ./rfp-northwind.md. first call was 2026-09-15 and they want something back by 2026-10-02. set the workspace up for me, nothing exists in this folder yet, this is the first lead we're tracking here.",
+      "expected_output": "No leads.json exists anywhere up-tree, so the skill confirms the root with the user and runs `node scripts/init-root.mjs --root <dir>`, producing the exact workspace layout from SKILL.md (leads.json, start.sh at the root, leads/, scripts/ with serve.mjs, the dashboard pages, lib/ and vendor/). It creates leads/northwind-analytics-<project>/ in kebab-case, moves/copies the RFP in, registers the lead through scripts/lead-upsert.mjs with a created date, then stops and names /business-analyst as the next step. It does not run the chain.",
+      "files": [
+        "plugins/solution-architect/skills/new-lead/evals/fixtures/fresh-lead-northwind/rfp-northwind.md"
+      ],
+      "assertions": [
+        "exact-workspace-layout: `scripts/init-root.mjs` was run and all of <root>/leads.json, <root>/start.sh, <root>/leads/, <root>/scripts/serve.mjs, <root>/scripts/index.html, <root>/scripts/detail.html, <root>/scripts/stats.mjs, <root>/scripts/vendor/reactflow-bundle.js and <root>/scripts/lib/registry.mjs exist; no index.html or serve.mjs sits flat at the root",
+        "lead-dir-under-leads: the lead directory is <root>/leads/<id>/ (not <root>/<id>/), <id> matches ^[a-z0-9]+(-[a-z0-9]+)*$, and the Northwind RFP file is inside that directory",
+        "registry-entry-fields: <root>/leads.json parses, has version 1, and holds exactly one lead whose id equals the leads/ folder name verbatim, with client \"Northwind Analytics\", a non-empty title, status \"active\", created matching ^\\d{4}-\\d{2}-\\d{2}$, closed null, value null and scenario null",
+        "registry-written-via-upsert: the transcript shows `scripts/lead-upsert.mjs --root <root> --id <id> --patch '{...}'` with created in the patch; leads.json is never authored or edited with a file-write tool",
+        "validate-passes: `node scripts/validate.mjs --file <root>/leads.json` exits 0 with no findings printed",
+        "next-skill-handoff-and-stop: the response names /business-analyst as the next step (or names /analyze-requirements plus a one-line recommendation to install the business-analyst plugin) and stops there - no ARCHITECTURE.md, estimation.json or proposal.md is produced in this turn"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "existing-root-pipeline",
+      "prompt": "new lead: Sable Dental. our contact there is Naomi Okafor (naomi@sabledental.co.uk) - came off the back of the Harborline referral, their ops manager used to work at Sable. intro call was yesterday 2026-09-15 and my notes are already in leads/sable-dental-booking/rfp.md. 11 practices, online booking sitting on top of Dentally, circa 150k and they want it phased, first two practices live before the March recall season. add it and then show me where everything else stands - I've got a pipeline review with Dan tomorrow morning.",
+      "expected_output": "The fixture is staged as the working directory: an existing leads root with leads.json (3 entries) and leads/ folders. The skill finds that root via findLeadsRoot rather than creating a new one (refreshing scripts/ via init-root.mjs is fine), adopts leads/sable-dental-booking through lead-upsert.mjs, and prints the lead state table - zephyr-hr-portal is an orphan (entry, no folder) reported and not deleted, harborline-logistics-tms is done, vellum-books-checkout is WIP resuming at /estimate. It names the dashboard start command and the next skill for Sable, and stops.",
+      "files": [
+        "plugins/solution-architect/skills/new-lead/evals/fixtures/existing-root-pipeline/leads.json",
+        "plugins/solution-architect/skills/new-lead/evals/fixtures/existing-root-pipeline/leads/harborline-logistics-tms/brief.md",
+        "plugins/solution-architect/skills/new-lead/evals/fixtures/existing-root-pipeline/leads/harborline-logistics-tms/requirements.json",
+        "plugins/solution-architect/skills/new-lead/evals/fixtures/existing-root-pipeline/leads/harborline-logistics-tms/ARCHITECTURE.md",
+        "plugins/solution-architect/skills/new-lead/evals/fixtures/existing-root-pipeline/leads/harborline-logistics-tms/estimation.json",
+        "plugins/solution-architect/skills/new-lead/evals/fixtures/existing-root-pipeline/leads/harborline-logistics-tms/proposal.md",
+        "plugins/solution-architect/skills/new-lead/evals/fixtures/existing-root-pipeline/leads/harborline-logistics-tms/dist/index.html",
+        "plugins/solution-architect/skills/new-lead/evals/fixtures/existing-root-pipeline/leads/vellum-books-checkout/rfp.md",
+        "plugins/solution-architect/skills/new-lead/evals/fixtures/existing-root-pipeline/leads/vellum-books-checkout/ARCHITECTURE.md",
+        "plugins/solution-architect/skills/new-lead/evals/fixtures/existing-root-pipeline/leads/sable-dental-booking/rfp.md"
+      ],
+      "assertions": [
+        "existing-root-reused: the fixture's own leads.json is the file that gets updated - no second leads.json is created in a subdirectory or a new root, and its version stays 1",
+        "prior-entries-untouched: harborline-logistics-tms, vellum-books-checkout and zephyr-hr-portal keep their exact prior values for client, title, status, created, closed, value and scenario; the zephyr-hr-portal entry is still present",
+        "new-entry-matches-folder: leads.json gains exactly one entry with id \"sable-dental-booking\" (the leads/ folder name verbatim, not a re-derived slug), client \"Sable Dental\", a non-empty title, status \"active\", closed null and created matching ^\\d{4}-\\d{2}-\\d{2}$, written via `scripts/lead-upsert.mjs --root ... --id ... --patch`",
+        "validate-passes: `node scripts/validate.mjs --file <root>/leads.json` exits 0 after the write",
+        "state-table-correct: the printed state table marks zephyr-hr-portal orphan (report only, entry not deleted), harborline-logistics-tms done, vellum-books-checkout WIP resuming at /estimate (ARCHITECTURE.md present, estimation.json and proposal.md missing), and sable-dental-booking new",
+        "dashboard-and-next-step: the response names the dashboard start command at the root (`sh <root>/start.sh` or `./start.sh`, 127.0.0.1:4600) and names the next skill for sable-dental-booking (/business-analyst, else /analyze-requirements), without running the chain or writing any artifact into a lead folder"
+      ]
+    }
+  ]
+}

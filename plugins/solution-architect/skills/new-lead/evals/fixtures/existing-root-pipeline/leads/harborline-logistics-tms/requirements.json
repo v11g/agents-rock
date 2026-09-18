@@ -1,0 +1,38 @@
+{
+  "schemaVersion": "1.0",
+  "lead": "harborline-logistics-tms",
+  "status": "READY",
+  "depth": "STANDARD",
+  "updated": "2026-07-20",
+  "mode": "existing",
+  "context": {
+    "problem": "The in-house TMS cannot be changed safely; dispatch works around it in spreadsheets.",
+    "goals": [
+      { "id": "G-001", "goal": "Retire the legacy TMS", "metric": "zero dispatch spreadsheets by go-live", "source": "kickoff 2026-07-05" }
+    ],
+    "successMetrics": ["all loads dispatched from the new system within 6 months of go-live"]
+  },
+  "actors": [
+    { "id": "ACT-001", "name": "Dispatcher", "type": "human", "goal": "tender loads to carriers", "painPoints": ["re-keys everything into spreadsheets"] }
+  ],
+  "workflows": [
+    { "id": "WF-001", "name": "Load tendering", "state": "as-is", "trigger": "customer books a load", "steps": ["dispatcher enters load", "calls carriers", "records acceptance"], "exceptions": ["no carrier accepts: load is re-priced"] }
+  ],
+  "requirements": [
+    { "id": "FR-001", "text": "The system must tender a load to a ranked carrier list.", "label": "confirmed", "source": "kickoff 2026-07-05", "traces": { "goal": "G-001", "workflow": "WF-001", "rules": [] }, "scope": "in", "acceptance": [] }
+  ],
+  "businessRules": [],
+  "scenarios": [],
+  "nfrs": [],
+  "integrations": [
+    { "id": "INT-001", "system": "EDI gateway", "direction": "both", "label": "confirmed" }
+  ],
+  "data": [],
+  "constraints": [],
+  "assumptions": [],
+  "openQuestions": [],
+  "conflicts": [],
+  "scope": { "out": ["EDI gateway replacement"], "future": ["driver mobile app"], "unconfirmed": [] },
+  "ai": null,
+  "readiness": { "overall": 86, "areas": { "businessContext": 90, "workflows": 90, "rules": 80, "integrations": 85, "data": 80, "nfrs": 85 }, "blockers": [] }
+}

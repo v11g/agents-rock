@@ -1,0 +1,68 @@
+{
+  "schemaVersion": "1.0",
+  "lead": "trellis-wholesale",
+  "status": "READY_FOR_ARCHITECTURE",
+  "depth": "STANDARD",
+  "updated": "2026-09-08",
+  "mode": "existing",
+  "context": {
+    "problem": "Wholesale buyers order by phone and fax; two staff re-key every order into the ERP and stock levels are quoted from memory.",
+    "goals": [
+      { "id": "G-001", "goal": "Let trade customers place their own orders online", "metric": "60% of wholesale order lines self-served within 6 months", "source": "kickoff call 2026-09-02" },
+      { "id": "G-002", "goal": "Stop manual re-keying into the ERP", "metric": "zero re-keyed orders for online customers", "source": "kickoff call 2026-09-02" }
+    ],
+    "successMetrics": ["60% of wholesale order lines placed online within 6 months"]
+  },
+  "actors": [
+    { "id": "ACT-001", "name": "Trade buyer", "type": "human", "goal": "reorder stock without phoning the depot", "painPoints": ["depot phone line is busy at 8am", "no way to see their contract price"] },
+    { "id": "ACT-002", "name": "Sales desk staff", "type": "human", "goal": "stop re-keying phoned-in orders", "painPoints": ["double entry into the ERP", "typos on bulk lines"] }
+  ],
+  "workflows": [
+    { "id": "WF-001", "name": "Wholesale reorder", "state": "as-is", "trigger": "buyer phones the depot", "steps": ["buyer phones in a list", "sales desk writes it down", "desk checks stock in the ERP", "desk re-keys the order"], "exceptions": ["item out of stock: desk calls back later"] }
+  ],
+  "requirements": [
+    { "id": "FR-001", "text": "The system must let an authenticated trade customer build and submit an order from a product catalogue.", "label": "confirmed", "source": "kickoff call 2026-09-02", "traces": { "goal": "G-001", "workflow": "WF-001", "rules": ["BR-001"] }, "scope": "in", "acceptance": ["SC-001"] },
+    { "id": "FR-002", "text": "The system must show each customer their own contract pricing, not list price.", "label": "confirmed", "source": "kickoff call 2026-09-02", "traces": { "goal": "G-001", "workflow": "WF-001", "rules": ["BR-001"] }, "scope": "in", "acceptance": ["SC-002"] },
+    { "id": "FR-003", "text": "The system must push submitted orders into the Sage 200 ERP without manual re-entry.", "label": "confirmed", "source": "email from Dan Whitlock 2026-09-04", "traces": { "goal": "G-002", "workflow": "WF-001", "rules": [] }, "scope": "in", "acceptance": [] },
+    { "id": "FR-004", "text": "The system must show live stock availability per depot on the catalogue.", "label": "assumed", "source": "inferred from the out-of-stock call-back exception in WF-001", "traces": { "goal": "G-001", "workflow": "WF-001", "rules": [] }, "scope": "in", "acceptance": [] },
+    { "id": "FR-005", "text": "The system should let a buyer repeat a previous order in one action.", "label": "recommended", "source": "analyst recommendation — 70% of phoned orders repeat the prior month", "traces": { "goal": "G-001", "workflow": "WF-001", "rules": [] }, "scope": "in", "acceptance": [] }
+  ],
+  "businessRules": [
+    { "id": "BR-001", "rule": "Contract pricing is per customer account and overrides list price for every line.", "source": "kickoff call 2026-09-02", "examples": ["account 4471 pays 0.82 of list on compost", "walk-in accounts pay list"], "openQuestion": null }
+  ],
+  "scenarios": [
+    { "id": "SC-001", "requirement": "FR-001", "type": "happy", "given": "a logged-in trade buyer", "when": "they submit a basket of 12 lines", "then": "an order is created and acknowledged on screen" },
+    { "id": "SC-002", "requirement": "FR-002", "type": "edge", "given": "an account with no contract price for a product", "when": "they view that product", "then": "list price is shown and flagged as list" }
+  ],
+  "nfrs": [
+    { "id": "NFR-001", "area": "availability", "text": "The portal must be usable during the 7am-9am ordering peak.", "label": "confirmed" },
+    { "id": "NFR-002", "area": "performance", "text": "Catalogue search should return within 2 seconds on 14,000 SKUs.", "label": "assumed" }
+  ],
+  "integrations": [
+    { "id": "INT-001", "system": "Sage 200 ERP", "direction": "bidirectional", "label": "confirmed" },
+    { "id": "INT-002", "system": "Stripe (card-on-account payments)", "direction": "write", "label": "assumed" }
+  ],
+  "data": [
+    { "id": "DAT-001", "entity": "Product", "sensitivity": "public", "volume": "14,000 SKUs", "label": "confirmed" },
+    { "id": "DAT-002", "entity": "Customer account", "sensitivity": "commercial", "volume": "about 900 trade accounts", "label": "confirmed" }
+  ],
+  "constraints": [
+    { "id": "CON-001", "text": "Trellis's own two in-house developers write and own the code; the vendor pairs with them.", "source": "kickoff call 2026-09-02" },
+    { "id": "CON-002", "text": "Must go live before the spring buying season (1 March 2027).", "source": "kickoff call 2026-09-02" }
+  ],
+  "assumptions": [
+    { "id": "ASM-001", "text": "Sage 200 exposes its REST API on the client's current licence tier.", "impact": "high", "status": "unconfirmed" },
+    { "id": "ASM-002", "text": "Contract pricing is imported from Sage rather than re-modelled in the portal.", "impact": "medium", "status": "unconfirmed" }
+  ],
+  "openQuestions": [
+    { "id": "Q-001", "question": "Does live stock come from Sage or from the depot WMS?", "priority": "P2", "reason": "changes the integration surface for FR-004", "affects": ["FR-004", "INT-001"], "status": "open", "answer": null, "architectureBlocker": false }
+  ],
+  "conflicts": [],
+  "scope": { "out": ["consumer (retail) storefront", "route planning for depot vans"], "future": ["mobile app"], "unconfirmed": ["card-on-account payments"] },
+  "ai": null,
+  "readiness": {
+    "overall": 86,
+    "areas": { "businessContext": 95, "workflows": 90, "rules": 85, "integrations": 75, "data": 90, "nfrs": 80 },
+    "blockers": []
+  }
+}

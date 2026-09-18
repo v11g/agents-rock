@@ -1,0 +1,66 @@
+{
+  "skill_name": "analyze-requirements",
+  "evals": [
+    {
+      "id": 0,
+      "name": "unknowns-gate-interview",
+      "prompt": "we've got a compliance audit in three weeks and the auditors want \"architecture documentation\" for our internal expense reimbursement tool. I don't have the repo checked out on this machine and I'm not going to get VPN access before Thursday. can you write the architecture doc - C4 diagrams, ADRs, the whole set? it's a Node app, about four years old, and the dev who originally built it left last year.",
+      "expected_output": "The skill stops before writing. It states the detected mode (greenfield/no source available, overridable) and the Node >= 20 + npx likec4 dependency up front, then asks the human the unknowables via AskUserQuestion cards - at minimum the deployment target, the quality attribute + measurable target, and the availability/RPO-RTO questions the interview bank marks as never-skippable. No ARCHITECTURE.md, no .c4 model, no ADRs are written in this turn, and no component, datastore or cloud service is asserted as a fact about this system.",
+      "files": [],
+      "assertions": [
+        "no-artifacts-written-before-answers: no ARCHITECTURE.md, no docs/architecture/model/*.c4, no docs/adr/*.md and no threat-model.md exists on disk after this turn - the skill stopped at the interview instead of writing",
+        "no-invented-components: the response names zero concrete components, datastores, queues or cloud services as belonging to this system (no 'Postgres', 'Redis', 'API Gateway', 'S3', 'Express API' etc. stated as fact); any technology mentioned appears only inside an explicit question or an option the user must confirm",
+        "asks-the-never-skippable-questions: the questions put to the user include the target deployment environment AND at least two of {primary quality attribute with a measurable target, availability target, RPO/RTO} - the rows interview.md marks 'never' skippable",
+        "asks-about-data-sensitivity-or-tags-it: the PII/data-sensitivity of reimbursement data is either asked about, or any statement made about it is explicitly tagged 'stated'/'proposed' or rendered as 'Not provided - <reason>' - never asserted bare",
+        "mode-and-dependency-stated: the response states the detected mode (brownfield vs greenfield) as overridable AND states the Node >= 20 / npx likec4 dependency before proposing to write anything",
+        "question-budget-respected: the interview stays within 12 questions total, delivered as AskUserQuestion cards with at most 4 options per card and at most 3 cards per call"
+      ]
+    },
+    {
+      "id": 1,
+      "name": "brownfield-cli-installer",
+      "prompt": "document the installer CLI in src/cli/ for me - that's the whole thing, the npx entry point is bin/agents-rock.mjs and there's nothing else to it. answering the usual questions up front so you don't have to ask me any:\n\n- goal: let a developer install agents-rock plugin skills into Claude Code or Codex with one npx command. users are devs running `npx @v11g/agents-rock`.\n- constraints: node >=18.3, no build step at all, exactly two runtime deps (@clack/prompts, picocolors), and it has to keep working when it's run straight from npx with no install.\n- the quality attribute I care about: a failed or interrupted install must never leave a half-written target directory. target is zero partial installs across 100 consecutive interrupted runs.\n- availability target: n/a, it's a CLI, there's nothing to keep up.\n- RPO/RTO: n/a, same reason.\n- project type is CLI/library, don't ask me to confirm it.\n- I own it - truong.\n- no effort estimates, don't bother with estimation.md.\n\nput ARCHITECTURE.md at the repo root and the ADRs under docs/adr/. don't start the viewer server, I just want the files on disk.",
+      "expected_output": "ARCHITECTURE.md at the repo root carrying the full 16-heading spine including §3 Project Structure (brownfield), a LikeC4 model under docs/architecture/model/ with index/containers/components-* views, and ADRs under docs/adr/. Every table row carries a src column valued observed/stated/researched [source]/proposed; components are drawn from the real src/cli modules and their key paths point at files that exist. §10 renders the CLI/library variant 'Not applicable - no deployment: distributed as a binary/package'. node scripts/validate.mjs --mode brownfield exits 0. No server started.",
+      "files": [
+        "bin/agents-rock.mjs",
+        "package.json",
+        "src/cli/main.mjs",
+        "src/cli/args.mjs",
+        "src/cli/registry.mjs",
+        "src/cli/flow.mjs",
+        "src/cli/prompts.mjs",
+        "src/cli/scope.mjs",
+        "src/cli/targets.mjs",
+        "src/cli/agents.mjs",
+        "src/cli/install.mjs",
+        "src/cli/uninstall.mjs",
+        "src/cli/report.mjs"
+      ],
+      "assertions": [
+        "arch-md-16-section-spine: ARCHITECTURE.md exists at the repo root and contains all 16 spine headings in order (Goals and Scope through Glossary), with §3 Project Structure populated with a real tree because this run is brownfield",
+        "no-invented-components: every component named in §6 Core Components and every path in its 'key paths' column resolves to a file or directory that actually exists under src/cli/ or bin/ - no module, service or datastore is named that is not in the supplied tree",
+        "provenance-on-every-row: every table in ARCHITECTURE.md except the §14 Decisions and §16 Glossary indexes has 'src' as its last column header, and every row's src value is exactly one of observed / stated / researched [<source>] / proposed - the pre-fed interview answers (SLO, constraints, owner) are 'stated', the code-derived rows are 'observed'",
+        "deployment-not-applicable-cli: §10 Deployment and Infrastructure renders the CLI/library variant as an honest absence ('Not applicable - no deployment: distributed as a binary/package') and does NOT invent containers, environments or a CI/CD pipeline table for this package",
+        "elections-frontmatter-complete: ARCHITECTURE.md frontmatter has electedDocs as a one-line JSON array with all four entries (threat-model, interface-contract, estimation, domain-overview), each with a boolean 'elected' and a non-empty 'reason' when false - estimation is elected:false because the user declined estimates",
+        "likec4-model-and-embed-markers: docs/architecture/model/ contains .c4 source declaring views named index, containers and components-<container>; §5/§7/§10 embed them via '<!-- likec4:view <id> -->' markers, and any mermaid appears only in §8 (ER) and §12 (DFD) - never a hand-drawn mermaid stand-in for a modeled C4 view"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "greenfield-llm-triage-spec",
+      "prompt": "greenfield one - we're building a support-ticket triage service that runs inbound customer email through an LLM and routes it into a Zendesk queue. no repo yet, nothing written. the spec is in triage-service-spec.md and it's been through Legal and SRE already, so the SLOs, the deployment target and the data-sensitivity call are all in there - you shouldn't need to ask me anything.\n\ndesign the architecture and write the whole doc set. ARCHITECTURE.md and the model under docs/architecture/, ADRs under docs/adr/. we definitely want the threat model. no effort estimates. team is the Platform squad. skip the localhost viewer for now - write the files and validate them, that's it.",
+      "expected_output": "ARCHITECTURE.md under docs/architecture/ with the 16-heading spine, §3 Project Structure rendered 'Not applicable - <reason>' because there is no repo yet, a LikeC4 model (index/containers/components-*/deployment views) covering the ECS Fargate + SQS + RDS topology the spec fixes, ADRs under docs/adr/, and threat-model.md framed on OWASP LLM Top 10 2025 with a DFD, trust boundaries, a threat list and a mitigation per threat. Every fact from the spec is tagged 'stated', every design choice the skill made itself is 'proposed', nothing is 'observed'. node scripts/validate.mjs exits 0. No server started.",
+      "files": [
+        "plugins/solution-architect/skills/analyze-requirements/evals/fixtures/greenfield-llm-triage-spec/triage-service-spec.md"
+      ],
+      "assertions": [
+        "no-observed-provenance-in-greenfield: no table row or prose tag anywhere in the doc set carries provenance 'observed' - there is no code to observe - and §3 Project Structure renders exactly one 'Not applicable - <reason>' line rather than an invented directory tree",
+        "no-invented-components: every component, datastore, queue and external system named in §6/§8/§9/§10 traces to an entity the spec fixture actually names (Postmark inbound webhook, Zendesk Tickets API, Anthropic Messages API, audit-log gRPC service, SQS + DLQ, RDS PostgreSQL 16, ECS Fargate, ALB, Secrets Manager, KMS) or is tagged 'proposed' - no unclaimed vendor, service or table is presented as decided",
+        "stated-vs-proposed-split: facts lifted from the spec (the 45s p99, 99.5% availability, 5min RPO / 4h RTO, eu-central-1, the $1,400/month ceiling, the 0.72 confidence floor, the 30-day body retention) are tagged 'stated'; every design decision the skill originated is tagged 'proposed'; any 'researched' row is followed by a bracketed source",
+        "threat-model-llm-variant: threat-model.md exists, is framed on OWASP LLM Top 10 2025 (not generic STRIDE) as project-types.md prescribes for an AI/LLM app, and contains all four parts - a DFD, named trust boundaries, a threat list including prompt injection from the email body, and a mitigation per threat",
+        "mermaid-er-parses-and-matches: §8's ```mermaid erDiagram block parses as valid mermaid and every entity name in it appears as a row in the §8 Data Stores table (and vice versa); §12's DFD is likewise a parsing mermaid block - neither section uses a LikeC4 view marker",
+        "elections-recorded-with-reasons: frontmatter electedDocs is a one-line JSON array with all four companions; threat-model is elected:true, estimation is elected:false with a reason naming the user's declining it, and every other elected:false entry carries a non-empty reason"
+      ]
+    }
+  ]
+}

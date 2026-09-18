@@ -1,0 +1,54 @@
+{
+  "skill_name": "business-analyst",
+  "evals": [
+    {
+      "id": 0,
+      "name": "thin-warehouse-brief-gate-check",
+      "prompt": "Dana at Havenridge Logistics has been emailing us for two weeks about replacing their stock-count spreadsheet and I finally got the whole thread exported — it's in havenridge-thread.md. Sales wants something to take to her board on the 24th. Can you run discovery on this and start the requirements package in leads/havenridge/? Fair warning, it's thin — I don't think she's told us half of what we need.",
+      "expected_output": "Extracts what the thread actually contains, then stops and asks: depth mode, and a grounded set of P1 questions quoting Dana's own lines. The supervisor-only-adjust statement (3 Sep) versus the anyone-on-the-floor statement (5 Sep) is recorded as an open contradiction, not silently reconciled. Sage 200 direction, the missing role set, budget, volumes and a real go-live date are asked for, never filled in. Any package written stays DRAFT/CLARIFICATION_REQUIRED.",
+      "files": [
+        "plugins/business-analyst/skills/business-analyst/evals/fixtures/thin-warehouse-brief/havenridge-thread.md"
+      ],
+      "assertions": [
+        "no-fabricated-figures: the response states no budget amount, no staff/user headcount, no SKU or transaction volume, and no go-live date — the thread contains none of these; every number that appears in the output also appears verbatim in havenridge-thread.md",
+        "adjust-permission-conflict-surfaced: the output quotes both the 3 Sep line ('Only warehouse supervisors should be allowed to adjust a stock figure') and the 5 Sep line ('anyone on the floor should be able to correct a count on the spot'), records them as an unresolved conflict or open question, and does not pick one reading",
+        "sage-direction-asked: the output asks whether the system reads from Sage 200, writes to it, or both — the thread only says it 'has to match what's in Sage' and never states a direction",
+        "missing-roles-flagged: the output asks for the complete list of user roles and who holds stock-adjustment authority; no actor it lists is presented as confirmed beyond the people/roles the thread literally names (Dana, Marcus, warehouse supervisor, picker)",
+        "no-solutioning: the output recommends no technology, platform, database, framework, hosting or architecture — Excel, OneDrive and Sage 200 appear only as facts quoted from the thread, never as a proposed stack",
+        "no-premature-ready-status: if a requirements.json is written to leads/havenridge/, its status is DRAFT or CLARIFICATION_REQUIRED (never VALIDATED or READY_FOR_ARCHITECTURE) and no row carries label 'confirmed' for a fact absent from the thread"
+      ]
+    },
+    {
+      "id": 1,
+      "name": "pre-fed-freight-quoting-package",
+      "prompt": "Handover from me, not an interview — I already ran the discovery call on Monday, so everything you'd ask me is below. Client is Meridian Freight Forwarding, Rotterdam, ~340 staff, sea freight only. Go STANDARD depth and write the package into leads/meridian-freight/.\n\nTheir brief, pasted from the RFP email:\n\n\"We quote sea-freight jobs by hand. A customer emails a request, a quote desk agent digs tariffs out of CargoWise, builds the price in a spreadsheet, gets it signed off if it's big, and emails it back. It takes too long and we lose jobs to faster competitors. We want the desk to produce a quote from one screen with the approvals built in.\"\n\nMy notes from the call, question by question:\n\n1. Business result + metric: get median quote turnaround from 11 working hours down to under 4 working hours, measured from their Outlook shared-mailbox timestamps, within 6 months of go-live. Second goal: stop quoting below margin floor — zero sub-8%-margin quotes issued, measured on the monthly margin report they already run.\n2. Actors: Quote Desk Agent (builds the quote), Branch Manager (approves low-margin quotes), Commercial Director (approves high-value quotes), and CargoWise One as a system actor. No customer-facing users at all.\n3. As-is workflow: request lands in the shared quotes@ mailbox -> agent claims it -> agent looks up tariffs in CargoWise One -> agent builds price in Quote_Calc.xlsx -> if it needs sign-off, agent emails a manager and waits -> agent emails the quote to the customer -> agent pastes the quote into the mailbox folder. Exceptions: manager on leave and nothing moves; customer changes the container count mid-quote and the agent starts over.\n4. Business rules, exact numbers: any quote with gross margin below 8% needs Branch Manager approval. Any quote with a total value above EUR 50,000 needs Commercial Director approval. If both apply, both approvals are needed, director last. A quote expires 14 calendar days after issue. Examples they gave me: 7.5% margin on a EUR 12,000 job -> branch manager only; 9% margin on a EUR 60,000 job -> director only.\n5. Integrations: CargoWise One — read only, tariff tables and job reference data, no write back. Exact Online — read only, customer credit status. Nothing else.\n6. Data: ~1,100 quote requests per month, average 6 line items each. Tariff table is ~240,000 rows, refreshed nightly. Customer credit status is commercially sensitive. Quotes retained 7 years, which is their existing policy and does not change.\n7. NFRs: tariff lookup must return results within 3 seconds against the 240,000-row table; audit trail of every approval decision retained 7 years; UI in Dutch and English.\n8. Constraints: must run in their existing Azure West Europe subscription; sign-in through their existing Entra ID tenant; no customer data leaves the EU.\n9. Out of scope, their words: customer self-service portal, invoicing, carrier booking. Future, not now: air freight quoting, a mobile app for agents.\n10. No AI or ML anywhere in this one — they were explicit, they want deterministic pricing.\n11. Nothing contradicted anything else on the call, and there is no one left for me to ask.",
+      "expected_output": "Both artifacts written to leads/meridian-freight/, validator clean. Requirements trace to the two stated goals and the as-is workflow, business rules carry the 8% / EUR 50,000 / 14-day numbers with the supplied inside/outside examples, integrations are the two read-only systems with direction 'read', out-of-scope and future items land in scope.out / scope.future rather than becoming FRs, ai is null, and the status stops short of READY_FOR_ARCHITECTURE pending human review.",
+      "files": [],
+      "assertions": [
+        "artifacts-at-lead-path: leads/meridian-freight/requirements.md and leads/meridian-freight/requirements.json both exist after the run",
+        "validator-exits-zero: `node plugins/business-analyst/skills/business-analyst/scripts/validate.mjs --json leads/meridian-freight/requirements.json --md leads/meridian-freight/requirements.md` exits 0 and prints 'requirements package valid'",
+        "every-fr-traced-and-sourced: every row in requirements[] has a non-empty source, a label from confirmed|assumed|recommended, a scope from in|out|future|unconfirmed, and traces.goal resolving to a G-### id that exists in context.goals — no FR has an empty or missing traces object",
+        "thresholds-verbatim: businessRules[] reproduces the supplied numbers exactly (8% margin floor, EUR 50,000 director threshold, 14-day quote expiry) and the margin rule carries at least one example inside and one outside the boundary; no FR or NFR text contains a banned ambiguous term",
+        "no-invented-scope: no FR with scope 'in' covers a customer self-service portal, invoicing, or carrier booking (all stated out of scope), no FR introduces AI/ML scoring (explicitly excluded), and integrations[] contains exactly CargoWise One and Exact Online, both with direction 'read'",
+        "status-not-self-promoted: requirements.json status is one of DRAFT, CLARIFICATION_REQUIRED, ANALYZED or VALIDATED — the run does not promote itself to READY_FOR_ARCHITECTURE, and the md frontmatter status/depth/readiness match the json"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "pre-fed-ai-contract-review-package",
+      "prompt": "We're pitching Kestrel Legal LLP for a contract-review assistant and the discovery call is already done — full transcript in kestrel-discovery-call.md, and Rowan answered everything, including the AI questions, so there's nothing left to ask them. Run it DEEP and put the package in leads/kestrel-legal/. The solution-architect chain picks this up on Friday so the ids need to be stable.",
+      "expected_output": "Both artifacts in leads/kestrel-legal/, validator clean, DEEP depth (all five parts plus scenario tables). The ai object is populated from the transcript: recommend-only authority, two human gates, read on iManage plus the SharePoint playbook and write limited to the draft memo, the four failure behaviours, and the 200-contract / 98% recall eval requirement. The partner sign-off guardrail is a business rule referenced from an FR, not prose.",
+      "files": [
+        "plugins/business-analyst/skills/business-analyst/evals/fixtures/pre-fed-ai-contract-review/kestrel-discovery-call.md"
+      ],
+      "assertions": [
+        "artifacts-at-lead-path: leads/kestrel-legal/requirements.md and leads/kestrel-legal/requirements.json both exist after the run",
+        "validator-exits-zero: `node plugins/business-analyst/skills/business-analyst/scripts/validate.mjs --json leads/kestrel-legal/requirements.json --md leads/kestrel-legal/requirements.md` exits 0 and prints 'requirements package valid'",
+        "ai-object-complete: requirements.json `ai` is a non-null object containing all five keys decisionBoundary, hitl, toolAccess, failureHandling and evalRequirements, each a non-empty array; evalRequirements records the 200-contract dataset and the >= 98% recall threshold",
+        "authority-verbs-recommend-only: every ai.decisionBoundary entry has authority 'recommend' — none uses 'decide' or 'execute', matching Rowan's 'it does not approve anything, it does not email anyone, it does not negotiate'",
+        "ai-ids-cross-reference: every ai.hitl entry's actor is an ACT-### id present in actors[], every ai.toolAccess entry's integration is an INT-### id present in integrations[], and integrations[] contains no mailbox/email system (Tom stated 'no mailbox access at all')",
+        "guardrail-filed-as-business-rule: the rule that nothing reaches a client without supervising-partner sign-off exists as a BR-### row with a source, and is referenced from at least one requirement's traces.rules — not left as narrative prose in requirements.md"
+      ]
+    }
+  ]
+}

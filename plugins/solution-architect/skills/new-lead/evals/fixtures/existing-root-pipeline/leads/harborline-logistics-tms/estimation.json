@@ -1,0 +1,10 @@
+{
+  "scenarios": [
+    { "id": "3eng-balanced", "label": "3 engineers, balanced" },
+    { "id": "5eng-fast", "label": "5 engineers, fast" }
+  ],
+  "risks": [
+    { "name": "EDI gateway contract is undocumented" },
+    { "name": "Carrier settlement rules vary per contract" }
+  ]
+}
