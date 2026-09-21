@@ -79,13 +79,11 @@ settled.
 
 ## Output contract
 
-Emit the six core fields plus the `router` block exactly as defined in
-`references/contract.md`: `problem`, `framework_used`, `framework_reason`,
-`evidence`, `assumptions`, `open_questions`, and a `router` block carrying
-`problem_class`, `reasoning_skill`, `recommended_framework`, `confidence`,
-`why`, and `frameworks_rejected`. Read that file for field meanings,
-evidence types, assumption status, and confidence rules — don't guess at
-them here.
+Emit the six core fields plus the `router` block — see
+`references/contract.md` for the names and their definitions, along with
+evidence types, assumption status, and confidence rules. Don't guess at
+any of it here; the contract is the single source of truth for the field
+set.
 
 ## Degradation
 
