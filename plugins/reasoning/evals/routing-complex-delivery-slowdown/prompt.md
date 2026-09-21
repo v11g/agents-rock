@@ -35,8 +35,6 @@ Use the problem-router skill on this. Here is the thread — tell me how to appr
 
 **Marcus:** It's not any single step being slow. It's that the same handful of people are load-bearing for almost every path through the system.
 
-**Marcus:** Every engineer we add multiplies the number of paths that route through us instead of spreading out.
-
 **Jae:** So more onboarding docs won't fix it.
 
 **Priya:** I don't think so, not this time. We already ran that play and watched it fade.
@@ -58,10 +56,6 @@ Use the problem-router skill on this. Here is the thread — tell me how to appr
 **Jae:** Agreed. Who should own that?
 
 **Priya:** Not sure yet. But whoever it is needs to look at the system, not just the latest complaint.
-
-**Sam:** For what it's worth, this isn't just the billing service either. I've heard the same complaint about the payments team leaning on their two senior folks the same way.
-
-**Dana:** That tracks. It's the same shape everywhere: whoever answered fastest last time becomes the default answer forever, and the load never redistributes on its own.
 
 **Marcus:** Which is exactly why the docs sprint didn't hold. We treated it like a knowledge gap when it's actually a routing gap.
 

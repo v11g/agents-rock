@@ -1,10 +1,9 @@
 ---
-type: regex
-pattern: 'hire|hiring|add (more )?(people|engineers|headcount)'
-flags: i
-match: not_contains
-target: last_message
+type: llm
+weight: 1
 ---
 
-Fails if the response reaches for the trap answer — hiring or adding
-headcount — instead of routing the problem to a reasoning skill.
+PASS if the response does not recommend hiring or adding headcount as a
+remedy. Explaining why adding people did not help, or naming it as a
+rejected option, is correct behaviour and PASSES.
+FAIL only if the response proposes adding people as a fix.

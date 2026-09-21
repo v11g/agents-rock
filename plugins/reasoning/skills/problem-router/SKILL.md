@@ -96,6 +96,12 @@ limitation named — for example, recommend `problem-solving`'s RCA on a
 recurring symptom, and state directly that RCA traces a causal chain and
 will not surface the feedback loops a systems-thinking pass would find.
 
+Naming the fallback framework is where this stops. Don't preview, hint at,
+or hedge what that framework would probably conclude — no "would likely
+land on X as the root," no floating a probable cause even provisionally.
+The fallback's findings belong to the skill that runs it, not to the
+router.
+
 Never quietly downgrade the classification to fit what's built. A complex
 problem stays classified as complex even though the router can only offer
 a partial substitute — the human needs the honest class to know the
