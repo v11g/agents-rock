@@ -20,7 +20,7 @@
 - `references/contract.md` is byte-identical in every skill under `plugins/reasoning/`. Edit one, copy to all, or the parity test fails.
 - No JSON schema files and no validation script ship in spec 1.
 - No reference to the `business-analyst` plugin anywhere in `plugins/reasoning/`. The two are independent by decision.
-- `evals/` directories are excluded from user installs by `NOT_SHIPPED` in `src/cli/install.mjs` — do not relocate them.
+- Eval cases live at `plugins/reasoning/evals/<case-name>/` — the PLUGIN root, never under `skills/<skill>/`. `claude plugin eval` resolves the eval dir per plugin (`--eval-dir` > manifest `experimental.evals` > `evals/`) and warns when the eval dir overlaps a declared component location, which `skills/<skill>/evals/` would. Plugin-root `evals/` is never copied to users, because `copyCanonical` copies only skill directories.
 - README lives per skill (`skills/<name>/README.md`), matching all three existing plugins. The spec's plugin-root README is dropped.
 
 ---
@@ -34,13 +34,13 @@
 | `plugins/reasoning/skills/problem-router/SKILL.md` | classify → recommend → human confirms |
 | `plugins/reasoning/skills/problem-router/README.md` | human-facing summary |
 | `plugins/reasoning/skills/problem-router/references/contract.md` | output contract (canonical copy) |
-| `plugins/reasoning/skills/problem-router/evals/evals.json` | 6 routing cases |
-| `plugins/reasoning/skills/problem-router/evals/fixtures/` | problem inputs too long for a prompt |
+| `plugins/reasoning/evals/<case>/prompt.md` | one eval case each, 6 routing + 4 guardrail |
+| `plugins/reasoning/evals/<case>/graders/*.md` | graders per case (`llm` / `regex`) |
+| `plugins/reasoning/evals/<case>/case.yaml` | only for cases mounting a fixture (`context.add_dirs`) |
 | `plugins/reasoning/skills/problem-solving/SKILL.md` | select framework → run → stop |
 | `plugins/reasoning/skills/problem-solving/README.md` | human-facing summary |
 | `plugins/reasoning/skills/problem-solving/references/contract.md` | output contract (identical copy) |
 | `plugins/reasoning/skills/problem-solving/frameworks/*.md` | one file per framework, 5 files |
-| `plugins/reasoning/skills/problem-solving/evals/evals.json` | 4 guardrail cases |
 | `tests/contract-parity.test.mjs` | asserts contract copies do not drift |
 
 `npm test` runs `node --test tests/*.test.mjs …` — the parity test is picked up by the existing glob. No `package.json` change.
@@ -408,127 +408,155 @@ git commit -m "feat(reasoning): add problem-router skill"
 
 Six cases across all four classes. Negative assertions carry the weight — a router that recommends everything passes a positive-only suite.
 
+Format note: `claude plugin eval` reads `<case>/prompt.md` plus `graders/*.md`, and resolves the eval dir per PLUGIN. It cannot read `evals.json` (the format the other plugins in this repo use predates this CLI). Cases therefore live at `plugins/reasoning/evals/`, not under the skill.
+
 **Files:**
-- Create: `plugins/reasoning/skills/problem-router/evals/evals.json`
-- Create: `plugins/reasoning/skills/problem-router/evals/fixtures/delivery-slowdown-thread.md`
+- Create: `plugins/reasoning/evals/routing-simple-null-pointer/{prompt.md,graders/*.md}`
+- Create: `plugins/reasoning/evals/routing-complex-delivery-slowdown/{case.yaml,fixtures/delivery-slowdown-thread.md,graders/*.md}`
+- Create: `plugins/reasoning/evals/routing-ambiguous-feature-request/{prompt.md,graders/*.md}`
+- Create: `plugins/reasoning/evals/routing-complex-adaptive-org-change/{prompt.md,graders/*.md}`
+- Create: `plugins/reasoning/evals/routing-thin-input-provisional/{prompt.md,graders/*.md}`
+- Create: `plugins/reasoning/evals/routing-classify-only/{prompt.md,graders/*.md}`
 
 **Interfaces:**
 - Consumes: the `problem-router` skill from Task 2.
-- Produces: the acceptance gate for Task 2. No later task depends on it.
+- Produces: the acceptance gate for Task 2. Task 6 adds four more cases to the same `plugins/reasoning/evals/` directory and must not disturb these.
 
-- [ ] **Step 1: Write the long-input fixture**
+- [ ] **Step 1: Scaffold the six case directories**
 
-Create `evals/fixtures/delivery-slowdown-thread.md`: 30–40 lines of realistic internal chat about delivery slowing after headcount growth. It must contain coordination overhead, senior engineers being interrupted, a previous local fix that did not hold, and **no numbers at all** — no headcount, no dates, no percentages. The fabricated-figures assertion depends on that absence.
-
-- [ ] **Step 2: Write the eval suite**
-
-Create `evals/evals.json` matching the repo format (`skill_name`, `evals[]` with `id`, `name`, `prompt`, `expected_output`, `files`, `assertions`):
-
-```json
-{
-  "skill_name": "problem-router",
-  "evals": [
-    {
-      "id": 0,
-      "name": "simple-null-pointer",
-      "prompt": "A button in our settings page crashes the app. Stack trace says user.profile is null. Where do I start?",
-      "expected_output": "Classifies as simple or bounded, recommends problem-solving with RCA or a direct fix, and rejects the heavier frameworks with reasons. Asks at most one question. No iceberg, no causal loop, no transition framing.",
-      "files": [],
-      "assertions": [
-        "class-simple: the output classifies the problem as simple or bounded, not complex or complex-adaptive",
-        "no-heavy-frameworks: the output does not recommend systemic-design, three-horizons, causal-loop, or iceberg",
-        "at-most-one-question: the output asks no more than one clarifying question",
-        "rejections-have-reasons: every framework listed as rejected carries a stated reason, not a bare name",
-        "no-numeric-confidence: confidence appears as low, medium, or high — no decimal or percentage value",
-        "no-root-cause-named: the output does not assert a root cause; routing only"
-      ]
-    },
-    {
-      "id": 1,
-      "name": "complex-delivery-slowdown",
-      "prompt": "Read delivery-slowdown-thread.md and tell me how to approach this.",
-      "expected_output": "Classifies as complex on the strength of recurrence, multiple actors, and a failed local fix. Recommends systems-thinking, states plainly that systems-thinking is not built in this release, and offers the closest available option with its limitation named. Does not recommend hiring.",
-      "files": [
-        "plugins/reasoning/skills/problem-router/evals/fixtures/delivery-slowdown-thread.md"
-      ],
-      "assertions": [
-        "class-complex: the output classifies the problem as complex",
-        "names-systems-thinking: the output names systems-thinking as the fitting skill",
-        "states-unbuilt: the output states that systems-thinking is not available in this release and offers a named fallback with its limitation",
-        "no-hiring-recommendation: the output does not recommend adding people as a remedy",
-        "no-fabricated-figures: every number in the output also appears verbatim in delivery-slowdown-thread.md",
-        "no-analysis: the output does not perform the analysis — no root cause, no intervention list"
-      ]
-    },
-    {
-      "id": 2,
-      "name": "ambiguous-feature-request",
-      "prompt": "Leadership wants us to 'improve the onboarding experience'. Nobody agrees on what that means. What now?",
-      "expected_output": "Classifies as ambiguous, recommends problem-solving with Double Diamond, and explains that the problem definition itself is the unknown. Rejects RCA and 5 Whys because there is no agreed symptom to trace.",
-      "files": [],
-      "assertions": [
-        "class-ambiguous: the output classifies the problem as ambiguous",
-        "recommends-double-diamond: the output recommends Double Diamond",
-        "rejects-cause-tracing: the output rejects RCA or 5 Whys with the reason that no agreed symptom exists yet",
-        "rejections-have-reasons: every framework listed as rejected carries a stated reason"
-      ]
-    },
-    {
-      "id": 3,
-      "name": "complex-adaptive-org-change",
-      "prompt": "We want to move 200 people from project-based staffing to long-lived product teams over the next two years. Every previous reorg attempt got reverted within a quarter.",
-      "expected_output": "Classifies as complex-adaptive on emergence, independent actors, and long horizon. Routes to systems-thinking then systemic-design, and states both are unbuilt in this release rather than substituting a lighter framework as if it were equivalent.",
-      "files": [],
-      "assertions": [
-        "class-complex-adaptive: the output classifies the problem as complex-adaptive",
-        "routes-both: the output names systems-thinking followed by systemic-design",
-        "states-unbuilt: the output states both skills are unavailable in this release",
-        "no-silent-downgrade: the output does not reclassify to a lighter class in order to match a built skill"
-      ]
-    },
-    {
-      "id": 4,
-      "name": "thin-input-provisional",
-      "prompt": "Things keep breaking. Help.",
-      "expected_output": "Says outright that two lines cannot support a confident classification. Gives a provisional class, marks it provisional, and asks the small number of questions that would actually flip it. Does not invent a scenario.",
-      "files": [],
-      "assertions": [
-        "marked-provisional: the output states the classification is provisional given the thin input",
-        "asks-flipping-questions: the questions asked are ones whose answers would change the class, and there are no more than three",
-        "no-invented-context: the output does not attribute systems, teams, or incidents that the prompt never mentioned",
-        "low-confidence: confidence is stated as low"
-      ]
-    },
-    {
-      "id": 5,
-      "name": "classify-only-request",
-      "prompt": "Just classify this, don't recommend anything yet: our nightly batch job silently skips records when the upstream feed is late.",
-      "expected_output": "Honours the constraint — returns the classification and its reasoning, and stops. No framework recommendation, no hand-off, no analysis.",
-      "files": [],
-      "assertions": [
-        "honours-classify-only: the output gives a classification and does not recommend a framework or hand off to another skill",
-        "class-stated-with-reason: the classification carries a stated reason drawn from the prompt",
-        "no-analysis: the output does not diagnose why records are skipped"
-      ]
-    }
-  ]
-}
-```
-
-- [ ] **Step 3: Validate the JSON**
-
-Run: `node -e "const d=require('fs').readFileSync('plugins/reasoning/skills/problem-router/evals/evals.json','utf8'); const j=JSON.parse(d); console.log(j.skill_name, j.evals.length, j.evals.every(e=>e.assertions.length>=3))"`
-Expected: `problem-router 6 true`
-
-- [ ] **Step 4: Run the eval suite**
-
-Run: `claude plugin eval plugins/reasoning/skills/problem-router`
-Expected: all six cases pass. Any failure is a defect in the Task 2 prose — fix `SKILL.md`, not the assertion, unless the assertion is demonstrably wrong about the spec.
-
-- [ ] **Step 5: Commit**
+Run from the plugin root so the CLI writes the layout itself:
 
 ```bash
-git add plugins/reasoning/skills/problem-router/evals
+cd plugins/reasoning
+for c in routing-simple-null-pointer routing-complex-delivery-slowdown \
+         routing-ambiguous-feature-request routing-complex-adaptive-org-change \
+         routing-thin-input-provisional routing-classify-only; do
+  claude plugin eval init --bare "$c"
+done
+ls evals/
+```
+
+Expected: six directories, each with `prompt.md` and `graders/criteria.md` containing TODO placeholders you now replace.
+
+- [ ] **Step 2: Write the first case in full**
+
+`evals/routing-simple-null-pointer/prompt.md`:
+
+```markdown
+---
+max_turns: 10
+allowed_tools: [Read, Glob, Grep, Skill]
+---
+
+A button in our settings page crashes the app. Stack trace says user.profile is null. Where do I start?
+```
+
+`evals/routing-simple-null-pointer/graders/classifies-simple.md`:
+
+```markdown
+---
+type: llm
+weight: 1
+---
+
+PASS if the response classifies this problem as simple or bounded.
+FAIL if it classifies it as complex or complex-adaptive, or gives no classification at all.
+```
+
+`evals/routing-simple-null-pointer/graders/no-heavy-frameworks.md`:
+
+```markdown
+---
+type: regex
+pattern: 'systemic[- ]design|three[- ]horizons|causal[- ]loop|iceberg'
+flags: i
+match: not_contains
+target: last_message
+---
+
+Fails if any heavy systems framework is named for a bounded defect.
+```
+
+`evals/routing-simple-null-pointer/graders/routing-discipline.md`:
+
+```markdown
+---
+type: llm
+weight: 1
+---
+
+PASS only if ALL of these hold:
+- the response asks at most one clarifying question
+- every framework it lists as rejected carries a stated reason, not a bare name
+- confidence is expressed as low, medium, or high — never a decimal or percentage
+- the response does not assert a root cause; it routes, it does not diagnose
+
+FAIL if any one of them is violated.
+```
+
+`evals/routing-simple-null-pointer/graders/skill-fired.md`:
+
+```markdown
+---
+type: tool_used
+tool: Skill
+min: 1
+---
+
+The problem-router skill must actually be invoked, not merely described.
+```
+
+- [ ] **Step 3: Write the fixture case**
+
+Create `evals/routing-complex-delivery-slowdown/fixtures/delivery-slowdown-thread.md`: 30–40 lines of realistic internal chat about delivery slowing after headcount growth. It must contain coordination overhead, senior engineers being interrupted, a previous local fix that did not hold, and **no numbers at all** — no headcount, no dates, no percentages. A later grader depends on that absence.
+
+Because this case mounts a fixture, it needs a `case.yaml` (a bare `prompt.md` cannot mount directories). Replace `prompt.md` with `evals/routing-complex-delivery-slowdown/case.yaml`:
+
+```yaml
+schema_version: "1.0"
+name: routing-complex-delivery-slowdown
+context:
+  add_dirs: [fixtures]
+execution:
+  prompt: |
+    Read fixtures/delivery-slowdown-thread.md and tell me how to approach this.
+```
+
+Graders for this case:
+
+| File | Type | Asserts |
+| ---- | ---- | ------- |
+| `classifies-complex.md` | `llm` | classified complex; recurrence, multiple actors, and the failed local fix are cited as the reason |
+| `names-unbuilt-skill.md` | `llm` | names systems-thinking as the fitting skill AND states it is not available in this release AND offers a named fallback with its limitation stated |
+| `no-hiring-remedy.md` | `regex`, `match: not_contains`, `flags: i` | pattern `hire|hiring|add (more )?(people|engineers|headcount)` — the trap answer |
+| `no-fabricated-figures.md` | `llm` | every number in the response also appears in `fixtures/delivery-slowdown-thread.md` |
+| `no-analysis.md` | `llm` | the response routes only — no root cause, no intervention list |
+
+- [ ] **Step 4: Write the remaining four cases**
+
+| Case dir | Prompt | Graders |
+| -------- | ------ | ------- |
+| `routing-ambiguous-feature-request` | "Leadership wants us to 'improve the onboarding experience'. Nobody agrees on what that means. What now?" | `llm`: classified ambiguous · `llm`: recommends Double Diamond · `llm`: rejects RCA or 5 Whys with the reason that no agreed symptom exists yet · `llm`: every rejected framework carries a reason |
+| `routing-complex-adaptive-org-change` | "We want to move 200 people from project-based staffing to long-lived product teams over the next two years. Every previous reorg attempt got reverted within a quarter." | `llm`: classified complex-adaptive · `llm`: names systems-thinking then systemic-design · `llm`: states both are unavailable in this release · `llm`: does NOT reclassify to a lighter class to match a built skill |
+| `routing-thin-input-provisional` | "Things keep breaking. Help." | `llm`: states the classification is provisional given thin input · `llm`: asks at most three questions, each one whose answer would change the class · `llm`: attributes no systems, teams, or incidents the prompt never mentioned · `regex` `(low)` `match: contains` `flags: i`: confidence stated as low |
+| `routing-classify-only` | "Just classify this, don't recommend anything yet: our nightly batch job silently skips records when the upstream feed is late." | `llm`: gives a classification and does NOT recommend a framework or hand off · `llm`: the classification carries a reason drawn from the prompt · `llm`: does not diagnose why records are skipped |
+
+Every case also gets the `skill-fired.md` grader from Step 2 verbatim.
+
+- [ ] **Step 5: Run the routing suite**
+
+```bash
+claude plugin eval plugins/reasoning --case 'routing-*' --no-publish
+```
+
+Expected: all six cases pass. A failure is a defect in the Task 2 prose — fix `SKILL.md`, not the grader, unless the grader is demonstrably wrong about the spec.
+
+Record the exact command and its score output in your report.
+
+- [ ] **Step 6: Commit**
+
+```bash
+git add plugins/reasoning/evals
 git commit -m "test(reasoning): add problem-router routing evals"
 ```
 
@@ -684,103 +712,106 @@ git commit -m "feat(reasoning): add problem-solving skill"
 
 ### Task 6: problem-solving guardrail evals
 
-Four cases targeting PRD §47. These grade the core hypothesis: that the skill avoids what an unaided agent does.
+Four cases targeting PRD §47. These grade the core hypothesis: that the skill avoids what an unaided agent does. They live in the same `plugins/reasoning/evals/` directory as Task 3's routing cases — add, do not disturb.
 
 **Files:**
-- Create: `plugins/reasoning/skills/problem-solving/evals/evals.json`
-- Create: `plugins/reasoning/skills/problem-solving/evals/fixtures/checkout-timeout-report.md`
+- Create: `plugins/reasoning/evals/guardrail-no-fabricated-figures/{case.yaml,fixtures/checkout-timeout-report.md,graders/*.md}`
+- Create: `plugins/reasoning/evals/guardrail-no-unsupported-root-cause/{prompt.md,graders/*.md}`
+- Create: `plugins/reasoning/evals/guardrail-no-over-analysis/{prompt.md,graders/*.md}`
+- Create: `plugins/reasoning/evals/guardrail-unavailable-framework/{prompt.md,graders/*.md}`
 
 **Interfaces:**
 - Consumes: the `problem-solving` skill from Task 5.
 - Produces: the acceptance gate for Task 5.
 
-- [ ] **Step 1: Write the fixture**
+- [ ] **Step 1: Scaffold and write the fixture**
 
-Create `evals/fixtures/checkout-timeout-report.md`: 20–30 lines of a support-escalation report about checkout timeouts. It must contain qualitative complaints only — no latency figures, no error rates, no revenue impact, no dates. The fabricated-figures assertion depends on the absence of numbers.
-
-- [ ] **Step 2: Write the eval suite**
-
-Create `evals/evals.json`:
-
-```json
-{
-  "skill_name": "problem-solving",
-  "evals": [
-    {
-      "id": 0,
-      "name": "no-fabricated-figures",
-      "prompt": "Read checkout-timeout-report.md and work out what's going on.",
-      "expected_output": "Runs a fitting framework on what the report actually says. States that the report carries no measurements and that any metric-driven step needs data first. Invents no latency, error rate, or revenue number.",
-      "files": [
-        "plugins/reasoning/skills/problem-solving/evals/fixtures/checkout-timeout-report.md"
-      ],
-      "assertions": [
-        "no-fabricated-figures: every number in the output also appears verbatim in checkout-timeout-report.md",
-        "missing-data-named: the output states that the report contains no measurements and names what would need to be collected",
-        "assumptions-labelled: anything not stated in the report is listed under assumptions with status unverified",
-        "one-framework: exactly one framework block appears in the output"
-      ]
-    },
-    {
-      "id": 1,
-      "name": "no-unsupported-root-cause",
-      "prompt": "Our nightly sync fails about once a week. Use 5 Whys on it.",
-      "expected_output": "Runs the why chain, and stops where the links stop being supported. The terminal cause is reported as root_candidate with its uncertainties named, not asserted as the root cause, because nothing in the prompt evidences the chain.",
-      "files": [],
-      "assertions": [
-        "root-candidate-not-root: the terminal cause is presented as a candidate with stated uncertainty, not asserted as the root cause",
-        "chain-stops-at-speculation: the why chain stops where further links would be speculative, and the output says so",
-        "uncertainties-listed: the five_whys block includes uncertainties",
-        "assumptions-labelled: inferred links appear as assumptions with status unverified, not as evidence"
-      ]
-    },
-    {
-      "id": 2,
-      "name": "no-over-analysis",
-      "prompt": "A form submits twice when you double-click the button. Fix approach?",
-      "expected_output": "Treats this as the bounded defect it is. One lightweight framework, or a direct answer with the framework choice explained. No systems framing, no second framework, no diagram.",
-      "files": [],
-      "assertions": [
-        "one-framework: exactly one framework block appears in the output",
-        "no-systems-framing: the output does not produce an iceberg, a causal loop, a system map, or leverage points",
-        "no-gratuitous-diagram: no diagram is produced for this bounded defect",
-        "proportionate-length: the response does not pad a one-line defect into a multi-section report"
-      ]
-    },
-    {
-      "id": 3,
-      "name": "unavailable-framework-named",
-      "prompt": "Use the iceberg model on this: our incident count keeps climbing quarter over quarter.",
-      "expected_output": "States that iceberg belongs to systems-thinking and that the skill is not built in this release. Names the closest available option and what it will not capture. Does not improvise an iceberg analysis under another name.",
-      "files": [],
-      "assertions": [
-        "ownership-stated: the output states that the iceberg model belongs to the systems-thinking skill",
-        "unavailability-stated: the output states that systems-thinking is not available in this release",
-        "no-improvised-iceberg: the output does not produce event/pattern/structure/mental-model levels anyway",
-        "fallback-with-limits: a closest-available framework is named together with what it will not surface"
-      ]
-    }
-  ]
-}
+```bash
+cd plugins/reasoning
+for c in guardrail-no-fabricated-figures guardrail-no-unsupported-root-cause \
+         guardrail-no-over-analysis guardrail-unavailable-framework; do
+  claude plugin eval init --bare "$c"
+done
 ```
 
-- [ ] **Step 3: Validate the JSON**
+Create `evals/guardrail-no-fabricated-figures/fixtures/checkout-timeout-report.md`: 20–30 lines of a support-escalation report about checkout timeouts. Qualitative complaints only — no latency figures, no error rates, no revenue impact, no dates. The fabricated-figures grader depends on the absence of numbers.
 
-Run: `node -e "const j=JSON.parse(require('fs').readFileSync('plugins/reasoning/skills/problem-solving/evals/evals.json','utf8')); console.log(j.skill_name, j.evals.length, j.evals.every(e=>e.assertions.length>=3))"`
-Expected: `problem-solving 4 true`
+Replace that case's `prompt.md` with `case.yaml`:
 
-- [ ] **Step 4: Run both eval suites**
+```yaml
+schema_version: "1.0"
+name: guardrail-no-fabricated-figures
+context:
+  add_dirs: [fixtures]
+execution:
+  prompt: |
+    Read fixtures/checkout-timeout-report.md and work out what's going on.
+```
 
-Run: `claude plugin eval plugins/reasoning/skills/problem-solving`
-Expected: all four pass.
+- [ ] **Step 2: Write the guardrail graders**
 
-Run: `claude plugin eval plugins/reasoning/skills/problem-router`
-Expected: all six still pass — Task 5's prose must not have regressed routing.
+`evals/guardrail-no-fabricated-figures/graders/no-invented-numbers.md`:
+
+```markdown
+---
+type: llm
+weight: 1
+---
+
+FAIL if any number in the response does not also appear in fixtures/checkout-timeout-report.md — latency figures, error rates, percentages, revenue amounts, counts, or dates that the report never stated.
+PASS if every number in the response is traceable to the report.
+```
+
+This one is judge-graded, not deterministic: no grader type does cross-source set comparison. Treat a failure as a real signal and a pass as weaker evidence than the mechanical graders.
+
+`evals/guardrail-no-fabricated-figures/graders/names-missing-data.md`:
+
+```markdown
+---
+type: llm
+weight: 1
+---
+
+PASS if the response states that the report contains no measurements AND names what would need to be collected before a metric-driven step is possible.
+FAIL if it proceeds as though data existed.
+```
+
+`evals/guardrail-no-fabricated-figures/graders/one-framework.md`:
+
+```markdown
+---
+type: llm
+weight: 1
+---
+
+PASS if exactly one framework block appears in the response (one of: double_diamond, rca, five_whys, a3, pdca) and anything the report did not state is listed under assumptions marked unverified.
+FAIL if two or more framework blocks appear, or if inferred content is presented as evidence.
+```
+
+- [ ] **Step 3: Write the remaining three cases**
+
+| Case dir | Prompt | Graders |
+| -------- | ------ | ------- |
+| `guardrail-no-unsupported-root-cause` | "Our nightly sync fails about once a week. Use 5 Whys on it." | `llm`: the terminal cause is presented as `root_candidate` with stated uncertainty, NOT asserted as the root cause · `llm`: the why chain stops where further links would be speculative, and says so · `llm`: the `five_whys` block includes `uncertainties` · `llm`: inferred links appear as assumptions marked unverified, not as evidence |
+| `guardrail-no-over-analysis` | "A form submits twice when you double-click the button. Fix approach?" | `regex` `iceberg\|causal[- ]loop\|system map\|leverage point` `flags: i` `match: not_contains` · `llm`: exactly one framework block · `llm`: no diagram produced for this bounded defect · `llm`: the response does not pad a one-line defect into a multi-section report |
+| `guardrail-unavailable-framework` | "Use the iceberg model on this: our incident count keeps climbing quarter over quarter." | `llm`: states the iceberg model belongs to the systems-thinking skill · `llm`: states systems-thinking is not available in this release · `llm`: does NOT produce event/pattern/structure/mental-model levels anyway · `llm`: names a closest-available framework together with what it will not surface |
+
+Every case also gets the `skill-fired.md` grader (`type: tool_used`, `tool: Skill`, `min: 1`) from Task 3 Step 2.
+
+- [ ] **Step 4: Run the whole ten-case suite**
+
+```bash
+claude plugin eval plugins/reasoning --no-publish
+```
+
+Expected: all ten cases pass — the four new guardrail cases AND Task 3's six routing cases, which must not have regressed when Task 5's prose landed.
+
+Record the command and full score output in your report.
 
 - [ ] **Step 5: Commit**
 
 ```bash
-git add plugins/reasoning/skills/problem-solving/evals
+git add plugins/reasoning/evals
 git commit -m "test(reasoning): add problem-solving guardrail evals"
 ```
 
@@ -816,7 +847,7 @@ node bin/agents-rock.mjs install \
 find "$VERIFY_DIR/.agents/skills" \( -name 'evals' -o -name 'contract.md' \) | sort
 ```
 
-Expected: exactly two lines, `contract.md` under each of `problem-router` and `problem-solving`, and no `evals` directory. That is the Task 1 finding proven — the contract ships because it lives inside each skill, and `NOT_SHIPPED` keeps the eval suites out.
+Expected: exactly two lines, `contract.md` under each of `problem-router` and `problem-solving`, and no `evals` directory. That is the Task 1 finding proven — the contract ships because it lives inside each skill. The eval suites are absent for a stronger reason than `NOT_SHIPPED`: they live at the plugin root, and `copyCanonical` copies only skill directories, so they were never candidates for copying.
 
 Then confirm the framework files came along:
 
@@ -858,5 +889,5 @@ Skip this step if steps 1–3 were clean.
 | 6. a simple problem does not trigger systemic analysis | 3 (eval 0), 6 (eval 2) |
 | 7. router degrades honestly into unbuilt skills | 2, 3 (eval 1, 3), 6 (eval 3) |
 | 8. `tests/contract-parity.test.mjs` passes | 1 |
-| 9. ten-case eval suite passes | 3, 6 |
+| 9. ten-case eval suite passes (`claude plugin eval plugins/reasoning`) | 3, 6 |
 | 10. bundle and install deliver `contract.md` per skill | 7 |
