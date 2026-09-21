@@ -48,6 +48,19 @@
       "keywords": ["business-analysis", "requirements", "discovery", "elicitation", "pre-sales"],
       "category": "documentation",
       "strict": false
+    },
+    {
+      "name": "reasoning",
+      "source": "./plugins/reasoning",
+      "description": "Reasoning toolkit: classify a problem, pick a fitting framework, and work it to a testable next step — with evidence and assumptions kept apart.",
+      "version": "0.1.0",
+      "author": {
+        "name": "Truong Vu",
+        "email": "vukhanhtruong@gmail.com"
+      },
+      "keywords": ["reasoning", "problem-solving", "root-cause", "double-diamond", "analysis"],
+      "category": "documentation",
+      "strict": false
     }
   ]
 }
