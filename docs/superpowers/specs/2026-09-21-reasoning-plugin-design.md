@@ -64,30 +64,36 @@ test covers it without modification.
 ```
 plugins/reasoning/
 ├── .claude-plugin/plugin.json
-├── README.md
+├── evals/                        # per PLUGIN, not per skill
+│   └── <case-name>/
+│       ├── prompt.md             # fixtures are inlined into the prompt
+│       └── graders/*.md          # type: llm | regex | tool_used
 └── skills/
     ├── problem-router/
     │   ├── SKILL.md
-    │   ├── references/contract.md
-    │   └── evals/evals.json
+    │   ├── README.md
+    │   └── references/contract.md
     └── problem-solving/
         ├── SKILL.md
+        ├── README.md
         ├── references/contract.md
-        ├── frameworks/
-        │   ├── double-diamond.md
-        │   ├── root-cause-analysis.md
-        │   ├── five-whys.md
-        │   ├── a3.md
-        │   └── pdca.md
-        └── evals/
-            ├── evals.json
-            └── fixtures/
+        └── frameworks/
+            ├── double-diamond.md
+            ├── root-cause-analysis.md
+            ├── five-whys.md
+            ├── a3.md
+            └── pdca.md
 ```
 
 Plus one entry in `.claude-plugin/marketplace.json`
 (`name: reasoning`, `version: 0.1.0`, `category: documentation`).
-`bundle.sh reasoning` works unchanged. `evals/` is already excluded from
-user installs by `NOT_SHIPPED`.
+`bundle.sh reasoning` works unchanged. Plugin-root `evals/` never reaches
+users, because `copyCanonical` copies only skill directories.
+
+Eval cases use `claude plugin eval`'s own format — `<case>/prompt.md` plus
+`graders/*.md` — and live at the plugin root. The `evals/evals.json`
+convention the other three plugins carry predates this CLI and is not
+readable by it. README lives per skill, matching every existing plugin.
 
 ## The contract
 
@@ -238,8 +244,9 @@ with the existing suites in `tests/`. Hashes every
 `skills/*/references/contract.md` under `plugins/reasoning/` and fails
 if they differ.
 
-**Evals** — `evals/evals.json` per skill, repo format (prompt,
-expected_output, assertions, fixtures), run with `claude plugin eval`.
+**Evals** — `plugins/reasoning/evals/<case>/` holding `prompt.md` and
+`graders/*.md`, run with
+`claude plugin eval plugins/reasoning --runs 3 --ablation none --threshold 0.85 --trust-plugin --no-publish`.
 Ten cases: six routing, four guardrail. Assertions are predominantly
 negative, because the claim under test is that the skills *avoid*
 failure modes a general-purpose agent falls into.
@@ -290,6 +297,6 @@ currently in this repository.
 6. A simple problem does not trigger systemic analysis.
 7. The router degrades honestly when it classifies into an unbuilt skill.
 8. `tests/contract-parity.test.mjs` passes.
-9. The ten-case eval suite passes, negative assertions included.
+9. The ten-case eval suite scores >= 0.85 per case at `--runs 3`, negative assertions included. Not a perfect pass rate: skill behaviour is non-deterministic prose, and a 1.0 threshold measures sampling luck rather than quality.
 10. `bundle.sh reasoning` produces an installable archive, and
     `agents-rock install` delivers `contract.md` with each skill.

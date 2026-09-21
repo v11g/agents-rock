@@ -21,6 +21,7 @@
 - No JSON schema files and no validation script ship in spec 1.
 - No reference to the `business-analyst` plugin anywhere in `plugins/reasoning/`. The two are independent by decision.
 - Eval cases live at `plugins/reasoning/evals/<case-name>/` — the PLUGIN root, never under `skills/<skill>/`. `claude plugin eval` resolves the eval dir per plugin (`--eval-dir` > manifest `experimental.evals` > `evals/`) and warns when the eval dir overlaps a declared component location, which `skills/<skill>/evals/` would. Plugin-root `evals/` is never copied to users, because `copyCanonical` copies only skill directories.
+- The eval gate is per-case SCORE >= 0.85 at `--runs 3`, not a perfect pass rate. Skill behaviour is non-deterministic prose: two consecutive full-suite runs on identical files produced 3 red and then 0 red, so a single run decides nothing and a 1.0 threshold measures sampling luck. Every gate invocation carries `--runs 3 --ablation none --threshold 0.85 --trust-plugin --no-publish`. `--no-publish` is mandatory: the CLI publishes an HTML report to claude.ai by default.
 - README lives per skill (`skills/<name>/README.md`), matching all three existing plugins. The spec's plugin-root README is dropped.
 
 ---
@@ -801,7 +802,7 @@ Every case also gets the `skill-fired.md` grader (`type: tool_used`, `tool: Skil
 - [ ] **Step 4: Run the whole ten-case suite**
 
 ```bash
-claude plugin eval plugins/reasoning --no-publish
+claude plugin eval plugins/reasoning --runs 3 --ablation none --threshold 0.85 --trust-plugin --no-publish
 ```
 
 Expected: all ten cases pass — the four new guardrail cases AND Task 3's six routing cases, which must not have regressed when Task 5's prose landed.
@@ -889,5 +890,5 @@ Skip this step if steps 1–3 were clean.
 | 6. a simple problem does not trigger systemic analysis | 3 (eval 0), 6 (eval 2) |
 | 7. router degrades honestly into unbuilt skills | 2, 3 (eval 1, 3), 6 (eval 3) |
 | 8. `tests/contract-parity.test.mjs` passes | 1 |
-| 9. ten-case eval suite passes (`claude plugin eval plugins/reasoning`) | 3, 6 |
+| 9. ten-case eval suite scores >= 0.85 per case at `--runs 3` | 3, 6 |
 | 10. bundle and install deliver `contract.md` per skill | 7 |
