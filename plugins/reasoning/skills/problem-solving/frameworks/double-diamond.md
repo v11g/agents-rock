@@ -51,3 +51,10 @@ above.
 ## Stop when
 
 Framing settles; remaining unknowns will not change it.
+
+Apply this as a test, not an impression: list each unknown still open from
+Discover. For every one, ask whether an answer to it would change the
+reframed problem, the scope, or the success criteria set in Define. If any
+unknown would change one of those three, framing has not settled — go back
+to Define and revise it, then run the test again. If none would, framing
+has settled; stop and move to Develop.
