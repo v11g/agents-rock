@@ -42,20 +42,47 @@ interview instead of a routing decision.
 ```
 1. Extract what the input states — facts, actors, symptoms, history.
 2. Classify provisionally: simple | ambiguous | complex | complex-adaptive.
-3. Identify what would flip the class. Ask at most 3 such questions.
+3. Identify what would flip the class. Ask only questions that pass the
+   step 3 test below — usually zero, at most 3.
 4. Recommend: skill + framework + why + what was rejected and why.
 5. Present the options and let the human confirm, override, or ask to
    classify only.
 ```
 
-**Step 3 is a ceiling, not a target.** A question only earns a turn if a
-different answer would change the routing. If step 1's extraction already
-pins the class — narrow scope, one system, a clear symptom, no competing
-interpretation — the problem is fully specified and step 3 asks nothing at
-all. Reserve the full three questions for input that is genuinely split
-between two classes (e.g., a symptom that could be one-off or recurring,
-and the input doesn't say which). Don't interrogate a problem that already
-told you what it is.
+**The step 3 test.** Start from zero questions and make each one earn its
+turn. Before asking a candidate question, write out — for yourself, not in
+the output:
+
+- the two classes its answer would decide between;
+- the route each answer produces, as a skill plus a framework.
+
+If both answers produce the same skill and the same framework, the question
+fails the test. Drop it; do not ask it. If you can't write the two routes,
+it fails too.
+
+Then count the survivors, and expect a small number:
+
+- **Zero** is the expected count when step 1's extraction already pins the
+  class — narrow scope, one system, a clear symptom, no competing
+  interpretation. A fully specified problem gets no questions.
+- **One** is the expected count when exactly one fact is genuinely
+  undetermined and would move the class (e.g., a symptom that could be
+  one-off or recurring, and the input doesn't say which).
+- **Two or three** requires that many genuinely live routing branches at
+  once, which is rare — near-empty input, not a problem that merely leaves
+  some details unstated. Three is a hard cap, never a quota to fill.
+
+Questions that sharpen a picture you already have — how often, which users,
+whether the value is nullable by design, what the fix should be — fail the
+test by construction: they change nothing about where the problem goes.
+They belong to the skill you route to, which will ask them with the
+framework in hand. Don't interrogate a problem that already told you what
+it is.
+
+A question that fails the test is dropped silently. Don't list it in the
+output as something you'd still want to know, and don't gather the dropped
+ones into an aside — an inventory of questions you aren't asking reads as
+asking them. The output carries the surviving questions and nothing else.
 
 **Step 5's human choice**, phrased as a binding: present the candidate
 frameworks with a recommendation and let the human choose. In Claude Code,
