@@ -1,3 +1,10 @@
+---
+max_turns: 10
+allowed_tools: [Read, Glob, Grep, Skill]
+---
+
+Use the problem-router skill on this. Here is the thread — tell me how to approach it:
+
 # #eng-delivery — thread
 
 **Priya (Eng Manager):** Delivery has been sliding for weeks and I don't think it's one thing. Commitments keep slipping and nobody can point to a single blocker.

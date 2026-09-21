@@ -22,3 +22,4 @@ plugins/**/skills/*-workspace/
 # eval fixtures under dist/ are inputs, not build output
 !plugins/**/evals/fixtures/**/dist/
 !plugins/**/evals/fixtures/**/dist/**
+plugins/*/evals/results/
