@@ -1,0 +1,7 @@
+schema_version: "1.0"
+name: routing-complex-delivery-slowdown
+context:
+  add_dirs: [fixtures]
+execution:
+  prompt: |
+    Read fixtures/delivery-slowdown-thread.md and tell me how to approach this.
