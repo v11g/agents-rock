@@ -1,6 +1,6 @@
 ---
 type: regex
-pattern: '(low)'
+pattern: 'confidence[^\n]{0,40}\blow\b'
 flags: i
 match: contains
 target: last_message
