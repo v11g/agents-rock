@@ -26,6 +26,18 @@ served on localhost for review.
 6. **Validate**: export the model with `node scripts/likec4-export.mjs --dir ... --out ...`, then `node scripts/validate.mjs --arch ... --model ...` (add `--mode brownfield --clusters ...` when applicable). Fix findings; re-run until clean.
 7. **Render + serve**: follow `references/viewer.md`; report the URL.
 
+## Supporting knowledge
+
+Load only when the step in hand needs it; never preload.
+
+- `references/decision-rules.md` — defaults, thresholds, smells. Read before
+  settling the decomposition and deployment shape in step 5.
+- `references/patterns.md` — techniques with their costs. Read when a §7 flow,
+  §8 store, or §11 concern needs a mechanism rather than a name.
+
+Both are working knowledge, not sources. A document cites the project's drivers,
+never these files.
+
 ## Dependency
 
 Node ≥ 20 with npm (`npx likec4`). State this upfront; without it, stop before step 5.
