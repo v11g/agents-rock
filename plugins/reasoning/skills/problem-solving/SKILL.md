@@ -81,9 +81,14 @@ proceed.
    - Named already (human, or router hand-off with confirmation) → that's
      the choice, go to step 3.
    - Not named → shortlist two from the table above, recommend one with a
-     one-line reason, and let the human choose — in Claude Code, via
-     `AskUserQuestion`. Headless: take the recommendation, record it
-     agent-selected and unconfirmed.
+     one-line reason. Then test, don't infer: is `AskUserQuestion`
+     actually available in this session? If yes, ask via
+     `AskUserQuestion` and wait for the answer. If no — the tool is
+     unavailable, or the run is otherwise non-interactive — you are
+     headless: take your own recommendation, record it agent-selected and
+     unconfirmed, and go straight to step 3. Naming the shortlist and
+     stopping there, without asking and without proceeding, is not a valid
+     outcome on either branch.
 3. Open the matching file under `frameworks/` and follow its process
    exactly. Don't substitute a different structure or skip its steps
    because the problem feels straightforward.
