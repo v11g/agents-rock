@@ -27,6 +27,10 @@ in the input supports the analysis, and the output says so.
 | `five_whys` | `why_chain`, `root_candidate`, `uncertainties` |
 | `a3` | `background`, `current`, `problem`, `target`, `causes`, `countermeasures`, `plan`, `follow_up` |
 | `pdca` | `hypothesis`, `test`, `metric`, `expected`, `actual`, `next` |
+| `iceberg` | `event`, `patterns`, `structures`, `mental_models` |
+| `system_map` | `system_boundary`, `actors`, `components`, `relationships`, `dependencies`, `external_factors` |
+| `causal_loop` | `variables`, `links`, `loops`, `delays` |
+| `leverage_points` | `elements`, `points` |
 
 Later skills add blocks. The core never changes — that is what lets one
 skill consume another's result without knowing which framework produced
@@ -59,7 +63,11 @@ evidence.
 ## Rendering
 
 In chat by default: markdown headings, one per core field, then the
-framework block. Diagrams only where they carry something prose cannot.
+framework block.
+
+A structure containing a cycle gets a diagram; one without gets prose.
+Prose renders a cycle as a list, and a list loses the closure — `A -> B ->
+C -> A` read top to bottom does not show that it comes back.
 
 On request: one file, `problem-analysis.md`, in the directory the human
 names. Core fields and the framework block become YAML front-matter above

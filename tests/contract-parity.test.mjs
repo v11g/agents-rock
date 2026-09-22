@@ -17,8 +17,8 @@ function contractCopies() {
 test('every reasoning skill carries a contract copy', () => {
   const copies = contractCopies();
   assert.ok(
-    copies.length >= 2,
-    `expected at least 2 contract.md copies, found ${copies.length}`,
+    copies.length >= 3,
+    `expected at least 3 contract.md copies, found ${copies.length}`,
   );
 });
 
