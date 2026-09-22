@@ -196,6 +196,8 @@ using their existing structure, never restructure or replace them. Rules:
   (offer an ADR only when a decision is hard to reverse, surprising without
   context, and the result of a real trade-off) still governs whether an ADR
   gets written at all — this project only strengthens what's inside it.
+  `decisions.md` says how to answer that gate, and what an ADR carries once
+  it passes: significance tests, the four technology costs, and acceptance.
 
 ## 7. ER ≠ domain model
 

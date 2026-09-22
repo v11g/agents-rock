@@ -34,6 +34,9 @@ Load only when the step in hand needs it; never preload.
   settling the decomposition and deployment shape in step 5.
 - `references/patterns.md` — techniques with their costs. Read when a §7 flow,
   §8 store, or §11 concern needs a mechanism rather than a name.
+- `references/decisions.md` — significance tests, the four technology costs,
+  acceptance. Read when a choice might warrant an ADR, and again when writing
+  one. `writing.md` §6 still owns where ADRs live and what the format requires.
 
 Both are working knowledge, not sources. A document cites the project's drivers,
 never these files.
