@@ -20,7 +20,7 @@ served on localhost for review.
 
 1. **Detect mode**: target has source code → brownfield, else greenfield. State the detection and let the user override.
 2. **Scan** (brownfield): `index_repository` if needed, then `get_architecture` — clusters seed §6 Core Components. Read `manage_adr` if present; never write it.
-3. **Interview**: follow `references/interview.md`. Detect project type per `references/project-types.md`.
+3. **Interview**: follow `references/interview.md`. Detect project type per `references/project-types.md`. Turn the §13 answers into scenarios per `references/drivers.md`.
 4. **Research**: run `workflows/research.js` per `references/research.md`. Surface dropped items before writing.
 5. **Write**: model first (`references/likec4.md`), then ARCHITECTURE.md and companions (`references/writing.md`).
 6. **Validate**: export the model with `node scripts/likec4-export.mjs --dir ... --out ...`, then `node scripts/validate.mjs --arch ... --model ...` (add `--mode brownfield --clusters ...` when applicable). Fix findings; re-run until clean.

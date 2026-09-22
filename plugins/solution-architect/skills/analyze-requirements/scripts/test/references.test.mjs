@@ -4,9 +4,9 @@ import { readFileSync } from 'node:fs';
 import { SPINE_TITLES } from '../lib/section-help.mjs';
 
 const ref = (f) => readFileSync(new URL(`../../references/${f}`, import.meta.url), 'utf8');
-const KNOWLEDGE = ['patterns.md', 'decision-rules.md', 'decisions.md'];
+const KNOWLEDGE = ['patterns.md', 'decision-rules.md', 'decisions.md', 'drivers.md'];
 const ALL = ['interview.md', 'likec4.md', 'project-types.md', 'research.md', 'viewer.md',
-  'writing.md', 'patterns.md', 'decision-rules.md', 'decisions.md'];
+  'writing.md', 'patterns.md', 'decision-rules.md', 'decisions.md', 'drivers.md'];
 
 test('no reference doc carries placeholders', () => {
   for (const f of ALL) assert.doesNotMatch(ref(f), /\bTBD\b|\bTODO\b/, f);
@@ -127,4 +127,49 @@ test('the knowledge references stay inside the file-length limit', () => {
     const lines = ref(f).split('\n').length;
     assert.ok(lines <= 200, `${f} is ${lines} lines, limit is 200`);
   }
+});
+
+// §13 renders five columns, so the scenario's six fields have to survive inside
+// them — the conditions and the element cannot quietly drop out of the cell.
+test('drivers.md defines the scenario the five-column shape carries', () => {
+  const doc = ref('drivers.md');
+  for (const field of ['stimulus', 'environment', 'element', 'response', 'measure', 'target']) {
+    assert.ok(doc.includes(field), `drivers.md missing scenario field: ${field}`);
+  }
+  assert.match(doc, /must.*should.*could/i, 'priority scale missing');
+});
+
+// The whole point of the fifth provenance word. Without this rule `assumed` is
+// just a quieter `proposed`.
+test('drivers.md blocks on an assumed must-target', () => {
+  const doc = ref('drivers.md');
+  assert.match(doc, /assumed/, 'the rule must name the tag');
+  assert.match(doc, /blocker/i);
+});
+
+// "Fast" is not a driver. Converting what a stakeholder says into something the
+// architecture can be measured against is the step that gets skipped.
+test('drivers.md converts domain language into characteristics', () => {
+  const doc = ref('drivers.md');
+  assert.match(doc, /time to market|user satisfaction/i, 'translation examples missing');
+  assert.match(doc, /top three/i, 'the top-three rule must be present');
+});
+
+// writing.md §1 tables the per-section column contract. §13 was the one row with
+// no columns named, which is how it stayed a list of adjectives.
+test('writing.md names the section 13 columns', () => {
+  const row = ref('writing.md').split('\n')
+    .find((l) => l.includes('Quality Requirements & SLOs') && l.trim().startsWith('13'));
+  assert.ok(row, 'spine row for 13 not found');
+  for (const col of ['scenario', 'measure', 'target', 'priority']) {
+    assert.ok(row.includes(col), `spine row 13 missing column: ${col}`);
+  }
+});
+
+// The cap is prose and the bank is a table; nothing held them to each other.
+test('the question bank stays inside the interview cap', () => {
+  const doc = ref('interview.md');
+  const bank = doc.slice(doc.indexOf('## Question bank'), doc.indexOf('## Card batching'));
+  const rows = bank.split('\n').filter((l) => l.startsWith('| ') && !/^\|\s*-+/.test(l));
+  assert.ok(rows.length - 1 <= 12, `bank has ${rows.length - 1} questions, cap is 12`);
 });
