@@ -107,8 +107,24 @@ nothing past it.
 | ----- | --------------- | --------- |
 | simple | narrow scope, direct cause likely, few dependencies, low uncertainty | `problem-solving` — RCA, 5 Whys, or PDCA |
 | ambiguous | problem definition or user need unclear, solution space unclear | `problem-solving` — usually Double Diamond |
-| complex | multiple actors, recurring, cross-functional dependencies, feedback loops, reappears after local fixes | `systems-thinking` |
-| complex-adaptive | independent actors, system reacts to intervention, behaviour emerges over time, long-horizon change | `systems-thinking`, then `systemic-design` |
+| complex | multiple actors, recurring, cross-functional dependencies; **structure** regenerates the symptom — fix the structure and it stops | `systems-thinking` |
+| complex-adaptive | independent actors, behaviour emerges over time, long-horizon change; **agents** regenerate the symptom by adapting — fix the structure and they route around it | `systems-thinking`, then `systemic-design` |
+
+**Separating the two.** These two classes described each other until this
+release: "reappears after local fixes" and "system reacts to intervention"
+are the same sentence. Use one test instead.
+
+> Name the actor whose behaviour changes *in response to the fix*, and say
+> how they route around it.
+>
+> Can you name one from the input's evidence? → `complex-adaptive`
+> Cannot? → `complex`
+
+A team that keeps hitting the same structural bottleneck is `complex`. A
+team that learns to bypass each fix you ship is `complex-adaptive`. State
+which test result you got and what evidence produced it — a class asserted
+without naming the actor (or naming that there isn't one) is a guess
+wearing a label.
 
 Thin input caps confidence, not honesty about the class. A two-line problem
 statement can still get a provisional class — but the output must say the
@@ -125,25 +141,24 @@ set.
 
 ## Degradation
 
-`complex` and `complex-adaptive` classify to `systems-thinking` and
-`systemic-design`. Neither skill is built in this release.
+`complex` routes to `systems-thinking`, which is built. Route to it
+normally — no caveat, no substitute.
 
-When routing lands on one of these classes, say so plainly: the fitting
-skill doesn't exist yet. Then offer the closest available option with its
-limitation named — for example, recommend `problem-solving`'s RCA on a
-recurring symptom, and state directly that RCA traces a causal chain and
-will not surface the feedback loops a systems-thinking pass would find.
+`complex-adaptive` routes to `systems-thinking` first and then
+`systemic-design`. The second is not built in this release. Say so plainly
+when you route there: the systems-thinking pass will run and produce a
+model, and the design pass that would turn that model into a coordinated
+intervention programme does not exist yet.
 
-Naming the fallback framework is where this stops. Don't preview, hint at,
-or hedge what that framework would probably conclude — no "would likely
-land on X as the root," no floating a probable cause even provisionally.
-The fallback's findings belong to the skill that runs it, not to the
-router.
+Naming that gap is where this stops. Don't preview, hint at, or hedge what
+`systemic-design` would probably conclude — no "would likely land on X", no
+floating a probable intervention even provisionally. Those findings belong
+to the skill that runs it, not to the router.
 
-Never quietly downgrade the classification to fit what's built. A complex
-problem stays classified as complex even though the router can only offer
-a partial substitute — the human needs the honest class to know the
-substitute is partial.
+Never quietly downgrade the classification to fit what's built. A
+complex-adaptive problem stays classified as complex-adaptive even though
+only the first leg of its route can run — the human needs the honest class
+to know the route is partial.
 
 ## Failure modes
 
@@ -191,13 +206,13 @@ Extraction: recurring symptom, multiple actors (sales, provisioning, the
 teams downstream), fixes that hold briefly then fail — a signature of
 feedback loops rather than a single broken step.
 
-Recommendation: class `complex`, which routes to `systems-thinking`.
-`systems-thinking` is not built in this release. Closest available option:
-`problem-solving`'s RCA, with the limitation named up front — RCA can map
-one more iteration of the immediate/contributing/root chain, but it traces
-a single causal path and will not surface the feedback loop that keeps
-regenerating the delay across different teams. Rejected outright: `5 Whys`
-— a single why-chain can't hold three actors and a recurring loop;
+Recommendation: class `complex` — the handoff between sales and
+provisioning regenerates the delay regardless of who is working it, and
+the input names no actor changing behaviour to get around the three fixes.
+Routes to `systems-thinking`, which is built; recommend it with
+`system_map`, since the input names several actors whose connections are
+unstated. Rejected: `problem-solving` with `RCA` — it traces one causal
+path and would not surface why three separate fixes each held briefly;
+`5 Whys` — a single why-chain can't hold three actors and a recurrence;
 `Double Diamond` — the problem is already well-defined, this isn't a
-discovery gap. The class stays `complex` in the output even though the
-recommendation is a partial substitute.
+discovery gap.

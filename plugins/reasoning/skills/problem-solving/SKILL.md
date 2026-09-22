@@ -143,11 +143,14 @@ test, not a judgment call.
 
 ## Failure modes
 
-- **Framework named that belongs to another skill** — iceberg, system map,
-  causal loop, leverage points, theory of change, three horizons. Say
-  which skill owns it (`systems-thinking` or `systemic-design`) and that
-  the skill isn't built in this release. Don't improvise the framework
-  here.
+- **Framework named that belongs to `systems-thinking`** — iceberg, system
+  map, causal loop, leverage points. That skill is built: say it owns the
+  framework and hand the problem over. Don't run the framework here, and
+  don't refuse it.
+- **Framework named that belongs to `systemic-design`** — theory of change,
+  three horizons, explore/reframe/create/catalyse. Say which skill owns it
+  and that the skill isn't built in this release. Don't improvise the
+  framework here.
 - **Framework named but unavailable** — from PRD §10.2's later set: DMAIC,
   OODA, TRIZ, Design Sprint. Say it isn't built yet, and name the closest
   available framework from the table above with the difference stated,
