@@ -195,7 +195,7 @@ reproducible trigger, RCA's fuller immediate/contributing/underlying/root
 breakdown is more structure than this needs; `systems-thinking` — one
 function, one service, no recurrence or cross-team dependency in evidence.
 
-**Complex — degradation applies**
+**Complex — no actor routes around the fix**
 
 Input: "Every quarter, the same onboarding delays come back. We fix the
 handoff between sales and provisioning, it's fine for a few weeks, then a
