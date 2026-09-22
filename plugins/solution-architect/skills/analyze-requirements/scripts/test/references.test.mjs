@@ -60,6 +60,33 @@ test('decisions.md requires a named acceptance', () => {
   assert.match(doc, /silence/i, 'the never-read-silence-as-agreement rule must be stated');
 });
 
+// writing.md already mandates a Considered Options section. Nothing said the
+// options had to be real, which is the cheaper way to fill one in.
+test('decisions.md bans the strawman option', () => {
+  const doc = ref('decisions.md');
+  assert.match(doc, /strawman/i, 'the strawman ban must be explicit');
+  assert.match(doc, /two credible|at least two/i);
+  assert.match(doc, /hard constraint/i, 'hard constraints must filter before comparison');
+  assert.match(doc, /current approach|keep the current/i, 'the do-nothing option must be considered');
+});
+
+// A slogan reads like analysis and costs nothing to write. Each row names the
+// mechanism the claim is worthless without.
+test('decision-rules.md makes slogan claims show their mechanism', () => {
+  const doc = ref('decision-rules.md');
+  for (const claim of ['Async', 'cache', 'eventually consistent']) {
+    assert.ok(doc.includes(claim), `decision-rules.md missing mechanism row: ${claim}`);
+  }
+  assert.match(doc, /invalidation/i, 'the cache row must demand an invalidation path');
+});
+
+// One home applies to these files too. The communication defaults live in
+// decision-rules.md; a second copy in decisions.md is how the two drift.
+test('the coupling defaults have exactly one home', () => {
+  const homes = KNOWLEDGE.filter((f) => /Reuse is coupling/i.test(ref(f)));
+  assert.deepEqual(homes, ['decision-rules.md'], `coupling defaults duplicated in: ${homes.join(', ')}`);
+});
+
 test('patterns.md covers the techniques the spine sections need', () => {
   const doc = ref('patterns.md');
   for (const needle of ['Trade-Off Analysis', 'Architecture Quantum', 'Fitness Functions',

@@ -33,7 +33,37 @@ behaviour.
 Never split one choice into a paired architectural and technical record to make
 the trail look thorough. One choice, one record.
 
-## 2. Link it
+## 2. Considered Options
+
+`writing.md` requires the section. These rules decide whether what goes in it is
+worth reading.
+
+**At least two credible options** per decision, and "keep the current approach"
+is one of them wherever a current approach exists. If only one option is really
+feasible, say which hard constraint eliminated the others — never invent a
+strawman to lose against. An option nobody would have chosen teaches the reader
+nothing and hides that the decision was never open.
+
+**Filter on hard constraints first.** An option that violates a constraint
+from §2 is out regardless of how well it scores on everything else. Do that
+pass before comparing, so the comparison is between options that could actually
+ship.
+
+**Then compare on what differs**: realistic operating conditions, the team's
+capability and size, failure modes, delivery effort, operational burden, and
+the cost of future change.
+
+For each option say which qualities improve, which worsen, and which are
+**uncertain** — and give the mechanism, not the direction. "Better scalability"
+is not analysis; `decision-rules.md` lists the claims that most often arrive
+without one.
+
+**If you score options**, publish the criteria, the weights, and what each scale
+point means. A score never overrides a hard constraint. Where a small change in
+weighting flips the recommendation, mark the decision **sensitive** and name the
+experiment that would settle it.
+
+## 3. Link it
 
 Every ADR names what it addresses: a §2 constraint, a §13 quality row, a §15
 risk, or a stated goal from §1. An ADR that addresses nothing either has a
@@ -44,7 +74,7 @@ decision, such as a measurement crossing a threshold, a volume arriving, or a
 vendor changing terms. A decision with no trigger cannot be revisited on
 purpose, only regretted.
 
-## 3. Technology choices
+## 4. Technology choices
 
 Constrain the **class of choice** before naming a product. A product name
 belongs in the decision only when a quality in §13 forces that specific one —
@@ -68,7 +98,7 @@ price, a service limit, or a team estimate — research it and cite the source
 with a date, or mark the claim **unverified** and say how that weakens the
 recommendation.
 
-## 4. Status and acceptance
+## 5. Status and acceptance
 
 ```
 proposed → accepted | rejected | deferred

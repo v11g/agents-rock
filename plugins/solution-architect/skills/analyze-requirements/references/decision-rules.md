@@ -22,6 +22,37 @@ where no measurement exists the claim is `proposed`, never `observed`.
 | A stakeholder demands an extreme number | **Divide and conquer** | Rarely does the whole system need it — find the part that does |
 | Deciding when to decide | **Last responsible moment** | Before the team is blocked, after the choice can be justified |
 
+## Decomposition axis
+
+Pick the axis before picking a style — the scorecard's Partitioning row is a
+consequence of this choice, not a substitute for making it.
+
+**Technical partitioning** — presentation, business, data. Familiar, and a
+domain change touches every partition.
+
+**Domain partitioning** — order, payment, shipping. Change stays local, and the
+technical concerns repeat once per domain.
+
+Team structure reshapes the architecture whether or not the design accounts for
+it. Where the target structure needs different team boundaries than the ones
+that exist, say so in the ADR rather than drawing a diagram the organisation
+cannot staff.
+
+## Claims that need a mechanism
+
+Each of these reads like analysis and costs nothing to write. State the
+right-hand column or drop the claim — a direction with no mechanism is a
+preference wearing a technical word.
+
+| Tempting claim | What the document must actually show |
+|---|---|
+| "Async makes it reliable" | Where the message is durably recorded, what happens when a consumer crashes, and how duplicates are neutralised |
+| "Microservices scale" | Which component's load profile differs, by how much, and why the coupling permits scaling it alone |
+| "Add a cache" | Which read is hot, the staleness tolerance, the invalidation path, and what breaks on a cold start |
+| "Queue it" | Depth under peak, consumer failure behaviour, ordering needs, and the poison-message path |
+| "It's eventually consistent" | The width of the window, who observes it, and which business rule tolerates it |
+| "We'll scale horizontally" | What state the added instance needs, and where that state lives |
+
 ## Style scorecard
 
 Indicative rankings against each other in the general case. They are **not
