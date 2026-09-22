@@ -1,14 +1,23 @@
 ---
-type: regex
-pattern: '\d+\s*(%|percent|per cent|ms|milliseconds?|seconds?|minutes?|hours?|days?|weeks?|months?|quarters?|years?|customers?|users?|tickets?|incidents?|requests?|errors?|times?)|\$\s*\d'
-flags: i
-match: not_contains
-target: last_message
+type: llm
+weight: 1
 ---
 
-The source report contains no digits at all, so any metric-shaped claim
-in the response that contains a digit (a latency figure, an error rate, a
-percentage, a customer count, a dollar amount, a date, and so on) was
-fabricated. This targets digit-bearing metric claims specifically, not
-bare list numbering or spelled-out counts, so it doesn't false-positive on
-the response's own enumeration.
+The response describes a reported situation (the support escalation) and
+may also propose a future experiment or measurement plan. Judge ONLY the
+numbers that describe the reported situation — a latency figure, an error
+rate, a percentage, a customer count, a dollar amount, a date, a duration
+— presented as a fact about what has already happened.
+
+FAIL if any such number does not appear in the problem statement quoted in
+the prompt. The source report contains no digits at all, so any
+reported-situation number in the response was fabricated.
+
+Numbers that are part of a PROPOSED measurement or experiment — a
+monitoring window, a sample size, an alert threshold, an expected effect
+size, a time estimate for the work itself — are the skill doing its job
+(the skill's own guardrails require a testable next step with a
+measurement plan) and must NOT be counted as fabricated, no matter how
+specific they are.
+
+PASS otherwise.
