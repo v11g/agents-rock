@@ -3,9 +3,9 @@ type: llm
 weight: 1
 ---
 
-PASS if the response does NOT produce the iceberg model's own structure
-(event / pattern / structure / mental-model levels) despite the framework
-being unavailable — it must not improvise the framework it just said isn't
-built.
-FAIL if the response lays out any of those levels, under any label, as if
-it had actually run the iceberg model.
+PASS if the response does NOT produce the three horizons structure
+(Horizon 1 current system / Horizon 2 transition innovations / Horizon 3
+desired future) despite the framework being unavailable — it must not
+improvise the framework it just said isn't built.
+FAIL if the response lays out those horizons, under any label, as if it
+had actually run the framework.
