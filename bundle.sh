@@ -11,6 +11,6 @@ mkdir -p build
 out="build/$plugin.zip"
 rm -f "$out"
 (cd plugins && zip -r "../$out" "$plugin" \
-  -x "*/node_modules/*" -x "*/.git/*" -x "*.zip")
+  -x "*/node_modules/*" -x "*/.git/*" -x "*.zip" -x "*/evals/results/*")
 echo "built $out"
 unzip -l "$out" | head -20

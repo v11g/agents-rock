@@ -88,7 +88,9 @@ plugins/reasoning/
 Plus one entry in `.claude-plugin/marketplace.json`
 (`name: reasoning`, `version: 0.1.0`, `category: documentation`).
 `bundle.sh reasoning` works unchanged. Plugin-root `evals/` never reaches
-users, because `copyCanonical` copies only skill directories.
+users via `agents-rock install`, because `copyCanonical` copies only skill
+directories; the marketplace zip does ship the eval cases, and excludes
+only the gitignored local run output under `evals/results/`.
 
 Eval cases use `claude plugin eval`'s own format — `<case>/prompt.md` plus
 `graders/*.md` — and live at the plugin root. The `evals/evals.json`
