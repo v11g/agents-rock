@@ -45,3 +45,15 @@ Emit the `rca` block from `references/contract.md`, with fields `symptom`,
 ## Stop when
 
 Causes trace to something actionable and supported.
+
+Apply this as two tests over what the `root` field already holds, not as an
+impression that the chain feels deep enough. **Supported** is the `root` /
+`root_candidate` test in Process above, run per entry: a specific `evidence`
+entry ties the cause to the symptom with no further inferential step. Every
+entry has been labelled by that test, and each `root_candidate` carries the
+evidence that would promote it. **Actionable** means every entry in `root`
+has at least one named entry in `actions` that someone could start on
+without first investigating further — a change with an owner and a scope,
+not "look into X" or "understand why Y". If any entry in `root` has no such
+action, the chain has not reached something actionable: keep tracing, or
+state plainly that it stopped short and what blocks it.

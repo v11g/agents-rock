@@ -90,11 +90,22 @@ do this with the `AskUserQuestion` tool. Headless, with no human available
 to ask: take the recommendation, record it as agent-selected and
 unconfirmed, and proceed.
 
+**Classify-only mode.** The human can ask for classification without a
+route — "just classify this", "don't recommend anything yet". When they do,
+skip step 4 and skip step 5's choice, and emit the `router` block with
+`problem_class`, `confidence` and `why` populated exactly as normal, but
+`recommended_framework` and `reasoning_skill` set to `null`, and
+`frameworks_rejected` empty. Set the core field `framework_reason` to state
+that routing was not requested. Naming a framework or a receiving skill
+anywhere in the output — including as an aside, a "for when you're ready",
+or a rejection list — breaks this mode; the human asked for the class and
+nothing past it.
+
 ## Problem classes
 
 | Class | Characteristics | Routes to |
 | ----- | --------------- | --------- |
-| simple | narrow scope, direct cause likely, few dependencies, low uncertainty | `problem-solving` — direct solve, RCA, 5 Whys, or PDCA |
+| simple | narrow scope, direct cause likely, few dependencies, low uncertainty | `problem-solving` — RCA, 5 Whys, or PDCA |
 | ambiguous | problem definition or user need unclear, solution space unclear | `problem-solving` — usually Double Diamond |
 | complex | multiple actors, recurring, cross-functional dependencies, feedback loops, reappears after local fixes | `systems-thinking` |
 | complex-adaptive | independent actors, system reacts to intervention, behaviour emerges over time, long-horizon change | `systems-thinking`, then `systemic-design` |

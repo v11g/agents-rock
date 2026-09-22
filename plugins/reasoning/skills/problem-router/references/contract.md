@@ -8,7 +8,7 @@ framework that ran. Nothing else appears at the top level.
 | Field | Contents |
 | ----- | -------- |
 | `problem` | The problem as this skill understands it, restated in one or two sentences. |
-| `framework_used` | The framework that ran. |
+| `framework_used` | The framework that ran. A `problem-router` run runs none — emit `router` there, naming the routing pass itself. |
 | `framework_reason` | One line: why this framework, for this problem. |
 | `evidence` | What the input actually supplied. Each entry names its type. |
 | `assumptions` | Anything the input did not state. Each carries a status. |

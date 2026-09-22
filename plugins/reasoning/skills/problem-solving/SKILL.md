@@ -132,12 +132,14 @@ test, not a judgment call.
   the tested next step back rather than acting on it, however obvious the
   fix looks.
 - **Length and depth scale to the problem, not to the framework's
-  capacity.** Test: could this section's content, unchanged, be pasted
-  into an analysis of a different problem? Yes → it's filling space, not
-  analysis of this one — cut it, or replace it with a plain "no evidence
-  for this." A one-line defect gets however many fields the evidence
-  actually supports, stated briefly; it does not get every section of the
-  framework padded out to look thorough.
+  capacity.** Test, applied sentence by sentence to what you have written:
+  does this sentence name a specific fact, quote, figure, file, or
+  `evidence` entry from THIS problem's input? If a sentence would read as
+  true no matter what `evidence` contained, it is generic — cut it, or
+  replace it with a plain "no evidence for this." A one-line defect gets
+  however many fields the evidence actually supports, stated briefly; it
+  does not get every section of the framework padded out to look
+  thorough.
 
 ## Failure modes
 
