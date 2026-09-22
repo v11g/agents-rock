@@ -26,3 +26,11 @@ test('accepts researched with a source suffix', () => {
   const t = { section: 'X', headers: ['A', 'src'], rows: [['a', 'researched [stripe docs]']] };
   assert.deepEqual(validateProvenance({ tables: [t] }), []);
 });
+
+// "we invented this to keep moving" and "we recommend this" are different claims.
+// drivers.md fires a blocker on the first and not the second, so the vocabulary
+// has to keep them apart.
+test('accepts assumed as distinct from proposed', () => {
+  const t = { section: 'Quality Requirements', headers: ['A', 'src'], rows: [['p99', 'assumed']] };
+  assert.deepEqual(validateProvenance({ tables: [t] }), []);
+});

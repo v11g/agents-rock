@@ -2,13 +2,13 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { inline, stripInline } from '../lib/md-inline.mjs';
 
-// Every fact in an analyze-requirements set carries where it came from, and the four words
+// Every fact in an analyze-requirements set carries where it came from, and the five words
 // are a closed vocabulary (validate-provenance.mjs). Written as `observed`, they
 // rendered as <code> in accent teal — the same chip as `org_id` and
 // `docker-compose.yml`, so the accent meant two unrelated things and the most
 // repeated element in the document read as a snippet of code.
 test('a provenance marker is its own element, not a code span', () => {
-  for (const word of ['observed', 'stated', 'researched', 'proposed']) {
+  for (const word of ['observed', 'stated', 'researched', 'proposed', 'assumed']) {
     const html = inline(`The value is bound. \`${word}\``);
     assert.match(html, new RegExp(`<span class="prov" data-prov="${word}">${word}</span>`));
     assert.doesNotMatch(html, /<code>/);

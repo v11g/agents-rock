@@ -89,8 +89,8 @@ Contract notes, verbatim:
   auth model → §12 · threat list → threat-model doc · decision rationale →
   ADR files · debt → §15.
 - Every table row carries a `src` column: `observed` / `stated` /
-  `researched [link]` / `proposed`. Prose facts carry an inline tag.
-  Diagrams carry a view-level provenance note.
+  `researched [link]` / `proposed` / `assumed`. Prose facts carry an inline
+  tag. Diagrams carry a view-level provenance note.
 
 ## 2. One home per fact
 
@@ -113,9 +113,14 @@ two homes is a defect, not redundancy:
   bare `cell | cell`.
 - `src` is the last column, header spelled exactly `src` (the provenance
   validator looks up that literal header name).
-- Values are one of the four provenance words: `observed` · `stated` ·
-  `researched` · `proposed`. `researched` is always followed by a bracketed
-  source: `researched [source]`.
+- Values are one of the five provenance words: `observed` · `stated` ·
+  `researched` · `proposed` · `assumed`. `researched` is always followed by a
+  bracketed source: `researched [source]`.
+- `proposed` and `assumed` are not interchangeable. `proposed` is a
+  recommendation this document is making and standing behind. `assumed` is a
+  value nobody supplied that was invented so the work could continue — it is a
+  hole, and §13 treats an `assumed` target on a `must` row as a blocker. Never
+  promote one to the other to make a section look settled.
 - Generated-index tables are exempt: `Decisions` (§14) and `Glossary` (§16)
   carry no `src` column — they're derived from `docs/adr/` and `CONTEXT.md`
   files, not asserted facts.

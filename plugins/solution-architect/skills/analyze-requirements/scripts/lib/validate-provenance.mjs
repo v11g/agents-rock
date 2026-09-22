@@ -1,4 +1,4 @@
-const ALLOWED = ['observed', 'stated', 'researched', 'proposed'];
+const ALLOWED = ['observed', 'stated', 'researched', 'proposed', 'assumed'];
 const EXEMPT = ['Decisions', 'Glossary'];
 
 export function validateProvenance({ tables }) {

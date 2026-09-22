@@ -17,7 +17,7 @@ export function stripInline(text) {
 // the accent meant two unrelated things and the most repeated element in the
 // document read as a snippet of code. Matched exactly: `observed_at` is a column
 // name and `Observed` is not a member of the vocabulary.
-const PROVENANCE = new Set(['observed', 'stated', 'researched', 'proposed']);
+const PROVENANCE = new Set(['observed', 'stated', 'researched', 'proposed', 'assumed']);
 
 const codeOrMarker = (_, body) => (PROVENANCE.has(body)
   ? `<span class="prov" data-prov="${body}">${body}</span>`
