@@ -40,6 +40,16 @@ preview, so a link reopens exactly the table you were reading. Values the
 receiving copy does not recognise are dropped rather than applied.
 (`solution-architect` 2.0.0)
 
+A second `analyze-requirements` run no longer overwrites hand edits. The skill
+records what it wrote in `architecture-state.json` beside `ARCHITECTURE.md` —
+a hash per file, and a hash per spine section — and compares disk against that
+record before writing anything. A file that changed since the last run is shown
+as a real `git diff` where a repository supplies one and as a list of changed
+section numbers where it does not, and the question is asked once, before the
+first write. A file the skill has never written is never overwritten at all,
+and an accepted ADR is never rewritten regardless, because a changed decision
+is a new record with `supersedes`. (`solution-architect` 2.2.0)
+
 ### Changed
 
 The score review page is designed for the job it does. Each feature is a band —
