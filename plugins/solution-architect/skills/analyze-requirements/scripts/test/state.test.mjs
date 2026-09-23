@@ -1,6 +1,9 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { normalise, hashText, sectionHashes } from '../lib/state.mjs';
+import { normalise, hashText, sectionHashes, readState, writeState } from '../lib/state.mjs';
+import { mkdtempSync, writeFileSync, readFileSync, existsSync, readdirSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 
 // Line endings, trailing spaces and how many newlines a file ends with are
 // editor artefacts. If they changed the hash, every run would report drift on
@@ -71,4 +74,50 @@ test('editing one section moves only that section', () => {
 test('content before the first numbered heading is in no section', () => {
   const after = sectionHashes(ARCH.replace('name: atlas', 'name: atlas-2'));
   assert.deepEqual(after, sectionHashes(ARCH));
+});
+
+const tmp = () => mkdtempSync(join(tmpdir(), 'rerun-safety-'));
+
+test('state survives a round trip', () => {
+  const path = join(tmp(), 'architecture-state.json');
+  const state = { revision: 2, files: { 'ARCHITECTURE.md': { hash: 'sha256:aa' } } };
+  writeState(path, state);
+  assert.deepEqual(readState(path).state, state);
+});
+
+test('an absent state file is not an error', () => {
+  assert.deepEqual(readState(join(tmp(), 'nope.json')), { state: null });
+});
+
+// A corrupt state file is the one case where deleting would be convenient and
+// wrong: it is the only record of what the last run wrote.
+test('a corrupt state file reads as absent, is reported, and is left alone', () => {
+  const path = join(tmp(), 'architecture-state.json');
+  writeFileSync(path, '{ not json');
+  const result = readState(path);
+  assert.equal(result.state, null);
+  assert.match(result.error, /unreadable/);
+  assert.equal(readFileSync(path, 'utf8'), '{ not json');
+});
+
+// Written last and atomically: a crash must leave the previous revision intact
+// rather than a half-written file that the next run would trust.
+test('writing leaves no temp file behind', () => {
+  const dir = tmp();
+  const path = join(dir, 'architecture-state.json');
+  writeState(path, { revision: 1, files: {} });
+  assert.deepEqual(readdirSync(dir), ['architecture-state.json']);
+  assert.equal(existsSync(`${path}.tmp`), false);
+});
+
+// The crash case itself. A write that dies partway must leave revision 1
+// readable — that is what lets the next run treat the half-written documents
+// as drifted and ask about them, instead of trusting them.
+test('a failed write leaves the previous revision intact', () => {
+  const path = join(tmp(), 'architecture-state.json');
+  writeState(path, { revision: 1, files: {} });
+  const circular = { revision: 2 };
+  circular.self = circular;
+  assert.throws(() => writeState(path, circular));
+  assert.equal(readState(path).state.revision, 1);
 });
