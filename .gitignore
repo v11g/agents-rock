@@ -4,6 +4,7 @@ plugins/**/.claude-plugin/*.*
 
 node_modules/
 dist/
+build/
 !plugins/solution-architect/skills/new-lead/scripts/test/fixtures/root/acme-crm/dist/
 !plugins/solution-architect/skills/new-lead/scripts/test/fixtures/root/acme-crm/dist/**
 

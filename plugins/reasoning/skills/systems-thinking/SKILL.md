@@ -128,7 +128,9 @@ not a judgment call.
 - **One framework per run.** Test: before starting a second, has the first's
   own stopping test actually fired (check that file's Stop when section),
   and is there a stated reason a second adds something the first didn't
-  reach? Both must be yes.
+  reach? Both must be yes — and even then the second framework is a
+  second run, with its own six core fields and its own single block.
+  Never a second block in this one.
 - **Diagrams only for cycles.** Test: does the structure contain a cycle? No
   → prose. A four-level iceberg and a flat leverage list are not cycles and
   get no diagram.

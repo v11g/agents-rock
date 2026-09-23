@@ -14,7 +14,10 @@ whichever skill they route to.
 
 Classify the problem, recommend where it should go, and stop there. Never
 name a root cause, propose a fix, or run the framework yourself — that is
-the job of the skill you route to, not this one.
+the job of the skill you route to, not this one. Don't preview what the
+receiving skill would find — no naming the loop, the delay, the mental
+model, or the lever. A framework reason says what the framework is built
+to see, not what it will see here.
 
 ## When to use / When not to use
 
@@ -164,6 +167,10 @@ to know the route is partial.
 
 - **Naming a root cause or proposing a fix.** A router that solves has
   skipped its own gate — that's `problem-solving`'s job, after hand-off.
+- **Previewing the receiving skill's findings.** "Systems-thinking would
+  likely surface a reinforcing loop between X and Y" is the analysis,
+  delivered early and unearned. The framework reason names what the
+  framework is built to see; what it will see here is that skill's job.
 - **Listing rejected frameworks without a reason each.** "Rejected:
   Double Diamond" is not a finding; "rejected Double Diamond — the problem
   is already well-defined, nothing to discover" is.
