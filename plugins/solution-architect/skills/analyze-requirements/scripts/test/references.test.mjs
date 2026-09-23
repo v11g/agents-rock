@@ -185,10 +185,5 @@ test('validation.md says its checks are estimable work', () => {
   assert.match(ref('validation.md'), /estimate/i);
 });
 
-// The cap is prose and the bank is a table; nothing held them to each other.
-test('the question bank stays inside the interview cap', () => {
-  const doc = ref('interview.md');
-  const bank = doc.slice(doc.indexOf('## Question bank'), doc.indexOf('## Card batching'));
-  const rows = bank.split('\n').filter((l) => l.startsWith('| ') && !/^\|\s*-+/.test(l));
-  assert.ok(rows.length - 1 <= 12, `bank has ${rows.length - 1} questions, cap is 12`);
-});
+// The interview bank's own contracts — the cap and the never-skippable rows —
+// live in interview.test.mjs, which keeps this file inside the length limit.

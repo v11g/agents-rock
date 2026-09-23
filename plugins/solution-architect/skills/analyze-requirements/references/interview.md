@@ -24,9 +24,9 @@ what shape, and when to stay silent instead.
 |---|---|---|---|
 | §1 Goals & Scope | What is the primary goal of this system, and who are its intended users? | both | an existing README/pitch doc/ARCHITECTURE.md already states it |
 | §2 Constraints | What constraints must the architecture respect — budget, compliance regime, timeline, mandated tech or vendor? | both | constraints are already documented (compliance docs, existing ADRs, a constraints file the scan found) |
-| §13 Quality Requirements & SLOs | Which three qualities matter most, in any order — and if you had to drop one of the three, which goes? | both | never — this cannot be observed or researched |
-| §13 Quality Requirements & SLOs | For the quality you kept: under what conditions and workload does it have to hold, and what is the measurable target (e.g. p99 < 200ms at 400 concurrent users)? | both | never — this cannot be observed or researched |
+| §13 Quality Requirements & SLOs | Which single quality matters most, and under what conditions and workload must it hold — with the measurable target (e.g. p99 < 200ms at 400 concurrent users)? | both | never — this cannot be observed or researched |
 | §13 Quality Requirements & SLOs | What availability target must this system meet, and what is the worst tolerable loss on failure — data loss window (RPO) or downtime (RTO)? | both | never — this cannot be observed or researched |
+| §13 Quality Requirements & SLOs | Which three qualities matter most, in any order — and if you had to drop one of the three, which goes? | both | optional probe — skip when the run is at the 12-question cap; it is dropped before either §13 row above, never ahead of them |
 | CONTEXT.md (terms) | What are the key domain terms in this system, and how do you define each precisely? | greenfield or thin CONTEXT.md | `CONTEXT.md` already has 5 or more resolved terms |
 | DOMAIN-OVERVIEW.md (actors) | Who are the actors/personas that interact with or are affected by this system? | greenfield or thin CONTEXT.md | same as above, or the project is not domain-heavy |
 | DOMAIN-OVERVIEW.md (processes) | What are the key business processes, described as actor-level steps? | greenfield or thin CONTEXT.md | same as above |
