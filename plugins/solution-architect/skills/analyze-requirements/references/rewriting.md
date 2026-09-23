@@ -37,7 +37,7 @@ file. Exit codes: `0` nothing drifted, `2` something drifted, `1` usage error.
 | `new` | we have never written it and it is not on disk | write it — nobody has one |
 | `untracked` | we have never written it, but a file is there | **never write it** — it is not ours |
 | `missing` | we wrote it, it is gone now | report it; never silently recreate it |
-| `locked` | an accepted ADR | never rewrite; a new decision is a new ADR with `supersedes` |
+| `locked` | an ADR whose `## Status` on disk reads accepted | never rewrite; a new decision is a new ADR with `supersedes` |
 | `drifted` | changed since we wrote it | ask, before writing anything |
 
 ## 4. Asking

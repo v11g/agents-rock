@@ -42,6 +42,21 @@ test('an accepted ADR is locked whatever its hash says', () => {
   assert.equal(classify({ hash: 'sha256:stale', status: 'proposed' }, BODY), 'drifted');
 });
 
+// The ordinary way an ADR becomes accepted: we wrote it `proposed`, a person
+// accepted it afterwards. State still says `proposed`, so reading state alone
+// offers "overwrite it" for a record the spec says can only be superseded.
+const ADR = '# ADR 0001: Use Stripe\n\n## Status\n\nAccepted\n\n## Context\n\nc\n';
+
+test('an ADR accepted on disk is locked whatever state recorded', () => {
+  assert.equal(classify({ hash: hashText(ADR), status: 'proposed' }, ADR), 'locked');
+  assert.equal(classify({ hash: 'sha256:stale', status: 'proposed' }, ADR), 'locked');
+});
+
+test('a document with no status falls back to the recorded one', () => {
+  assert.equal(classify({ hash: 'sha256:stale', status: 'accepted' }, BODY), 'locked');
+  assert.equal(classify({ hash: 'sha256:stale', status: 'proposed' }, BODY), 'drifted');
+});
+
 const ARCH = '## 1 Goals and Scope\n\na\n\n## 13 Quality Requirements and SLOs\n\nb\n';
 
 test('changed sections are named, ascending', () => {
