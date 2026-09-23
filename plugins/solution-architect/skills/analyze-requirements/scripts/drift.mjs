@@ -48,10 +48,10 @@ if (!args.state) {
 
 const { state, error } = readState(args.state);
 if (error) console.log(`state file ${error}`);
-if (!state) {
-  console.log('first run — no state recorded, nothing is at risk');
-  process.exit(0);
-}
+// A first run is not halted, but it is still judged: with no entries every file
+// already on disk reads as untracked, which is what keeps a hand-written
+// package safe from the run that was pointed at it.
+if (!state) console.log('first run — no state recorded, nothing is at risk');
 
 const ctx = { root: dirname(args.state), state: { gitCommit: null, files: {}, ...state } };
 const verdicts = args.files.map((f) => report(ctx, f));

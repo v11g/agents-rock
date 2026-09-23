@@ -65,6 +65,18 @@ test('a missing state file is a first run, not a failure', () => {
   assert.match(stdout, /first run/);
 });
 
+// "nothing blocked" means the run is not halted, not that nothing is judged.
+// Point the skill at a directory that already holds a hand-written package and
+// every file in it must still come back untracked — that is the property that
+// makes a first run against someone else's documents safe.
+test('a first run still classifies the files it was given', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'rerun-safety-first-'));
+  writeFileSync(join(dir, 'ARCHITECTURE.md'), ARCH);
+  const { code, stdout } = run(['--state', join(dir, 'architecture-state.json'), '--files', 'ARCHITECTURE.md']);
+  assert.equal(code, 0);
+  assert.match(stdout, /ARCHITECTURE\.md\s+untracked/);
+});
+
 test('no --state is a usage error', () => {
   const { code, stderr } = run(['--files', 'ARCHITECTURE.md']);
   assert.equal(code, 1);
