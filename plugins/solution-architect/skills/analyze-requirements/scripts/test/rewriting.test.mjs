@@ -23,6 +23,12 @@ test('the discipline never claims to know who edited a file', () => {
   assert.doesNotMatch(doc, /you edited|the user edited/i);
 });
 
+// Every verdict the gate can print needs a row, or the agent meets one with no
+// instruction. `new` is the one that lets run 2 add a document at all.
+test('the verdict table covers a file that does not exist yet', () => {
+  assert.match(ref('rewriting.md'), /\|\s*`new`\s*\|/);
+});
+
 test('an accepted ADR is named as exempt', () => {
   const doc = ref('rewriting.md');
   assert.match(doc, /accepted/);

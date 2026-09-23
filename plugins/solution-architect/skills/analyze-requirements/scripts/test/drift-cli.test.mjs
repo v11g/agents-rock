@@ -65,6 +65,15 @@ test('a missing state file is a first run, not a failure', () => {
   assert.match(stdout, /first run/);
 });
 
+// A new ADR on run 2 has no entry and no file. It is not "not ours" — nobody
+// has one — so the gate must not hand the agent a verdict that forbids it.
+test('a file that does not exist yet is new, not untracked', () => {
+  const dir = packageDir(ARCH);
+  const { code, stdout } = run(['--state', join(dir, 'architecture-state.json'), '--files', 'docs/adr/0002-new.md']);
+  assert.equal(code, 0);
+  assert.match(stdout, /0002-new\.md\s+new/);
+});
+
 // "nothing blocked" means the run is not halted, not that nothing is judged.
 // Point the skill at a directory that already holds a hand-written package and
 // every file in it must still come back untracked — that is the property that

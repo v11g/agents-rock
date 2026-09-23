@@ -12,6 +12,13 @@ test('a file with no entry is untracked, never ours', () => {
   assert.equal(classify(undefined, BODY), 'untracked');
 });
 
+// The other half of "no entry": a file this run means to create has no entry
+// either. Calling it untracked would tell the agent never to write it, and no
+// new ADR or companion could ever be added after run 1.
+test('a file with no entry and nothing on disk is new, safe to write', () => {
+  assert.equal(classify(undefined, null), 'new');
+});
+
 test('a matching hash is unchanged', () => {
   assert.equal(classify(entryFor(BODY), BODY), 'unchanged');
 });
