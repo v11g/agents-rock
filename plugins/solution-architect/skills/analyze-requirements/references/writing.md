@@ -156,14 +156,14 @@ Task 7's fixture, `scripts/test/fixtures/docs-pass/ARCHITECTURE.md`):
 
 ```yaml
 ---
-electedDocs: [{"name":"threat-model","elected":false,"reason":"CLI-only fixture, no external attack surface"},{"name":"interface-contract","elected":false,"reason":"no public API exposed by this fixture"},{"name":"estimation","elected":false,"reason":"user declined effort estimates"},{"name":"domain-overview","elected":false,"reason":"thin domain: fixture repo"}]
+electedDocs: [{"name":"threat-model","elected":false,"reason":"CLI-only fixture, no external attack surface"},{"name":"interface-contract","elected":false,"reason":"no public API exposed by this fixture"},{"name":"estimation","elected":false,"reason":"user declined effort estimates"},{"name":"domain-overview","elected":false,"reason":"thin domain: fixture repo"},{"name":"validation-plan","elected":false,"reason":"no must-level quality rows in this fixture"}]
 ---
 ```
 
-All four companions (`threat-model`, `interface-contract`, `estimation`,
-`domain-overview`) always get an entry, elected or not — an un-elected
-companion with no `reason` fails validation. Never drop an entry to avoid
-writing a reason.
+All five companions (`threat-model`, `interface-contract`, `estimation`,
+`domain-overview`, `validation-plan`) always get an entry, elected or not — an
+un-elected companion with no `reason` fails validation. Never drop an entry to
+avoid writing a reason.
 
 ## 5. Companion contracts
 
@@ -185,6 +185,11 @@ writing a reason.
   rule still binds whoever renders it: every row carries confidence +
   assumptions; a row nobody estimated renders `not estimated` — **never
   `0`**, which would misread as "estimated at zero effort."
+- **validation-plan.md** carries one row per load-bearing claim: method,
+  condition, threshold, status. `planned` until something has actually run,
+  and a planned check never renders as passed. `validation.md` owns the
+  contract, including what evidence has to carry before it replaces a plan.
+  Elect it when §13 has a `must` row or an ADR rests on an unmeasured number.
 
 ## 6. mattpocock integration
 

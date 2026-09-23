@@ -4,9 +4,11 @@ import { readFileSync } from 'node:fs';
 import { SPINE_TITLES } from '../lib/section-help.mjs';
 
 const ref = (f) => readFileSync(new URL(`../../references/${f}`, import.meta.url), 'utf8');
-const KNOWLEDGE = ['patterns.md', 'decision-rules.md', 'decisions.md', 'drivers.md'];
+const KNOWLEDGE = ['patterns.md', 'decision-rules.md', 'decisions.md', 'drivers.md',
+  'validation.md'];
 const ALL = ['interview.md', 'likec4.md', 'project-types.md', 'research.md', 'viewer.md',
-  'writing.md', 'patterns.md', 'decision-rules.md', 'decisions.md', 'drivers.md'];
+  'writing.md', 'patterns.md', 'decision-rules.md', 'decisions.md', 'drivers.md',
+  'validation.md'];
 
 test('no reference doc carries placeholders', () => {
   for (const f of ALL) assert.doesNotMatch(ref(f), /\bTBD\b|\bTODO\b/, f);
@@ -164,6 +166,23 @@ test('writing.md names the section 13 columns', () => {
   for (const col of ['scenario', 'measure', 'target', 'priority']) {
     assert.ok(row.includes(col), `spine row 13 missing column: ${col}`);
   }
+});
+
+// A plan and a result read the same once they are both on the page, and the
+// plan is the one that is free to write.
+test('validation.md separates planned from evidenced', () => {
+  const doc = ref('validation.md');
+  assert.match(doc, /planned/i);
+  assert.match(doc, /never .*passed|not .*passed/i, 'a planned check must never be reported as passed');
+  for (const field of ['result', 'environment', 'date', 'artifact']) {
+    assert.ok(doc.includes(field), `validation.md missing evidence field: ${field}`);
+  }
+});
+
+// The plan's rows are work someone has to do. Left unpriced they are the part of
+// the estimate that surfaces after the contract is signed.
+test('validation.md says its checks are estimable work', () => {
+  assert.match(ref('validation.md'), /estimate/i);
 });
 
 // The cap is prose and the bank is a table; nothing held them to each other.

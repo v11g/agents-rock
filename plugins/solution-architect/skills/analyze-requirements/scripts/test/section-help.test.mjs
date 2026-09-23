@@ -20,16 +20,16 @@ test('no explainer is keyed on a heading that does not exist', () => {
   assert.deepEqual(Object.keys(help.spine).sort(), [...SPINE_TITLES].sort());
 });
 
-test('the three elected companions have an explainer and nothing else does', () => {
+test('the elected companions have an explainer and nothing else does', () => {
   assert.deepEqual(Object.keys(help.companions).sort(),
-    ['domain-overview', 'estimation', 'threat-model']);
+    ['domain-overview', 'estimation', 'threat-model', 'validation-plan']);
 });
 
 // An empty field renders as a blank row in the panel, which reads as a bug
 // rather than as an absence.
 test('every explainer states all three fields', () => {
   const all = [...Object.entries(help.spine), ...Object.entries(help.companions)];
-  assert.equal(all.length, 19);
+  assert.equal(all.length, SPINE_TITLES.length + 4);
   for (const [key, entry] of all) {
     for (const field of ['what', 'why', 'good']) {
       assert.equal(typeof entry[field], 'string', `${key}.${field} is not a string`);

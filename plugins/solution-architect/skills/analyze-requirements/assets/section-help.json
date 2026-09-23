@@ -96,6 +96,11 @@
       "what": "Three parts and nothing else: the actors, the processes they drive, and the business rules that govern them.",
       "why": "A data model shows how information is stored, never what the business means by it. The two legitimately differ.",
       "good": "Every rule links the component that enforces it and the decision it came from."
+    },
+    "validation-plan": {
+      "what": "The checks that would show a load-bearing claim in this document is wrong, and the evidence from any that have run.",
+      "why": "A target nobody plans to measure is a wish. Separating what is planned from what has actually run is what stops a document reading as proven.",
+      "good": "Nothing planned is reported as passed. Evidence carries its result, environment, date and artifact."
     }
   }
 }

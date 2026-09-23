@@ -1,4 +1,5 @@
-const COMPANIONS = ['threat-model', 'interface-contract', 'estimation', 'domain-overview'];
+const COMPANIONS = ['threat-model', 'interface-contract', 'estimation', 'domain-overview',
+  'validation-plan'];
 
 export function validateElections({ frontmatter }) {
   const docs = frontmatter.electedDocs;

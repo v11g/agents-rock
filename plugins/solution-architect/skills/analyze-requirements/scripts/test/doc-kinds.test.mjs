@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { kindOf } from '../lib/doc-kinds.mjs';
+import { kindOf, labelOf } from '../lib/doc-kinds.mjs';
 
 // Index 0 is ARCHITECTURE.md by construction — render.mjs already flags it this
 // way with `spine: i === 0`. Nothing reads its filename, because a target repo
@@ -38,4 +38,9 @@ test('excluded document classes get no kind', () => {
 // section explainers and gain one wrong one.
 test('position beats filename', () => {
   assert.equal(kindOf('docs/estimation.md', 0), 'spine');
+});
+
+test('validation-plan is a labelled companion', () => {
+  assert.equal(kindOf('docs/validation-plan.md', 1), 'validation-plan');
+  assert.equal(labelOf('validation-plan'), 'Validation Plan');
 });

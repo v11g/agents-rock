@@ -1,5 +1,5 @@
 ---
-electedDocs: [{"name":"threat-model","elected":false,"reason":"CLI-only fixture, no external attack surface"},{"name":"interface-contract","elected":false,"reason":"no public API exposed by this fixture"},{"name":"estimation","elected":false,"reason":"user declined effort estimates"},{"name":"domain-overview","elected":false,"reason":"thin domain: fixture repo"}]
+electedDocs: [{"name":"threat-model","elected":false,"reason":"CLI-only fixture, no external attack surface"},{"name":"interface-contract","elected":false,"reason":"no public API exposed by this fixture"},{"name":"estimation","elected":false,"reason":"user declined effort estimates"},{"name":"domain-overview","elected":false,"reason":"thin domain: fixture repo"},{"name":"validation-plan","elected":false,"reason":"no must-level quality rows in this fixture"}]
 ---
 
 # Shop Architecture

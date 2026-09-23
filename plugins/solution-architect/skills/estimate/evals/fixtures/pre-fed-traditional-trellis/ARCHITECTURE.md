@@ -6,7 +6,7 @@ updated: 2026-09-10
 mode: greenfield
 projectType: web-application
 docVersion: 1
-electedDocs: [{"name":"threat-model","elected":true},{"name":"interface-contract","elected":false,"reason":"no public API exposed to third parties in v1"},{"name":"estimation","elected":false,"reason":"not run yet"},{"name":"domain-overview","elected":true}]
+electedDocs: [{"name":"threat-model","elected":true},{"name":"interface-contract","elected":false,"reason":"no public API exposed to third parties in v1"},{"name":"estimation","elected":false,"reason":"not run yet"},{"name":"domain-overview","elected":true},{"name":"validation-plan","elected":false,"reason":"checks not planned at proposal stage"}]
 ---
 
 # Trellis Wholesale Ordering Portal — Architecture

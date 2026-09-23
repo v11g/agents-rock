@@ -13,7 +13,8 @@ into `estimation-inputs.json`, never upgrade it on your own judgment.
 | Source | Pre-fills | Provenance label |
 | --- | --- | --- |
 | Requirements doc / RFP / backlog | feature list, scope text, named deadlines | `stated` |
-| `ARCHITECTURE.md` (companion mode) | tech stack, existing components, integration points | `stated` |
+| `ARCHITECTURE.md` (companion mode) | tech stack, existing components, integration points, §13 quality targets and the conditions they hold under | `stated` — except a §13 row whose own `src` is `assumed`, which stays `assumed` |
+| `validation-plan.md` (companion mode) | one task per planned check: harness, data shaping, the run itself | `stated` |
 | Codebase scan (brownfield, no docs) | languages, frameworks, existing test coverage, rough size of touched areas | `observed` |
 | None found (greenfield, no docs, no code) | nothing — every field starts as a hole | — |
 

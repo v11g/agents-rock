@@ -61,7 +61,13 @@ interactive page served on localhost.
 ## Companion mode
 
 When ARCHITECTURE.md exists: §6 components seed the WBS, §15 risks seed the
-risk register, seed the `components` roster from §6 rows (use the LikeC4
+risk register, §13 quality rows raise the effort of the features that have to
+meet them — a scenario naming conditions and a target is work (caching, a load
+harness, a failover path), and its `src` says how firm the number is; an
+`assumed` target is a sizing assumption, never a confirmed one. When
+`validation-plan.md` is elected, each of its rows is a WBS task in its own
+right: building the harness, shaping the data, running it, reading the result.
+Seed the `components` roster from §6 rows (use the LikeC4
 model's container and component ids where one exists — dotted ids like
 `atlas.goldStore`) and tag every feature with the component it implements,
 flip the `electedDocs` estimation entry to `elected: true`,

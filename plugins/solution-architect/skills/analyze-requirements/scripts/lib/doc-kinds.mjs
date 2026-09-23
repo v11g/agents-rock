@@ -8,6 +8,7 @@ const COMPANIONS = new Map([
   ['threat-model.md', 'threat-model'],
   ['estimation.md', 'estimation'],
   ['domain-overview.md', 'domain-overview'],
+  ['validation-plan.md', 'validation-plan'],
 ]);
 
 // The rail row is ~190px wide and companion H1s arrive carrying the project name
@@ -19,6 +20,7 @@ const LABELS = new Map([
   ['threat-model', 'Threat Model'],
   ['estimation', 'Estimation'],
   ['domain-overview', 'Domain Overview'],
+  ['validation-plan', 'Validation Plan'],
 ]);
 
 // Undefined for the spine and for anything unclassified: those titles are the

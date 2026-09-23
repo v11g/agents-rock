@@ -151,3 +151,16 @@ test('SKILL.md points the interview at the scoring guide and the review script',
   assert.match(skill, /scoring-guide\.md/);
   assert.match(skill, /score-review\.mjs/);
 });
+
+// Companion mode names which sections of a document seed which part of the
+// estimate. A source with no named target gets read and changes no number, so
+// each of these has to say where it lands.
+test('companion mode names every architecture source and its target', () => {
+  const skill = readFileSync(new URL('../../SKILL.md', import.meta.url), 'utf8');
+  const companion = skill.slice(skill.indexOf('## Companion mode'));
+  for (const [source, target] of [['§6', /WBS/], ['§15', /risk register/],
+    ['§13', /quality|scenario/i], ['validation-plan', /task|WBS/i]]) {
+    assert.ok(companion.includes(source), `companion mode missing source: ${source}`);
+    assert.match(companion, target, `companion mode missing target for ${source}`);
+  }
+});

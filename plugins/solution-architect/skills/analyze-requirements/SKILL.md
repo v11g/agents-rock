@@ -37,6 +37,8 @@ Load only when the step in hand needs it; never preload.
 - `references/decisions.md` — significance tests, the four technology costs,
   acceptance. Read when a choice might warrant an ADR, and again when writing
   one. `writing.md` §6 still owns where ADRs live and what the format requires.
+- `references/validation.md` — what gets checked and what has been checked.
+  Read when electing `validation-plan.md`, and again when writing it.
 
 Both are working knowledge, not sources. A document cites the project's drivers,
 never these files.

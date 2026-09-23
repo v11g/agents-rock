@@ -41,7 +41,7 @@
         "no-invented-components: every component named in §6 Core Components and every path in its 'key paths' column resolves to a file or directory that actually exists under src/cli/ or bin/ - no module, service or datastore is named that is not in the supplied tree",
         "provenance-on-every-row: every table in ARCHITECTURE.md except the §14 Decisions and §16 Glossary indexes has 'src' as its last column header, and every row's src value is exactly one of observed / stated / researched [<source>] / proposed - the pre-fed interview answers (SLO, constraints, owner) are 'stated', the code-derived rows are 'observed'",
         "deployment-not-applicable-cli: §10 Deployment and Infrastructure renders the CLI/library variant as an honest absence ('Not applicable - no deployment: distributed as a binary/package') and does NOT invent containers, environments or a CI/CD pipeline table for this package",
-        "elections-frontmatter-complete: ARCHITECTURE.md frontmatter has electedDocs as a one-line JSON array with all four entries (threat-model, interface-contract, estimation, domain-overview), each with a boolean 'elected' and a non-empty 'reason' when false - estimation is elected:false because the user declined estimates",
+        "elections-frontmatter-complete: ARCHITECTURE.md frontmatter has electedDocs as a one-line JSON array with all five entries (threat-model, interface-contract, estimation, domain-overview, validation-plan), each with a boolean 'elected' and a non-empty 'reason' when false - estimation is elected:false because the user declined estimates",
         "likec4-model-and-embed-markers: docs/architecture/model/ contains .c4 source declaring views named index, containers and components-<container>; §5/§7/§10 embed them via '<!-- likec4:view <id> -->' markers, and any mermaid appears only in §8 (ER) and §12 (DFD) - never a hand-drawn mermaid stand-in for a modeled C4 view"
       ]
     },
@@ -59,7 +59,7 @@
         "stated-vs-proposed-split: facts lifted from the spec (the 45s p99, 99.5% availability, 5min RPO / 4h RTO, eu-central-1, the $1,400/month ceiling, the 0.72 confidence floor, the 30-day body retention) are tagged 'stated'; every design decision the skill originated is tagged 'proposed'; any 'researched' row is followed by a bracketed source",
         "threat-model-llm-variant: threat-model.md exists, is framed on OWASP LLM Top 10 2025 (not generic STRIDE) as project-types.md prescribes for an AI/LLM app, and contains all four parts - a DFD, named trust boundaries, a threat list including prompt injection from the email body, and a mitigation per threat",
         "mermaid-er-parses-and-matches: §8's ```mermaid erDiagram block parses as valid mermaid and every entity name in it appears as a row in the §8 Data Stores table (and vice versa); §12's DFD is likewise a parsing mermaid block - neither section uses a LikeC4 view marker",
-        "elections-recorded-with-reasons: frontmatter electedDocs is a one-line JSON array with all four companions; threat-model is elected:true, estimation is elected:false with a reason naming the user's declining it, and every other elected:false entry carries a non-empty reason"
+        "elections-recorded-with-reasons: frontmatter electedDocs is a one-line JSON array with all five companions; threat-model is elected:true, estimation is elected:false with a reason naming the user's declining it, and every other elected:false entry carries a non-empty reason"
       ]
     }
   ]
