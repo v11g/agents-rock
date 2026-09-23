@@ -29,6 +29,17 @@ test('the skill runs the recorder at the end of step 5', () => {
   assert.match(skill(), /record\.mjs/);
 });
 
+// The first run is the one where `untracked` matters — it is what stops a run
+// pointed at a hand-written package from overwriting it. Prose that makes the
+// gate conditional on a state file existing puts that verdict back out of
+// reach, whatever the code does.
+test('the gate is never conditional on a state file existing', () => {
+  const doc = ref('rewriting.md');
+  assert.match(doc, /gate[^.]*\bevery run\b/i, 'the reference must say the gate runs every run');
+  assert.doesNotMatch(doc, /gate[^.]*after\s+the\s+first/i, 'never "the gate runs after the first run"');
+  assert.doesNotMatch(skill(), /after\s+the\s+first[^.]*drift\.mjs|drift\.mjs[^.]*after\s+the\s+first/i);
+});
+
 // A hash cannot identify an author, and a message that claims it can is a lie
 // the reader will believe.
 test('the discipline never claims to know who edited a file', () => {

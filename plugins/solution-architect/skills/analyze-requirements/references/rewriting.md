@@ -1,7 +1,9 @@
 # Rewriting — what is already on disk
 
-Read before step 5 writes anything. The gate (§3) runs on every run after the
-first; the recording (§5) closes every run, including the first.
+Read before step 5 writes anything. The gate (§3) runs on every run, before the
+first write; the recording (§5) closes every run. Only what they find differs —
+a first run has no record to compare against, and the documents it finds
+already on disk are, by that fact, not ours.
 
 ## 1. The rule
 
