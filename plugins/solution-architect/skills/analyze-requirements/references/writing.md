@@ -35,7 +35,7 @@ frontmatter: name · repo · team · updated · mode · projectType · docVersio
 11  Crosscutting Concepts        observability, error handling, validation, config/secrets,
                                  auth mechanics, testing strategy
 12  Security                     mermaid DFD + trust boundaries, authz model, link to threat model
-13  Quality Requirements & SLOs  table: scenario, measure, target, priority — never adjectives
+13  Quality Requirements & SLOs  table: scenario, measure, target, priority, src — never adjectives
 14  Decisions                    generated index of docs/adr/ (root + per-context)
 15  Risks & Technical Debt
 16  Glossary                     generated from all CONTEXT.md files; omitted if <5 terms, and says so

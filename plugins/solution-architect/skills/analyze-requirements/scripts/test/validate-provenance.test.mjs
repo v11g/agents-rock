@@ -1,6 +1,9 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import { validateProvenance } from '../lib/validate-provenance.mjs';
+
+const doc = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
 
 const ok = { section: 'Core Components', headers: ['C', 'src'], rows: [['api', 'observed']] };
 const badValue = { section: 'Data Stores', headers: ['S', 'src'], rows: [['pg', 'guessed']] };
@@ -33,4 +36,17 @@ test('accepts researched with a source suffix', () => {
 test('accepts assumed as distinct from proposed', () => {
   const t = { section: 'Quality Requirements', headers: ['A', 'src'], rows: [['p99', 'assumed']] };
   assert.deepEqual(validateProvenance({ tables: [t] }), []);
+});
+
+// An eval run hit the fifth tag as a straight contradiction: the hard rule and
+// the research contract still enumerated four, while drivers.md required a tag
+// neither of them allowed. A writer following the hard rule literally cannot
+// write the §13 row the skill demands, and only the validator settles it.
+test('every file that enumerates the vocabulary lists all five tags', () => {
+  for (const path of ['SKILL.md', 'references/research.md', 'references/writing.md']) {
+    const text = doc(path);
+    assert.match(text, /`assumed`/, `${path} omits the assumed tag`);
+    assert.doesNotMatch(text, /only four provenance|the four provenance/i,
+      `${path} still says there are four`);
+  }
 });

@@ -10,7 +10,7 @@ served on localhost for review.
 
 ## Hard rules
 
-1. Every fact carries provenance: `observed` | `stated` | `researched` (with source) | `proposed`. A claim nobody verified must never render like one that was.
+1. Every fact carries provenance: `observed` | `stated` | `researched` (with source) | `proposed` | `assumed`. A claim nobody verified must never render like one that was, and a number this document invented is `assumed` — on a §13 `must` row that is a blocker (`drivers.md` §3).
 2. One home per fact — diagrams own topology, tables own properties, prose owns neither.
 3. Unknowns render as honest absences (`Not applicable — <reason>`, `not estimated`, `Not provided`) — never placeholders, never `[TODO]`, never `0`.
 4. Validation blocks rendering: `node scripts/validate.mjs` must exit 0 before the viewer is generated.
@@ -42,7 +42,7 @@ Load only when the step in hand needs it; never preload.
 - `references/validation.md` — what gets checked and what has been checked.
   Read when electing `validation-plan.md`, and again when writing it.
 
-Both are working knowledge, not sources. A document cites the project's drivers,
+These are working knowledge, not sources. A document cites the project's drivers,
 never these files.
 
 ## Dependency

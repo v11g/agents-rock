@@ -163,7 +163,7 @@ test('writing.md names the section 13 columns', () => {
   const row = ref('writing.md').split('\n')
     .find((l) => l.includes('Quality Requirements & SLOs') && l.trim().startsWith('13'));
   assert.ok(row, 'spine row for 13 not found');
-  for (const col of ['scenario', 'measure', 'target', 'priority']) {
+  for (const col of ['scenario', 'measure', 'target', 'priority', 'src']) {
     assert.ok(row.includes(col), `spine row 13 missing column: ${col}`);
   }
 });

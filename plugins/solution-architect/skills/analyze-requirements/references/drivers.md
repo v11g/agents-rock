@@ -65,6 +65,23 @@ acceptance criterion, and it will read as settled to everyone downstream.
 `should` and `could` rows tolerate an `assumed` target. Say so rather than
 leaving the reader to infer which holes matter.
 
+The row's `src` describes the **target cell**, and only that cell. A row whose
+target the client gave is `stated` even though the scenario was written here and
+the priority was assigned here — otherwise every row in a well-sourced §13 turns
+`assumed` on the strength of its own prose, and the blocker rule above fires on
+all of them. When nobody assigned the priorities, say once under the table that
+the column is the document's own reading and invite the correction. That is a
+`proposed` judgement about ordering, not an invented threshold.
+
+## 3b. A quality the client rules out
+
+"Availability — n/a, it's a CLI, there is nothing to keep up" is an answer, not a
+gap. It has no legal row: `priority` is `must | should | could` and none of them
+is true. Record it under the table as `Not applicable — <the reason they gave>`,
+tagged with their provenance, and never as a row with an empty target. An
+unasked question stays `Not provided — <why>`; the two must not be collapsed,
+because one of them is a hole and the other is a decision.
+
 ## 4. Prioritise
 
 Ask for the **top three, unordered** — never a full ranking. Then ask which one

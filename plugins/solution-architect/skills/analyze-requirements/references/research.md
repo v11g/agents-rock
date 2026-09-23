@@ -59,9 +59,12 @@ Verbatim — apply these exactly, do not paraphrase into something weaker:
 > `stated`** — never upgraded; agent proposals are `proposed`; scan output
 > is `observed`.
 
-These are the only four provenance values that may ever appear in a table's
-`src` column or a prose fact's inline tag (`writing.md` §3). A fact's
-provenance never changes once assigned except by the rule above: `stated`
+Research produces those four. A fifth value, `assumed`, exists for a number
+nobody supplied that the document invented to keep moving — research never
+produces one, and `writing.md` §3 owns the full vocabulary. Nothing outside
+those five may appear in a table's `src` column or a prose fact's inline tag.
+
+A fact's provenance never changes once assigned except by the rule above: `stated`
 can be confirmed but is never silently promoted to `researched` just because
 an agent looked at it and found nothing to contradict it.
 
