@@ -4,6 +4,30 @@
 
 ### Added
 
+A new skill reviews a finished architecture package and says what is wrong with
+it. `review-architecture` runs seven gates over the judgement a validator
+cannot check — whether a provenance tag is true, whether a quality requirement
+is measurable, whether an ADR compared options that could have won, whether
+evidence is real — and reports findings by severity with one readiness verdict,
+validation stated separately. It never writes into the package, never re-reports
+what the structural validator already gates, and a same-session review is
+dispatched to a subagent, because the writer cannot grade the writer. The ratios
+it prints are computed by `scripts/coverage.mjs`, never counted by hand.
+(`solution-architect` 2.1.0)
+
+Five design references now sit behind `analyze-requirements`, so the questions
+an architect would ask are asked in the document rather than left to the
+reader: quality scenarios and how to convert "fast" into something measurable,
+the significance tests that decide whether a decision needs an ADR at all, the
+mechanism a claim like "a cache will fix it" is worthless without, the four
+technology costs kept apart instead of blended, and the line between a planned
+check and an evidenced one. (`solution-architect` 2.1.0)
+
+`validation-plan` is the fifth companion document, elected or declined in
+frontmatter like the other four. A `must`-level quality requirement with
+nothing planned to check it is now visible as a gap rather than absent.
+(`solution-architect` 2.1.0)
+
 The leads dashboard serves documents at the lead root — `requirements.md`,
 `rfp.md`, a client PDF (`.md`, `.txt`, `.csv`, `.json`, `.pdf`; one level deep,
 same traversal and symlink guards) — and evidence nodes on the lineage map now
@@ -41,6 +65,30 @@ receiving copy does not recognise are dropped rather than applied.
 (`solution-architect` 2.0.0)
 
 ### Changed
+
+Section 13 is a table of scenarios, not a list of adjectives. Each row carries
+the scenario, the measure, the target, the priority and its source, so "the
+system should be fast" cannot be written where "checkout submit at peak, 400
+concurrent carts → p99 under 200 ms" belongs. A row nothing could observe is a
+finding against the document. (`solution-architect` 2.1.0)
+
+`assumed` joins the provenance vocabulary as a fifth tag. A number the document
+invented to keep moving is not a recommendation, and saying so is the point: an
+`assumed` target on a `must` row is a blocker, because the design has no
+acceptance criterion. It was previously indistinguishable from `proposed`.
+(`solution-architect` 2.1.0)
+
+An ADR must compare options that could have won. At least two credible ones,
+hard constraints applied before the comparison rather than inside it, the
+current approach considered, and no option a reader would recognise as there to
+lose. Acceptance names a person and a date — silence is never read as
+agreement. (`solution-architect` 2.1.0)
+
+The interview's quality questions each stand on their own. The one carrying the
+measurable target no longer opens by referring to an earlier answer, so it can
+be asked first or alone; the top-three probe is the §13 question the
+twelve-question cap may buy out, and it is dropped before either row that
+carries a target. (`solution-architect` 2.1.0)
 
 The score review page is designed for the job it does. Each feature is a band —
 its name, total and tier on the left, the five factor scores across the right —
@@ -118,6 +166,12 @@ so returning meant reloading. The toggle now stays put and names the view it
 switches to. (`solution-architect` 2.0.0)
 
 ### BREAKING CHANGES
+
+Adding `validation-plan` to the companion list means an existing
+`ARCHITECTURE.md` with no election record for it now fails validation. Add one
+entry to `electedDocs` in the frontmatter — `{"name":"validation-plan",
+"elected":true}`, or `false` with a reason — and it passes again. Nothing else
+in the document changes. (`solution-architect` 2.1.0)
 
 An install or uninstall run without a terminal now requires an explicit scope.
 `npx @v11g/agents-rock -p lmk -a claude` errors naming `--global` and
