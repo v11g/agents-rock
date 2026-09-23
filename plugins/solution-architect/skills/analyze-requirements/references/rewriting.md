@@ -55,7 +55,12 @@ No merge. No three-way resolution. Detect, show, ask which wins, obey.
 
 ## 5. First runs and broken states
 
-No state file means a first run: everything is untracked, nothing is blocked,
-and the state is written at the end. A state file that will not parse is
-treated as absent, said out loud, and **never deleted** — it is the only record
-of what the last run wrote.
+No state file means a first run: every file is still judged — untracked where
+one is already on disk, `new` where none is — nothing is blocked, and the state
+is written at the end.
+
+A state file that will not parse is treated as absent, said out loud, and
+**never deleted** — it is the only record of what the last run wrote. It is not
+a first run, though: the file's existence says tracked documents are on disk,
+and its corruption is what stops us telling which of them moved. Nothing on
+disk can be verified against it, so nothing in that run is cleared for writing.

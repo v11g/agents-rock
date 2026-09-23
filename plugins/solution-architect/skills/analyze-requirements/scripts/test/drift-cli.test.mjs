@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { spawnSync, execFileSync } from 'node:child_process';
-import { mkdtempSync, writeFileSync } from 'node:fs';
+import { mkdtempSync, writeFileSync, readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { hashText, sectionHashes } from '../lib/state.mjs';
@@ -128,6 +128,22 @@ test('a first run still classifies the files it was given', () => {
   const { code, stdout } = run(['--state', join(dir, 'architecture-state.json'), '--files', 'ARCHITECTURE.md']);
   assert.equal(code, 0);
   assert.match(stdout, /ARCHITECTURE\.md\s+untracked/);
+});
+
+// The reassurance is false exactly when it prints: a state file exists, so
+// tracked files are on disk, and its corruption is what stops us telling which
+// of them moved. It is also the more actionable line, so it is the one acted on.
+test('a corrupt state file warns without clearing anything', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'rerun-safety-corrupt-'));
+  const statePath = join(dir, 'architecture-state.json');
+  writeFileSync(join(dir, 'ARCHITECTURE.md'), ARCH);
+  writeFileSync(statePath, '{ not json');
+  const { code, stdout } = run(['--state', statePath, '--files', 'ARCHITECTURE.md']);
+  assert.equal(code, 0);
+  assert.match(stdout, /unreadable/);
+  assert.match(stdout, /nothing on disk can be verified/);
+  assert.doesNotMatch(stdout, /nothing is at risk/);
+  assert.equal(readFileSync(statePath, 'utf8'), '{ not json', 'never deleted');
 });
 
 test('no --state is a usage error', () => {
