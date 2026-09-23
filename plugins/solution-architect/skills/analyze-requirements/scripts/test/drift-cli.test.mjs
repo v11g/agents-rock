@@ -135,3 +135,15 @@ test('no --state is a usage error', () => {
   assert.equal(code, 1);
   assert.match(stderr, /^usage:/m);
 });
+
+// A gate that a typo turns into a clean bill of health fails the wrong way: an
+// empty write set prints nothing and exits 0, which reads as "all clear".
+test('an empty file list is a usage error, not a clean bill of health', () => {
+  const dir = packageDir(ARCH);
+  const state = join(dir, 'architecture-state.json');
+  for (const argv of [['--state', state], ['--state', state, '--files'], ['--state', state, '--file', 'ARCHITECTURE.md']]) {
+    const { code, stderr } = run(argv);
+    assert.equal(code, 1, argv.join(' '));
+    assert.match(stderr, /^usage:/m);
+  }
+});

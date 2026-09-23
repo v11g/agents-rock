@@ -41,7 +41,9 @@ function report(ctx, file) {
 }
 
 const args = parseArgs(process.argv.slice(2));
-if (!args.state) {
+// An empty write set is a fumbled argument, never an all-clear: a mistyped
+// --file would otherwise turn the gate into a clean bill of health.
+if (!args.state || !args.files.length) {
   console.error('usage: drift.mjs --state <architecture-state.json> --files <path> [<path> …]');
   process.exit(1);
 }
