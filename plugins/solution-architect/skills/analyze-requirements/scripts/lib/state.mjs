@@ -14,3 +14,19 @@ export function normalise(text) {
 export function hashText(text) {
   return `sha256:${createHash('sha256').update(normalise(text)).digest('hex')}`;
 }
+
+// Only ARCHITECTURE.md gets these — it is the only file with a spine to cut on.
+export function sectionHashes(md) {
+  const out = {};
+  let key = null;
+  let buf = [];
+  const flush = () => { if (key) out[key] = hashText(buf.join('\n')); };
+  for (const line of md.split('\n')) {
+    const heading = line.match(/^##\s+(\d+)\s/);
+    if (heading) flush();
+    if (heading) { key = heading[1]; buf = []; }
+    if (key) buf.push(line);
+  }
+  flush();
+  return out;
+}
