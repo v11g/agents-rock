@@ -19,7 +19,19 @@
 *"ask the client for the peak concurrent figure, or mark the row `should`"* is a fix.
 
 Mark separately any **assumption that invalidates the design if wrong**. It may
-carry any severity and still be the most important line in the report.
+carry any severity and still be the most important line in the report, so it
+carries a shape of its own rather than hiding inside the severity order:
+
+```
+[<severity>] invalidating assumption — <what the design takes as given>
+        — affected: <section or ADR id>
+        — evidence: <file, and where the document relies on it>
+        — if wrong: <what stops working, and what would have to be redesigned>
+        — fix: <how to confirm it, and who can>
+```
+
+These are listed first under `## Findings`, above the blockers, whatever
+severity they carry.
 
 ## 2. Ratios
 
@@ -39,6 +51,14 @@ dishonesty this report exists to catch.
 
 List deferred and excluded items separately rather than removing them from the
 denominator.
+
+The script also returns a `notes` array — one entry per input it could not
+read, such as a §13 it failed to find or an absent ADR directory. Copy each
+entry into `## Nothing to check` verbatim. They are the difference between a
+ratio that is genuinely **not applicable** and one the script could not compute,
+which the numbers alone report identically. A not-applicable ratio printed with
+no note beside it claims the document has nothing to count, so check the array
+before writing one.
 
 ## 3. Verdict — exactly one
 
@@ -69,21 +89,32 @@ state. Implying otherwise in either direction is a finding against this report.
 ```markdown
 # Review — <name>
 
-Reviewed <docVersion> · <updated> · <today>
+Reviewed docVersion <docVersion>, updated <updated> · review run <today>
 
 ## Verdict
 <one level> · validation: <one state>
 
 ## Findings
-<blockers, then majors, then minors>
+<invalidating assumptions, then blockers, then majors, then minors>
 
 ## Coverage
 <four ratios, numerator and denominator>
 
+## Checked, nothing found
+<each gate that ran and found nothing>
+
 ## Nothing to check
-<each skipped gate and why>
+<each gate that could not run and why, plus every script note>
 ```
+
+A gate that **ran and found nothing** belongs under `Checked, nothing found` —
+one line, the gate and what it inspected. A gate that could not run belongs
+under `Nothing to check`, with the reason. Collapsing the two loses the only
+signal that separates a document that passed a gate from one the gate never
+reached, and a reader who cannot see that difference reads both as approval.
+Neither heading is ever omitted; an empty one says `none`.
 
 The revision stamp is not decoration. Without it a reader cannot tell whether
 the review still describes the document in front of them, and a stale review
-reads exactly like a current one.
+reads exactly like a current one. All three values carry their labels — bare,
+they are three dates-looking strings in an order only their author knows.

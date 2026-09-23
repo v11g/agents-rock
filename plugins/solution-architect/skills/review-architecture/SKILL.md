@@ -18,9 +18,12 @@ write into it.
    reviewer never grades its own repair.
 3. **Agent judges, script computes.** Every ratio in the report comes from
    `node scripts/coverage.mjs`. Never count rows by hand.
-4. **Never re-report what `validate.mjs` already enforces.** Missing `src`
-   columns, broken links and model disagreement are gated before rendering.
-   Repeating them buries the findings only a reader can make.
+4. **Never re-report what `validate.mjs` already enforces.** That script
+   ships with `analyze-requirements`, not with this skill: the reviewer
+   never invokes it and assumes that gate ran before the document was
+   rendered. Missing `src` columns, broken links and model disagreement are
+   caught there. Repeating them buries the findings only a reader can make.
+   When nothing shows it ran, say so once as context — not once per gate.
 5. **A finding names evidence.** File and section or ADR id, every time. A
    finding with no location is an opinion.
 6. **One readiness verdict, and validation reported separately.** Complete

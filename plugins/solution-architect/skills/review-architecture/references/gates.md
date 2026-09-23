@@ -19,8 +19,10 @@ no subagent.
 
 ## G1 — Input integrity
 
-`validate.mjs` has already checked that every row carries a `src` value from the
-closed vocabulary. This gate asks whether the value is **true**.
+`validate.mjs` ships with `analyze-requirements`, not with this skill. The
+reviewer never invokes it; it assumes that gate ran and that every row already
+carries a `src` value from the closed vocabulary. This gate asks whether the
+value is **true**.
 
 - A `stated` fact with no interview or source behind it.
 - A `proposed` that is really `assumed` — a number the document invented, dressed
@@ -63,6 +65,12 @@ Every file in `docs/adr/`. The rules are `analyze-requirements`
   silence is a **blocker**.
 
 ## G4 — Coverage
+
+The spine is 16 sections, and "applicable section" means one of those 16. Their
+headings and per-section column contracts are tabled in `analyze-requirements`
+`references/writing.md` §1 — the one home for that list. Read it before running
+this gate rather than inferring the spine from the document under review, which
+is the document whose omissions this gate exists to find.
 
 - An applicable section left empty rather than carrying `Not applicable —
   <reason>`.
