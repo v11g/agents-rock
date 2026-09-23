@@ -40,6 +40,17 @@ test('the gate is never conditional on a state file existing', () => {
   assert.doesNotMatch(skill(), /after\s+the\s+first[^.]*drift\.mjs|drift\.mjs[^.]*after\s+the\s+first/i);
 });
 
+// The hard rules are what an agent reads first and leans on hardest, so an
+// unqualified "no entry means not ours" there outranks the verdict table: no
+// ADR or companion could ever be created after run 1. Only a file that is
+// actually on disk is someone else's.
+test('the hard rule does not forbid creating a file that does not exist', () => {
+  const rule = skill().split('\n').find((l) => /^5\. /.test(l) && l.includes('architecture-state.json'));
+  assert.ok(rule, 'hard rule 5 must still be the one about the state file');
+  assert.doesNotMatch(rule, /a file with no entry[^;]*is not ours/i, 'no entry alone does not mean not ours');
+  assert.match(rule, /creat/i, 'the rule must leave room to create a file that does not exist yet');
+});
+
 // A hash cannot identify an author, and a message that claims it can is a lie
 // the reader will believe.
 test('the discipline never claims to know who edited a file', () => {
