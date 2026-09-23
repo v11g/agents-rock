@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { spawnSync } from 'node:child_process';
+import { spawnSync, execFileSync } from 'node:child_process';
 import { mkdtempSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -30,6 +30,50 @@ function packageDir(archText) {
   }));
   return dir;
 }
+
+// `gitCommit` is HEAD as it stood when run 1 finished — before anyone committed
+// what run 1 had just written. Diffing against it renders the whole generated
+// package as additions, and the one line a person must judge is lost in it.
+function committedPackage() {
+  const dir = packageDir(ARCH);
+  const git = (...args) => execFileSync('git', args, { cwd: dir, stdio: 'ignore' });
+  git('init', '-q');
+  git('config', 'user.email', 'test@example.com');
+  git('config', 'user.name', 'Test');
+  writeFileSync(join(dir, 'README.md'), 'seed\n');
+  git('add', 'README.md');
+  git('commit', '-qm', 'seed');
+  const head = execFileSync('git', ['rev-parse', 'HEAD'], { cwd: dir, encoding: 'utf8' }).trim();
+  writeFileSync(join(dir, 'architecture-state.json'), JSON.stringify({
+    revision: 1,
+    gitCommit: head,
+    files: { 'ARCHITECTURE.md': { hash: hashText(ARCH), sections: sectionHashes(ARCH) } },
+  }));
+  git('add', 'ARCHITECTURE.md');
+  git('commit', '-qm', 'the generated package');
+  return dir;
+}
+
+test('the diff shows the hand edit, not the whole generated package', () => {
+  const dir = committedPackage();
+  writeFileSync(join(dir, 'ARCHITECTURE.md'), ARCH.replace('\nb\n', '\nedited by hand\n'));
+  const { code, stdout } = run(['--state', join(dir, 'architecture-state.json'), '--files', 'ARCHITECTURE.md']);
+  assert.equal(code, 2);
+  assert.match(stdout, /^\s*\+edited by hand$/m);
+  assert.doesNotMatch(stdout, /^\s*\+## 1 Goals and Scope$/m);
+});
+
+// The spec's other git row: a repository whose package was never committed has
+// no old bytes to show, so the section numbers are all the reader gets.
+test('an uncommitted package falls back to section numbers', () => {
+  const dir = committedPackage();
+  execFileSync('git', ['rm', '-q', '--cached', 'ARCHITECTURE.md'], { cwd: dir, stdio: 'ignore' });
+  execFileSync('git', ['commit', '-qm', 'drop it'], { cwd: dir, stdio: 'ignore' });
+  writeFileSync(join(dir, 'ARCHITECTURE.md'), ARCH.replace('\nb\n', '\nedited by hand\n'));
+  const { code, stdout } = run(['--state', join(dir, 'architecture-state.json'), '--files', 'ARCHITECTURE.md']);
+  assert.equal(code, 2);
+  assert.match(stdout, /changed: §13/);
+});
 
 test('an untouched package exits zero and says so', () => {
   const dir = packageDir(ARCH);
