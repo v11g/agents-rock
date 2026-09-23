@@ -14,7 +14,7 @@ served on localhost for review.
 2. One home per fact — diagrams own topology, tables own properties, prose owns neither.
 3. Unknowns render as honest absences (`Not applicable — <reason>`, `not estimated`, `Not provided`) — never placeholders, never `[TODO]`, never `0`.
 4. Validation blocks rendering: `node scripts/validate.mjs` must exit 0 before the viewer is generated.
-5. Never overwrite what this skill did not write. A file with no entry in `architecture-state.json` is not ours; a file whose hash moved changed since the last run and is asked about before anything is written (`references/rewriting.md`).
+5. Never overwrite what this skill did not write. A file with no entry in `architecture-state.json` is not ours; a file whose hash moved has changed since the last run, and is asked about before anything is written (`references/rewriting.md`).
 6. mattpocock files (`CONTEXT.md`, `CONTEXT-MAP.md`, `docs/adr/`) are written into their existing formats — never restructured. Invoke the `domain-modeling` skill for term work.
 
 ## Flow
