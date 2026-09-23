@@ -112,6 +112,20 @@ test('inside a repository the commit is recorded', () => {
   assert.equal(stateOf(dir).gitCommit, execFileSync('git', ['rev-parse', 'HEAD'], { cwd: dir, encoding: 'utf8' }).trim());
 });
 
+// The one record of what the last run wrote. Renaming over it resets the
+// revision and takes the bytes with it; drift.mjs already refuses to treat a
+// corrupt file as absent-and-forgotten, and the writer is where that rule can
+// be enforced in code rather than prose.
+test('a corrupt state file is refused, not overwritten', () => {
+  const dir = packageDir();
+  const statePath = join(dir, 'architecture-state.json');
+  writeFileSync(statePath, '{ not json');
+  const { code, stderr } = record(dir);
+  assert.notEqual(code, 0);
+  assert.match(stderr, /unreadable/);
+  assert.equal(readFileSync(statePath, 'utf8'), '{ not json', 'never deleted');
+});
+
 test('recording nothing is a usage error', () => {
   const dir = packageDir();
   for (const argv of [['--files', 'ARCHITECTURE.md'], ['--state', join(dir, 'architecture-state.json')]]) {

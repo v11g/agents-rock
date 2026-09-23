@@ -102,3 +102,5 @@ A state file that will not parse is treated as absent, said out loud, and
 a first run, though: the file's existence says tracked documents are on disk,
 and its corruption is what stops us telling which of them moved. Nothing on
 disk can be verified against it, so nothing in that run is cleared for writing.
+`record.mjs` refuses to run against one, because writing would rename over the
+only record of the last run. Rename it by hand if you mean to start fresh.

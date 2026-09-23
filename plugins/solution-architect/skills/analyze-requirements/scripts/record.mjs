@@ -59,7 +59,15 @@ if (!args.state || !args.files.length) {
 }
 
 const root = dirname(args.state);
-const { state } = readState(args.state);
+const { state, error } = readState(args.state);
+// Refuse rather than rename over it: a corrupt state file is still the only
+// record of what the last run wrote, and writing would reset the revision and
+// take those bytes with it. Moving it aside would be a second guess about what
+// the person wants; they can rename it themselves.
+if (error) {
+  console.error(`state file ${error.replace(' — treated as a first run', '')} — refusing to overwrite it`);
+  process.exit(1);
+}
 const revision = (state?.revision ?? 0) + 1;
 const written = Object.fromEntries(args.files.map((f) => [f, entryFor(root, f)]));
 
