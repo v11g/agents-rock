@@ -63,6 +63,19 @@ test('the diff shows the hand edit, not the whole generated package', () => {
   assert.doesNotMatch(stdout, /^\s*\+## 1 Goals and Scope$/m);
 });
 
+// `git add` is not a decision about the document, and it must not change what
+// the reader is shown: a staged edit compared against the index looks clean,
+// and the whole regeneration comes back from the recorded commit instead.
+test('a staged hand edit is shown as the edit, not the whole package', () => {
+  const dir = committedPackage();
+  writeFileSync(join(dir, 'ARCHITECTURE.md'), ARCH.replace('\nb\n', '\nedited by hand\n'));
+  execFileSync('git', ['add', 'ARCHITECTURE.md'], { cwd: dir, stdio: 'ignore' });
+  const { code, stdout } = run(['--state', join(dir, 'architecture-state.json'), '--files', 'ARCHITECTURE.md']);
+  assert.equal(code, 2);
+  assert.match(stdout, /^\s*\+edited by hand$/m);
+  assert.doesNotMatch(stdout, /^\s*\+## 1 Goals and Scope$/m);
+});
+
 // The spec's other git row: a repository whose package was never committed has
 // no old bytes to show, so the section numbers are all the reader gets.
 test('an uncommitted package falls back to section numbers', () => {

@@ -15,12 +15,13 @@ function diff(root, range) {
   }
 }
 
-// The working tree first. `since` is HEAD as it stood when the state file was
-// written — before anyone committed what that run had just written — so
-// reaching for it while an uncommitted change exists renders the whole
-// regeneration and buries the one line a person has to judge.
+// The working tree against HEAD first — against HEAD rather than the index, so
+// that staging an edit does not hide it. `since` is HEAD as it stood when the
+// state file was written, before anyone committed what that run had just
+// written, so reaching for it while an uncommitted change exists renders the
+// whole regeneration and buries the one line a person has to judge.
 export function gitDiff({ root, file, since = null }) {
-  const working = diff(root, ['--', file]);
+  const working = diff(root, ['HEAD', '--', file]);
   if (working || !since) return working;
   return diff(root, [since, '--', file]);
 }

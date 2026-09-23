@@ -26,6 +26,17 @@ test('an uncommitted edit comes back as a diff', () => {
   assert.match(out, /^\+edited$/m);
 });
 
+// Staging is not a decision about the document. Compared against the index a
+// staged edit reads as clean, so the working tree has to be compared to HEAD.
+test('a staged edit comes back as a diff', () => {
+  const root = repoWithCommit();
+  writeFileSync(join(root, 'ARCHITECTURE.md'), '# Doc\n\nedited\n');
+  execFileSync('git', ['add', 'ARCHITECTURE.md'], { cwd: root, stdio: 'ignore' });
+  const out = gitDiff({ root, file: 'ARCHITECTURE.md' });
+  assert.match(out, /^-body$/m);
+  assert.match(out, /^\+edited$/m);
+});
+
 // The file is committed, so `git diff` alone reports nothing. Diffing against
 // the commit the state file recorded is what surfaces the change.
 test('a committed edit is found by diffing against the recorded commit', () => {
