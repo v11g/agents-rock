@@ -9,6 +9,12 @@
     },
     {
       "id": 1,
+      "name": "clean-package-invents-nothing",
+      "prompt": "Review the architecture package in plugins/solution-architect/skills/review-architecture/evals/fixtures/clean-harborline/ — I want to know whether it's ready to hand to the build team.",
+      "expected_output": "A review that does not manufacture findings. The §13 rows carry conditions, measures and non-assumed targets on both `must` rows, so G2 passes without a blocker. ADR-0001 compares two credible options with the managed-queue option eliminated by the §2 constraint before comparison rather than by a strawman, gives mechanisms rather than slogans (durable commit path, lease expiry on worker death, unique dispatch id against duplicates), separates the four costs, names a class over a product, carries a revisit trigger, and records acceptance with a named person and a date — so G3 yields no findings or at most minor ones. Coverage from scripts/coverage.mjs must read design 2/2, validation 2/2, executed evidence 0/3, decision traceability 1/1. The verdict must be Design-reviewable — not Accepted for implementation, because the checks have not run, and not Exploratory, because nothing is unresolved. Validation must be reported separately as not executed. Anything the review does raise must be genuinely present in the fixture: inventing a finding to look thorough is the failure this case tests for. It must not report a blocker."
+    },
+    {
+      "id": 2,
       "name": "no-package-present",
       "prompt": "Review the architecture for the billing service and tell me if it's ready to build.",
       "expected_output": "The skill stops. It reports that no ARCHITECTURE.md was found, names `analyze-requirements` as the skill that produces one, and does not attempt a review from the repository alone or invent a verdict. It must not report a readiness level for a package that does not exist."

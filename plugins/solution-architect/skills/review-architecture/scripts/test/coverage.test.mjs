@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { sectionTable } from '../lib/tables.mjs';
+import { sectionTable, firstTable } from '../lib/tables.mjs';
 import { mustRows, designCoverage, validationCoverage, evidenceCoverage, traceability, ratio, notes }
   from '../lib/coverage.mjs';
 
@@ -25,7 +25,12 @@ name: atlas
 ## 14 Decisions
 `;
 
-const PLAN = `# Validation plan
+// Titled the way a real one is. Looking the table up by an exact "Validation
+// plan" heading reported an empty plan for a document full of rows, which read
+// as nothing-to-check rather than as a reader that could not find it.
+const PLAN = `# Northwind Dispatch — Validation plan
+
+One row per claim that would change the design if it turned out false.
 
 | claim | method | condition | threshold | status | src |
 |---|---|---|---|---|---|
@@ -59,13 +64,13 @@ test('design coverage counts must rows an ADR names', () => {
 
 test('validation coverage counts must rows the plan has a row for', () => {
   const rows = mustRows(sectionTable(ARCH, 'Quality Requirements & SLOs'));
-  const plan = sectionTable(PLAN, 'Validation plan') ?? { headers: [], rows: [] };
+  const plan = firstTable(PLAN);
   assert.deepEqual(validationCoverage(rows, plan.rows), { n: 2, d: 2 });
 });
 
 // Evidence is all four fields or it is still a plan.
 test('evidence coverage needs result, environment, date and artifact', () => {
-  const plan = sectionTable(PLAN, 'Validation plan');
+  const plan = firstTable(PLAN);
   assert.deepEqual(evidenceCoverage(plan.rows), { n: 1, d: 2 });
 });
 

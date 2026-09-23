@@ -38,13 +38,23 @@ function toRow(headers, line) {
   return Object.fromEntries(headers.map((h, i) => [h, values[i] ?? '']));
 }
 
-export function sectionTable(md, title) {
-  const lines = sectionLines(md, title);
-  if (!lines) return undefined;
+// A companion whose whole job is one table is found by the table, not by its
+// heading: real ones are titled "<Project> — Validation plan", and matching the
+// heading exactly reports an empty plan for a document full of rows.
+export function firstTable(md) {
+  return toTable(md.split('\n'));
+}
+
+function toTable(lines) {
   const pipes = lines.filter((l) => l.trim().startsWith('|') && l.trim().endsWith('|'))
     .map((l) => l.trim());
   if (pipes.length < 2) return undefined;
   const headers = cells(pipes[0]);
   const rows = pipes.slice(1).filter((l) => !isRule(l)).map((l) => toRow(headers, l));
   return { headers, rows };
+}
+
+export function sectionTable(md, title) {
+  const lines = sectionLines(md, title);
+  return lines ? toTable(lines) : undefined;
 }

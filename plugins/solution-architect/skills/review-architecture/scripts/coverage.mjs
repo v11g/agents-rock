@@ -1,6 +1,6 @@
 import { readFileSync, readdirSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
-import { sectionTable } from './lib/tables.mjs';
+import { sectionTable, firstTable } from './lib/tables.mjs';
 import { mustRows, designCoverage, validationCoverage, evidenceCoverage, traceability, notes }
   from './lib/coverage.mjs';
 
@@ -27,9 +27,7 @@ function adrTexts(dir) {
 
 function planRows(path) {
   if (!path || !existsSync(path)) return [];
-  const md = readFileSync(path, 'utf8');
-  const table = sectionTable(md, 'Validation plan') ?? sectionTable(md, 'Checks');
-  return table?.rows ?? [];
+  return firstTable(readFileSync(path, 'utf8'))?.rows ?? [];
 }
 
 function main() {
