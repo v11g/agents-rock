@@ -1,6 +1,7 @@
 # Rewriting — what is already on disk
 
-Read before step 5 writes anything, on every run after the first.
+Read before step 5 writes anything. The gate (§3) runs on every run after the
+first; the recording (§5) closes every run, including the first.
 
 ## 1. The rule
 
@@ -17,8 +18,8 @@ rename — so a crash leaves it pointing at the previous consistent revision.
 
 A hash says a file **changed since the last run**. It cannot say who changed
 it: a formatter, a merge, a `git checkout`, another agent and a person all look
-identical, and a hash cannot tell them apart — so the document must never
-claim it knows an author. Write "this changed since the last run", not a
+identical, and a hash cannot tell them apart — so what the run reports must
+never claim to know an author. Write "this changed since the last run", not a
 claim about who did it.
 
 ## 3. The gate
@@ -53,7 +54,44 @@ section numbers where it did not. For each file offer exactly three answers:
 
 No merge. No three-way resolution. Detect, show, ask which wins, obey.
 
-## 5. First runs and broken states
+## 5. Recording what you wrote
+
+The gate can only compare against a record, and nothing writes that record on
+its own. **The last thing step 5 does**, once every document is on disk:
+
+    node scripts/record.mjs --state <package>/architecture-state.json \
+      --files ARCHITECTURE.md docs/architecture/validation-plan.md docs/adr/0001-….md
+
+`--files` is every file this run actually wrote: the list the gate was given,
+minus any file a drift answer told you to keep and minus anything the run
+skipped. Paths are relative to the state file, as they are for the gate. A file
+left out keeps whatever entry it already had.
+
+`docVersion` is read from `ARCHITECTURE.md`'s frontmatter. Pass
+`--doc-version <v>` only on a run that did not write that document.
+
+The script hashes each file, adds a hash per spine section for
+`ARCHITECTURE.md`, reads each ADR's `## Status`, and writes:
+
+```json
+{
+  "_generated": "written by analyze-requirements — do not edit",
+  "revision": 3,
+  "updated": "2026-09-23T10:11:00.000Z",
+  "docVersion": "1.2.0",
+  "gitCommit": "3dcac90…",
+  "files": {
+    "ARCHITECTURE.md": { "hash": "sha256:9f2a…", "sections": { "1": "sha256:aa…" } },
+    "docs/adr/0001-postgres-job-queue.md": { "hash": "sha256:e4…", "status": "accepted" }
+  }
+}
+```
+
+Never hand-write or hand-edit that file. A record that disagrees with what is
+on disk is worse than no record at all: it reports drift nobody caused, and
+people learn to answer "overwrite" without reading.
+
+## 6. First runs and broken states
 
 No state file means a first run: every file is still judged — untracked where
 one is already on disk, `new` where none is — nothing is blocked, and the state

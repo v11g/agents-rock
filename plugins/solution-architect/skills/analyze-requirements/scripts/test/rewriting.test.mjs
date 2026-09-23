@@ -15,6 +15,20 @@ test('the discipline puts the question before the first write', () => {
   assert.match(doc, /written last|write it last/i, 'the state file ordering must be stated');
 });
 
+// Nothing writes the state file on its own. Without an instruction naming the
+// tool, run 1 records nothing and run 2 has nothing to compare disk against —
+// the gate reports a first run and the hand edit goes.
+test('the discipline tells the run to record what it wrote', () => {
+  const doc = ref('rewriting.md');
+  assert.match(doc, /record\.mjs/, 'the reference must name the script that writes the state');
+  assert.match(doc, /--files/, 'and say which files go into it');
+  assert.match(doc, /"revision"/, 'the state file shape belongs in the reference once');
+});
+
+test('the skill runs the recorder at the end of step 5', () => {
+  assert.match(skill(), /record\.mjs/);
+});
+
 // A hash cannot identify an author, and a message that claims it can is a lie
 // the reader will believe.
 test('the discipline never claims to know who edited a file', () => {
