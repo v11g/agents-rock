@@ -24,7 +24,9 @@ served on localhost for review.
 4. **Research**: run `workflows/research.js` per `references/research.md`. Surface dropped items before writing.
 5. **Write**: model first (`references/likec4.md`), then ARCHITECTURE.md and companions (`references/writing.md`).
 6. **Validate**: export the model with `node scripts/likec4-export.mjs --dir ... --out ...`, then `node scripts/validate.mjs --arch ... --model ...` (add `--mode brownfield --clusters ...` when applicable). Fix findings; re-run until clean.
-7. **Render + serve**: follow `references/viewer.md`; report the URL.
+7. **Render + serve**: follow `references/viewer.md`; report the URL. Then name
+   `review-architecture` as the next action — a suggestion, never a call. The
+   writer cannot grade the writer, so the review belongs in its own context.
 
 ## Supporting knowledge
 

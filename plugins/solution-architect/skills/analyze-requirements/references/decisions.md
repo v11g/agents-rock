@@ -69,6 +69,11 @@ Every ADR names what it addresses: a §2 constraint, a §13 quality row, a §15
 risk, or a stated goal from §1. An ADR that addresses nothing either has a
 justification nobody wrote down, or should not exist.
 
+Name it the way the target is written. For a §13 row that means quoting its
+**measure** verbatim — `addresses: §13 p99 end-to-end` — because §13 carries no
+id column and the measure is the only handle the two documents share. Paraphrase
+it and the link stops resolving for anything reading across them.
+
 Name the **revisit trigger** too — the observation that would overturn the
 decision, such as a measurement crossing a threshold, a volume arriving, or a
 vendor changing terms. A decision with no trigger cannot be revisited on

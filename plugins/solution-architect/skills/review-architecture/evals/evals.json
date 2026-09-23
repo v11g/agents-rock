@@ -1,0 +1,17 @@
+{
+  "skill_name": "review-architecture",
+  "evals": [
+    {
+      "id": 0,
+      "name": "soft-targets-and-a-strawman",
+      "prompt": "Can you take a look over the architecture doc in plugins/solution-architect/skills/review-architecture/evals/fixtures/soft-targets-northwind/ before I send it to the client Thursday? I think it's in decent shape — the team's happy with it and the ADR's signed off. Mostly just want a second pair of eyes.",
+      "expected_output": "A review report, not a rewrite. It must raise as a blocker that the §13 'the system is fast under load' row carries an `assumed` target on a `must` row — a design with no acceptance criterion — and separately that the same row's scenario cell names no conditions, so it is an adjective rather than a scenario. Against ADR-0001 it must find that the two considered options are not both credible: cron-based batch assignment is a strawman nobody would have chosen for a dispatch product, so the decision was never open. It must find 'async makes it reliable, and it scales' to be a claim with no mechanism — no durable record, no consumer-crash behaviour, no duplicate handling named. It must find the $400/month figure blends the four technology costs into one number, and that the ADR names a managed queue service as a class without stating which §13 quality forces a product. It must find the ADR is marked Accepted with no named decision-maker and no date, which is acceptance inferred rather than recorded. It must note the §2 'must run inside the customer's AWS account' constraint is never reconciled with the managed-service choice. It must report that G6 validation honesty has nothing to check because no validation-plan.md exists, and say that a package with two `must` rows and no plan is itself a finding. Coverage ratios must come from scripts/coverage.mjs with numerator and denominator shown, never a bare percentage. The verdict must be exactly one level — Exploratory, because a blocker is open — with validation reported separately as not executed. It must not claim the document passed anything it did not check, and must not edit ARCHITECTURE.md or the ADR."
+    },
+    {
+      "id": 1,
+      "name": "no-package-present",
+      "prompt": "Review the architecture for the billing service and tell me if it's ready to build.",
+      "expected_output": "The skill stops. It reports that no ARCHITECTURE.md was found, names `analyze-requirements` as the skill that produces one, and does not attempt a review from the repository alone or invent a verdict. It must not report a readiness level for a package that does not exist."
+    }
+  ]
+}

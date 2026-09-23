@@ -1,7 +1,7 @@
 {
   "name": "solution-architect",
-  "version": "2.0.1",
-  "description": "Solution-architecture toolkit: interview-driven architecture documentation with interactive diagrams and provenance-tagged facts, AI-aware project estimation, and client-ready proposals.",
+  "version": "2.1.0",
+  "description": "Solution-architecture toolkit: interview-driven architecture documentation with interactive diagrams and provenance-tagged facts, independent architecture review, AI-aware project estimation, and client-ready proposals.",
   "author": {
     "name": "Truong Vu",
     "email": "vukhanhtruong@gmail.com"

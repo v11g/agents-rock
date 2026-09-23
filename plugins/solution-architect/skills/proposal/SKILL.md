@@ -27,6 +27,11 @@ PDF.
 ## Flow
 
 1. **Prereq gate**: ARCHITECTURE.md and estimation.json both exist, or stop.
+   Then check for `review-report.md` beside ARCHITECTURE.md. Missing, or
+   stamped with an older revision than ARCHITECTURE.md's `updated`, is not a
+   stop — say so in one line and let the user decide. A proposal built on an
+   architecture nobody reviewed is a normal thing to send knowingly and a bad
+   thing to send unaware.
 2. **Interview**: follow `references/interview.md` — client context, tech
    level, scenario pick, validity, firm profile (with storage-scope choice).
 3. **Figures**: `node scripts/derive.mjs --estimation <dir>/estimation.json
