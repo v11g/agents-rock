@@ -4,9 +4,17 @@
   "technique": "three-point-pert",
   "depth": "STANDARD",
   "calibration": { "S": [20, 60], "M": [60, 160], "L": [160, 400], "XL": [400, 800] },
-  "overheadPct": 0.35,
   "verificationPct": 0.12,
-  "exposeRatesToClient": false,
+  "contextLevels": {
+    "codebaseMaturity": 2, "stackFamiliarity": 1, "specQuality": 3, "compliance": 1, "clientDecisions": 2
+  },
+  "contextProvenance": {
+    "codebaseMaturity": { "level": 2, "anchor": "young and clean", "cite": "ARCHITECTURE.md §3", "source": "derived" },
+    "stackFamiliarity": { "level": 1, "anchor": "core stack, done before", "cite": "interview", "source": "stated" },
+    "specQuality": { "level": 3, "anchor": "outline or slide deck", "cite": "requirements.json readiness 62", "source": "derived" },
+    "compliance": { "level": 1, "anchor": "none", "cite": "ARCHITECTURE.md §8 no PII", "source": "derived" },
+    "clientDecisions": { "level": 2, "anchor": "two or three", "cite": "requirements.md Part 1", "source": "derived" }
+  },
   "components": [
     { "id": "api", "name": "Booking API" },
     { "id": "notify", "name": "Notification Service" },
@@ -65,12 +73,5 @@
   ],
   "assumptions": [
     { "text": "single timezone", "impactIfWrong": "recompute booking-api at logic category, +30%" }
-  ],
-  "scenarios": [
-    { "id": "3eng-noai", "aiAssisted": false, "toolingCostPerSeat": null,
-      "team": [{ "seniority": "mid", "rate": 45 }, { "seniority": "mid", "rate": 45 }, { "seniority": "junior", "rate": 30 }] },
-    { "id": "2eng-max5x", "aiAssisted": true, "toolingCostPerSeat": 100,
-      "team": [{ "seniority": "senior", "rate": 60 }, { "seniority": "mid", "rate": 45 }] }
-  ],
-  "recommendedScenario": "2eng-max5x"
+  ]
 }

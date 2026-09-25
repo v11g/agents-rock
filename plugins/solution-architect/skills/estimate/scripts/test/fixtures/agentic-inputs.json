@@ -5,7 +5,6 @@
   "depth": "STANDARD",
   "agentContext": { "agent": "claude-code", "model": "sonnet", "repository": "project-a" },
   "measurementsPath": "FIXTURE_MEASUREMENTS",
-  "overheadPct": 0.1,
   "assumptions": ["Existing CI pipeline stays as is"],
   "risks": [
     { "name": "SDK incompatibility", "probability": 0.3, "impactMinutes": 30, "reason": "new SDK may break integration test mocks" }
@@ -36,10 +35,5 @@
           "assumptions": [], "provenance": "proposed" }
       ]
     }
-  ],
-  "scenarios": [
-    { "id": "solo", "aiAssisted": true, "toolingCostPerSeat": 100, "team": [{ "seniority": "senior", "rate": 90 }] },
-    { "id": "pair", "aiAssisted": true, "toolingCostPerSeat": 200, "team": [{ "seniority": "senior", "rate": 90 }, { "seniority": "mid", "rate": 60 }] }
-  ],
-  "recommendedScenario": "solo"
+  ]
 }

@@ -2,7 +2,7 @@
 // checks here are the contract that keeps interview output honest before any
 // arithmetic happens. Findings are strings with the offending id in them.
 import { AI_CATEGORIES } from './estimate-math.mjs';
-import { checkScenarios } from './scenario-schema.mjs';
+import { checkContext } from './context-schema.mjs';
 import { checkScoring } from './scoring-schema.mjs';
 import { TASK_SHAPES } from './measurements.mjs';
 
@@ -123,7 +123,6 @@ function checkComponents(inputs, out) {
 // optional (rollup.mjs falls back to `project`) but must be a real value
 // when set — rung 1 of the retrieval ladder needs it to mean something.
 function checkGlobals(inputs, out, agentic) {
-  if (!pct(inputs.overheadPct)) out.push('overheadPct must be a number in [0, 1)');
   if (!agentic && !pct(inputs.verificationPct)) out.push('verificationPct must be a number in [0, 1)');
   const ctx = inputs.agentContext;
   if (agentic && typeof ctx === 'object' && ctx !== null && 'repository' in ctx
@@ -139,24 +138,34 @@ function checkGlobals(inputs, out, agentic) {
   }
 }
 
+// Top-level shape: the five required keys, the removed ones that must be
+// refused rather than silently ignored (an old inputs file may still carry
+// them), and — in agentic mode — the agentContext the rest of the checks
+// and rollup.mjs both depend on existing.
+function checkTopLevel(inputs, out, agentic) {
+  if (inputs.deliveryMode !== undefined && !DELIVERY_MODES.includes(inputs.deliveryMode)) out.push('deliveryMode must be traditional|agentic');
+  for (const key of ['project', 'technique', 'features', 'risks', 'assumptions']) {
+    if (!(key in inputs)) out.push(`missing top-level "${key}"`);
+  }
+  if ('scenarios' in inputs) out.push('"scenarios" was removed — pricing no longer depends on team or rates');
+  if ('recommendedScenario' in inputs) out.push('"recommendedScenario" was removed with scenarios');
+  if ('overheadPct' in inputs) out.push('"overheadPct" was removed — overhead now comes from OVERHEADS in project-price.mjs');
+  if (!agentic) return;
+  const ctx = inputs.agentContext;
+  if (typeof ctx !== 'object' || ctx === null) { out.push('agentic mode requires top-level agentContext'); return; }
+  for (const key of ['agent', 'model']) {
+    if (!(typeof ctx[key] === 'string' && ctx[key].trim())) out.push(`agentContext.${key} must be a non-empty string`);
+  }
+}
+
 export function checkInputs(inputs) {
   const out = [];
   const agentic = isAgentic(inputs);
-  if (inputs.deliveryMode !== undefined && !DELIVERY_MODES.includes(inputs.deliveryMode)) out.push('deliveryMode must be traditional|agentic');
-  for (const key of ['project', 'technique', 'features', 'risks', 'assumptions', 'scenarios']) {
-    if (!(key in inputs)) out.push(`missing top-level "${key}"`);
-  }
-  if (agentic) {
-    const ctx = inputs.agentContext;
-    if (typeof ctx !== 'object' || ctx === null) out.push('agentic mode requires top-level agentContext');
-    else for (const key of ['agent', 'model']) {
-      if (!(typeof ctx[key] === 'string' && ctx[key].trim())) out.push(`agentContext.${key} must be a non-empty string`);
-    }
-  }
+  checkTopLevel(inputs, out, agentic);
   for (const feature of inputs.features ?? []) checkFeature(feature, out, agentic);
   checkMilestones(inputs.features ?? [], out);
   checkComponents(inputs, out);
-  checkScenarios(inputs, out);
+  checkContext(inputs, out);
   checkScoring(inputs, out);
   checkGlobals(inputs, out, agentic);
   return out;
