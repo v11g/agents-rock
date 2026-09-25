@@ -248,18 +248,26 @@ or alters:
 | `inputs.scenarios[].team[].seniority` | **nothing** |
 | `features[].low/high` (PERT hour spread) | v2's score-driven spread |
 
-Consequences, all of which need a decision in the implementation plan:
+Consequences, all resolved (see §12):
 
 - `--scenario <id>` has nothing to select. The flag goes.
 - The validator requires cost low/high **and months low/high** in the
   Executive Summary. The months requirement goes.
-- §7 Investment & Timeline has a Duration column per milestone. Either the
-  column goes, or durations are supplied from outside the estimate.
-- §8 Team renders roles from the chosen scenario's team. That section has no
-  source any more.
-- Cost low/high should come from the roll-up's presented range (P50…P95)
-  rather than being scaled by PERT hour ratios — otherwise the proposal
-  reports a different range than the workbook.
+- §7 Investment & Timeline loses its Duration column; the milestone table
+  keeps Investment, split by milestone share.
+- §8 Team is removed. It has no source any more.
+- Cost low/high comes from the roll-up's presented range (P50…P95), not from
+  scaling by PERT hour ratios — otherwise the proposal would report a
+  different range than the workbook.
+- `checks-doc.mjs` requires `scenario` in the proposal's frontmatter and
+  validates it against `estimation.computed.scenarios[fm.scenario]`. With
+  `scenarios` gone that lookup dereferences `undefined` and throws rather
+  than reporting a finding, so the key and the branch both go.
+- `sections.mjs` hardcodes the ten section names in a `SECTIONS` array and
+  slices the document on `## <exact name>`. Removing Team means dropping it
+  from that array; the document becomes nine sections, and `writing.md`'s
+  "ten sections, in order" wording changes with it. Headings carry names, not
+  numbers, so nothing renumbers.
 
 `/new-lead` needs no change: `map-nodes.mjs` reads `est?.scenarios ?? []` and
 degrades to zero scenario nodes.
@@ -309,11 +317,37 @@ Check changes:
 - Agentic delivery mode keeps its measurement-based baselines unchanged.
   Pricing moves to scores there too; the shapes and seed minutes do not change.
 
-## 12. Open questions
+## 12. Resolved questions
 
-1. `/proposal` §8 Team and the §7 Duration column — remove them, or feed them
-   from a source outside the estimate?
-2. Does `estimation.md` keep an hours total anywhere, or do hours become
-   internal to the Task Breakdown tab only?
-3. Should the contingency rate stay at v2's defaults (5% + 2%/2%) or be tuned
-   before first use?
+All three were settled by v2's own instructions rather than by preference.
+Recorded here because the reasoning is not obvious from the change itself.
+
+**Contingency defaults ship unchanged and editable.** The How to Use sheet,
+step 5: *"The defaults are starting points, not truths. Tune them once
+against your own delivered projects and then leave them alone."* Tier
+Reference: *"Recalibrate these bands from delivered actuals roughly twice a
+year."* The dimension weights are already labelled *"(edit to re-tune)"*.
+So: expose base rate, per-uncertainty-point and per-risk-point rates as
+inputs, ship v2's 5% / 2% / 2%, and calibrate from actuals later. Tuning
+first would block the change on assembling historical data v2 expects to
+accumulate after adoption, not before.
+
+**Hours live in the Task Breakdown tab only.** How to Use: *"When a single
+feature matters enough to get right, stop using this sheet for that feature
+and run the companion FEATURE DEEP ESTIMATOR workbook instead."* Bottom-up
+detail belongs in the deep workbook; the ballpark document carries none. Our
+Task Breakdown tab is that workbook. `estimation.md` keeps the task register
+with its confidence and assumptions, and carries no hours in any pricing
+section and no project hours total.
+
+**`/proposal` loses §8 Team and §7's Duration column.** v2 has no cell for a
+team or a duration anywhere. Its closing block is `Estimate prepared on`,
+`Valid until`, `Prepared by`, `Status: BALLPARK — NOT A QUOTE`, and it states
+it is *"not a quote and should never be presented as one"*. An estimate that
+produces no timeline cannot source one, so the proposal stops rendering both.
+
+The consequence is commercial, not technical, and is recorded so it is not
+discovered later: client proposals currently show a delivery timeline and
+after this change will not. Restoring one means asking for it in the
+proposal's own interview — deliberately out of scope here, because it would
+put duration back into a pipeline that has no basis for it.
