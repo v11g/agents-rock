@@ -168,9 +168,10 @@ Ask one thing at a time, in this order:
    **Writing it down.** STANDARD/DEEP: every feature gets `scores` (per
    factor `{ n, anchor, cite }`), `scoreNote` (the `Why` sentence) and
    `scoreProvenance` — `proposed` when accepted as offered, `stated` when
-   any cell or the note was changed. QUICK: use the scores for the tier and
-   the calibration band as today; do not write them (`schema.mjs` refuses
-   them at QUICK).
+   any cell or the note was changed. QUICK: score for a rough tier only, as
+   a gut-check; do not write the scores (`schema.mjs` refuses them at
+   QUICK) and do not price the feature — QUICK produces no price
+   (`techniques.md` §2).
 
    **Ask why.** A changed score keeps a cite that argued for the *old*
    number, so every entry in `--read`'s `needsReason` list is a question you
@@ -186,29 +187,36 @@ Ask one thing at a time, in this order:
    ask twice. A rewritten `Why` sentence needs no reason — it is the
    reviewer's own words.
 
-3b. **Tasks + O/M/P** — STANDARD/DEEP only, per `techniques.md` §3. After a
-   feature's tasks are sized, compare `Σ pert(e)` with its tier's calibration
-   band. Outside the band, say so once — `Σ19 → L → 160–400 h, tasks sum to
-   85 h; tasks missing or scores high?` — and let the human decide. Nothing
-   is refused and nothing new is written; the page marks the row ⚠.
-4. **Team + rates + seniority mix** — how many engineers, what they cost
-   per hour, and whether each is junior/mid/senior. Default is **one team**
-   → one scenario; ask "compare staffing options?" and only then collect
-   more rosters. With two or more, ask why the recommended one wins and
-   write it to `recommendedReason` — the page shows a choice it must be
-   able to explain.
-5. **AI-assisted delivery** — per scenario, default **yes**; ask only
-   "humans unaided?" as the opt-out. Then **tooling cost per seat per
-   month** — one number, vendor-neutral (a Claude Max seat, Codex, Cursor —
-   whatever the client will actually run), written to `toolingCostPerSeat`.
-   The human may skip it: write `null` and add an assumption to the gate
-   whose text names the tooling cost gap and its impact-if-wrong (~2% of
-   total at typical seat prices). The validator refuses a null seat cost on
-   an AI-assisted scenario without that assumption.
-6. **Deadline / constraints** — any hard date or budget ceiling.
-7. **calibration table** — ask for the org's own tier → hour-band history; if
-   none exists, offer the defaults `S 20-60h, M 60-160h, L 160-400h, XL 400-800h`.
-8. **Expose-rates-to-client** — y/n; controls whether the client-facing render
+3b. **Tasks + O/M/P** — STANDARD/DEEP only, per `techniques.md` §3. Task
+   hours feed planning only — they size the roadmap's milestone shares —
+   not the price; the feature's score already set that. Nothing here is
+   refused and nothing new is written.
+4. **Context factors** — five project-wide multipliers from
+   `CONTEXT_FACTORS` in `project-price.mjs` (`codebaseMaturity`,
+   `stackFamiliarity`, `specQuality`, `compliance`, `clientDecisions`), each
+   a level 1–4 written to `contextLevels` with a matching
+   `contextProvenance` entry (`{ level, anchor, cite, source:
+   "derived"|"stated" }` — `writing.md` §1). Four are **derived**, never
+   asked outright — each arrives as a proposal with its evidence named, and
+   the human can override it in review:
+
+   | Factor | Derived from |
+   | --- | --- |
+   | `specQuality` | the business-analyst skill's readiness score and status |
+   | `compliance` | BA layer 8 (NFRs), plus `ARCHITECTURE.md` §8's PII column |
+   | `clientDecisions` | BA layer 2 — the deciders and approvers named for the stakeholders |
+   | `codebaseMaturity` | `ARCHITECTURE.md`'s `mode` frontmatter, plus §3, §11 and §15 |
+
+   One is **asked**: `stackFamiliarity`, a pick-list seeded from
+   `ARCHITECTURE.md` §6's tech column ("how familiar is the delivery team
+   with each of: <§6 tech list>?" — 1 never used it, 4 shipped it before).
+
+   **Standalone mode** — no `ARCHITECTURE.md`, no business-analyst
+   companion doc — asks all five directly; there is nothing to derive from.
+   Context factors are skipped entirely at QUICK depth and in agentic mode
+   (`context-schema.mjs`).
+5. **Deadline / constraints** — any hard date or budget ceiling.
+6. **Expose-rates-to-client** — y/n; controls whether the client-facing render
    shows labor rates or only totals.
 
 ## 5. Loop rule

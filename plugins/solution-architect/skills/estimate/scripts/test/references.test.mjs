@@ -1,8 +1,10 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { AI_CATEGORIES, TIER_BREAKS } from '../lib/estimate-math.mjs';
+import { AI_CATEGORIES } from '../lib/estimate-math.mjs';
 import { TASK_SHAPES } from '../lib/measurements.mjs';
+import { WEIGHTS, BANDS } from '../lib/pricing.mjs';
+import { CONTEXT_FACTORS } from '../lib/project-price.mjs';
 
 const ref = (f) => readFileSync(new URL(`../../references/${f}`, import.meta.url), 'utf8');
 const ALL = ['interview.md', 'techniques.md', 'ai-multipliers.md', 'writing.md', 'slicing.md',
@@ -10,6 +12,14 @@ const ALL = ['interview.md', 'techniques.md', 'ai-multipliers.md', 'writing.md',
 
 test('no reference doc carries placeholders', () => {
   for (const f of ALL) assert.doesNotMatch(ref(f), /\bTBD\b|\bTODO\b/, f);
+});
+
+// The Claude-plan price table used to live in ai-multipliers.md and the
+// interview's seat-cost question used to guard against naming one; both
+// hosts are gone, but the vendor-neutrality rule they carried is not — it
+// now covers every reference doc, not just the one that happened to host it.
+test('no reference doc names a vendor AI plan tier', () => {
+  for (const f of ALL) assert.doesNotMatch(ref(f), /Max 5x|Max 20x|Claude plan/, f);
 });
 
 test('interview.md carries its five required parts', () => {
@@ -20,13 +30,16 @@ test('interview.md carries its five required parts', () => {
   }
 });
 
-test('techniques.md names every technique and the real tier breaks', () => {
+test('techniques.md names every technique and the shipped bands', () => {
   const doc = ref('techniques.md');
   for (const needle of ['factor-scored tiering', 'three-point PERT', 'analogy']) {
     assert.ok(doc.includes(needle), `techniques.md missing: ${needle}`);
   }
-  assert.ok(doc.includes('12–17 M') || doc.includes('12-17 M'), 'tier breaks must match TIER_BREAKS');
-  assert.equal(TIER_BREAKS[1].max, 17); // the doc claim above is only honest while this holds
+  for (const b of BANDS) {
+    assert.ok(doc.includes(`${b.start}`) && doc.includes(b.tier), `band ${b.tier} not documented`);
+  }
+  assert.match(doc, /continuous/i, 'bands must be described as continuous');
+  assert.match(doc, /interpolat/i, 'bands must be described as interpolated');
 });
 
 test('ai-multipliers.md agrees with the code constants', () => {
@@ -35,23 +48,16 @@ test('ai-multipliers.md agrees with the code constants', () => {
     assert.ok(doc.includes(category), `ai-multipliers.md missing category: ${category}`);
   }
   assert.match(doc, /blanket/i, 'the blanket-multiplier prohibition must be stated');
-  // The Claude-plan price table lived here; seat cost is now an interview input.
   assert.doesNotMatch(doc, /PLAN_PRICES|max5x|max20x/, 'vendor plan pricing must not be documented as a constant');
 });
 
-test('interview.md asks AI-assisted (default yes) and a nullable seat cost, never a Claude plan', () => {
+// AI-assisted (default yes) and toolingCostPerSeat priced a team that no
+// longer exists in estimation-inputs.json — schema.mjs refuses `scenarios`
+// outright. The doc must not describe fields the code no longer accepts.
+test('interview.md does not ask for a team, rates, or a seat cost', () => {
   const doc = ref('interview.md');
-  for (const needle of ['AI-assisted', 'toolingCostPerSeat', 'default']) {
-    assert.ok(doc.includes(needle), `interview.md missing: ${needle}`);
-  }
-  assert.doesNotMatch(doc, /Max 5x|Max 20x|Claude plan/);
-});
-
-test('interview.md defaults to one team and asks why when several are compared', () => {
-  const doc = ref('interview.md');
-  for (const needle of ['one team', 'recommendedReason']) {
-    assert.ok(doc.includes(needle), `interview.md missing: ${needle}`);
-  }
+  assert.doesNotMatch(doc, /toolingCostPerSeat|recommendedReason/, 'removed team/rate fields must not be documented');
+  assert.doesNotMatch(doc, /Team \+ rates \+ seniority mix/);
 });
 
 test('writing.md states every validator rule family', () => {
@@ -108,13 +114,18 @@ test('method sources are cited where techniques are recommended', () => {
   }
 });
 
-test('scoring-guide.md carries five rows of five anchors and the tier scale', () => {
+test('the scoring guide states the weight of every factor and the priced bands', () => {
   const doc = ref('scoring-guide.md');
   const rows = doc.split('\n').filter((l) => /^\| (Tech complexity|Feature size|Dependencies|Uncertainty|Risk) \|/.test(l));
   assert.equal(rows.length, 5);
   for (const r of rows) assert.equal(r.split('|').length - 2, 6, r); // label + 5 anchors
-  assert.match(doc, /S ≤ 11 · M 12–17 · L 18–22 · XL 23\+/);
-  assert.match(doc, /XL 400–800 h/);
+  for (const [key, w] of Object.entries(WEIGHTS)) {
+    assert.ok(doc.includes(`${w * 100}%`), `guide never states ${key}'s ${w * 100}% weight`);
+  }
+  for (const b of BANDS) {
+    assert.ok(doc.includes(`${b.start}`) && doc.includes(b.tier), `band ${b.tier} not documented`);
+  }
+  assert.doesNotMatch(doc, /XL 400.{1,3}800 ?h/, 'hours calibration must be gone — price bands replace it');
   assert.doesNotMatch(doc, /derived:/);
 });
 
@@ -130,12 +141,24 @@ test('interview.md scores before tasks, names the three review channels and the 
   assert.ok(doc.indexOf('Factor scores per feature') < doc.indexOf('Tasks + O/M/P'), 'scores come before tasks');
 });
 
-test('techniques.md says scores persist at STANDARD/DEEP and the band is a soft cross-check', () => {
+// The five context factors from project-price.mjs: four derived from
+// upstream BA/architecture artifacts, one (stack familiarity) asked
+// directly. Standalone mode (no companion docs) asks all five.
+test('interview.md asks for stack familiarity and derives the other four context factors', () => {
+  const doc = ref('interview.md');
+  assert.match(doc, /stack.*familiar/i, 'no stack familiarity question');
+  for (const key of Object.keys(CONTEXT_FACTORS)) {
+    assert.ok(doc.includes(key), `context factor ${key} never mentioned`);
+  }
+  assert.match(doc, /standalone/i, 'standalone mode must state it asks all five');
+});
+
+test('techniques.md says scores persist at STANDARD/DEEP and the band is the price, not a cross-check', () => {
   const doc = ref('techniques.md');
   assert.match(doc, /STANDARD\/DEEP/);
   assert.match(doc, /persist/i);
-  assert.match(doc, /cross-check/i);
-  assert.match(doc, /XL 400-800h|XL 400–800 h/);
+  assert.doesNotMatch(doc, /soft cross-check/i, 'the band is the price now, not a cross-check against it');
+  assert.doesNotMatch(doc, /XL 400-800h|XL 400–800 h/, 'hours calibration must be gone');
 });
 
 test('writing.md documents the score fields and the Tier rule', () => {

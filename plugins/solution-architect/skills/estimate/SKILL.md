@@ -6,8 +6,8 @@ description: Interview-driven project estimation with AI-aware delivery scenario
 # estimate
 
 Produce an honest, validated estimate: confirmed scope split from assumptions,
-a technique that fits the evidence, AI-assisted staffing scenarios, and an
-interactive page served on localhost.
+a technique that fits the evidence, a score-driven price band per feature,
+and an interactive page served on localhost.
 
 ## Hard rules
 
@@ -16,8 +16,10 @@ interactive page served on localhost.
 2. Every scope item is labeled `stated` or `proposed` — no unlabeled scope.
 3. Agent judges, script computes: every number in a deliverable comes from
    `scripts/compute.mjs`. Never total, average, or price by hand.
-4. Never apply one blanket AI multiplier to a whole project — per-task
-   category only (`references/ai-multipliers.md`).
+4. Never apply one blanket price or multiplier to a feature — score all
+   five factors (`references/scoring-guide.md`) and let `pricing.mjs`'s
+   weighted score and bands set the price; the weights already encode what
+   matters most (uncertainty 30%, size 10% — `references/ai-multipliers.md`).
 5. `node scripts/validate.mjs` must exit 0 before the page renders.
 6. Agentic estimates: baselines and confidence come from scripts reading
    measurements.jsonl — the agent never writes a duration, confidence, or
@@ -36,7 +38,9 @@ interactive page served on localhost.
    `references/scoring-guide.md` before proposing any score; offer the
    review channel (terminal cards, csv, or html via
    `node scripts/score-review.mjs`). Before proposing milestones, read
-   `references/slicing.md` — slices are judged there, not computed.
+   `references/slicing.md` — slices are judged there, not computed. Score
+   the five context factors too — four derived, one asked — per
+   `references/interview.md` §4.
 4. **Technique**: TRADITIONAL-only — recommend from `references/techniques.md`,
    state why, cite the method's sources (its §Sources — attribution + link,
    never quoted text), confirm. AGENTIC reads

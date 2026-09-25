@@ -29,30 +29,38 @@ yet. This is also the technique QUICK depth commits to. Score each feature
 - uncertainty
 - risk
 
-Sum the five scores per feature. Tier breaks: ≤11 S / 12–17 M / 18–22 L / 23+ XL
-(the team workbook's scale; `TIER_BREAKS` in `estimate-math.mjs`).
+Weight and sum the five scores per feature — `weightedScore()` in
+`pricing.mjs` computes SUMPRODUCT(scores, weights) × 5 using `WEIGHTS`
+(tech 20%, size 10%, deps 20%, unc 30%, risk 20% — see `scoring-guide.md`
+for why size and uncertainty are weighted asymmetrically). The result
+(5–25) lands in one of four bands (`BANDS` in `pricing.mjs`):
 
-A tier is not itself an hour figure. It is looked up against the
-**calibration table** — the org's own historical tier → hour-band data if
-supplied during the interview, or the defaults `S 20-60h, M 60-160h, L
-160-400h, XL 400-800h` if not. The calibration table is what turns "this is an M" into a
-number; never assign hours from the tier letter directly.
+| Tier | Score | Price |
+| --- | --- | --- |
+| S | 5–11.5 | $500–$1,500 |
+| M | 11.5–17.5 | $1,500–$4,000 |
+| L | 17.5–22.5 | $4,000–$10,000 |
+| XL | 22.5–25 | $10,000–$25,000 |
+
+Bands are continuous, not discrete steps: `pointEstimate()` interpolates
+linearly between a band's price floor and ceiling by where the score sits
+inside it, so two features tiered M do not price the same unless their
+scores match. The band **is** the price — nothing downstream converts a
+tier letter, or an hour figure, into money.
 
 At STANDARD/DEEP the five scores are persisted on every feature (`scores`,
-`scoreNote`, `scoreProvenance` — `interview.md` §4 step 3) and the PERT
-total per feature is a soft cross-check against the tier's band: outside it,
-the interviewer says so once and the page marks the row ⚠; nothing is
-refused. Scores are never derived from hours.
+`scoreNote`, `scoreProvenance` — `interview.md` §4 step 3) and `pricing.mjs`
+prices the feature straight from them. Task-level PERT hours (§3 below) are
+still computed for planning — they size the roadmap's milestone shares —
+but they no longer cross-check or gate the price. Scores are never derived
+from hours, and hours are never derived from scores.
 
-At QUICK depth this is the only technique in play, so the tier still has to
-reach `compute.mjs` through the normal task-shaped path: for each feature,
-write exactly one synthetic task whose `o`/`m`/`p` are the calibration
-band's low/mid/high (mid = `(low + high) / 2`), tagged with whichever AI
-category dominates the feature's expected work. The agent still does the
-judgment — scoring the five factors, picking the tier, reading the
-calibration table — the script only turns that one task's three numbers
-into an hour figure, so rule 3 (agent judges, script computes) holds even
-at the coarsest depth.
+At QUICK depth this is the only technique in play: the five factors still
+give a rough tier for a gut-check, but nothing is persisted (`schema.mjs`
+refuses `scores`/`scoreNote`/`scoreProvenance` at QUICK) and no price is
+computed — `compute.mjs` only prices STANDARD/DEEP features. QUICK is
+reconnaissance, not a quote; move to STANDARD once the scope is worth
+pricing.
 
 ## 3. Three-point PERT
 
