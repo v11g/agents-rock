@@ -1,6 +1,7 @@
 // Turns validated estimation-inputs into the estimation.json truth: PERT per
-// task, per-feature price bands, and the project price roll-up. Every map is
-// assembled with sorted keys so repeat runs are byte-identical.
+// task, per-feature price bands, and the project price roll-up. The dynamic,
+// id-keyed maps (tasks, features, components) are assembled with sorted keys
+// so repeat runs are byte-identical.
 import { pert, round2 } from './estimate-math.mjs';
 import { featurePrice } from './pricing.mjs';
 import { projectPrice } from './project-price.mjs';
@@ -87,6 +88,17 @@ function buildFeatures(inputs, tasks) {
   return { features: sortedMap(Object.entries(features)), summaries, priced };
 }
 
+// Rounds every top-level money/rate field on the price block, plus the one
+// nested money field (overheads.amount) the top-level pass can't reach
+// because `overheads` itself is an object, not a number.
+function roundedPrice(price) {
+  const block = Object.fromEntries(
+    Object.entries(price).map(([k, v]) => [k, typeof v === 'number' ? round2(v) : v]),
+  );
+  block.overheads = { ...price.overheads, amount: round2(price.overheads.amount) };
+  return block;
+}
+
 const isAgentic = (inputs) => inputs.deliveryMode === 'agentic';
 
 const taskSummary = (t) => (t.evidence !== undefined
@@ -103,9 +115,6 @@ export function computeEstimation(inputs, measurements) {
   const roadmap = roadmapFor({ features: inputs.features, taskHours });
   const components = componentHoursFor(inputs, features);
   const price = projectPrice({ features: priced, levels: inputs.contextLevels ?? {} });
-  const priceBlock = Object.fromEntries(
-    Object.entries(price).map(([k, v]) => [k, typeof v === 'number' ? round2(v) : v]),
-  );
   return {
     inputs,
     computed: {
@@ -113,7 +122,7 @@ export function computeEstimation(inputs, measurements) {
       features,
       ...(components ? { components } : {}),
       ...(roadmap ? { roadmap } : {}),
-      price: priceBlock,
+      price: roundedPrice(price),
       projectConfidence: criticalConfidence(summaries, tasks),
     },
   };

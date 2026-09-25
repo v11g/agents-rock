@@ -28,6 +28,12 @@ test('golden numbers for the booking fixture', () => {
   assert.equal(price.presentHigh, 14000);
 });
 
+test('price.overheads.amount is rounded before it reaches estimation.json', () => {
+  const { computed } = computeEstimation(fixture());
+  // adjustedBase 5550.64 × totalPct 0.56 = 3108.3589743589755 unrounded
+  assert.equal(computed.price.overheads.amount, 3108.36);
+});
+
 test('CLI writes byte-identical output on repeat runs', () => {
   const dir = mkdtempSync(join(tmpdir(), 'estimate-'));
   const out = join(dir, 'estimation.json');
