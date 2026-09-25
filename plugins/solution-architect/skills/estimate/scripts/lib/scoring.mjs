@@ -4,7 +4,7 @@
 // derived facts compute copies into estimation.json: Σ and tier.
 import { readFileSync } from 'node:fs';
 import { escapeHtml } from '../../../analyze-requirements/scripts/lib/md-inline.mjs';
-import { weightedScore, bandFor } from './pricing.mjs';
+import { tierFor } from './pricing.mjs';
 
 export const SCORE_FACTORS = ['tech', 'size', 'deps', 'unc', 'risk'];
 export const FACTOR_LABELS = {
@@ -40,6 +40,6 @@ export const scoreNumbers = (scores) => Object.fromEntries(SCORE_FACTORS.map((k)
 // xlsx read one object; QUICK features carry no scores and get nothing.
 export function scoreSummary(feature) {
   if (!feature.scores) return {};
-  const scoreTotal = weightedScore(scoreNumbers(feature.scores));
-  return { scoreTotal, tier: bandFor(scoreTotal).tier };
+  const { total, tier } = tierFor(scoreNumbers(feature.scores));
+  return { scoreTotal: total, tier };
 }

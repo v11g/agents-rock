@@ -67,3 +67,12 @@ export function featurePrice(scores, params = MODEL_PARAMS) {
     flag: flagFor({ score, point, spread, size: scores.size }, params),
   };
 }
+
+// The score review page re-tiers an edited row in the browser and groups
+// rows by identical total, so the total is rounded here rather than at each
+// call site — float noise would split two identically scored features into
+// separate groups.
+export function tierFor(scores) {
+  const total = Math.round(weightedScore(scores) * 100) / 100;
+  return { total, tier: bandFor(total).tier };
+}
