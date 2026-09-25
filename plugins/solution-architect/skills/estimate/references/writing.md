@@ -43,8 +43,13 @@ review. `schema.mjs` refuses a factor missing from either object, or whose
 `contextProvenance` level disagrees with `contextLevels`. Both fields are
 skipped at `QUICK` depth and in agentic mode.
 
-Optional top-level `recommendedReason` (non-empty string) says why the
-recommended delivery approach wins when more than one option was considered.
+Optional top-level `recommendedReason` (non-empty string) — free text for
+a judgment call worth explaining to the reader (why AGENTIC over
+TRADITIONAL, why one technique over another, anything else worth a
+sentence). The rendered page shows it verbatim as "Recommended because
+…" when present. `schema.mjs` neither requires it nor validates its
+content — nothing in `estimation-inputs.json` compares options to generate
+it automatically, so write it only when there is a real call to explain.
 `schema.mjs` is the enforced half of this contract (`checkInputs`) — this
 doc is the readable half; if the two ever disagree, the code wins.
 
@@ -224,10 +229,13 @@ skeleton with these additions (mirror
   `computed.tasks[*].evidence` — the validator refuses an evidence row whose
   id isn't script-matched, or whose minutes cell doesn't match the matched
   record, so never invent, hand-add, or alter a history row.
-- **Risks table** — same section as team mode, but the Impact column is in
-  minutes with an added Reason column: `Risk | Probability | Impact (min) |
-  Reason`. Every risk row needs all four cells; a generic buffer with no
-  reason is refused the same as in team mode.
+- **Risks table** — `### Risks`, required in the agentic template (mirror
+  `agentic-estimation-pass.md` §Risks): `Risk | Probability | Impact (min) |
+  Reason`. Every row needs all four cells — `schema.mjs` requires `reason`
+  on agentic risks specifically. Team mode's own §2 skeleton carries no
+  equivalent section today; `risks` is a required top-level input either
+  way (§1), but nothing requires `reason` on a team-mode risk, and nothing
+  requires team mode's `estimation.md` to surface the risk register at all.
 - **Calibration nudge** — when any task is UNCALIBRATED or low-sample, the
   detail section's calibration line should point at recording actuals to
   close the loop (see `docs/requirements/record-task.md` — the capture
