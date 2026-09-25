@@ -9,22 +9,15 @@
 
 Recommended delivery: 2 engineers (1 senior, 1 mid), AI-assisted — see detail.
 
-| Line | Hours |
-| --- | --- |
-| Development | 90.67 |
-| Overhead (35%) | 31.73 |
-| Risk buffer | 12 |
-| Estimate-spread buffer | 10.91 |
-
 ### Roadmap
 
-| Milestone | Features | Months (from start) |
+| Milestone | Features | Share |
 | --- | --- | --- |
-| M1 - Booking core | User can book appointment | 0–0.3 |
-| M2 - Notifications | Email reminders | 0.3–0.4 |
+| M1 - Booking core | User can book appointment | 76% |
+| M2 - Notifications | Email reminders | 24% |
 
-Sequential delivery by the recommended scenario team. Bands are relative
-months, not calendar dates. Ordering: proposed.
+Bands are relative shares of total effort, not durations. This estimate
+produces no timeline. Ordering: proposed.
 
 ### Assumptions
 
@@ -47,12 +40,14 @@ Technique: three-point PERT — detailed backlog available.
 | Slot conflict + cancellation rules | logic | 24/40/80 | 44 | MED | no recurring bookings in v1 | proposed |
 | Scheduled reminder jobs | logic | 12/20/36 | 21.33 | MED | provider already chosen | proposed |
 
-### Scenario comparison
+### Price
 
-| Scenario | Team | AI-assisted | Months | Cost | Notes |
-| --- | --- | --- | --- | --- | --- |
-| 3eng-noai | 2 mid + 1 junior | no | 0.43 | $7,266 | — |
-| 2eng-max5x | 1 senior + 1 mid | yes | 0.40 | $5,993 | recommended |
+| Figure | Value |
+| --- | --- |
+| Presented range | $10,000 – $14,000 |
+| If a single number is required | $12,000 |
+| Contingency rate | 15% |
+| Implied accuracy | 24% |
 
 ### Calibration
 

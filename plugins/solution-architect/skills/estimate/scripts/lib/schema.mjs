@@ -53,6 +53,12 @@ function checkFeature(feature, out, agentic) {
   }
   if (!(feature.tasks?.length > 0)) out.push(`feature ${feature.id}: must have at least one task`);
   for (const task of feature.tasks ?? []) (agentic ? checkAgenticTask(task, out) : checkTask(task, out));
+  // The waiver is an escape hatch from the one failure mode the pricing model
+  // has — a bare `true` must not buy a pass, so it has to carry a reason.
+  if (feature.deepEstimateWaiver !== undefined
+    && !(typeof feature.deepEstimateWaiver === 'string' && feature.deepEstimateWaiver.trim())) {
+    out.push(`feature ${feature.id}: deepEstimateWaiver must be a non-empty string`);
+  }
 }
 
 // Roadmap is all-or-nothing: a half-labeled feature list would render a

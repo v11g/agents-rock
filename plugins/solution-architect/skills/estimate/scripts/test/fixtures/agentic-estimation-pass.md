@@ -9,11 +9,6 @@ Delivery: agentic (claude-code + sonnet) · Baselines: 20 measurements, 3 shapes
 | Planning | S | proposed |
 | API client swap | S | stated |
 
-| Line | Hours |
-| --- | --- |
-| Spread buffer | 0.25 |
-| Risk buffer | 0.15 |
-
 ### Out of scope
 
 - Anything not listed above.
@@ -28,11 +23,6 @@ Calibration: 20 measurement records; 1 of 4 tasks uncalibrated.
 | swap-refactor | 11 | 7 | repo+agent+model | MED | old client has no dynamic call sites | stated |
 | swap-tests | 10 | 10 | repo+agent+model | HIGH | none | proposed |
 | swap-db | not estimated | 0 | none | UNCALIBRATED | none | proposed |
-
-| Scenario | Months | Total cost |
-| --- | --- | --- |
-| solo | 0.02 | $208.43 |
-| pair | 0.01 | $195.12 |
 
 ### Evidence
 

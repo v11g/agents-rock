@@ -24,6 +24,12 @@ Technique: three-point PERT — detailed backlog available.
 | Slot conflict + cancellation rules | logic | 24/40/80 | 44 | MED | no recurring bookings in v1 |
 | Scheduled reminder jobs | logic | 12/20/36 | 21.33 | MED |  | proposed |
 
+### Scenario comparison
+
+| Scenario | Team | AI-assisted | Months | Cost | Notes |
+| --- | --- | --- | --- | --- | --- |
+| 3eng-noai | 2 mid + 1 junior | no | 0.43 | $7,266 | — |
+
 ### Calibration
 
 Tier hour bands used: S 20-60h · M 60-160h · L 160-400h (defaults — no

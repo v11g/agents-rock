@@ -2,13 +2,19 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
-import { checkDeliverables } from '../lib/checks.mjs';
+import { checkDeliverables, checkDeepEstimates } from '../lib/checks.mjs';
 import { computeEstimation } from '../lib/rollup.mjs';
 import { loadMeasurements } from '../lib/measurements.mjs';
 
 const read = (f) => readFileSync(new URL(`./fixtures/${f}`, import.meta.url), 'utf8');
 const inputs = () => JSON.parse(read('booking-inputs.json'));
 const stripRoadmap = (md) => md.replace(/### Roadmap[\s\S]*?(?=### Assumptions)/, '');
+// checkDeliverables under another name, for the price/roadmap tests below —
+// the booking fixture already carries milestones, so both helpers build the
+// same fully computed estimation object from it.
+const findings = checkDeliverables;
+const priced = () => computeEstimation(inputs());
+const withMilestones = () => computeEstimation(inputs());
 
 test('the pass fixture passes', () => {
   assert.deepEqual(
@@ -26,7 +32,7 @@ test('neither deliverable fixture names a vendor AI plan', () => {
 
 test('each seeded violation is caught by name', () => {
   const findings = checkDeliverables({ md: read('estimation-fail.md'), estimation: computeEstimation(inputs()) });
-  for (const needle of ['never 0', 'src', 'assumptions cell', 'assumptions register', 'buffer', 'out of scope', 'scenario', 'roadmap']) {
+  for (const needle of ['never 0', 'src', 'assumptions cell', 'assumptions register', 'out of scope', 'scenario', 'roadmap']) {
     assert.ok(findings.some((f) => f.toLowerCase().includes(needle)), `no finding for: ${needle}`);
   }
 });
@@ -84,9 +90,9 @@ test('no milestones and no Roadmap section is clean', () => {
 });
 
 test('the roadmap honesty line is mandatory', () => {
-  const md = read('estimation-pass.md').replace(/not calendar dates/, 'roughly');
+  const md = read('estimation-pass.md').replace(/relative shares/, 'roughly');
   const findings = checkDeliverables({ md, estimation: computeEstimation(inputs()) });
-  assert.ok(findings.some((f) => f.includes('not calendar dates')));
+  assert.ok(findings.some((f) => f.includes('relative shares')));
 });
 
 // Agentic deliverable checks.
@@ -144,4 +150,48 @@ test('the Tier column is required at STANDARD depth and ignored at QUICK', () =>
   for (const f of quick.features) { delete f.scores; delete f.scoreNote; delete f.scoreProvenance; }
   const md = read('estimation-pass.md').replace('| User can book appointment | M |', '| User can book appointment | XL |');
   assert.ok(!checkDeliverables({ md, estimation: computeEstimation(quick) }).some((f) => f.includes('Tier')));
+});
+
+// Price block / deep-estimate checks (Task 6).
+test('the roadmap must say bands are relative shares, not durations', () => {
+  const md = '### Roadmap\n\n| Milestone | Share |\n|---|---|\n| M1 | 75% |\n\nBands are relative shares.\n';
+  const out = findings({ md, estimation: withMilestones() });
+  assert.ok(!out.some((f) => /relative shares/.test(f)), out.join('\n'));
+});
+
+test('a roadmap claiming durations is refused', () => {
+  const md = '### Roadmap\n\n| Milestone | Months |\n|---|---|\n| M1 | 0.4 |\n\nBands are relative months.\n';
+  const out = findings({ md, estimation: withMilestones() });
+  assert.ok(out.some((f) => /relative shares/.test(f)), out.join('\n'));
+});
+
+test('a scenario comparison table in the md is refused', () => {
+  const md = '## Summary\n\n| Scenario | Team | AI-assisted | Months | Cost |\n|---|---|---|---|---|\n';
+  const out = findings({ md, estimation: priced() });
+  assert.ok(out.some((f) => /scenario table was removed/i.test(f)), out.join('\n'));
+});
+
+test('the presented range must appear in the md', () => {
+  const out = findings({ md: '## Summary\n\nNo numbers here.\n', estimation: priced() });
+  assert.ok(out.some((f) => /presented range/i.test(f)), out.join('\n'));
+});
+
+test('a feature flagged for a deep estimate needs a breakdown or a waiver', () => {
+  const est = priced();
+  const id = Object.keys(est.computed.features)[0];
+  est.computed.features[id].flag = 'Deep estimate required';
+  est.inputs.features.find((f) => f.id === id).tasks = [];
+  const out = [];
+  checkDeepEstimates(est, out);
+  assert.ok(out.some((f) => new RegExp(id).test(f)), out.join('\n'));
+});
+
+test('a waived deep estimate passes', () => {
+  const est = priced();
+  const id = Object.keys(est.computed.features)[0];
+  est.computed.features[id].flag = 'Deep estimate required';
+  est.inputs.features.find((f) => f.id === id).deepEstimateWaiver = 'client capped this feature at the band price';
+  const out = [];
+  checkDeepEstimates(est, out);
+  assert.deepEqual(out, []);
 });

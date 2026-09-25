@@ -129,6 +129,15 @@ test('a blank milestone is refused; none at all is fine', () => {
   assert.deepEqual(checkInputs(bare), []);           // no milestones at all → still valid
 });
 
+test('a bare true deepEstimateWaiver does not buy a pass; a reason does', () => {
+  const bad = fixture();
+  bad.features[0].deepEstimateWaiver = true;
+  assert.ok(checkInputs(bad).some((f) => f.includes('booking') && f.includes('deepEstimateWaiver')));
+  const good = fixture();
+  good.features[0].deepEstimateWaiver = 'client capped this feature at the band price';
+  assert.deepEqual(checkInputs(good), []);
+});
+
 // Agentic-mode schema branch.
 const agenticFixturePath = new URL('./fixtures/agentic-inputs.json', import.meta.url).pathname;
 const agenticFixture = () => JSON.parse(readFileSync(agenticFixturePath, 'utf8'));

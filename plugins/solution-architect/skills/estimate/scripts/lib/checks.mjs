@@ -19,9 +19,6 @@ function checkStructure(md) {
   if (!/^###?\s*Out of scope\b/im.test(summary ?? '')) out.push('Out of scope heading missing from Summary');
   const assumptionRows = tables(heading(md, 'Assumptions')).flatMap((t) => t.rows);
   if (assumptionRows.length < 1) out.push('assumptions register is empty (### Assumptions needs >= 1 row)');
-  if (!/\|.*buffer.*\|/i.test(summary ?? '')) out.push('no buffer line item found in Summary (/buffer/i)');
-  const scenarioTable = tables(detail ?? '').find((t) => t.header.includes('Scenario'));
-  if (!scenarioTable || scenarioTable.rows.length < 1) out.push('scenario comparison table missing or empty');
   if (!/calibration/i.test(detail ?? '')) out.push('no calibration line found in Estimation detail');
   return out;
 }
@@ -65,8 +62,38 @@ function checkRoadmap(md, estimation, out) {
   }
   if (section === null) { out.push('missing ### Roadmap section (inputs carry milestones)'); return; }
   if (tables(section).flatMap((t) => t.rows).length < 1) out.push('roadmap table is empty');
-  if (!/not calendar dates/i.test(section)) {
-    out.push('roadmap must state bands are relative months, not calendar dates');
+  if (!/relative shares/i.test(section)) {
+    out.push('roadmap must state bands are relative shares, not durations');
+  }
+}
+
+// The scenario table priced a team; there is no team any more. Leaving it in
+// a document would show a cost nothing computed.
+const SCENARIO_HEADER = /\|\s*Scenario\s*\|/i;
+
+export function checkPrice(md, estimation, out) {
+  if (!estimation.computed.price || estimation.computed.price.p50 === 0) return;
+  if (SCENARIO_HEADER.test(md)) out.push('the scenario table was removed — show the price block instead');
+  const { presentLow, presentHigh } = estimation.computed.price;
+  for (const n of [presentLow, presentHigh]) {
+    if (!md.includes(n.toLocaleString('en-US'))) {
+      out.push(`presented range bound ${n.toLocaleString('en-US')} missing from the document`);
+    }
+  }
+}
+
+// v2's flag column is the handoff to the deep pass. A flagged feature that
+// nobody broke down and nobody waived is the one failure mode this whole
+// model has, so it is refused rather than reported.
+export function checkDeepEstimates(estimation, out) {
+  const byId = new Map((estimation.inputs.features ?? []).map((f) => [f.id, f]));
+  for (const [id, row] of Object.entries(estimation.computed.features ?? {})) {
+    if (!/^Deep estimate|^SPLIT/.test(row.flag ?? '')) continue;
+    const feature = byId.get(id);
+    if (feature?.deepEstimateWaiver) continue;
+    if (!(feature?.tasks?.length > 0)) {
+      out.push(`feature ${id}: flagged "${row.flag}" but has no task breakdown and no deepEstimateWaiver`);
+    }
   }
 }
 
@@ -105,6 +132,8 @@ function checkNumbers(estimation) {
 export function checkDeliverables({ md, estimation }) {
   const out = [...checkStructure(md), ...checkRows(md, estimation), ...checkNumbers(estimation)];
   checkRoadmap(md, estimation, out);
+  checkPrice(md, estimation, out);
+  checkDeepEstimates(estimation, out);
   out.push(...scoringFindings({ md, estimation }));
   if (estimation.inputs.deliveryMode === 'agentic') out.push(...agenticFindings({ md, estimation }));
   return out;

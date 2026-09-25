@@ -73,23 +73,16 @@ sections, in this order:
 
 Recommended delivery: <team + AI-assisted summary> — see detail.
 
-| Line | Hours |
-| --- | --- |
-| Development | <hours> |
-| Overhead (<pct>%) | <hours> |
-| Risk buffer | <hours> |
-| Estimate-spread buffer | <hours> |
-
 ### Roadmap
 
 (only when features carry milestones — omit the heading entirely otherwise)
 
-| Milestone | Features | Months (from start) |
+| Milestone | Features | Share |
 | --- | --- | --- |
-| <label> | <feature names> | <start>–<end> |
+| <label> | <feature names> | <share>% |
 
-Sequential delivery by the recommended scenario team. Bands are relative
-months, not calendar dates. Ordering: <stated|proposed>.
+Bands are relative shares of total effort, not durations. This estimate
+produces no timeline. Ordering: <stated|proposed>.
 
 ### Assumptions
 
@@ -109,11 +102,14 @@ Technique: <technique name> — <one line on why>.
 | --- | --- | --- | --- | --- | --- | --- |
 | <task name> | boilerplate|logic|novel | <o>/<m>/<p> | <e> | HIGH|MED|LOW | <text or "none"> | observed|stated|researched|proposed |
 
-### Scenario comparison
+### Price
 
-| Scenario | Team | AI-assisted | Months | Cost | Notes |
-| --- | --- | --- | --- | --- | --- |
-| <scenario id> | <team summary> | yes|no | <months> | <cost> | <"recommended" or "—"> |
+| Figure | Value |
+| --- | --- |
+| Presented range | <presentLow> – <presentHigh> |
+| If a single number is required | <singleNumber> |
+| Contingency rate | <contingencyRate> |
+| Implied accuracy | <impliedAccuracy> |
 
 ### Calibration
 
@@ -133,11 +129,12 @@ Structure:
 2. Summary must contain an `### Out of scope` heading.
 3. Summary must contain an `### Assumptions` heading whose table has at
    least one row.
-4. Summary must contain a line item matching `/buffer/i` (the buffer table
-   row above).
-5. Estimation detail must contain a table with a `Scenario` column and at
-   least 1 row.
-6. Estimation detail must contain a line matching `/calibration/i`.
+4. Estimation detail must contain a line matching `/calibration/i`.
+5. The document must not contain a table with a `Scenario` column — the
+   price block replaces it (`checkPrice` in `scripts/lib/checks.mjs`).
+6. `computed.price.presentLow` and `presentHigh` must both appear in the
+   document as formatted numbers (`Number.toLocaleString('en-US')`) — skipped
+   when `computed.price.p50` is `0` (agentic deliverables carry no price).
 
 Row-level, on the task table (found by header, needs `Task`, `Confidence`,
 `Assumptions`, `src` columns):
@@ -175,11 +172,19 @@ Roadmap (mirrors `checkRoadmap` in `scripts/lib/checks.mjs`):
 14. Inputs carry milestones → Summary must contain a `### Roadmap` heading
     with a table of at least one row; no milestones → the heading must be
     absent.
-15. The Roadmap section must contain a line matching `/not calendar dates/i`
-    — the bands claim sequence and rough size, never dates.
+15. The Roadmap section must contain a line matching `/relative shares/i`
+    — the bands claim relative shares of effort, never durations.
 16. Band numbers come from
     `computed.scenarios[recommendedScenario].roadmap` — covered by the
     recompute rule 12, same as every other number.
+
+Deep estimates (mirrors `checkDeepEstimates` in `scripts/lib/checks.mjs`):
+
+17. A feature whose `computed.features[<id>].flag` starts with `Deep
+    estimate` or `SPLIT` needs either a real task breakdown (`inputs`
+    `tasks` is non-empty) or a `deepEstimateWaiver` — a non-empty string
+    naming why the band price stands without one (`schema.mjs` refuses a
+    bare `true`). Neither present is refused.
 
 ## 3b. Agentic deliverable additions
 
