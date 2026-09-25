@@ -219,8 +219,12 @@ Ask one thing at a time, in this order:
    Context factors are skipped entirely at QUICK depth and in agentic mode
    (`context-schema.mjs`).
 5. **Deadline / constraints** — any hard date or budget ceiling.
-6. **Expose-rates-to-client** — y/n; controls whether the client-facing render
-   shows labor rates or only totals.
+6. **Expose-the-pricing-working** — y/n; sets `exposeRatesToClient`. Default
+   no: the client render carries the presented range, the single number and
+   the contingency rate, but not the working behind them — the context
+   multiplier, the overhead lines, the adjusted base, and the tier and price
+   band each feature landed in. Answer yes only when the client has asked to
+   see how the number was built and the team is content to show it.
 
 ## 5. Loop rule
 

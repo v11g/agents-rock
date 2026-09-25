@@ -46,10 +46,12 @@ skipped at `QUICK` depth and in agentic mode.
 Optional top-level `recommendedReason` (non-empty string) — free text for
 a judgment call worth explaining to the reader (why AGENTIC over
 TRADITIONAL, why one technique over another, anything else worth a
-sentence). The rendered page shows it verbatim as "Recommended because
-…" when present. `schema.mjs` neither requires it nor validates its
-content — nothing in `estimation-inputs.json` compares options to generate
-it automatically, so write it only when there is a real call to explain.
+sentence). The rendered page shows it verbatim under the summary figures as
+"Approach: …" — not as a recommendation over other options, because there
+are no other options to price. `schema.mjs` neither requires it nor
+validates its content — nothing in `estimation-inputs.json` compares options
+to generate it automatically, so write it only when there is a real call to
+explain.
 `schema.mjs` is the enforced half of this contract (`checkInputs`) — this
 doc is the readable half; if the two ever disagree, the code wins.
 
@@ -89,8 +91,6 @@ sections, in this order:
 | Feature | Tier | Range (h) | src |
 | --- | --- | --- | --- |
 | <feature name> | S/M/L | <low>–<high> | stated|proposed |
-
-Recommended delivery: <team + AI-assisted summary> — see detail.
 
 ### Roadmap
 

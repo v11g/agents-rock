@@ -45,10 +45,11 @@ node scripts/render.mjs --json estimation.json --md estimation.md --out .
 
 `validate.mjs` must exit 0 before `render.mjs` will produce a page — an
 unvalidated estimate cannot ship. Add `--client-only` to `render.mjs` for a
-client-safe file with rates and the labor/tooling cost breakdown stripped from
-both the embedded data and the task register (totals and months stay) —
-unless `exposeRatesToClient: true` is set in `estimation-inputs.json`, which
-keeps them.
+client-safe file with the pricing working stripped from both the embedded data
+and the page — the context multiplier, the overhead lines, the adjusted base,
+and each feature's tier and price band. The presented range, the single number
+and the contingency rate always stay. Set `exposeRatesToClient: true` in
+`estimation-inputs.json` to keep the working as well.
 
 ## Dependency
 

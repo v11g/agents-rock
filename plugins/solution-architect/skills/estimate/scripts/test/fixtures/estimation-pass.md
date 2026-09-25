@@ -7,8 +7,6 @@
 | User can book appointment | M | 40–120 | stated |
 | Email reminders | S | 12–36 | proposed |
 
-Recommended delivery: 2 engineers (1 senior, 1 mid), AI-assisted — see detail.
-
 ### Roadmap
 
 | Milestone | Features | Share |
@@ -51,5 +49,8 @@ Technique: three-point PERT — detailed backlog available.
 
 ### Calibration
 
-Tier hour bands used: S 20-60h · M 60-160h · L 160-400h (defaults — no
-delivery history supplied).
+Implied rate check: the M band's $2,750 midpoint against the 69 h behind a
+comparable delivered feature is about $40/h blended — defensible for this
+team. No delivery history was supplied, so the bands are the defaults;
+recalibrate them against actuals roughly twice a year. Whatever AI leverage
+the team has is priced into the bands already and stays as margin.

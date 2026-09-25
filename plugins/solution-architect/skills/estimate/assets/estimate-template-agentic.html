@@ -335,7 +335,7 @@ function summaryAlts(rec, recC) {
     <th class="num">Months</th><th class="num">Cost</th><th></th></tr></thead>
     <tbody>${teams.map((s) => altRow(s, recC)).join('')}</tbody></table>` : '';
   const why = DATA.inputs.recommendedReason
-    ? `<p class="why">Recommended because ${esc(DATA.inputs.recommendedReason)}.</p>` : '';
+    ? `<p class="why">Approach: ${esc(DATA.inputs.recommendedReason)}.</p>` : '';
   return `<div class="alts" ${INTERNAL_ATTR}>${why}${variants}${table}${insightLine(teams, recC)}</div>`;
 }
 
