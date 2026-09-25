@@ -30,6 +30,19 @@ for a non-technical reader: no file names, factor names or `§`) and a
 `scoreProvenance` of `stated` or `proposed`. `schema.mjs` checks the anchor
 against the guide byte for byte. At `QUICK` these fields must be absent.
 
+At `STANDARD`/`DEEP`, non-agentic estimates also carry top-level
+`contextLevels` and `contextProvenance` — the five factors from
+`CONTEXT_FACTORS` in `project-price.mjs`: `codebaseMaturity`,
+`stackFamiliarity`, `specQuality`, `compliance`, `clientDecisions`, each an
+integer level 1–4 in `contextLevels`. `contextProvenance` carries one entry
+per factor: `{ "level": <matching contextLevels>, "anchor": "...", "cite":
+"...", "source": "derived"|"stated" }`. Four of the five factors are derived
+from upstream artifacts rather than asked, so each arrives as a proposal
+with its evidence attached, not a silent default, and can be overridden in
+review. `schema.mjs` refuses a factor missing from either object, or whose
+`contextProvenance` level disagrees with `contextLevels`. Both fields are
+skipped at `QUICK` depth and in agentic mode.
+
 Optional top-level `recommendedReason` (non-empty string) says why the
 recommended delivery approach wins when more than one option was considered.
 `schema.mjs` is the enforced half of this contract (`checkInputs`) — this
