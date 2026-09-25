@@ -38,11 +38,26 @@ function stripLiterals(src) {
 // Measured in lines of code, not lines of text. The limit caps how much logic a
 // reader holds at once, and a static HTML string or a comment block is neither —
 // they arrive here already blanked, so a blank line is a line that carried none.
+// A `function NAME(...)` match points before the parameter list, so the body
+// brace is whatever `{` follows the parameter list's own balanced parens —
+// not the first `{` after the match, which is the parameter list's own brace
+// when the first parameter is destructured (`function f({ a, b }) {`).
+function afterParams(code, from) {
+  const parenOpen = code.indexOf('(', from);
+  let depth = 0;
+  for (let i = parenOpen; i < code.length; i += 1) {
+    if (code[i] === '(') depth += 1;
+    if (code[i] === ')') { depth -= 1; if (depth === 0) return i + 1; }
+  }
+  return parenOpen + 1;
+}
+
 function functionSpans(code) {
   const spans = [];
   const starts = [...code.matchAll(/(?:^|\n)\s*(?:export\s+)?(?:async\s+)?function\s+\w+|=>\s*\{/g)];
   for (const m of starts) {
-    const open = code.indexOf('{', m.index);
+    const from = m[0].includes('function') ? afterParams(code, m.index) : m.index;
+    const open = code.indexOf('{', from);
     let depth = 0; let end = code.length - 1;
     for (let i = open; i < code.length; i += 1) {
       if (code[i] === '{') depth += 1;

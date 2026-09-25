@@ -74,6 +74,15 @@ test('a genuinely long function is still reported', () => {
   assert.deepEqual(violations(src, { functionLines: 22 }), ['function of 32 lines (max 22)']);
 });
 
+// The body opener is found as the first `{` after `function NAME`. When the
+// first parameter is object-destructured, that `{` belongs to the parameter
+// list, not the body — the brace-depth walk then closes on the parameter list
+// and the real body is never measured.
+test('a destructured first parameter does not truncate the measured body', () => {
+  const src = ['function long({ a, b }) {', ...Array(25).fill('  const x = 1;'), '}'].join('\n');
+  assert.deepEqual(violations(src, { functionLines: 22 }), ['function of 27 lines (max 22)']);
+});
+
 test('an omitted limit skips its check', () => {
   const src = ['function f(a, b, c, d) {', '  return a + b + c + d;', '}'].join('\n');
   assert.deepEqual(violations(src, { functionLines: 22 }), [], 'params not checked when absent');
