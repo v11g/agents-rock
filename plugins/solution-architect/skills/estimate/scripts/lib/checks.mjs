@@ -90,7 +90,7 @@ export function checkDeepEstimates(estimation, out) {
   for (const [id, row] of Object.entries(estimation.computed.features ?? {})) {
     if (!/^Deep estimate|^SPLIT/.test(row.flag ?? '')) continue;
     const feature = byId.get(id);
-    if (feature?.deepEstimateWaiver) continue;
+    if (typeof feature?.deepEstimateWaiver === 'string' && feature.deepEstimateWaiver.trim()) continue;
     if (!(feature?.tasks?.length > 0)) {
       out.push(`feature ${id}: flagged "${row.flag}" but has no task breakdown and no deepEstimateWaiver`);
     }

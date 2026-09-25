@@ -9,12 +9,12 @@ import { loadMeasurements } from '../lib/measurements.mjs';
 const read = (f) => readFileSync(new URL(`./fixtures/${f}`, import.meta.url), 'utf8');
 const inputs = () => JSON.parse(read('booking-inputs.json'));
 const stripRoadmap = (md) => md.replace(/### Roadmap[\s\S]*?(?=### Assumptions)/, '');
-// checkDeliverables under another name, for the price/roadmap tests below —
-// the booking fixture already carries milestones, so both helpers build the
-// same fully computed estimation object from it.
+// checkDeliverables under another name, for the price/roadmap tests below.
 const findings = checkDeliverables;
+// The booking fixture already carries milestones and scored features, so
+// one fully computed estimation object serves both the price tests and the
+// roadmap tests below.
 const priced = () => computeEstimation(inputs());
-const withMilestones = () => computeEstimation(inputs());
 
 test('the pass fixture passes', () => {
   assert.deepEqual(
@@ -159,13 +159,13 @@ test('the Tier column is required at STANDARD depth and ignored at QUICK', () =>
 // Price block / deep-estimate checks (Task 6).
 test('the roadmap must say bands are relative shares, not durations', () => {
   const md = '### Roadmap\n\n| Milestone | Share |\n|---|---|\n| M1 | 75% |\n\nBands are relative shares.\n';
-  const out = findings({ md, estimation: withMilestones() });
+  const out = findings({ md, estimation: priced() });
   assert.ok(!out.some((f) => /relative shares/.test(f)), out.join('\n'));
 });
 
 test('a roadmap claiming durations is refused', () => {
   const md = '### Roadmap\n\n| Milestone | Months |\n|---|---|\n| M1 | 0.4 |\n\nBands are relative months.\n';
-  const out = findings({ md, estimation: withMilestones() });
+  const out = findings({ md, estimation: priced() });
   assert.ok(out.some((f) => /relative shares/.test(f)), out.join('\n'));
 });
 
@@ -198,4 +198,26 @@ test('a waived deep estimate passes', () => {
   const out = [];
   checkDeepEstimates(est, out);
   assert.deepEqual(out, []);
+});
+
+// Through the real gate (checkDeliverables, the path validate.mjs actually
+// takes) rather than the helper in isolation: validate.mjs reads
+// estimation.json straight off disk and never runs checkInputs, so a bare
+// `true` hand-edited into inputs.deepEstimateWaiver after compute must still
+// be refused here, not just at schema.mjs's compute-time gate.
+test('a bare true deepEstimateWaiver does not pass the real gate; a reason does', () => {
+  const est = priced();
+  const id = Object.keys(est.computed.features)[0];
+  est.computed.features[id].flag = 'Deep estimate required';
+  const feature = est.inputs.features.find((f) => f.id === id);
+  feature.tasks = [];
+  const md = read('estimation-pass.md');
+
+  feature.deepEstimateWaiver = true;
+  const tampered = checkDeliverables({ md, estimation: est });
+  assert.ok(tampered.some((f) => f.includes(id) && f.includes('deepEstimateWaiver')), tampered.join('\n'));
+
+  feature.deepEstimateWaiver = 'client capped this feature at the band price';
+  const passing = checkDeliverables({ md, estimation: est });
+  assert.ok(!passing.some((f) => f.includes(id) && f.includes('deepEstimateWaiver')), passing.join('\n'));
 });
