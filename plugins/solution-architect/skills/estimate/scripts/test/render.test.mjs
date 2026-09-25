@@ -20,7 +20,7 @@ function renderedPage(extra = []) {
 }
 
 // Same pipeline, with the booking inputs mutated first — for pages whose
-// shape depends on the scenarios (one team vs several, AI-only variants).
+// shape depends on an optional input (recommendedReason, the expose flag).
 function renderWith(mutate, extra = []) {
   const dir = mkdtempSync(join(tmpdir(), 'estimate-render-'));
   const inputs = JSON.parse(readFileSync(fixture, 'utf8'));
@@ -45,6 +45,13 @@ function renderAgentic({ clientOnly = false } = {}) {
   execFileSync('node', [computeCli, '--inputs', inputsPath, '--out', json]);
   execFileSync('node', [cli, '--json', json, '--md', agenticPassMd, '--out', dir, ...(clientOnly ? ['--client-only'] : [])]);
   return readFileSync(join(dir, 'estimate.html'), 'utf8');
+}
+
+// The data island is the only place a rendered page states a number: every
+// section is drawn in the browser from this blob, so a test about what the
+// page carries reads it here rather than pattern-matching template source.
+function embedded(html) {
+  return JSON.parse(html.match(/<script type="application\/json" id="estimation-data">([\s\S]*?)<\/script>/)[1]);
 }
 
 test('render refuses a deliverable that fails validation', () => {
@@ -119,31 +126,48 @@ test('the page has no scenario cards, cost bars or what-if rail', () => {
   assert.match(html, /id="summary"/);
 });
 
-test('the summary names the recommended team, its AI assistance, months and cost', () => {
+// The page's one headline is the price, and it is the price the roll-up
+// committed — the summary reads computed.price and nothing else. Durations
+// are checked over the whole file (minus HTML comments, so a commented-out
+// month would not pass) because nothing in the model produces one any more.
+test('the page carries the price block and no duration anywhere', () => {
   const html = renderedPage();
-  // renderer source: the label rule, and the JSON it reads from
-  assert.match(html, /humans unaided/);
-  assert.match(html, /AI-assisted/);
-  assert.match(html, /"recommendedScenario":"2eng-max5x"/);
+  const { price, roadmap } = embedded(html).computed;
+  assert.deepEqual(
+    [price.presentLow, price.presentHigh, price.singleNumber, price.contingencyRate],
+    [10000, 14000, 12000, 0.15]);
+  assert.equal(price.scenarios, undefined);
+  assert.ok(roadmap.length > 0);
+  assert.ok(!/month/i.test(html.replace(/<!--[\s\S]*?-->/g, '')), 'no durations anywhere');
 });
 
-// Only a different roster is an alternative worth a row; a same-team variant
-// that differs in AI assistance collapses to one line.
-test('renderer distinguishes team alternatives from AI-only variants', () => {
-  const html = renderedPage();
-  assert.match(html, /AI assistance: /);            // the collapsed same-team line
-  assert.match(html, /<caption>Alternatives<\/caption>/); // the different-roster table
-  assert.match(html, /function sameTeam|const sameTeam/);
+// The roadmap is milestone shares of total effort. The percentages the page
+// draws are checked in browser.test.mjs; here the shares must reach the page
+// attached to the milestone they size.
+test('the roadmap travels as milestone shares, not month bands', () => {
+  const { roadmap } = embedded(renderedPage()).computed;
+  assert.deepEqual(roadmap.map((b) => [b.milestone, b.share]),
+    [['M1 - Booking core', 0.76], ['M2 - Notifications', 0.24]]);
+  for (const band of roadmap) {
+    assert.equal(band.startMonths, undefined);
+    assert.equal(band.endMonths, undefined);
+  }
 });
 
-test('--figures adds the client-facing range line; without it there is none', () => {
+// proposal-figures.json carries a cost range and a single number; it carries
+// no duration, so neither does the line the page draws from it.
+test('--figures adds the client-facing range; without it there is none', () => {
   const dir = mkdtempSync(join(tmpdir(), 'estimate-figures-'));
   const figures = join(dir, 'proposal-figures.json');
-  writeFileSync(figures, JSON.stringify({ scenario: '2eng-max5x', cost: { low: 5000, high: 7000 }, months: { low: 0.3, high: 0.5 } }));
+  writeFileSync(figures, JSON.stringify({
+    cost: { low: 5000, high: 7000 }, singleNumber: 6500,
+    milestones: [{ name: 'M1 - Booking core', share: 0.76 }],
+  }));
   const withRange = renderedPage(['--figures', figures]);
-  assert.match(withRange, /"figures":\{"cost":\{"low":5000,"high":7000\},"months":\{"low":0.3,"high":0.5\}\}/);
+  assert.deepEqual(embedded(withRange).figures,
+    { cost: { low: 5000, high: 7000 }, singleNumber: 6500 });
   const without = renderedPage();
-  assert.doesNotMatch(without, /"figures":/);
+  assert.equal(embedded(without).figures, undefined);
 });
 
 test('recommendedReason travels with the data', () => {
@@ -161,14 +185,44 @@ test('--client-only strips every internal range', () => {
   assert.match(stripInternal('a<!-- internal:start -->X<!-- internal:end -->b'), /^ab$/);
 });
 
-test('--client-only redacts rates and cost breakdown unless exposeRatesToClient is set', () => {
-  // Matched as quoted JSON keys, not bare identifiers: estimate-math.mjs is
-  // inlined verbatim for the what-if engine and legitimately declares
-  // `laborCost`/`toolingCost` as plain JS locals in every render, client or not.
+// exposeRatesToClient gates the pricing working: the context multiplier, the
+// overhead lines, the adjusted base, and each feature's tier and price band.
+//
+// Bare identifiers, not quoted JSON keys, for everything the page names only
+// while drawing the working — the renderer for it lives inside an
+// internal:start/end block, so a client file carries these in neither its data
+// nor its code, captions included. `Tier Reference` is that block's caption
+// and is checked the same way.
+const BARE_INTERNALS = ['contextMultiplier', 'adjustedBase', 'priceLow', 'priceHigh', 'Tier Reference'];
+// `overheads` is the one exception: the Method section explains in prose that
+// overheads are loaded onto the base, and that sentence is client-facing. Only
+// the numbers behind it are internal, so this one is matched as a quoted JSON
+// key — the form that still fails if redact.mjs stops stripping the block.
+const QUOTED_INTERNALS = [/"overheads":/, /"contextMultiplier":/, /"adjustedBase":/];
+
+test('--client-only strips the pricing internals and keeps the presented range', () => {
+  const internal = renderedPage();
+  for (const field of BARE_INTERNALS) assert.ok(internal.includes(field), `internal render must carry ${field}`);
+  for (const re of QUOTED_INTERNALS) assert.match(internal, re);
+
   const html = renderedPage(['--client-only']);
-  assert.doesNotMatch(html, /"rate":/);
-  assert.doesNotMatch(html, /"laborCost":/);
-  assert.doesNotMatch(html, /"toolingCost":/);
+  for (const field of BARE_INTERNALS) assert.ok(!html.includes(field), `client view leaks ${field}`);
+  for (const re of QUOTED_INTERNALS) assert.doesNotMatch(html, re);
+
+  const { price } = embedded(html).computed;
+  assert.deepEqual([price.presentLow, price.presentHigh, price.singleNumber], [10000, 14000, 12000]);
+});
+
+// The per-feature half of the same strip: the tier a feature landed in and
+// the band it priced at are the working, not the quote.
+test('--client-only strips each feature tier and price band', () => {
+  const client = embedded(renderedPage(['--client-only'])).computed.features;
+  assert.deepEqual(Object.keys(client).sort(), ['booking', 'reminders']);
+  for (const f of Object.values(client)) {
+    assert.deepEqual([f.tier, f.point, f.priceLow, f.priceHigh], [undefined, undefined, undefined, undefined]);
+    assert.equal(typeof f.hours, 'number'); // delivery planning survives
+    assert.equal(typeof f.scoreTotal, 'number'); // so does the score it was judged on
+  }
 });
 
 // The cite is internal shorthand — ticket phrases, file names, meeting
@@ -181,7 +235,7 @@ test('--client-only blanks the evidence cites and keeps the anchors', () => {
   assert.match(renderedPage(), /slot conflict \+ cancellation rules/);
 });
 
-test('--client-only keeps rates when exposeRatesToClient is true', () => {
+test('--client-only keeps the pricing internals when exposeRatesToClient is true', () => {
   const dir = mkdtempSync(join(tmpdir(), 'estimate-render-'));
   const inputs = JSON.parse(readFileSync(fixture, 'utf8'));
   inputs.exposeRatesToClient = true;
@@ -190,8 +244,11 @@ test('--client-only keeps rates when exposeRatesToClient is true', () => {
   const json = join(dir, 'estimation.json');
   execFileSync('node', [computeCli, '--inputs', inputsPath, '--out', json]);
   execFileSync('node', [cli, '--json', json, '--md', passMd, '--out', dir, '--client-only']);
-  const html = readFileSync(join(dir, 'estimate.html'), 'utf8');
-  assert.match(html, /"rate":/);
+  const { computed } = embedded(readFileSync(join(dir, 'estimate.html'), 'utf8'));
+  assert.equal(computed.price.contextMultiplier, 1.4);
+  assert.equal(computed.price.overheads.totalPct, 0.56);
+  assert.equal(computed.features.booking.tier, 'M');
+  assert.equal(typeof computed.features.booking.priceLow, 'number');
 });
 
 test('component data survives the client-only render', () => {
@@ -217,9 +274,20 @@ test('agentic estimation renders the agentic template', () => {
   assert.doesNotMatch(html, /boilerplate/); // no AI-category machinery on this page
 });
 
-test('agentic client render still redacts rates', () => {
-  const html = renderAgentic({ clientOnly: true });
-  assert.doesNotMatch(html, /"rate":/);
+// An agentic estimation scores nothing, so its features carry no tier and
+// its price is all zeroes — but the price block itself still exists, and its
+// working is stripped by the same rule as a team estimate's.
+test('agentic client render strips the pricing internals too', () => {
+  const full = renderAgentic();
+  const fullPrice = embedded(full).computed.price;
+  assert.equal(fullPrice.contextMultiplier, 1);
+  assert.equal(typeof fullPrice.overheads.totalPct, 'number');
+
+  const client = renderAgentic({ clientOnly: true });
+  for (const field of ['contextMultiplier', 'overheads', 'adjustedBase']) {
+    assert.ok(!client.includes(field), `agentic client view leaks ${field}`);
+  }
+  assert.equal(embedded(client).computed.price.presentLow, 0);
 });
 
 test('agentic client render strips the measurements path, repository, and evidence descriptions', () => {

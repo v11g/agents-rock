@@ -1,8 +1,11 @@
 // The --client-only export embeds the full estimation JSON in the page; this
-// strips the internal money detail (rates, labor/tooling cost split, per-task
-// hours per scenario) before it ships, unless the inputs opt out via
-// exposeRatesToClient. Assumptions/risks are left alone — those are
-// client-facing per spec.
+// strips the pricing working before it ships, unless the inputs opt out via
+// exposeRatesToClient. The working is the arithmetic behind the number: the
+// context multiplier, the overhead lines and the adjusted base they apply to,
+// plus the tier each feature landed in and the price band that tier bought.
+// What the client is quoted always survives — presentLow, presentHigh and
+// singleNumber — as do assumptions, risks, component names and the scores a
+// feature was judged on, which are client-facing per spec.
 //
 // Agentic-only fields are stripped unconditionally (not gated on
 // exposeRatesToClient, which is a pricing-transparency opt-out, not a
@@ -11,15 +14,13 @@
 // descriptions (the global measurements store can carry other projects'
 // task descriptions). These fields don't exist in team-mode estimations, so
 // team-mode output is unaffected.
-function redactScenarioTeam(team) {
-  return team.map(({ rate, ...rest }) => rest);
-}
+const PRICE_WORKING = ['contextMultiplier', 'adjustedBase', 'overheads'];
+const FEATURE_WORKING = ['tier', 'point', 'priceLow', 'priceHigh'];
 
-function redactComputedScenarios(scenarios) {
-  return Object.fromEntries(Object.entries(scenarios).map(([id, s]) => {
-    const { laborCost, toolingCost, taskHours, ...rest } = s;
-    return [id, rest];
-  }));
+const omit = (obj, keys) => Object.fromEntries(Object.entries(obj).filter(([k]) => !keys.includes(k)));
+
+function redactComputedFeatures(features) {
+  return Object.fromEntries(Object.entries(features).map(([id, f]) => [id, omit(f, FEATURE_WORKING)]));
 }
 
 function redactAgenticInputs({ measurementsPath, agentContext, ...rest }) {
@@ -52,13 +53,11 @@ export function redactForClient(estimation) {
   if (estimation.inputs.exposeRatesToClient) return { ...estimation, inputs, computed };
   return {
     ...estimation,
-    inputs: {
-      ...inputs,
-      scenarios: inputs.scenarios.map((s) => ({ ...s, team: redactScenarioTeam(s.team) })),
-    },
+    inputs,
     computed: {
       ...computed,
-      scenarios: redactComputedScenarios(computed.scenarios),
+      features: redactComputedFeatures(computed.features),
+      price: omit(computed.price, PRICE_WORKING),
     },
   };
 }

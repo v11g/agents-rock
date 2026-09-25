@@ -11,17 +11,29 @@ import { openPage } from '../../../analyze-requirements/scripts/lib/cdp.mjs';
 const skip = { skip: !findChrome() && 'no chrome on PATH' };
 const fixture = new URL('./fixtures/booking-inputs.json', import.meta.url).pathname;
 
+// The deliverable gate cross-checks the document's presented range against the
+// computed one, so a fixture variant that prices differently needs the range
+// it actually priced. The booking fixture's own numbers are unchanged.
+function pricedMd(jsonPath) {
+  const md = readFileSync(new URL('./fixtures/estimation-pass.md', import.meta.url), 'utf8');
+  const { presentLow, presentHigh } = JSON.parse(readFileSync(jsonPath, 'utf8')).computed.price;
+  return md.replace(/\| Presented range \|[^|]*\|/,
+    `| Presented range | $${presentLow.toLocaleString('en-US')} – $${presentHigh.toLocaleString('en-US')} |`);
+}
+
 function buildPage(extra = [], inputsPath = fixture) {
   const dir = mkdtempSync(join(tmpdir(), 'estimate-browser-'));
   const scripts = new URL('..', import.meta.url).pathname;
-  const passMd = join(scripts, 'test/fixtures/estimation-pass.md');
-  execFileSync('node', [join(scripts, 'compute.mjs'), '--inputs', inputsPath, '--out', join(dir, 'estimation.json')]);
-  execFileSync('node', [join(scripts, 'render.mjs'), '--json', join(dir, 'estimation.json'), '--md', passMd, '--out', dir, ...extra]);
+  const json = join(dir, 'estimation.json');
+  const md = join(dir, 'estimation.md');
+  execFileSync('node', [join(scripts, 'compute.mjs'), '--inputs', inputsPath, '--out', json]);
+  writeFileSync(md, pricedMd(json));
+  execFileSync('node', [join(scripts, 'render.mjs'), '--json', json, '--md', md, '--out', dir, ...extra]);
   return pathToFileURL(join(dir, 'estimate.html')).href;
 }
 
 // The booking inputs with a mutation applied, for pages whose shape depends
-// on the scenarios.
+// on an input the fixture does not carry (an extra feature, a written reason).
 function buildPageWith(mutate) {
   const dir = mkdtempSync(join(tmpdir(), 'estimate-browser-inputs-'));
   const inputs = JSON.parse(readFileSync(fixture, 'utf8'));
@@ -53,7 +65,7 @@ test('client view hides internals; theme toggle flips the root attribute', skip,
   try {
     await page.eval(`document.getElementById('view-toggle').click()`);
     assert.equal(await page.eval(
-      `getComputedStyle(document.querySelector('#summary .alts')).display`), 'none');
+      `getComputedStyle(document.querySelector('#summary .working')).display`), 'none');
     await page.eval(`document.getElementById('theme-toggle').click()`);
     assert.equal(await page.eval(`document.documentElement.dataset.theme`), 'light');
   } finally { page.close(); }
@@ -262,10 +274,7 @@ test('roadmap bands segment by container; clicking a row drives the breakdown', 
 // rows by container, so the stripe colors cluster the way the band's segments
 // do — the roadmap colors and the breakdown colors tell the same story.
 test('a roadmap click groups the breakdown rows by container', skip, async () => {
-  const dir = mkdtempSync(join(tmpdir(), 'estimate-browser-'));
-  const scripts = new URL('..', import.meta.url).pathname;
-  const inputs = JSON.parse(readFileSync(fixture, 'utf8'));
-  inputs.features.push({
+  const url = buildPageWith((inputs) => inputs.features.push({
     id: 'audit', name: 'Booking audit log', provenance: 'proposed',
     component: 'api', milestone: 'M2 - Notifications',
     scores: {
@@ -279,11 +288,8 @@ test('a roadmap click groups the breakdown rows by container', skip, async () =>
     scoreProvenance: 'proposed',
     tasks: [{ id: 'audit-log', name: 'Audit log writes', category: 'boilerplate',
       o: 4, m: 6, p: 10, confidence: 'MED', assumptions: [], provenance: 'proposed' }],
-  });
-  writeFileSync(join(dir, 'inputs.json'), JSON.stringify(inputs));
-  execFileSync('node', [join(scripts, 'compute.mjs'), '--inputs', join(dir, 'inputs.json'), '--out', join(dir, 'estimation.json')]);
-  execFileSync('node', [join(scripts, 'render.mjs'), '--json', join(dir, 'estimation.json'), '--md', join(scripts, 'test/fixtures/estimation-pass.md'), '--out', dir]);
-  const page = await openPage(pathToFileURL(join(dir, 'estimate.html')).href);
+  }));
+  const page = await openPage(url);
   try {
     const ids = () => page.eval(
       `[...document.querySelectorAll('#panel-estimate tr.feat-row')].map((r) => r.dataset.id)`);
@@ -443,15 +449,19 @@ test('score cells explain themselves: anchor + cite on hover, note under the nam
   } finally { page.close(); }
 });
 
-test('⚠ marks a feature whose PERT hours fall outside its tier band', skip, async () => {
+// The hours calibration bands no longer bound anything: a tier is 70% risk,
+// uncertainty and dependencies and only 10% size, so a small-but-hairy feature
+// is legitimately XL on hours nobody would call XL. The cross-check that
+// compared the two fired on exactly that shape, so it is gone — inputs.calibration
+// stays as QUICK depth's PERT seed and nothing on the page reads it.
+test('the effort cell carries no tier-band cross-check', skip, async () => {
   const page = await openPage(buildPageWith((inputs) => {
-    // reminders is S (20–60 h); push its only task to ~120 h
+    // reminders scores S; push its only task far past the S hour band
     inputs.features[1].tasks[0] = { ...inputs.features[1].tasks[0], o: 90, m: 120, p: 160 };
   }));
   try {
-    const warn = await page.eval(`document.querySelector('#panel-estimate tr[data-id="reminders"] .oob')?.title ?? ''`);
-    assert.match(warn, /outside S band 20–60 h/);
-    assert.equal(await page.eval(`!!document.querySelector('#panel-estimate tr[data-id="booking"] .oob')`), false);
+    assert.equal(await page.eval(`document.querySelectorAll('#panel-estimate .oob').length`), 0);
+    assert.equal(await page.eval(`document.querySelector('#panel-estimate tr[data-id="reminders"] .bd-num').textContent`), '121.67');
     assert.deepEqual(page.errors, []);
   } finally { page.close(); }
 });
@@ -732,48 +742,75 @@ test('printing shows both tables, named', skip, async () => {
   } finally { page.close(); }
 });
 
-// The Summary is the one place team, months and cost appear. The booking
-// fixture recommends the AI-assisted senior+mid pair; the unaided trio is a
-// different roster, so it is an alternative row, not a collapsed line.
-test('the summary states the recommended scenario once and lists team alternatives', skip, async () => {
+// The Summary is the one place the price appears, and it is the presented
+// range — the booking fixture's p50 and p95 rounded to $10,000 and $14,000,
+// with $12,000 as the single number to give when one is demanded.
+test('the summary states the presented range and the single number', skip, async () => {
   const page = await openPage(buildPage());
   try {
-    const lead = await page.eval(`document.querySelector('#summary .lead').textContent`);
-    assert.equal(lead, '2 engineers (senior · mid), AI-assisted');
+    assert.equal(await page.eval(`document.querySelector('#summary .lead').textContent`), 'Presented range');
     const figures = await page.eval(`document.querySelector('#summary .figures').textContent`);
-    assert.match(figures, /0\.40 months/);
-    assert.match(figures, /\$5,993/);
-    const alts = await page.eval(`[...document.querySelectorAll('#summary .alts tbody tr td:first-child')].map((c) => c.textContent)`);
-    assert.deepEqual(alts, ['3 engineers (mid · mid · junior), humans unaided']);
-    assert.equal(await page.eval(`document.querySelector('#summary .insight')`), null); // slower and pricier: no insight
+    assert.equal(figures, '$10,000–$14,000');
+    const meta = await page.eval(cellTexts('#summary p.meta'));
+    assert.equal(meta[0], 'single number, if one is required: $12,000');
+    assert.equal(meta[1], 'contingency 15% · implied accuracy 24%');
+    assert.ok(meta.some((m) => m.startsWith('91 h to plan')), `no planning hours line: ${meta}`);
+    // nothing on this page is a duration, in any section
+    assert.doesNotMatch(await page.eval(`document.body.textContent`), /month/i);
     assert.deepEqual(page.errors, []);
   } finally { page.close(); }
 });
 
-// Same roster, AI on vs off: not a staffing choice, so it collapses to one
-// line under the recommendation instead of an alternatives table.
-test('a same-team AI-only variant collapses to one line, not a table', skip, async () => {
-  const page = await openPage(buildPageWith((inputs) => {
-    const rec = inputs.scenarios.find((s) => s.id === inputs.recommendedScenario);
-    const other = inputs.scenarios.find((s) => s.id !== rec.id);
-    other.team = rec.team.map((m) => ({ ...m }));
-  }));
+// The working behind the number — the multiplier, the overhead lines, the
+// tier each feature's score bought — is internal-only. --client-only strips
+// the whole block; the internal page shows it under the range.
+test('the price working sits under the summary, internal-only', skip, async () => {
+  const page = await openPage(buildPage());
   try {
-    assert.equal(await page.eval(`document.querySelector('#summary .alts table')`), null);
-    const line = await page.eval(`document.querySelector('#summary .alts .meta').textContent`);
-    assert.match(line, /^Without AI assistance: 0\.\d\d months · \$[\d,]+ \(\+0\.\d\d mo · \+\$[\d,]+\)$/);
+    const captions = await page.eval(cellTexts('#summary .working caption'));
+    assert.deepEqual(captions, ['Price build-up', 'Tier Reference']);
+    const rows = await page.eval(cellTexts('#summary .working tbody tr td:first-child'));
+    assert.deepEqual(rows.slice(0, 5),
+      ['Feature prices', 'Context multiplier', 'Adjusted base', 'Overheads', 'Contingency']);
+    assert.match(await page.eval(`document.querySelector('#summary .working').textContent`), /×1\.4/);
     assert.deepEqual(page.errors, []);
   } finally { page.close(); }
 });
 
-// One scenario is the default interview answer: no alternatives block at all.
-test('a single-scenario estimate shows the summary with no alternatives block', skip, async () => {
+test('the client-only page shows the range and no working at all', skip, async () => {
+  const page = await openPage(buildPage(['--client-only']));
+  try {
+    assert.equal(await page.eval(`document.querySelector('#summary .figures').textContent`), '$10,000–$14,000');
+    assert.equal(await page.eval(`document.querySelector('#summary .working').children.length`), 0);
+    assert.equal(await page.eval(`document.querySelectorAll('#panel-scoring .tier').length`), 0);
+    assert.deepEqual(page.errors, []);
+  } finally { page.close(); }
+});
+
+// The roadmap draws computed.roadmap's shares: M1 is 76% of the booking
+// fixture's effort and M2 the remaining 24%, and neither is a duration.
+test('the roadmap bars are labelled with their share of effort', skip, async () => {
+  const page = await openPage(buildPage());
+  try {
+    assert.deepEqual(await page.eval(cellTexts('#roadmap .roadmap-share')), ['76%', '24%']);
+    const widths = await page.eval(
+      `[...document.querySelectorAll('#roadmap .roadmap-band')].map((b) => b.style.width)`);
+    assert.deepEqual(widths, ['76%', '24%']);
+    assert.equal(await page.eval(`document.querySelector('#roadmap .roadmap-axis-unit').textContent`), '% of effort');
+    assert.deepEqual(page.errors, []);
+  } finally { page.close(); }
+});
+
+// Free text about the approach taken, when the writer left any. It explains a
+// judgment call — delivery mode, technique — not a choice between prices.
+test('a written approach note renders under the summary figures', skip, async () => {
   const page = await openPage(buildPageWith((inputs) => {
-    inputs.scenarios = inputs.scenarios.filter((s) => s.id === inputs.recommendedScenario);
+    inputs.recommendedReason = 'the client has one senior available';
   }));
   try {
-    assert.equal(await page.eval(`document.querySelector('#summary .alts')`), null);
-    assert.equal(await page.eval(`document.querySelector('#summary .lead').textContent`), '2 engineers (senior · mid), AI-assisted');
+    assert.equal(await page.eval(`document.querySelector('#summary .why').textContent`),
+      'Approach: the client has one senior available.');
+    assert.equal(await page.eval(`document.querySelector('#summary .why')?.closest('[data-internal]')`), null);
     assert.deepEqual(page.errors, []);
   } finally { page.close(); }
 });

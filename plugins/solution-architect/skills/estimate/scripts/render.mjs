@@ -43,7 +43,7 @@ if (findings.length) {
 // quoted — so it rides along in both renders.
 const figures = typeof args.figures === 'string' ? JSON.parse(readFileSync(args.figures, 'utf8')) : null;
 const base = args['client-only'] ? redactForClient(estimation) : estimation;
-const dataForEmbed = figures ? { ...base, figures: { cost: figures.cost, months: figures.months } } : base;
+const dataForEmbed = figures ? { ...base, figures: { cost: figures.cost, singleNumber: figures.singleNumber } } : base;
 // Companion mode: --viewer carries the caller-known path back to the analyze-requirements
 // viewer. It sits in the header's internal range, so the client render (which
 // must not point at an internal document set) strips it with everything else.

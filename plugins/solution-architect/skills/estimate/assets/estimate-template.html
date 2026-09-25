@@ -5,7 +5,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="description" content="Interactive project estimate with scenario comparison">
+<meta name="description" content="Interactive project estimate with a scored price range">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' rx='3' fill='%230f766e'/%3E%3C/svg%3E">
 <title><!-- slot:TITLE --> — Estimate</title>
 <style>
@@ -100,8 +100,8 @@ main section h2, main aside h2 {
 }
 .sec-head { display:flex; align-items:center; gap:.45rem; margin:0 0 .8rem; }
 .sec-head h2 { margin:0; }
-/* summary: the estimate's headline — team, months and cost stated once, then
-   the committed alternatives as one small table (internal view only). */
+/* summary: the estimate's headline — the presented price range stated once,
+   then the working behind it as small tables (internal view only). */
 #summary .lead { font-size:1.02rem; font-weight:600; margin:0 0 .25rem; }
 #summary .figures {
   font-size:1.7rem; font-weight:600; letter-spacing:-.02em; line-height:1.15;
@@ -111,17 +111,13 @@ main section h2, main aside h2 {
 #summary .range, #summary .meta {
   margin:.15rem 0; font-family:'IBM Plex Mono',monospace; font-size:.78rem; color:var(--ink-dim);
 }
-#summary .alts { margin-top:.9rem; padding-top:.7rem; border-top:1px solid var(--border); }
-#summary .alts caption {
+#summary .working { margin-top:.9rem; padding-top:.7rem; border-top:1px solid var(--border); }
+#summary .working caption {
   text-align:left; font-size:.72rem; text-transform:uppercase; letter-spacing:.05em;
   color:var(--ink-dim); margin-bottom:.3rem;
 }
-#summary .why { font-size:.84rem; margin:0 0 .5rem; }
-#summary .delta {
-  font-family:'IBM Plex Mono',monospace; font-size:.72rem; color:var(--warn);
-  background:var(--warn-soft); padding:.12rem .4rem; border-radius:.25rem;
-}
-#summary .insight { font-size:.86rem; margin:.6rem 0 0; }
+#summary .working table + table { margin-top:1.1rem; }
+#summary .why { font-size:.84rem; margin:.5rem 0 0; }
 details.help { position:relative; display:inline-block; line-height:1; }
 details.help summary {
   list-style:none; cursor:help; width:1.05rem; height:1.05rem; border-radius:50%;
@@ -149,11 +145,11 @@ td details.help > p, caption details.help > p { left:auto; right:0; }
 #method li { margin-bottom:.35rem; }
 #method .sources { font-size:.78rem; color:var(--ink-dim); margin:0; }
 #method .sources span { display:block; margin-bottom:.2rem; }
-/* roadmap: Gantt-style shared axis. Every row is a flex triple (label |
-   track | months) with the same label/months widths as the axis strip below
-   it, so a given month lines up under the same x-position in every row's
-   track and in the axis ticks — one shared coordinate system, not a
-   per-row axis. */
+/* roadmap: shares of total effort on one shared axis. Every row is a flex
+   triple (label | track | share) with the same label/share widths as the axis
+   strip below it, so a given percentage lines up under the same x-position in
+   every row's track and in the axis ticks — one shared coordinate system, not
+   a per-row axis. */
 .roadmap-chart { display:flex; flex-direction:column; }
 .roadmap-row { display:flex; align-items:center; gap:.7rem; padding:.4rem 0; cursor:pointer; }
 .roadmap-row:hover { background:var(--accent-soft); }
@@ -171,13 +167,13 @@ td details.help > p, caption details.help > p { left:auto; right:0; }
   display:flex; overflow:hidden; /* container segments fill it left to right */
 }
 .roadmap-seg { height:100%; }
-.roadmap-months {
+.roadmap-share {
   flex:0 0 auto; min-width:4.6rem; text-align:right;
   font-family:'IBM Plex Mono',monospace; font-size:.72rem;
   color:var(--ink-dim); font-variant-numeric:tabular-nums;
 }
-/* the axis mirrors the row's flex geometry (same label/months widths) so its
-   ticks land under the matching month position in every track above. */
+/* the axis mirrors the row's flex geometry (same label/share widths) so its
+   ticks land under the matching percentage in every track above. */
 .roadmap-axis {
   display:flex; align-items:flex-end; gap:.7rem; height:1rem; margin-top:.6rem;
   padding-top:.4rem; border-top:1px solid var(--border);
@@ -282,7 +278,6 @@ td.ct-edge { box-shadow:inset 4px 0 0 var(--ct-color); }
 .tier.l { background:var(--warn-soft); color:var(--warn); }
 .tier.xl { background:rgba(185,28,28,.1); color:var(--bad); }
 #feature-table .edge { color:var(--warn); font-size:.7rem; margin-left:.15rem; cursor:help; }
-#feature-table .oob { color:var(--warn); margin-left:.3rem; cursor:help; }
 #feature-table .feat-note { margin-left:1.4rem; }
 #feature-table details.guide { margin:.9rem 0 0; border-top:1px solid var(--border); padding-top:.7rem; }
 #feature-table details.guide summary { cursor:pointer; font-size:.78rem; font-weight:600; color:var(--ink-dim); }
@@ -388,79 +383,30 @@ const badge = document.getElementById('confidence-badge');
 badge.textContent = DATA.computed.projectConfidence;
 badge.className = `${DATA.computed.projectConfidence.toLowerCase()} ${confLevel(DATA.computed.projectConfidence)}`;
 
-// Summary: the recommended scenario stated once — team, AI assistance,
-// months, cost — then the committed alternatives as one small table. Every
-// number is read from estimation.json; nothing is recomputed on the page.
-const recScenario = () => DATA.inputs.scenarios.find((s) => s.id === DATA.inputs.recommendedScenario);
-const sameTeam = (a, b) => a.team.length === b.team.length
-  && a.team.every((m, i) => m.seniority === b.team[i].seniority && m.rate === b.team[i].rate);
-const byMonths = (a, b) => DATA.computed.scenarios[a.id].months - DATA.computed.scenarios[b.id].months;
+// Summary: the price, stated once — the range this scope is presented at,
+// the single number if one is demanded, and how wide the spread behind them
+// is. Every number is read from estimation.json's price block; nothing is
+// recomputed on the page, and nothing here is a duration: the model prices
+// scope, it does not schedule it.
+const pctText = (v) => `${Math.round(v * 100)}%`;
 
-function scenarioLabel(s) {
-  const n = s.team.length;
-  const who = n === 1 ? `1 ${s.team[0].seniority} engineer`
-    : `${n} engineers (${s.team.map((m) => m.seniority).join(' · ')})`;
-  return `${who}, ${s.aiAssisted ? 'AI-assisted' : 'humans unaided'}`;
-}
-
-// Signed month and cost deltas against the recommended scenario.
-function deltaText(c, rec) {
-  const dm = c.months - rec.months;
-  const dc = c.totalCost - rec.totalCost;
-  const sign = (v) => (v >= 0 ? '+' : '−');
-  return `${sign(dm)}${Math.abs(dm).toFixed(2)} mo · ${sign(dc)}${fmtMoney(Math.abs(dc))}`;
-}
-
-function altRow(s, rec) {
-  const c = DATA.computed.scenarios[s.id];
-  return `<tr><td>${scenarioLabel(s)}</td><td class="num">${c.months.toFixed(2)}</td>
-    <td class="num">${fmtMoney(c.totalCost)}</td><td><span class="delta">${deltaText(c, rec)}</span></td></tr>`;
-}
-
-// A same-roster scenario that differs only in AI assistance is one line, not
-// a row: the roster is what a reader chooses between.
-function aiVariantLine(s, rec) {
-  const c = DATA.computed.scenarios[s.id];
-  return `<p class="meta">${s.aiAssisted ? 'With' : 'Without'} AI assistance: ${c.months.toFixed(2)} months · `
-    + `${fmtMoney(c.totalCost)} (${deltaText(c, rec)})</p>`;
-}
-
-// One sentence, only when an alternative beats the recommendation on both
-// axes — the page must not bury a dominated choice.
-function insightLine(alts, rec) {
-  const c = (s) => DATA.computed.scenarios[s.id];
-  const win = alts.find((s) => c(s).months < rec.months && c(s).totalCost < rec.totalCost);
-  if (!win) return '';
-  return `<p class="insight">&#9656; ${scenarioLabel(win)} finishes ${(rec.months - c(win).months).toFixed(2)} months `
-    + `sooner for ${fmtMoney(rec.totalCost - c(win).totalCost)} less than the recommended plan.</p>`;
-}
-
-function summaryAlts(rec, recC) {
-  const others = DATA.inputs.scenarios.filter((s) => s.id !== rec.id);
-  if (!others.length) return '';
-  const teams = others.filter((s) => !sameTeam(s, rec)).sort(byMonths);
-  const variants = others.filter((s) => sameTeam(s, rec)).map((s) => aiVariantLine(s, recC)).join('');
-  const table = teams.length ? `<table><caption>Alternatives</caption><thead><tr><th>Team</th>
-    <th class="num">Months</th><th class="num">Cost</th><th></th></tr></thead>
-    <tbody>${teams.map((s) => altRow(s, recC)).join('')}</tbody></table>` : '';
-  const why = DATA.inputs.recommendedReason
-    ? `<p class="why">Recommended because ${esc(DATA.inputs.recommendedReason)}.</p>` : '';
-  return `<div class="alts" ${INTERNAL_ATTR}>${why}${variants}${table}${insightLine(teams, recC)}</div>`;
-}
-
-// The client-facing range from proposal-figures.json, when render.mjs was
-// handed it — the number the client is actually quoted.
+// The client-facing figures from proposal-figures.json, when render.mjs was
+// handed them — what the client is actually quoted, cost only.
 function summaryRange() {
   const f = DATA.figures;
-  if (!f?.cost || !f?.months) return '';
-  return `<p class="range">range ${f.months.low} – ${f.months.high} months · ${fmtMoney(f.cost.low)} – ${fmtMoney(f.cost.high)}</p>`;
+  if (!f?.cost) return '';
+  const single = f.singleNumber ? ` &middot; single number ${fmtMoney(f.singleNumber)}` : '';
+  return `<p class="range">proposal ${fmtMoney(f.cost.low)} &ndash; ${fmtMoney(f.cost.high)}${single}</p>`;
 }
 
-function summarySize(recC) {
+// Hours survive as delivery planning only — they size the backlog and they
+// never convert into the price above them.
+function summarySize() {
   const feats = DATA.inputs.features;
+  const hours = feats.reduce((n, f) => n + DATA.computed.features[f.id].hours, 0);
   const tasks = feats.reduce((n, f) => n + f.tasks.length, 0);
   const milestones = new Set(feats.map((f) => f.milestone).filter(Boolean)).size;
-  const parts = [`${Math.round(recC.hours).toLocaleString()} h`, `${feats.length} features`, `${tasks} tasks`];
+  const parts = [`${Math.round(hours).toLocaleString()} h to plan`, `${feats.length} features`, `${tasks} tasks`];
   if (milestones) parts.push(`${milestones} milestones`);
   return parts.join(' · ');
 }
@@ -472,25 +418,35 @@ function summaryMethod() {
 }
 
 function summaryRisks() {
-  return `${DATA.inputs.risks.length} risks priced in (${DATA.computed.riskBufferHours} h) · `
-    + `${DATA.inputs.assumptions.length} assumptions`;
+  return `${DATA.inputs.risks.length} risks · ${DATA.inputs.assumptions.length} assumptions`;
+}
+
+// Free text the writer chose to leave about the approach — delivery mode,
+// technique, anything else worth a sentence (references/writing.md §1). It
+// explains a judgment call, not a choice between priced options.
+function summaryApproach() {
+  const why = DATA.inputs.recommendedReason;
+  return why ? `<p class="why">Approach: ${esc(why)}.</p>` : '';
 }
 
 function renderSummary() {
   const el = document.getElementById('summary');
   if (!el) return;
-  const rec = recScenario();
-  const recC = DATA.computed.scenarios[rec.id];
+  const p = DATA.computed.price;
   el.innerHTML = secHead('Summary',
-    'The recommended way to deliver this scope, stated once: team, months and cost from the '
-    + 'committed estimate. Alternatives compare other rosters against it.')
-    + `<p class="lead">${scenarioLabel(rec)}</p>
-    <p class="figures">${recC.months.toFixed(2)} months<span class="sep">&middot;</span>${fmtMoney(recC.totalCost)}</p>
+    'What this scope is priced at, stated once: the range presented to the client, the '
+    + 'single number to give if one is demanded, and the contingency and spread behind '
+    + 'both. Shares of effort are shown below; no duration is produced anywhere.')
+    + `<p class="lead">Presented range</p>
+    <p class="figures">${fmtMoney(p.presentLow)}<span class="sep">&ndash;</span>${fmtMoney(p.presentHigh)}</p>
+    <p class="meta">single number, if one is required: ${fmtMoney(p.singleNumber)}</p>
+    <p class="meta">contingency ${pctText(p.contingencyRate)} · implied accuracy ${pctText(p.impliedAccuracy)}</p>
     ${summaryRange()}
-    <p class="meta">${summarySize(recC)}</p>
+    <p class="meta">${summarySize()}</p>
     <p class="meta">${summaryMethod()}</p>
     <p class="meta">${summaryRisks()}</p>
-    ${summaryAlts(rec, recC)}`;
+    ${summaryApproach()}
+    <div class="working" id="price-working" ${INTERNAL_ATTR}></div>`;
 }
 
 const fmtMoney = (v) => `$${Math.round(v).toLocaleString()}`;
@@ -533,6 +489,10 @@ function ctEdge(component) {
 // from hours; Σ and tier were copied into computed.features by rollup.mjs.
 // A page with no scored feature (QUICK depth) shows the four estimate columns.
 const SCORED = DATA.inputs.features.length > 0 && DATA.inputs.features.every((f) => f.scores);
+// The tier is the price band a score bought, so it is pricing working: a
+// --client-only render has it stripped out of computed.features entirely
+// (redact.mjs), and the column goes with it rather than rendering blanks.
+const TIERED = SCORED && DATA.inputs.features.every((f) => DATA.computed.features[f.id].tier);
 const SCORE_KEYS = ['tech', 'size', 'deps', 'unc', 'risk'];
 const SCORE_LABELS = { tech: 'Tech', size: 'Size', deps: 'Deps', unc: 'Unc', risk: 'Risk' };
 const EDGE_TOTALS = [11, 17, 22];
@@ -567,9 +527,11 @@ function bdCols(tab) {
   const scoreCols = SCORE_KEYS.map((k) => ({
     key: k, label: SCORE_LABELS[k], cls: 'score', val: (f) => f.scores[k].n, hint: `sort by ${SCORE_LABELS[k]} score`,
   }));
-  return [BASE_COLS.name, ...scoreCols,
-    { key: 'total', label: '&Sigma;', cls: 'score', val: (f) => f.scoreTotal, hint: 'sum of the five scores' },
-    { key: 'tier', label: 'Tier', cls: 'score', val: (f) => f.scoreTotal, hint: 'S ≤ 11 / M ≤ 17 / L ≤ 22 / XL above' }];
+  const cols = [BASE_COLS.name, ...scoreCols,
+    { key: 'total', label: '&Sigma;', cls: 'score', val: (f) => f.scoreTotal, hint: 'sum of the five scores' }];
+  if (!TIERED) return cols;
+  return [...cols, { key: 'tier', label: 'Tier', cls: 'score', internal: true,
+    val: (f) => f.scoreTotal, hint: 'S ≤ 11 / M ≤ 17 / L ≤ 22 / XL above' }];
 }
 
 const bdTabs = () => (SCORED ? TABS.map(([id]) => id) : ['estimate']);
@@ -579,12 +541,10 @@ function breakdownData() {
     const c = DATA.computed.features[f.id];
     const conf = f.tasks.reduce(
       (w, t) => (CONF_RANK[t.confidence] > CONF_RANK[w] ? t.confidence : w), 'HIGH');
-    const band = c.tier ? DATA.inputs.calibration?.[c.tier] : undefined;
     return { id: f.id, name: f.name, milestone: f.milestone, component: f.component, provenance: f.provenance,
       tasks: f.tasks, conf, hours: c.hours, low: c.low, high: c.high, spread: c.high - c.low,
       scores: f.scores, scoreNote: f.scoreNote, scoreProvenance: f.scoreProvenance,
-      scoreTotal: c.scoreTotal, tier: c.tier,
-      outOfBand: band && (c.hours < band[0] || c.hours > band[1]) ? band : null };
+      scoreTotal: c.scoreTotal, tier: c.tier };
   });
 }
 
@@ -768,7 +728,7 @@ function bdHead(tab) {
     const active = !bdState.group && key === c.key;
     const aria = active ? (dir === 1 ? 'ascending' : 'descending') : 'none';
     const arrow = active ? (dir === 1 ? ' &#9650;' : ' &#9660;') : '';
-    return `<th aria-sort="${aria}"${c.cls ? ` class="${c.cls}"` : ''}>
+    return `<th aria-sort="${aria}"${c.cls ? ` class="${c.cls}"` : ''}${c.internal ? ` ${INTERNAL_ATTR}` : ''}>
       <button type="button" data-sort="${c.key}" data-panel="${tab}" title="${c.hint}">${c.label}${arrow}</button></th>`;
   }).join('')}</tr></thead>`;
 }
@@ -792,14 +752,13 @@ function scoreCells(f) {
   });
   const edge = EDGE_TOTALS.includes(f.scoreTotal)
     ? ' <span class="edge" title="one point from the next tier">&#9873;</span>' : '';
-  return `${cells.join('')}<td class="score total">${f.scoreTotal}${edge}</td>
-    <td class="score"><span class="tier ${f.tier.toLowerCase()}">${f.tier}</span></td>`;
+  const tier = TIERED
+    ? `<td class="score" ${INTERNAL_ATTR}><span class="tier ${f.tier.toLowerCase()}">${f.tier}</span></td>` : '';
+  return `${cells.join('')}<td class="score total">${f.scoreTotal}${edge}</td>${tier}`;
 }
 
 function hoursCell(f, max) {
-  const warn = f.outOfBand
-    ? `<span class="oob" title="PERT ${f.hours} h outside ${f.tier} band ${f.outOfBand[0]}–${f.outOfBand[1]} h">&#9888;</span>` : '';
-  return `<td><span class="bd-cell">${bdBar(f, max)}<span class="bd-num">${f.hours}</span>${warn}</span></td>`;
+  return `<td><span class="bd-cell">${bdBar(f, max)}<span class="bd-num">${f.hours}</span></span></td>`;
 }
 
 function estimateCells(f) {
@@ -857,7 +816,7 @@ function rationaleRows(f) {
     const cite = s.cite ? `<span class="cite" ${INTERNAL_ATTR}>${esc(s.cite)}</span>` : '';
     return `<dt>${SCORE_LABELS[k]} ${s.n}</dt><dd>${esc(s.anchor)}${cite}</dd>`;
   }).join('');
-  return `<tr class="rat-row"><td${ctEdge(f.component)} colspan="${SCORE_KEYS.length + 3}">
+  return `<tr class="rat-row"><td${ctEdge(f.component)} colspan="${bdCols('scoring').length}">
     <dl class="rationale">${items}</dl></td></tr>`;
 }
 
@@ -1006,21 +965,13 @@ function onRoadmapClick(e) {
   document.getElementById('feature-table')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
-// Ticks are whole months (0, 1, 2…) once the span is long enough for that to
-// read as a timeline; below that a whole-month grid would be a bare "0", so
-// fall back to each band's own start/end. Either way ticks are computed once
-// and shared by every row's gridlines and the axis strip below them — one
-// coordinate system, not a per-row axis.
-function roadmapTicks(total, roadmap) {
-  if (total >= 2) {
-    const whole = [];
-    for (let m = 0; m <= Math.floor(total); m++) whole.push(m);
-    return whole;
-  }
-  return [...new Set(roadmap.flatMap((b) => [b.startMonths, b.endMonths]))].sort((a, b) => a - b);
-}
+// The roadmap's scale is a share of the whole scope, not elapsed time: the
+// milestone shares computed.roadmap carries sum to 1, so the axis is a fixed
+// 0–100% and every row's gridlines and the axis strip below them read off the
+// same quarters — one coordinate system, not a per-row axis.
+const SHARE_TICKS = [0, 25, 50, 75, 100];
 
-const tickPct = (m, total) => (total > 0 ? (m / total) * 100 : 0);
+const edgeStyle = (pct, pin) => (pct <= 0 ? `left:0${pin}` : pct >= 100 ? `right:0${pin}` : `left:${pct}%`);
 
 // Milestone names and feature lists are the only free text the roadmap draws, and
 // they now land in an attribute as well as in the body — so both are escaped
@@ -1046,60 +997,49 @@ function bandSegments(band) {
       title="${esc(`${names[c] ?? c} · ${h.toFixed(2)}h (${Math.round((h / sum) * 100)}%)`)}"></span>`).join('');
 }
 
-// total, names and ticks are one thing — the chart's scale, shared by every row
-// and by the axis beneath them — so they travel together.
-function roadmapRow(band, scale) {
-  const { total, names, ticks } = scale;
-  const left = (band.startMonths / total) * 100;
-  const width = ((band.endMonths - band.startMonths) / total) * 100;
-  const gridlines = ticks.map((m) => {
-    const pct = tickPct(m, total);
-    const style = pct <= 0 ? 'left:0' : pct >= 100 ? 'right:0' : `left:${pct}%`;
-    return `<span class="roadmap-gridline" style="${style}"></span>`;
-  }).join('');
+const ROADMAP_GRIDLINES = SHARE_TICKS
+  .map((t) => `<span class="roadmap-gridline" style="${edgeStyle(t, '')}"></span>`).join('');
+
+// Every bar starts at the left edge: the rows are shares of one whole, read
+// against each other, and sliding them along an axis would draw a sequence
+// in time that nothing computed.
+function roadmapRow(band, names) {
   // 150px of label column against "M1 - Foundation: the governed write path": every
-  // row clips, and a clipped Gantt label names nothing. Widening the column would
-  // cost the axis the span it needs, so each label carries its own full text as a
-  // hover title instead.
+  // row clips, and a clipped label names nothing. Widening the column would cost the
+  // bars the span they need, so each label carries its own full text as a hover
+  // title instead.
   const feats = band.features.map((id) => names[id]);
   return `<div class="roadmap-row" data-milestone="${esc(band.milestone)}">
     <div class="roadmap-label"><span class="roadmap-name" title="${esc(band.milestone)}">${esc(band.milestone)}</span>
       <span class="roadmap-feature-names" title="${esc(feats.join(' · '))}">${feats.map(esc).join(' &middot; ')}</span></div>
-    <div class="roadmap-track">${gridlines}<span class="roadmap-band" style="left:${left}%;width:${width}%">${bandSegments(band)}</span></div>
-    <span class="roadmap-months">${band.startMonths}&ndash;${band.endMonths} mo</span></div>`;
+    <div class="roadmap-track">${ROADMAP_GRIDLINES}<span class="roadmap-band" style="left:0;width:${(band.share * 100).toFixed(2)}%">${bandSegments(band)}</span></div>
+    <span class="roadmap-share">${pctText(band.share)}</span></div>`;
 }
 
 // The two edge ticks are pinned to the track's own edges instead of centered,
 // so they never overhang the section.
-function roadmapAxis({ total, ticks }) {
-  const tick = (m) => {
-    const pct = tickPct(m, total);
-    const style = pct <= 0 ? 'left:0;transform:none'
-      : pct >= 100 ? 'right:0;transform:none' : `left:${pct}%`;
-    return `<span style="${style}">${m}</span>`;
-  };
+function roadmapAxis() {
+  const tick = (t) => `<span style="${edgeStyle(t, ';transform:none')}">${t}</span>`;
   return `<div class="roadmap-axis"><span class="roadmap-axis-spacer"></span>
-    <div class="roadmap-axis-ticks">${ticks.map(tick).join('')}</div>
-    <span class="roadmap-axis-unit">months</span></div>`;
+    <div class="roadmap-axis-ticks">${SHARE_TICKS.map(tick).join('')}</div>
+    <span class="roadmap-axis-unit">% of effort</span></div>`;
 }
 
-// Committed numbers only: the roadmap draws the recommended scenario as
-// computed — nothing on this page recomputes a month or a cost.
+// Committed numbers only: the roadmap draws computed.roadmap as computed —
+// milestones in delivery order, each sized by its share of total effort.
 function renderRoadmap() {
   const el = document.getElementById('roadmap');
   if (!el) return;
-  const roadmap = DATA.computed.scenarios[DATA.inputs.recommendedScenario]?.roadmap;
+  const roadmap = DATA.computed.roadmap;
   if (!roadmap) { el.remove(); return; }
-  const total = roadmap[roadmap.length - 1].endMonths;
   const names = Object.fromEntries(DATA.inputs.features.map((f) => [f.id, f.name]));
-  const scale = { total, names, ticks: roadmapTicks(total, roadmap) };
   el.innerHTML = secHead('Roadmap',
-    'Sequential delivery by the recommended scenario team. Bands are relative months from '
-    + 'kickoff, not calendar dates; each milestone\'s width is its share of the work. Band '
+    'Milestones in delivery order, each bar its share of total effort. Shares are not '
+    + 'durations and they are not dates — this estimate produces no timeline. Band '
     + 'colors are the containers the milestone touches (same palette as the chart above). '
     + 'Click a row to filter the breakdown below to that milestone, grouped by container.')
-    + `<div class="roadmap-chart">${roadmap.map((b) => roadmapRow(b, scale)).join('')}`
-    + `${roadmapAxis(scale)}</div>`;
+    + `<div class="roadmap-chart">${roadmap.map((b) => roadmapRow(b, names)).join('')}`
+    + `${roadmapAxis()}</div>`;
 }
 
 // Committed numbers only, like every section: expected hours summed per
@@ -1157,8 +1097,9 @@ function renderRegister() {
   if (!el) return;
   const riskRows = DATA.inputs.risks.map((r) => `<tr><td>${r.name}</td><td class="num">${Math.round(r.probability * 100)}%</td><td class="num">${r.impactHours}h</td></tr>`).join('');
   el.innerHTML = `<table><caption>Risk register ${help(
-    'Each risk adds probability &times; impact hours to the risk buffer, so unlikely-but-costly '
-    + 'events are priced in without padding every task.')}</caption>
+    'The named risks behind the risk scores. Risk is priced through those scores and the '
+    + 'contingency they size, never by adding these hours to a total — the register is what '
+    + 'the judgment rests on, and what to watch during delivery.')}</caption>
     <thead><tr><th>Risk</th><th class="num">Probability</th><th class="num">Impact</th></tr></thead>
     <tbody>${riskRows}</tbody></table>`;
 }
@@ -1169,31 +1110,33 @@ function renderRegister() {
 function renderMethod() {
   const el = document.getElementById('method');
   if (!el) return;
-  const pct = (v) => `${Math.round(v * 100)}%`;
   el.innerHTML = `<details class="method-fold" open><summary><h2>Method</h2>
     <span class="tech">${DATA.inputs.technique} &middot; depth ${DATA.inputs.depth}</span>
     <span class="chev" aria-hidden="true">&#9656;</span></summary>
     <ul>
-      <li>Each task is sized with three points (optimistic / most-likely / pessimistic);
-        expected hours use PERT: E = (O + 4M + P) / 6, spread &sigma; = (P &minus; O) / 6.</li>
-      <li>Two buffers are added once, at project level: an estimate-spread buffer
-        (&radic;&Sigma;&sigma;&sup2; across tasks) and a risk buffer (&Sigma; probability &times;
-        impact from the risk register). Overhead adds ${pct(DATA.inputs.overheadPct)} for
-        meetings, review, and coordination.</li>
-      <li>AI-assisted scenarios reduce each task by its category — boilerplate 50&ndash;80%,
-        logic 20&ndash;40%, novel 0&ndash;10% — blended as (AO + 2AR + TR) / 4, plus
-        ${pct(DATA.inputs.verificationPct)} verification overhead on AI output. There is no
-        blanket project-wide multiplier: the reduction is judged per task.</li>
-      <li>Seniority scales base effort (junior +15%, senior &minus;15%); team capacity pays a
-        10% coordination tax per engineer added.</li>
-      <li>The confidence badge is the worst task confidence on the largest feature —
+      <li>Price comes from judgment, not from hours. Each feature is scored 1&ndash;5 on five
+        factors &mdash; tech complexity, size, dependencies, uncertainty, risk &mdash; and the
+        weighted score lands it in a price band, interpolated so neighbouring scores never
+        jump a cliff. Uncertainty carries the heaviest weight and size the lightest.</li>
+      <li>The feature prices are summed, scaled by one context multiplier for the delivery
+        situation (codebase, stack familiarity, spec quality, compliance, client decisions),
+        then loaded with project overheads &mdash; foundation, discovery, UX, QA, devops,
+        docs, PM and integration &mdash; and a contingency sized by the average uncertainty
+        and risk across the features.</li>
+      <li>The spread is each feature's own uncertainty combined in quadrature, so a project
+        of many small confident features is presented tighter than one large vague one. The
+        presented range runs from the median to the 95th percentile, rounded.</li>
+      <li>Tasks are still sized with three points (optimistic / most-likely / pessimistic)
+        and PERT: E = (O + 4M + P) / 6, spread &sigma; = (P &minus; O) / 6. Those hours plan
+        the delivery; they never convert into the price, and no duration is produced.</li>
+      <li>The confidence badge is the worst task confidence on the largest feature &mdash;
         an estimate is only as strong as its critical path.</li>
     </ul>
     <p class="sources"><span>PERT and three-point estimation (US Navy, 1958), buffers, ranges,
       and risk registers — Atomic Object, atomicobject.com/client-resources/better-custom-software-estimates.</span>
-    <span>AI speedup categories and the blended formula — Kmino,
+    <span>Agent-assisted delivery shifts cost from writing code to resolving ambiguity — Kmino,
       kmino.io/blog/software-estimation-with-ai (practitioner observations, not peer-reviewed).</span>
-    <span>Scenario and tier structure — Modular Earth solutions-architecture-agent,
+    <span>Scoring and tier structure — Modular Earth solutions-architecture-agent,
       github.com/Modular-Earth-LLC/solutions-architecture-agent.</span></p></details>`;
 }
 
@@ -1278,6 +1221,56 @@ window.addEventListener('beforeprint', () => {
   document.querySelector('#method details.method-fold')?.setAttribute('open', '');
 });
 </script>
+<!-- internal:start --><script>
+// The price working: how the presented range was built from the feature
+// prices, and which tier each feature landed in. Inside internal markers
+// rather than merely marked data-internal, because redact.mjs strips the same
+// fields out of the embedded data — so a --client-only file names them in
+// neither its data nor its code, captions included, instead of shipping a
+// renderer for numbers it no longer carries.
+const WORKING = document.getElementById('price-working');
+
+const workingRow = (label, value) => `<tr><td>${label}</td><td class="num">${value}</td></tr>`;
+
+function overheadNote(overheads) {
+  const lines = Object.entries(overheads.lines).map(([k, v]) => `${k} ${pctText(v)}`).join(' · ');
+  return `${pctText(overheads.totalPct)} &mdash; ${lines}`;
+}
+
+// The arithmetic in the order it runs: feature prices, the situation they are
+// delivered in, the work around them, the cushion, and the spread that made
+// the range a range.
+function buildUpTable(p) {
+  const rows = [
+    workingRow('Feature prices', fmtMoney(p.featurePoints)),
+    workingRow('Context multiplier', `&times;${p.contextMultiplier}`),
+    workingRow('Adjusted base', fmtMoney(p.adjustedBase)),
+    workingRow('Overheads', `${overheadNote(p.overheads)} = ${fmtMoney(p.overheads.amount)}`),
+    workingRow('Contingency', `${pctText(p.contingencyRate)} = ${fmtMoney(p.contingencyAmount)}`),
+    workingRow('p50 / p80 / p95', `${fmtMoney(p.p50)} / ${fmtMoney(p.p80)} / ${fmtMoney(p.p95)}`),
+  ].join('');
+  return `<table><caption>Price build-up</caption><tbody>${rows}</tbody></table>`;
+}
+
+// Tier Reference: what each feature's score bought. The band is the price
+// range the tier spans; the point is where this feature's score interpolated
+// inside it.
+function tierReferenceTable() {
+  const rows = DATA.inputs.features.map((f) => {
+    const c = DATA.computed.features[f.id];
+    return `<tr><td>${esc(f.name)}</td><td class="score"><span class="tier ${c.tier.toLowerCase()}">${c.tier}</span></td>
+      <td class="num">${fmtMoney(c.point)}</td>
+      <td class="num">${fmtMoney(c.priceLow)} &ndash; ${fmtMoney(c.priceHigh)}</td></tr>`;
+  }).join('');
+  return `<table><caption>Tier Reference</caption><thead><tr><th>Feature</th>
+    <th class="score">Tier</th><th class="num">Point</th><th class="num">Band</th></tr></thead>
+    <tbody>${rows}</tbody></table>`;
+}
+
+if (WORKING && DATA.computed.price?.overheads) {
+  WORKING.innerHTML = buildUpTable(DATA.computed.price) + (TIERED ? tierReferenceTable() : '');
+}
+</script><!-- internal:end -->
 <!-- internal:start --><script>
 // Feature breakdown → spreadsheet export. Clones the sample estimator
 // workbook (base64 below), fills tab 1 with the rows the table currently
