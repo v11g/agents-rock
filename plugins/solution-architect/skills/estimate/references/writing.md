@@ -125,8 +125,12 @@ Technique: <technique name> — <one line on why>.
 
 ### Calibration
 
-Tier hour bands used: <bands> (state whether these are the org's own
-history or the S 20-60h / M 60-160h / L 160-400h defaults).
+State the band's implied rate: divide the tier's price midpoint by the
+hours actually spent on a comparable delivered feature, and confirm that
+blended rate is defensible. Recalibrate the bands against delivered
+actuals roughly twice a year. Whatever AI leverage the team has is priced
+into the bands already — it is never shown as a client-visible discount;
+it becomes margin instead, and that is deliberate.
 ```
 
 ## 3. Contract rules

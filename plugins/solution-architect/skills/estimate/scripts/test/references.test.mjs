@@ -63,7 +63,7 @@ test('interview.md does not ask for a team, rates, or a seat cost', () => {
 test('writing.md states every validator rule family', () => {
   const doc = ref('writing.md');
   for (const needle of ['not estimated', 'stated', 'proposed', 'Out of scope',
-    'assumptions', 'buffer', 'elected', 'docs/estimate/', 'Roadmap', 'not calendar dates',
+    'assumptions', 'contingencyRate', 'elected', 'docs/estimate/', 'Roadmap', 'relative shares',
     'components', 'scope hole']) {
     assert.ok(doc.includes(needle), `writing.md missing: ${needle}`);
   }
