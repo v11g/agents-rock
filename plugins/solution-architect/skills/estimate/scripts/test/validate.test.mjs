@@ -37,12 +37,16 @@ test('each seeded violation is caught by name', () => {
   }
 });
 
-// One team is the default interview answer now; a comparison table with a
-// single row is a complete deliverable, not a missing comparison.
-test('a scenario table with one row validates', () => {
-  const md = read('estimation-pass.md').replace(/\n\| 3eng-noai \|[^\n]*/, '');
+// The price block replaces the scenario table outright — a lingering one is
+// refused even when it sits beside an otherwise-clean, fully priced doc.
+test('a lingering scenario table is refused even in an otherwise-clean deliverable', () => {
+  const scenarioTable = '### Scenario comparison\n\n'
+    + '| Scenario | Team | AI-assisted | Months | Cost | Notes |\n'
+    + '| --- | --- | --- | --- | --- | --- |\n'
+    + '| 3eng-noai | 2 mid + 1 junior | no | 0.43 | $7,266 | — |\n\n';
+  const md = read('estimation-pass.md').replace('### Price', `${scenarioTable}### Price`);
   const findings = checkDeliverables({ md, estimation: computeEstimation(inputs()) });
-  assert.ok(!findings.some((f) => f.includes('scenario')), findings.join('\n'));
+  assert.ok(findings.some((f) => /scenario table was removed/i.test(f)), findings.join('\n'));
 });
 
 test('hand-edited totals are refused', () => {

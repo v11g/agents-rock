@@ -12,9 +12,8 @@ Do not re-derive the shape from prose — read
 `scripts/test/fixtures/booking-inputs.json` and match it field for field:
 top-level `project`, `technique`, `depth`, `calibration`, `overheadPct`,
 `verificationPct`, `exposeRatesToClient`, `features` (each with `id`, `name`,
-`provenance`, `tasks`), `risks`, `assumptions`, `scenarios`, and
-`recommendedScenario`. Every task carries `id`, `name`, `category`, `o`,
-`m`, `p`, `confidence`, `assumptions`, `provenance`.
+`provenance`, `tasks`), `risks`, and `assumptions`. Every task carries `id`,
+`name`, `category`, `o`, `m`, `p`, `confidence`, `assumptions`, `provenance`.
 
 Add top-level `deliveryMode` — `"agentic"` or `"traditional"` — on every
 estimate you write, even though the field is optional and the booking fixture
@@ -32,9 +31,9 @@ for a non-technical reader: no file names, factor names or `§`) and a
 against the guide byte for byte. At `QUICK` these fields must be absent.
 
 Optional top-level `recommendedReason` (non-empty string) says why the
-recommended scenario wins when several are compared. `schema.mjs` is the
-enforced half of this contract (`checkInputs`) — this doc is the readable
-half; if the two ever disagree, the code wins.
+recommended delivery approach wins when more than one option was considered.
+`schema.mjs` is the enforced half of this contract (`checkInputs`) — this
+doc is the readable half; if the two ever disagree, the code wins.
 
 At `depth: QUICK`, each feature's `tasks` array holds exactly one synthetic
 task carrying the tiering technique's calibration band as its `o`/`m`/`p`
@@ -174,9 +173,8 @@ Roadmap (mirrors `checkRoadmap` in `scripts/lib/checks.mjs`):
     absent.
 15. The Roadmap section must contain a line matching `/relative shares/i`
     — the bands claim relative shares of effort, never durations.
-16. Band numbers come from
-    `computed.scenarios[recommendedScenario].roadmap` — covered by the
-    recompute rule 12, same as every other number.
+16. Band numbers come from `computed.roadmap` — covered by the recompute
+    rule 12, same as every other number.
 
 Deep estimates (mirrors `checkDeepEstimates` in `scripts/lib/checks.mjs`):
 
