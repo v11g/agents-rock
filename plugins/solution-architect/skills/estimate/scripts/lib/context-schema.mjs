@@ -14,7 +14,9 @@ function checkOne(key, { level, prov }, out) {
     return;
   }
   if (typeof prov !== 'object' || prov === null) { out.push(`contextProvenance.${key}: required`); return; }
-  if (prov.level !== level) out.push(`contextProvenance.${key}: level disagrees with contextLevels`);
+  if (prov.level !== level) {
+    out.push(`contextProvenance.${key}: level ${prov.level} disagrees with contextLevels.${key} = ${level}`);
+  }
   if (!nonEmpty(prov.anchor)) out.push(`contextProvenance.${key}: anchor is required`);
   if (!nonEmpty(prov.cite)) out.push(`contextProvenance.${key}: cite is required`);
   if (!SOURCES.includes(prov.source)) out.push(`contextProvenance.${key}: source must be derived|stated`);

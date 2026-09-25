@@ -62,13 +62,17 @@ test('a feature with no tasks is refused — the zero-spread exemption must not 
   assert.ok(findings.some((f) => f.includes('reminders') && f.includes('task')));
 });
 
+// category is the only object-keyed enum left in the schema subsystem
+// (Object.hasOwn(AI_CATEGORIES, ...)) — every other vocabulary (PROVENANCE,
+// CONFIDENCE, DELIVERY_MODES, TASK_SHAPES, SOURCES) is an array checked with
+// .includes(), which has no prototype-chain hazard. This is therefore the
+// only field where an inherited key like "toString" could slip past an enum
+// check — do not "balance" this test with a second field.
 test('inherited object keys do not pass the enum checks', () => {
   const bad = fixture();
   bad.features[0].tasks[0].category = 'toString';
-  bad.features[1].tasks[0].confidence = 'toString';
   const findings = checkInputs(bad);
   assert.ok(findings.some((f) => f.includes('booking-api') && f.includes('category')));
-  assert.ok(findings.some((f) => f.includes('reminder-jobs') && f.includes('confidence')));
 });
 
 test('milestones are all-or-nothing across features', () => {
@@ -286,6 +290,22 @@ test('every context factor carries an anchor, a cite and a source', () => {
   const out = [];
   checkContext(inputs, out);
   assert.ok(out.some((f) => /specQuality.*cite/.test(f)), out.join('\n'));
+});
+
+test('a context factor with no anchor is refused', () => {
+  const inputs = contextBase();
+  delete inputs.contextProvenance.specQuality.anchor;
+  const out = [];
+  checkContext(inputs, out);
+  assert.ok(out.some((f) => /specQuality.*anchor/.test(f)), out.join('\n'));
+});
+
+test('a provenance level that disagrees with contextLevels is refused, both values named', () => {
+  const inputs = contextBase();
+  inputs.contextProvenance.compliance.level = 3;   // contextLevels.compliance stays 1
+  const out = [];
+  checkContext(inputs, out);
+  assert.ok(out.some((f) => f.includes('compliance') && f.includes('3') && f.includes('contextLevels.compliance = 1')), out.join('\n'));
 });
 
 test('context source must be derived or stated', () => {
