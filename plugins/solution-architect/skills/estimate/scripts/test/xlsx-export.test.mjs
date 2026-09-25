@@ -13,6 +13,7 @@ import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { findChrome } from '../../../analyze-requirements/scripts/lib/chrome.mjs';
 import { openPage } from '../../../analyze-requirements/scripts/lib/cdp.mjs';
+import { loadGuide } from '../lib/scoring.mjs';
 import { readZip } from './zip.mjs';
 
 const skip = { skip: !findChrome() && 'no chrome on PATH' };
@@ -114,6 +115,26 @@ test('the workbook asks the reader to recalculate on load', skip, async () => {
   } finally { page.close(); }
 });
 
+// The export writes cells the template already carries. If one ever goes
+// missing, a String.replace that finds nothing returns its input unchanged —
+// the feature name and its scores would vanish into blank cells and every
+// assertion in this file would still pass. Refuse instead.
+test('writing a cell the template does not carry is refused, not ignored', skip, async () => {
+  const page = await openPage(buildPage());
+  try {
+    assert.match(await page.eval(`(() => {
+      try { setCell('<c r="A1" s="3"/>', 'ZZ99', (s) => '<c r="ZZ99" s="' + s + '"/>'); }
+      catch (e) { return e.message; }
+      return 'no throw';
+    })()`), /no cell ZZ99/);
+    assert.match(await page.eval(`(() => {
+      try { appendCells('<row r="1"/>', 99, '<c r="A99"/>'); }
+      catch (e) { return e.message; }
+      return 'no throw';
+    })()`), /no row 99/);
+  } finally { page.close(); }
+});
+
 test('rows land ordered by milestone with the interview scores verbatim', skip, async () => {
   const page = await openPage(buildPage());
   try {
@@ -127,11 +148,15 @@ test('rows land ordered by milestone with the interview scores verbatim', skip, 
 
 // The template ships five worked sample features in rows 7-11. An export of
 // two features must not leave the other three standing next to our prices.
+// Their names are shared strings, so searching the sheet XML for one proves
+// nothing — the reference has to be resolved through sharedStrings.xml.
 test('the template\'s own sample rows are cleared past the exported features', skip, async () => {
   const page = await openPage(buildPage());
   try {
-    const xml = ballpark(await exportedFiles(page));
-    assert.doesNotMatch(xml, /User authentication/, 'sample feature left in the sheet');
+    const files = await exportedFiles(page);
+    const xml = ballpark(files);
+    assert.deepEqual(['A7', 'A8', 'A9', 'A10', 'A11'].map((r) => nameAt(files, xml, r)),
+      ['User can book appointment', 'Email reminders', '', '', '']);
     for (const ref of ['A9', 'A10', 'A11', 'B9', 'F11']) {
       assert.equal(cell(xml, ref), '', `${ref} must be emptied, not left with sample data`);
     }
@@ -150,6 +175,13 @@ function sharedText(files, frag) {
 }
 
 const headerText = (files, frag) => inlineText(frag) ?? sharedText(files, frag);
+
+// A name cell is either one of our inline strings or, in the pristine
+// template, a shared-string reference. Resolve both; a cleared cell reads ''.
+function nameAt(files, xml, ref) {
+  const frag = cell(xml, ref);
+  return frag ? headerText(files, frag) : '';
+}
 
 test('the score columns sit under the template\'s five score headers', skip, async () => {
   const page = await openPage(buildPage());
@@ -220,21 +252,54 @@ test('feature source and score origin are read from separate fields', skip, asyn
   } finally { page.close(); }
 });
 
+const quickInputs = () => variantInputs('quick', (inputs) => {
+  inputs.depth = 'QUICK';
+  for (const f of inputs.features) {
+    delete f.scores; delete f.scoreNote; delete f.scoreProvenance;
+    f.tasks = [{ ...f.tasks[0], id: `${f.id}-band`, o: 60, m: 110, p: 160 }];
+  }
+});
+
 test('QUICK inputs export blank score cells and an empty rationale tab', skip, async () => {
-  const inputsPath = variantInputs('quick', (inputs) => {
-    inputs.depth = 'QUICK';
-    for (const f of inputs.features) {
-      delete f.scores; delete f.scoreNote; delete f.scoreProvenance;
-      f.tasks = [{ ...f.tasks[0], id: `${f.id}-band`, o: 60, m: 110, p: 160 }];
-    }
-  });
-  const page = await openPage(buildPage(inputsPath));
+  const page = await openPage(buildPage(quickInputs()));
   try {
     const files = await exportedFiles(page);
     const xml = ballpark(files);
     assert.equal(cell(xml, 'B7'), '', 'no score value at QUICK');
     assert.match(xml, /<c r="B7" s="\d+"\/>/);
     assert.match(sheetRationale(files), /<autoFilter ref="A1:G1"\/>/);
+  } finally { page.close(); }
+});
+
+// A QUICK estimate has no scores, and this workbook prices only from scores.
+// The template's G7 is IF($A7="",0,SUMPRODUCT(...)), so a named feature with
+// blank B:F weighs 0 — not blank, which is what v1's COUNTA guard returned.
+// That 0 runs I7 -> I37 -> Project Roll-up C6 -> C20 and every figure under
+// it. Nothing about the sheet looks broken; it reads a confident, formatted
+// $0. Verified in LibreOffice: I37 = 0, C20 = 0, D34 = 0. So the sheet says
+// so beside the subtotal, and this pins the behaviour as a decision.
+test('a QUICK export says on the roll-up that its figures read zero', skip, async () => {
+  const page = await openPage(buildPage(quickInputs()));
+  try {
+    const files = await exportedFiles(page);
+    const note = inlineText(cell(rollup(files), 'D6')) ?? '';
+    assert.match(note, /NOT A PRICE/);
+    assert.match(note, /2 of 2 features carry no scores/);
+    assert.match(note, /read 0/);
+    assert.match(note, /Score the features on the Ballpark tab/); // 0 is recoverable in-sheet
+    // The formulas that produce that 0 are still the template's own, so typing
+    // scores in really does reprice the sheet.
+    assert.match(cellFormula(cell(ballpark(files), 'I37')) ?? '', /SUM\(\$I\$7:\$I\$36\)/);
+    assert.match(cellFormula(cell(rollup(files), 'C20')) ?? '', /\$C\$6\*\$D\$16/);
+  } finally { page.close(); }
+});
+
+// The note is warranted, not unconditional: a fully scored export must not
+// cry wolf on a tab a client may well read.
+test('a fully scored export leaves the roll-up unannotated', skip, async () => {
+  const page = await openPage(buildPage());
+  try {
+    assert.equal(cell(rollup(await exportedFiles(page)), 'D6'), '');
   } finally { page.close(); }
 });
 
@@ -296,8 +361,10 @@ test('the export honours the active source filter', skip, async () => {
 // multiplier beside each one stays a live INDEX formula, so an edited level
 // reprices the whole project inside the workbook.
 test('the roll-up context cells are filled from inputs in the sheet\'s own order', skip, async () => {
+  // Levels cap at 4, so five distinct values are impossible; 1,2,3,4,1 leaves
+  // codebaseMaturity/clientDecisions as the only pair a swap could hide.
   const inputsPath = variantInputs('levels', (inputs) => {
-    inputs.contextLevels = { codebaseMaturity: 4, stackFamiliarity: 3, specQuality: 1, compliance: 4, clientDecisions: 3 };
+    inputs.contextLevels = { codebaseMaturity: 1, stackFamiliarity: 2, specQuality: 3, compliance: 4, clientDecisions: 1 };
     for (const [key, prov] of Object.entries(inputs.contextProvenance ?? {})) {
       prov.level = inputs.contextLevels[key];
     }
@@ -306,7 +373,7 @@ test('the roll-up context cells are filled from inputs in the sheet\'s own order
   try {
     const xml = rollup(await exportedFiles(page));
     assert.deepEqual(['C11', 'C12', 'C13', 'C14', 'C15'].map((r) => cellNumber(cell(xml, r))),
-      [4, 3, 1, 4, 3]);
+      [1, 2, 3, 4, 1]);
     for (const ref of ['D11', 'D12', 'D13', 'D14', 'D15']) {
       assert.ok(/<f/.test(cell(xml, ref)), `${ref} must stay the template's INDEX formula`);
     }
@@ -314,19 +381,39 @@ test('the roll-up context cells are filled from inputs in the sheet\'s own order
   } finally { page.close(); }
 });
 
+// 2 fixture features + 31 clones = 33, three more than the 30 wired rows.
+// The clones score 1/2/3/4/5, five distinct values, so B-F can only line up
+// under the right headers one way — the booking fixture's 3,3,2,3,3 would
+// survive a B/C or E/F swap in SCORE_KEYS.
+// compute.mjs refuses a score whose anchor is not the guide's own sentence
+// for that number, so the rescored clones take theirs from the guide.
+const GUIDE = loadGuide();
+const SCORE_ORDER = ['tech', 'size', 'deps', 'unc', 'risk'];
+
+const overflowInputs = () => variantInputs('overflow', (inputs) => {
+  const base = inputs.features[0];
+  inputs.features.push(...Array.from({ length: 31 }, (_, i) => {
+    const f = { ...structuredClone(base), id: `extra${i}`, name: `Extra feature ${i}` };
+    f.tasks = base.tasks.map((t, j) => ({ ...structuredClone(t), id: `extra${i}-t${j}` }));
+    SCORE_ORDER.forEach((key, n) => { f.scores[key] = { ...f.scores[key], n: n + 1, anchor: GUIDE[key][n] }; });
+    return f;
+  }));
+});
+
+test('each score lands in its own column: five distinct values, one ordering', skip, async () => {
+  const page = await openPage(buildPage(overflowInputs()));
+  try {
+    const xml = ballpark(await exportedFiles(page));
+    assert.equal(inlineText(cell(xml, 'A8')), 'Extra feature 0');
+    assert.deepEqual(['B', 'C', 'D', 'E', 'F'].map((c) => cellNumber(cell(xml, `${c}8`))), [1, 2, 3, 4, 5]);
+  } finally { page.close(); }
+});
+
 // Patching the template in place means the Ballpark tab can hold only the
 // rows the template wired: 7-36. Anything past that must be loud, because a
 // silently truncated FEATURE SUBTOTAL is a wrong price on a client's desk.
 test('features past the template\'s 30 scored rows are called out in the sheet', skip, async () => {
-  const inputsPath = variantInputs('overflow', (inputs) => {
-    const base = inputs.features[0];
-    // 2 fixture features + 31 clones = 33, one more than the 30 wired rows.
-    inputs.features.push(...Array.from({ length: 31 }, (_, i) => ({
-      ...structuredClone(base), id: `extra${i}`, name: `Extra feature ${i}`,
-      tasks: base.tasks.map((t, j) => ({ ...structuredClone(t), id: `extra${i}-t${j}` })),
-    })));
-  });
-  const page = await openPage(buildPage(inputsPath));
+  const page = await openPage(buildPage(overflowInputs()));
   try {
     const files = await exportedFiles(page);
     const xml = ballpark(files);
@@ -338,6 +425,8 @@ test('features past the template\'s 30 scored rows are called out in the sheet',
     // Nothing is lost from the workbook — the overflow still rides the other tabs.
     assert.match(sheetTasks(files), /Email reminders/);
     assert.match(sheetRationale(files), /Email reminders/);
+    // ...and the roll-up, where every figure derives from that subtotal, says so too.
+    assert.match(inlineText(cell(rollup(files), 'D6')) ?? '', /INCOMPLETE: 3 features did not fit/);
   } finally { page.close(); }
 });
 

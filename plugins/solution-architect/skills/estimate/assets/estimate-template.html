@@ -1316,14 +1316,20 @@ const cellAt = (ref) => new RegExp(`<c r="${ref}"([^>]*?)(?:/>|>.*?</c>)`, 's');
 const rowAt = (r) => new RegExp(`<row r="${r}"([^>]*?)(?:/>|>(.*?)</row>)`, 's');
 const styleAt = (xml, ref) => /s="(\d+)"/.exec(cellAt(ref).exec(xml)?.[1] ?? '')?.[1] ?? '0';
 
-// make(style) → the replacement cell. A function replacement, so a `$&` in a
-// feature name is never read as a backreference.
+// make(style) → the replacement cell. Spliced by index rather than through
+// String.replace, so a `$&` in a feature name is never read as a
+// backreference — and a ref the template does not carry throws instead of
+// silently writing nothing, which would empty a row and pass every test.
 function setCell(xml, ref, make) {
-  return xml.replace(cellAt(ref), (_, attrs) => make(/s="(\d+)"/.exec(attrs)?.[1] ?? '0'));
+  const m = cellAt(ref).exec(xml);
+  if (!m) throw new Error(`the workbook template has no cell ${ref}`);
+  return xml.slice(0, m.index) + make(/s="(\d+)"/.exec(m[1])?.[1] ?? '0') + xml.slice(m.index + m[0].length);
 }
 
 function appendCells(xml, r, cells) {
-  return xml.replace(rowAt(r), (_, attrs, body) => `<row r="${r}"${attrs}>${body ?? ''}${cells}</row>`);
+  const m = rowAt(r).exec(xml);
+  if (!m) throw new Error(`the workbook template has no row ${r}`);
+  return `${xml.slice(0, m.index)}<row r="${r}"${m[1]}>${m[2] ?? ''}${cells}</row>${xml.slice(m.index + m[0].length)}`;
 }
 
 function fillScores(xml, f, r) {
@@ -1379,6 +1385,35 @@ function fillRollup(xml, levels) {
     const level = levels?.[key];
     return Number.isInteger(level) ? setCell(acc, ref, (s) => nCell(ref, s, level)) : acc;
   }, xml);
+}
+
+// The whole tab hangs off one cell: C6 pulls the Ballpark subtotal and C20
+// multiplies it, so every figure below inherits whatever is wrong with it —
+// in silence. Two things can be wrong, and both have to be said here, beside
+// the number, not only on the tab the number came from.
+function rollupWarnings(rows) {
+  const out = [];
+  const unscored = rows.filter((f) => !f.scores).length;
+  const dropped = Math.max(0, rows.length - XLSX_SLOTS);
+  if (unscored) {
+    out.push(`NOT A PRICE: ${unscored} of ${rows.length} features carry no scores, so the`
+      + ' subtotal beside this note and every figure below it read 0. Zero is what an'
+      + ' unscored feature weighs here, not what it costs. Score the features on the'
+      + ' Ballpark tab and every figure on this sheet prices itself.');
+  }
+  if (dropped) {
+    out.push(`INCOMPLETE: ${dropped} features did not fit the Ballpark tab's ${XLSX_SLOTS}`
+      + ' scored rows, so the subtotal beside this note excludes them.');
+  }
+  return out;
+}
+
+function buildRollup(xml, rows) {
+  const warnings = rollupWarnings(rows);
+  const noted = warnings.length
+    ? appendCells(xml, 6, sCell('D6', styleAt(xml, 'D5'), warnings.join(' ')))
+    : xml;
+  return fillRollup(noted, DATA.inputs.contextLevels);
 }
 
 function xlsxContainer(f) {
@@ -1587,7 +1622,7 @@ async function buildWorkbook() {
   const enc = new TextEncoder();
   const rows = exportRows();
   fillPart(files, XLSX_BALLPARK, (xml) => buildBallpark(xml, rows));
-  fillPart(files, XLSX_ROLLUP, (xml) => fillRollup(xml, DATA.inputs.contextLevels));
+  fillPart(files, XLSX_ROLLUP, (xml) => buildRollup(xml, rows));
   for (const sheet of EXTRA_SHEETS) {
     files.set(`xl/worksheets/${sheet.file}`, enc.encode(sheet.build(rows)));
     registerSheet(files, enc, sheet);
