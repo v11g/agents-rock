@@ -10,10 +10,10 @@ and the exact command sequence from computed numbers to a served page.
 
 Do not re-derive the shape from prose — read
 `scripts/test/fixtures/booking-inputs.json` and match it field for field:
-top-level `project`, `technique`, `depth`, `calibration`, `overheadPct`,
-`verificationPct`, `exposeRatesToClient`, `features` (each with `id`, `name`,
-`provenance`, `tasks`), `risks`, and `assumptions`. Every task carries `id`,
-`name`, `category`, `o`, `m`, `p`, `confidence`, `assumptions`, `provenance`.
+top-level `project`, `technique`, `depth`, `calibration`, `verificationPct`,
+`exposeRatesToClient`, `features` (each with `id`, `name`, `provenance`,
+`tasks`), `risks`, and `assumptions`. Every task carries `id`, `name`,
+`category`, `o`, `m`, `p`, `confidence`, `assumptions`, `provenance`.
 
 Add top-level `deliveryMode` — `"agentic"` or `"traditional"` — on every
 estimate you write, even though the field is optional and the booking fixture
