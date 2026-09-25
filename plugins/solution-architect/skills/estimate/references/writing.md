@@ -52,7 +52,9 @@ At `depth: QUICK`, each feature's `tasks` array holds exactly one synthetic
 task carrying the tiering technique's calibration band as its `o`/`m`/`p`
 (mid = the band's midpoint) — see `references/techniques.md` §2. That keeps
 `schema.mjs`'s at-least-one-task rule and `compute.mjs`'s PERT path
-unchanged; QUICK never bypasses the compute pipeline.
+unchanged; QUICK never bypasses the compute pipeline. These calibration
+bands feed task hours for delivery planning only — they never price
+anything; QUICK's price fields stay absent regardless (`techniques.md` §2).
 
 Features may each carry an optional `milestone` string (e.g. `"M1 - Booking
 core"`). Milestones are all-or-nothing: if any feature has one, every feature

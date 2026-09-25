@@ -32,7 +32,7 @@ before scope confirmation and before any factor scoring.
 | --- | --- | --- |
 | QUICK | feature-level factor-scored tiering only | ±wide |
 | STANDARD | task-level three-point PERT | ± moderate |
-| DEEP | STANDARD plus per-scenario detail (multiple team/AI-assistance combinations sized individually) | ± narrower |
+| DEEP | STANDARD's task-level PERT and scoring, with no shortcuts — every anchor cited, every task assumption named, nothing left as a `?` | ± narrower |
 
 ## 2b. Delivery mode — assume second, ask only to leave it
 
@@ -41,10 +41,9 @@ before scope confirmation and before any factor scoring.
 | AGENTIC (default) | AI coding agents write the code, humans plan and review | measurement-based (`agentic-estimation.md`) |
 | TRADITIONAL | humans write the code | technique menu (`techniques.md`) |
 
-Assume **AGENTIC**; ask only "humans writing the code?" as the opt-out, the
-same shape as the AI-assistance question in §5. A client who is hand-writing
-the code will say so; one who is not should not have to answer for it every
-interview.
+Assume **AGENTIC**; ask only "humans writing the code?" as the opt-out. A
+client who is hand-writing the code will say so; one who is not should not
+have to answer for it every interview.
 
 Write `deliveryMode` into `estimation-inputs.json` either way, explicitly. An
 absent field still reads as traditional, which is what estimates written
@@ -149,7 +148,7 @@ Ask one thing at a time, in this order:
    │           ← PRD §4.2: "reconciliation rules undecided"                    │
    │  Risk  5  Core infrastructure, compliance requirements, irreversible ops  │
    │           ← payments; rubric puts payments at 4–5, chose 5: irreversible  │
-   │  Σ 19  →  L  →  160–400 h                                                 │
+   │  Σ 19  →  L  →  $4,000–$10,000 band, point ≈$5,800                        │
    │  Why (client): handles payments and two outside services; matching       │
    │                rules still to be decided                                  │
    │  accept · change <factor> <n> · why <text> · split                        │
@@ -158,8 +157,12 @@ Ask one thing at a time, in this order:
 
    Rules: the anchor is the guide's full sentence for that factor and score;
    the cite quotes the fact it rests on; no evidence for a factor → the cell
-   is `?` and you ask, never a silent 3. Σ at 11, 17 or 22 shows `one point
-   from <tier>; <factor> +1 moves this to <band>`; Σ > 22 recommends `split`
+   is `?` and you ask, never a silent 3. A weighted score within a point of a
+   band edge (11.5, 17.5, 22.5) shows `near <tier>` — say so, but don't
+   guess which single factor would cross it: weights differ per factor
+   (`WEIGHTS` in `pricing.mjs`), so a flat "+1" on any of them no longer
+   moves the total by one point. Σ ≥ 22.5 flags `Deep estimate required`
+   (`SPLIT into sub-features` instead, when feature size alone scored 5)
    before `accept`; any 5 shows `review`. `Why` is one plain sentence for a
    non-technical reader — what the feature touches and what is still
    unknown; no file names, no factor names, no rubric wording. `split`
