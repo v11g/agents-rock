@@ -57,7 +57,10 @@ function percentileBlock(p50, sigma, rounding) {
   };
 }
 
-export function projectPrice({ features, levels, rounding = ROUNDING }) {
+// The money arithmetic: points through p50 — context, overheads, contingency.
+// Split out purely to hold projectPrice under the function-length gate; it
+// has no meaning of its own outside that one caller.
+function moneyArithmetic(features, levels) {
   const featurePoints = features.reduce((sum, f) => sum + f.point, 0);
   const multiplier = contextMultiplier(levels);
   const adjustedBase = featurePoints * multiplier;
@@ -68,6 +71,15 @@ export function projectPrice({ features, levels, rounding = ROUNDING }) {
   });
   const contingencyAmount = (adjustedBase + overheadAmount) * rate;
   const p50 = adjustedBase + overheadAmount + contingencyAmount;
+  return {
+    featurePoints, multiplier, adjustedBase, lines, totalPct, overheadAmount, rate, contingencyAmount, p50,
+  };
+}
+
+export function projectPrice({ features, levels, rounding = ROUNDING }) {
+  const {
+    featurePoints, multiplier, adjustedBase, lines, totalPct, overheadAmount, rate, contingencyAmount, p50,
+  } = moneyArithmetic(features, levels);
   const buildSigma = Math.sqrt(features.reduce((sum, f) => sum + (f.point * f.spread) ** 2, 0));
   const sigma = featurePoints === 0 ? 0 : buildSigma * p50 / featurePoints;
   return {
