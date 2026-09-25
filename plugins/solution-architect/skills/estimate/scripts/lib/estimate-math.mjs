@@ -16,6 +16,12 @@ export function pert({ o, m, p }) {
   return { e: (o + 4 * m + p) / 6, sigma: (p - o) / 6 };
 }
 
+// Shared money/hours rounding. Lives here (not rollup.mjs) so roadmap.mjs can
+// import it too without rollup.mjs <-> roadmap.mjs becoming a cycle.
+export function round2(n) {
+  return Math.round(n * 100) / 100;
+}
+
 // Milestone widths as shares of total task hours. Seniority and the
 // verification percentage were uniform multipliers and cancelled out of
 // these ratios exactly, which is why dropping them moves no boundary.

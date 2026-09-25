@@ -3,7 +3,7 @@
 // group's scenario task hours, and lets roadmapBands turn shares into bands.
 // Returns undefined when no feature carries a milestone — the roadmap is
 // optional and its absence must stay a missing key, not an empty array.
-import { roadmapBands } from './estimate-math.mjs';
+import { roadmapBands, round2 } from './estimate-math.mjs';
 
 function milestonesFrom(features, taskHours) {
   const order = [];
@@ -20,13 +20,12 @@ function milestonesFrom(features, taskHours) {
   return order.map((name) => byName[name]);
 }
 
-export function roadmapFor({ features, taskHours, months }) {
+export function roadmapFor({ features, taskHours }) {
   const milestones = milestonesFrom(features, taskHours);
   if (!milestones) return undefined;
-  return roadmapBands({ milestones, months }).map((band, i) => ({
+  return roadmapBands({ milestones }).map((band, i) => ({
     milestone: band.name,
     features: milestones[i].features,
-    startMonths: band.startMonths,
-    endMonths: band.endMonths,
+    share: round2(band.share),
   }));
 }

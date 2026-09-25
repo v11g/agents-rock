@@ -1,53 +1,16 @@
 // Turns validated estimation-inputs into the estimation.json truth: PERT per
-// task, AI-adjusted hours per (task × scenario), buffers, and cost rollups.
-// Every map is assembled with sorted keys so repeat runs are byte-identical.
-import {
-  pert, projectBuffer, taskHours, riskBufferHours, scenarioRollup, dominantSeniority,
-} from './estimate-math.mjs';
+// task, per-feature price bands, and the project price roll-up. Every map is
+// assembled with sorted keys so repeat runs are byte-identical.
+import { pert, round2 } from './estimate-math.mjs';
+import { featurePrice } from './pricing.mjs';
+import { projectPrice } from './project-price.mjs';
 import { roadmapFor } from './roadmap.mjs';
 import { componentHoursFor } from './components.mjs';
 import { agenticTask } from './baselines.mjs';
-import { scoreSummary } from './scoring.mjs';
+import { scoreNumbers, scoreSummary } from './scoring.mjs';
 
 function sortedMap(entries) {
   return Object.fromEntries(entries.sort(([a], [b]) => a.localeCompare(b)));
-}
-
-export function round2(n) {
-  return Math.round(n * 100) / 100;
-}
-
-export function taskHoursFor(scenario, tasks) {
-  const seniority = dominantSeniority(scenario.team);
-  const entries = Object.keys(tasks).map((id) => [id, tasks[id].evidence !== undefined
-    ? tasks[id].e
-    : taskHours({
-      e: tasks[id].e, seniority, aiAssisted: scenario.aiAssisted,
-      category: tasks[id].category, verificationPct: tasks[id].verificationPct,
-    })]);
-  return sortedMap(entries);
-}
-
-export function scenarioBlock(scenario, ctx) {
-  const taskHours = taskHoursFor(scenario, ctx.tasks);
-  const sumTaskHours = Object.values(taskHours).reduce((a, b) => a + b, 0);
-  const hours = sumTaskHours + sumTaskHours * ctx.overheadPct + ctx.spreadBufferHours + ctx.riskBufferHours;
-  const rollup = scenarioRollup({ hours, team: scenario.team, toolingCostPerSeat: scenario.toolingCostPerSeat });
-  const roadmap = roadmapFor({ features: ctx.features, taskHours, months: rollup.months })
-    ?.map((b) => ({ ...b, startMonths: round2(b.startMonths), endMonths: round2(b.endMonths) }));
-  const notes = [];
-  if (scenario.team.length === 1) notes.push('bus factor: single engineer');
-  if (scenario.team.length > 3) notes.push('coordination overhead grows past 3 engineers');
-  return {
-    taskHours: sortedMap(Object.entries(taskHours).map(([id, h]) => [id, round2(h)])),
-    hours: round2(hours),
-    months: round2(rollup.months),
-    laborCost: round2(rollup.laborCost),
-    toolingCost: round2(rollup.toolingCost),
-    totalCost: round2(rollup.totalCost),
-    notes,
-    ...(roadmap ? { roadmap } : {}),
-  };
 }
 
 const CONFIDENCE_RANK = { HIGH: 0, MED: 1, LOW: 2, UNCALIBRATED: 3 };
@@ -92,31 +55,39 @@ function buildAgenticTasks(inputs, measurements) {
   return tasks;
 }
 
+// Prices a scored feature onto `row` and pushes its price inputs onto
+// `priced` for the project roll-up. scoreSummary stays the single authority
+// for a feature's scoreTotal/tier; featurePrice only supplies the money.
+function scoredFeatureRow(feature, row, priced) {
+  const n = scoreNumbers(feature.scores);
+  const p = featurePrice(n);
+  Object.assign(row, scoreSummary(feature), {
+    point: round2(p.point), spread: round2(p.spread),
+    priceLow: round2(p.low), priceHigh: round2(p.high), flag: p.flag,
+  });
+  priced.push({ point: p.point, spread: p.spread, unc: n.unc, risk: n.risk });
+}
+
+// Feature rows carry both halves now: hours for planning, price for the
+// quote. They come from different inputs and never convert into each other.
 function buildFeatures(inputs, tasks) {
   const features = {};
   const summaries = [];
+  const priced = [];
   for (const feature of inputs.features) {
     const taskIds = feature.tasks.map((t) => t.id);
     const hours = taskIds.reduce((sum, id) => sum + tasks[id].e, 0);
     const low = taskIds.reduce((sum, id) => sum + tasks[id].o, 0);
     const high = taskIds.reduce((sum, id) => sum + tasks[id].p, 0);
-    features[feature.id] = { hours: round2(hours), low: round2(low), high: round2(high), ...scoreSummary(feature) };
+    const row = { hours: round2(hours), low: round2(low), high: round2(high) };
+    if (feature.scores) scoredFeatureRow(feature, row, priced);
+    features[feature.id] = row;
     summaries.push({ hours, taskIds });
   }
-  return { features: sortedMap(Object.entries(features)), summaries };
-}
-
-function globalBuffers(tasks, risks) {
-  const devHours = Object.values(tasks).reduce((sum, t) => sum + t.e, 0);
-  const spreadBufferHours = projectBuffer(Object.values(tasks).map((t) => t.sigma));
-  return { devHours, spreadBufferHours, riskBufferHours: riskBufferHours(risks) };
+  return { features: sortedMap(Object.entries(features)), summaries, priced };
 }
 
 const isAgentic = (inputs) => inputs.deliveryMode === 'agentic';
-
-const normalizeRisks = (inputs) => (isAgentic(inputs)
-  ? inputs.risks.map((r) => ({ ...r, impactHours: r.impactMinutes / 60 }))
-  : inputs.risks);
 
 const taskSummary = (t) => (t.evidence !== undefined
   ? {
@@ -125,30 +96,25 @@ const taskSummary = (t) => (t.evidence !== undefined
   }
   : { e: round2(t.e), sigma: round2(t.sigma) });
 
-const computedBlock = (ctx) => ({
-  tasks: sortedMap(Object.entries(ctx.tasks).map(([id, t]) => [id, taskSummary(t)])),
-  features: ctx.features,
-  ...(ctx.components ? { components: ctx.components } : {}),
-  devHours: round2(ctx.buffers.devHours),
-  overheadHours: round2(ctx.buffers.devHours * ctx.overheadPct),
-  spreadBufferHours: round2(ctx.buffers.spreadBufferHours),
-  riskBufferHours: round2(ctx.buffers.riskBufferHours),
-  scenarios: ctx.scenarios,
-  projectConfidence: criticalConfidence(ctx.summaries, ctx.tasks),
-});
-
 export function computeEstimation(inputs, measurements) {
-  const risks = normalizeRisks(inputs);
   const tasks = isAgentic(inputs) ? buildAgenticTasks(inputs, measurements) : buildTasks(inputs);
-  const { features, summaries } = buildFeatures(inputs, tasks);
-  const buffers = globalBuffers(tasks, risks);
-  const ctx = { tasks, features: inputs.features, overheadPct: inputs.overheadPct, ...buffers };
-  const scenarios = sortedMap(inputs.scenarios.map((s) => [s.id, scenarioBlock(s, ctx)]));
+  const { features, summaries, priced } = buildFeatures(inputs, tasks);
+  const taskHours = Object.fromEntries(Object.entries(tasks).map(([id, t]) => [id, t.e]));
+  const roadmap = roadmapFor({ features: inputs.features, taskHours });
   const components = componentHoursFor(inputs, features);
+  const price = projectPrice({ features: priced, levels: inputs.contextLevels ?? {} });
+  const priceBlock = Object.fromEntries(
+    Object.entries(price).map(([k, v]) => [k, typeof v === 'number' ? round2(v) : v]),
+  );
   return {
     inputs,
-    computed: computedBlock({
-      tasks, features, components, buffers, overheadPct: inputs.overheadPct, scenarios, summaries,
-    }),
+    computed: {
+      tasks: sortedMap(Object.entries(tasks).map(([id, t]) => [id, taskSummary(t)])),
+      features,
+      ...(components ? { components } : {}),
+      ...(roadmap ? { roadmap } : {}),
+      price: priceBlock,
+      projectConfidence: criticalConfidence(summaries, tasks),
+    },
   };
 }

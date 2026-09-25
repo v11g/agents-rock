@@ -16,23 +16,16 @@ test('golden numbers for the booking fixture', () => {
   assert.equal(computed.tasks['booking-api'].e, 25.33);
   assert.equal(computed.tasks['booking-rules'].e, 44);
   assert.equal(computed.tasks['reminder-jobs'].e, 21.33);
-  assert.equal(computed.devHours, 90.67);               // round2(152/6 + 44 + 128/6)
-  assert.equal(computed.overheadHours, 31.73);          // round2(90.6667 × 0.35)
-  assert.equal(computed.spreadBufferHours, 10.91);      // round2(√(4² + 9.3333² + 4²))
-  assert.equal(computed.riskBufferHours, 12);           // 0.3 × 40
   assert.equal(computed.projectConfidence, 'MED');      // critical path = booking, worst row MED
-  const rec = computed.scenarios['2eng-max5x'];
-  assert.ok(rec.months > 0 && rec.totalCost > 0);
-  assert.equal(rec.totalCost, rec.laborCost + rec.toolingCost);
-  assert.equal('planCost' in rec, false);
-  // Same team math as before the plan→aiAssisted rename: hours and seat cost pinned
-  assert.equal(computed.scenarios['3eng-noai'].hours, 145.31);
-  assert.equal(rec.hours, 101.35);
-  assert.equal(rec.toolingCost, 80.44);                 // 0.4022 mo × $100 × 2 seats
-  // AI hours strictly below traditional on every task in an AI scenario
-  for (const id of Object.keys(computed.tasks)) {
-    assert.ok(rec.taskHours[id] < computed.tasks[id].e);
-  }
+  const { price } = computed;
+  // booking: weighted score 14 (M, point 2541.67) · reminders: score 11 (S, point 1423.08)
+  assert.equal(price.featurePoints, 3964.74);
+  assert.equal(price.contextMultiplier, 1.4);           // 1 + (.1 + 0 + .2 + 0 + .1) context deviations
+  assert.equal(price.adjustedBase, 5550.64);
+  assert.equal(price.contingencyRate, 0.15);            // 0.05 + 2.5×0.02 + 2.5×0.02 avg unc/risk
+  assert.equal(price.p50, 9957.85);
+  assert.equal(price.presentLow, 10000);
+  assert.equal(price.presentHigh, 14000);
 });
 
 test('CLI writes byte-identical output on repeat runs', () => {
@@ -55,18 +48,16 @@ test('CLI refuses invalid inputs, naming findings', () => {
   );
 });
 
-test('scenarios carry a roadmap when features have milestones', () => {
+test('the roadmap is top level when features have milestones', () => {
   const { computed } = computeEstimation(fixture());
-  const roadmap = computed.scenarios['2eng-max5x'].roadmap;
+  const { roadmap } = computed;
   assert.deepEqual(roadmap.map((b) => b.milestone), ['M1 - Booking core', 'M2 - Notifications']);
   assert.deepEqual(roadmap[0].features, ['booking']);
   assert.deepEqual(roadmap[1].features, ['reminders']);
-  assert.equal(roadmap[0].startMonths, 0);
-  assert.equal(roadmap[1].startMonths, roadmap[0].endMonths); // bands tile, no gap
-  assert.equal(roadmap[1].endMonths, computed.scenarios['2eng-max5x'].months);
-  // AI-adjusted shares: booking (M1) carries most of the hours
-  assert.ok(roadmap[0].endMonths - roadmap[0].startMonths
-    > roadmap[1].endMonths - roadmap[1].startMonths);
+  // booking (M1) carries most of the task hours
+  assert.ok(roadmap[0].share > roadmap[1].share);
+  assert.equal(roadmap[0].share, 0.76);
+  assert.equal(roadmap[1].share, 0.24);
 });
 
 test('computed.components rolls feature hours into top-level containers', () => {
@@ -87,9 +78,7 @@ test('no milestones → no roadmap key at all', () => {
   const bare = fixture();
   for (const f of bare.features) delete f.milestone;
   const { computed } = computeEstimation(bare);
-  for (const s of Object.values(computed.scenarios)) {
-    assert.ok(!('roadmap' in s), 'roadmap key must be absent, not empty');
-  }
+  assert.ok(!('roadmap' in computed), 'roadmap key must be absent, not empty');
 });
 
 // Agentic-mode rollup.
@@ -104,7 +93,7 @@ function agenticInputs() {
 }
 const measurements = () => loadMeasurements(measurementsFixture).records;
 
-test('agentic tasks are baseline-driven and scenario-independent', () => {
+test('agentic tasks are baseline-driven', () => {
   const { computed } = computeEstimation(agenticInputs(), measurements());
   const swap = computed.tasks['swap-refactor'];
   assert.equal(swap.samples, 7);
@@ -116,13 +105,10 @@ test('agentic tasks are baseline-driven and scenario-independent', () => {
   const db = computed.tasks['swap-db'];
   assert.equal(db.confidence, 'UNCALIBRATED');
   assert.equal(db.calibrated, false);
-  // measured durations do not vary by team or plan
-  assert.deepEqual(computed.scenarios.solo.taskHours, computed.scenarios.pair.taskHours);
 });
 
-test('agentic risks convert minutes to hours; uncalibrated task taints project confidence', () => {
+test('uncalibrated task taints project confidence', () => {
   const { computed } = computeEstimation(agenticInputs(), measurements());
-  assert.equal(computed.riskBufferHours, Math.round((0.3 * 30 / 60) * 100) / 100);
   assert.equal(computed.projectConfidence, 'UNCALIBRATED'); // swap-db sits on the largest feature
 });
 
@@ -153,4 +139,37 @@ test('QUICK inputs get no score fields in computed features', () => {
   const { computed } = computeEstimation(quick);
   assert.equal('tier' in computed.features.booking, false);
   assert.equal('scoreTotal' in computed.features.booking, false);
+});
+
+test('computed carries a price block and no scenarios', () => {
+  const { computed } = computeEstimation(fixture());
+  assert.equal(computed.scenarios, undefined);
+  assert.equal(computed.devHours, undefined);
+  assert.ok(computed.price.p50 > 0);
+  assert.ok(computed.price.presentHigh >= computed.price.presentLow);
+  assert.equal(computed.price.presentLow % 500, 0);
+});
+
+test('every scored feature carries its price and flag', () => {
+  const { computed } = computeEstimation(fixture());
+  for (const f of Object.values(computed.features)) {
+    assert.ok(Number.isFinite(f.point), 'point');
+    assert.ok(Number.isFinite(f.spread), 'spread');
+    assert.equal(typeof f.flag, 'string');
+    assert.ok(f.priceLow <= f.point && f.point <= f.priceHigh);
+  }
+});
+
+test('the roadmap is top level and its shares sum to 1', () => {
+  const { computed } = computeEstimation(fixture());
+  const total = computed.roadmap.reduce((sum, b) => sum + b.share, 0);
+  assert.ok(Math.abs(total - 1) < 1e-9, `shares sum to ${total}`);
+  assert.equal(computed.roadmap[0].startMonths, undefined);
+});
+
+test('repeat runs are byte-identical', () => {
+  assert.equal(
+    JSON.stringify(computeEstimation(fixture())),
+    JSON.stringify(computeEstimation(fixture())),
+  );
 });
