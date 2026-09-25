@@ -1,7 +1,7 @@
 // Factor scores are human judgments recorded in estimation-inputs.json.
 // This module owns their vocabulary, the rubric loader (references/
 // scoring-guide.md is the single source of anchor text), and the two
-// derived facts compute copies into estimation.json: Σ and tier.
+// derived facts compute copies into estimation.json: score and tier.
 import { readFileSync } from 'node:fs';
 import { escapeHtml } from '../../../analyze-requirements/scripts/lib/md-inline.mjs';
 import { tierFor } from './pricing.mjs';

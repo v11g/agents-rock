@@ -17,7 +17,7 @@ function parseArgs(argv) {
 }
 
 const templatePath = new URL('../assets/scores-review-template.html', import.meta.url).pathname;
-const mathPath = new URL('./lib/estimate-math.mjs', import.meta.url).pathname;
+const mathPath = new URL('./lib/pricing.mjs', import.meta.url).pathname;
 const json = (path) => JSON.parse(readFileSync(path, 'utf8'));
 
 function write(args) {

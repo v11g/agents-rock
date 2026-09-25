@@ -162,7 +162,8 @@ in your own words, then copy the feedback block at the bottom back into the chat
     <span style="grid-column:14/19">L <b>18&ndash;22</b></span>
     <span style="grid-column:19/22">XL <b>23+</b></span>
   </div>
-  <p class="spine-note">Each dot is one feature, placed on its total. Click a dot to jump to it; a red dot is one you changed.</p>
+  <p class="spine-note">Each dot is one feature, placed on its total. Click a dot to jump to it; a red dot is one you changed.
+  The score weights tech/size/deps/uncertainty/risk at 20/10/20/30/20, so a 4-4-4-4-4 row reads 20.0, not 20.</p>
 </div>
 
 <div id="review"></div>
@@ -195,7 +196,7 @@ const state = Object.fromEntries(DRAFT.features.map((f) => [f.id, {
 
 // The number comes from `state`, never from the draft: a select that re-read
 // f.scores[k].n would snap back to the agent's proposal and disagree with the
-// Σ beside it. The anchor and cite stay the draft's — re-anchoring a changed
+// score beside it. The anchor and cite stay the draft's — re-anchoring a changed
 // score is the CLI's job, not the page's — so an edited cell strikes its old
 // evidence through instead of showing it as if it explained the new score.
 const STALE_TITLE = 'rubric sentence changes with the score — re-anchored when the agent reads this back';
@@ -226,7 +227,7 @@ function rail(f) {
   return `<div class="rail">
     <h2>${esc(f.name)}</h2>
     <p class="meta">${esc(f.id)}</p>
-    <p class="verdict"><span class="total">&Sigma; <b data-total="${esc(f.id)}">${total}</b></span>
+    <p class="verdict"><span class="total">Score <b data-total="${esc(f.id)}">${total}</b></span>
       <span class="tier t-${tier.toLowerCase()}" data-tier="${esc(f.id)}">${tier}</span></p>
     <p class="hint" data-hint="${esc(f.id)}">${hintFor(total)}</p>
     <p class="prov${edited(f) ? ' edited' : ''}" data-prov="${esc(f.id)}">${originText(f)}</p>
@@ -246,7 +247,7 @@ function band(f) {
 function dotsAt(total) {
   return DRAFT.features.filter((f) => tierFor(state[f.id].scores).total === total)
     .map((f) => `<button type="button" class="dot${edited(f) ? ' changed' : ''}" data-goto="${esc(f.id)}"
-      title="${esc(f.name)} — &Sigma; ${total}"><span>${esc(f.name)}</span></button>`).join('');
+      title="${esc(f.name)} — score ${total}"><span>${esc(f.name)}</span></button>`).join('');
 }
 
 function tallyText() {

@@ -11,7 +11,7 @@ export function toHtml({ draft, template, guideHtml, mathSrc }) {
       TITLE: draft.project ?? 'Estimate',
       DATA: JSON.stringify(draft).replaceAll('</script', '<\\/script'),
       GUIDE: guideHtml,
-      MATH: inlineModule(extractExports(mathSrc, ['TIER_BREAKS', 'tierFor'])),
+      MATH: inlineModule(extractExports(mathSrc, ['WEIGHTS', 'BANDS', 'weightedScore', 'bandFor', 'tierFor'])),
     },
   });
 }

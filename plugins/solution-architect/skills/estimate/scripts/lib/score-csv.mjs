@@ -3,10 +3,10 @@
 // "note" column come back. Anchors and cites travel beside each score so the
 // reviewer sees the reason without opening anything else.
 import { SCORE_FACTORS, scoreNumbers } from './scoring.mjs';
-import { tierFor } from './estimate-math.mjs';
+import { tierFor } from './pricing.mjs';
 
 export const CSV_HEADERS = ['id', 'feature',
-  ...SCORE_FACTORS.flatMap((k) => [k, `${k}_why`, `${k}_cite`]), 'sum', 'tier', 'why_this_tier', 'note'];
+  ...SCORE_FACTORS.flatMap((k) => [k, `${k}_why`, `${k}_cite`]), 'score', 'tier', 'why_this_tier', 'note'];
 
 const quote = (v) => {
   const s = String(v ?? '');

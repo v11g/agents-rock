@@ -7,12 +7,17 @@ import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { toCsv, parseCsv, fromCsv, CSV_HEADERS } from '../lib/score-csv.mjs';
 import { diffScores, applyDiff } from '../lib/score-diff.mjs';
-import { loadGuide } from '../lib/scoring.mjs';
+import { loadGuide, guideTableHtml } from '../lib/scoring.mjs';
+import { toHtml } from '../lib/score-html.mjs';
+import { tierFor } from '../lib/pricing.mjs';
 import { findChrome } from '../../../analyze-requirements/scripts/lib/chrome.mjs';
 import { openPage } from '../../../analyze-requirements/scripts/lib/cdp.mjs';
 
 const cli = new URL('../score-review.mjs', import.meta.url).pathname;
 const skip = { skip: !findChrome() && 'no chrome on PATH' };
+const templatePath = new URL('../../assets/scores-review-template.html', import.meta.url).pathname;
+const pricingPath = new URL('../lib/pricing.mjs', import.meta.url).pathname;
+const nums = (tech, size, deps, unc, risk) => ({ tech, size, deps, unc, risk });
 
 const inputs = () => JSON.parse(readFileSync(new URL('./fixtures/booking-inputs.json', import.meta.url), 'utf8'));
 const draft = () => {
@@ -184,4 +189,32 @@ test('review page: a feature id with a quote in it cannot inject attributes', sk
     assert.equal(await page.eval(`document.querySelectorAll('[onfocus]').length`), 0);
     assert.equal(await page.eval(`window.__pwned === undefined`), true);
   } finally { page.close(); }
+});
+
+test('tierFor returns the weighted total, rounded, with its tier', () => {
+  assert.deepEqual(tierFor(nums(1, 3, 3, 3, 3)), { total: 13, tier: 'M' });
+  assert.deepEqual(tierFor(nums(3, 3, 4, 2, 4)), { total: 15.5, tier: 'M' });
+  assert.deepEqual(tierFor(nums(2, 3, 2, 1, 1)), { total: 8, tier: 'S' });
+});
+
+test('two features with the same scores group on an identical total', () => {
+  assert.equal(tierFor(nums(4, 2, 3, 3, 2)).total, tierFor(nums(4, 2, 3, 3, 2)).total);
+});
+
+test('the review page inlines the weighted scale, not the old breaks', () => {
+  const html = toHtml({
+    draft: draft(),
+    template: readFileSync(templatePath, 'utf8'),
+    guideHtml: guideTableHtml(loadGuide()),
+    mathSrc: readFileSync(pricingPath, 'utf8'),
+  });
+  assert.ok(html.includes('BANDS'), 'BANDS must be inlined');
+  assert.ok(!html.includes('TIER_BREAKS'), 'TIER_BREAKS must be gone');
+  assert.ok(html.includes('weightedScore'), 'weightedScore must be inlined');
+});
+
+test('the csv carries the weighted total', () => {
+  const csv = toCsv(draft());
+  const [, booking] = csv.trim().split('\n');
+  assert.match(booking, /,14,M,/, csv.split('\n').slice(0, 3).join('\n'));
 });
