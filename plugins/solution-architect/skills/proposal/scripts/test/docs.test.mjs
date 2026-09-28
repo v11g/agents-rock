@@ -50,4 +50,8 @@ test('review.md dispatches a fresh-eyes subagent with the five-point charter', (
   for (const needle of ['fresh', 'tech level', 'hype', 'leak', 'contradiction', 'one']) {
     assert.ok(d.toLowerCase().includes(needle), `review.md missing: ${needle}`);
   }
+  // The estimate produces no timeline; a review that asks for one pushes the
+  // author to promise a duration nothing downstream can back.
+  assert.doesNotMatch(d, /how long/i, 'review.md must not ask how long delivery takes');
+  assert.match(d, /delivery duration or date/, 'a duration must be listed as a leak');
 });

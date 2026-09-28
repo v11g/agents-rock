@@ -10,12 +10,13 @@ way the client will.
 1. **Comprehension** — would a reader at the stated tech level understand
    every sentence? Flag anything too technical; this catches jargon beyond
    the deny-list.
-2. **Executive summary** — does page one answer what we build, what it
-   costs, and how long it takes?
+2. **Executive summary** — does page one answer what we build and what it
+   costs?
 3. **Honesty** — persuasive is fine, hype is not. Flag any claim the
    document itself cannot back.
 4. **Leaks** — anything internal: staffing detail, rates, provenance
-   words, confidence internals.
+   words, confidence internals, a delivery duration or date (the estimate
+   produces no timeline).
 5. **Contradictions** — scope vs out-of-scope, price table vs summary,
    milestones vs delivery prose.
 
