@@ -287,6 +287,7 @@ if (deliveryLine) {
 // always takes the unpriced branch. Every number is read from
 // estimation.json; nothing is recomputed on the page.
 const pctText = (v) => `${Math.round(v * 100)}%`;
+const INTERNAL_ATTR = ['data', 'internal'].join('-');
 
 function totalHours() {
   return DATA.inputs.features.reduce((n, f) => n + DATA.computed.features[f.id].hours, 0);
@@ -336,6 +337,18 @@ function summaryRisks() {
   return `${DATA.inputs.risks.length} risks · ${DATA.inputs.assumptions.length} assumptions`;
 }
 
+// R51: free text the writer chose to leave about the approach — not
+// scenario-specific (recommendedScenario is gone, recommendedReason is not),
+// still schema-legal under any deliveryMode, and redact.mjs still strips it
+// unconditionally from every client render (same rule as a score's cite) —
+// so it is meant to keep existing and rendering, same as on the team page.
+// Internal-only: marked, not merely present, since the client bytes never
+// carry the field to render from.
+function summaryApproach() {
+  const why = DATA.inputs.recommendedReason;
+  return why ? `<p class="why" ${INTERNAL_ATTR}>Approach: ${esc(why)}.</p>` : '';
+}
+
 function renderSummary() {
   const el = document.getElementById('summary');
   if (!el) return;
@@ -350,7 +363,8 @@ function renderSummary() {
     + (priced ? summaryRange() : '')
     + `<p class="meta">${summarySize(hours)}</p>
     <p class="meta">${summaryMethod()}</p>
-    <p class="meta">${summaryRisks()}</p>`;
+    <p class="meta">${summaryRisks()}</p>
+    ${summaryApproach()}`;
 }
 
 const fmtMoney = (v) => `$${Math.round(v).toLocaleString()}`;

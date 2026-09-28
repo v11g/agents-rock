@@ -34,10 +34,20 @@ function buildPage(extra = [], mutate = () => {}, mdExtra = '') {
   return pathToFileURL(join(dir, 'estimate.html')).href;
 }
 
-// HTML comments are stripped before the "no month" check the same way
-// render.test.mjs's byte-level check does — a commented-out Gantt renderer
-// would otherwise pass this dishonestly.
-const stripComments = (s) => s.replace(/<!--[\s\S]*?-->/g, '');
+// What a reader actually sees: a clone of <body> with <script>/<style> torn
+// out, then its textContent. Not `document.body.textContent` (which walks
+// the JS source and embedded JSON, so it flags a `$0`/`month` that only
+// exists in a code comment — a false positive, not the leak this check is
+// for). Not `innerText` either — that also drops nodes the client-view
+// toggle hides via `display:none` without removing from the DOM
+// ([data-internal]), which is exactly where a leaked `$0` would hide.
+function readerText(page) {
+  return page.eval(`(() => {
+    const clone = document.body.cloneNode(true);
+    clone.querySelectorAll('script,style').forEach((n) => n.remove());
+    return clone.textContent;
+  })()`);
+}
 
 // The binding user decision: agentic mode is not priced, and the page must
 // never present a bare zero as if it were a quote. R50 keys this off
@@ -47,9 +57,9 @@ async function assertUnpriced(page) {
   assert.deepEqual(page.errors, []);
   assert.match(await page.eval(`document.querySelector('#summary .lead')?.textContent`), /not priced/i);
   assert.match(await page.eval(`document.querySelector('#summary .figures')?.textContent`), /\d+(\.\d+)? h$/);
-  const body = await page.eval(`document.body.textContent`);
+  const body = await readerText(page);
   assert.doesNotMatch(body, /\$0\b/);
-  assert.doesNotMatch(stripComments(body), /month/i);
+  assert.doesNotMatch(body, /month/i);
 }
 
 test('the agentic page renders measured hours and states plainly it is not priced', skip, async () => {
@@ -101,5 +111,33 @@ test('a milestone-tagged agentic estimate draws share-based roadmap bars, not mo
     assert.ok(shares.every((s) => /%$/.test(s)), `expected percentages, got ${shares}`);
     assert.equal(await page.eval(`document.querySelector('#roadmap .roadmap-months')`), null);
     assert.doesNotMatch(await page.eval(`document.getElementById('roadmap').textContent`), /\bmo\b/);
+  } finally { page.close(); }
+});
+
+// R51: recommendedReason is not scenario-specific (schema.mjs only refuses
+// scenarios/recommendedScenario) and redact.mjs still strips it
+// unconditionally from every client render — so the agentic page must render
+// it internally, the way the team page's summaryApproach() does, and never
+// carry it in the --client-only bytes.
+test('a written approach note renders under the agentic summary, internal-only', skip, async () => {
+  const page = await openPage(buildPage([], (inputs) => {
+    inputs.recommendedReason = 'the client wants a spike before committing scope';
+  }));
+  try {
+    assert.equal(await page.eval(`document.querySelector('#summary .why')?.textContent`),
+      'Approach: the client wants a spike before committing scope.');
+    assert.ok(await page.eval(`document.querySelector('#summary .why')?.closest('[data-internal]')`),
+      'the approach note must be marked internal-only');
+    assert.deepEqual(page.errors, []);
+  } finally { page.close(); }
+});
+
+test('the client-only agentic page does not carry the written approach note', skip, async () => {
+  const page = await openPage(buildPage(['--client-only'], (inputs) => {
+    inputs.recommendedReason = 'we quoted low to beat the incumbent bid';
+  }));
+  try {
+    assert.equal(await page.eval(`document.querySelector('#summary .why')`), null);
+    assert.deepEqual(page.errors, []);
   } finally { page.close(); }
 });
