@@ -41,7 +41,7 @@ test('render refuses a proposal that fails validation', () => {
   assert.throws(() => rendered(failMd));
 });
 
-test('rendered page is self-contained with fonts, nav, and all ten sections', () => {
+test('rendered page is self-contained with fonts, nav, and all nine sections', () => {
   const html = rendered();
   assert.doesNotMatch(html, /<!-- slot:/);
   assert.match(html, /@font-face/);

@@ -10,8 +10,12 @@ export function checkProposal({ md, estimation, today = new Date() }) {
   const { data: fm, error } = parseFrontmatter(md);
   if (!fm) return [`frontmatter: ${error}`];
   const out = checkDoc({ fm, md, estimation, today });
-  if (fm.scenario && estimation.computed.scenarios[fm.scenario]) {
+  // checkClient derives its figures from the estimate itself; an unpriced
+  // estimate can't quote a client, but that's a finding, not a crash.
+  try {
     checkClient({ md, fm, estimation }, out);
+  } catch (e) {
+    out.push(`cannot check client-facing figures: ${e.message}`);
   }
   return out;
 }

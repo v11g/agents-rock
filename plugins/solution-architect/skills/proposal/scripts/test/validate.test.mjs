@@ -30,11 +30,12 @@ test('the fail fixture exits 1 and names every violation class', () => {
   } catch (e) { err = e; }
   assert.ok(err, 'expected non-zero exit');
   const findings = err.stderr.toString();
-  assert.match(findings, /missing ## Team/);
+  assert.match(findings, /scenario.*removed/i);
+  assert.match(findings, /Team section was removed/i);
+  assert.match(findings, /Duration column/i);
   assert.match(findings, /placeholder/i);
   assert.match(findings, /valid_until/);
   assert.match(findings, /9,999|9999/);
   assert.match(findings, /"src"/);
-  assert.match(findings, /3eng-noai/);
   assert.match(findings, /jargon/i);
 });

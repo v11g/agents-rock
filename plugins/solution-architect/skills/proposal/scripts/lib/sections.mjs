@@ -3,7 +3,7 @@
 export const SECTIONS = [
   'Executive Summary', 'Background & Objectives', 'Proposed Solution', 'Scope',
   'Out of Scope & Assumptions', 'Delivery Approach', 'Investment & Timeline',
-  'Team', 'About', 'Next Steps',
+  'About', 'Next Steps',
 ];
 
 export const escapeRegExp = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');

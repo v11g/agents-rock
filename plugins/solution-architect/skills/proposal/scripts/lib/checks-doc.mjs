@@ -1,23 +1,32 @@
-// Structural half of the proposal gate: frontmatter contract, the ten
+// Structural half of the proposal gate: frontmatter contract, the nine
 // sections, placeholder scan, future validity. Client-safety checks live
 // in checks-client.mjs.
 import { SECTIONS, sectionText, tables } from './sections.mjs';
 
-const FM_KEYS = ['client', 'client_tech_level', 'scenario', 'currency',
+const FM_KEYS = ['client', 'client_tech_level', 'currency',
   'valid_until', 'source_architecture', 'source_estimation'];
 const TECH_LEVELS = ['non-tech', 'low-tech', 'technical'];
+const DURATION_HEADER = /\|\s*Duration\s*\|/i;
 
-function checkFrontmatter({ fm, estimation, today }, out) {
+function checkFrontmatter({ fm, today }, out) {
   for (const key of FM_KEYS) {
     if (!fm[key]) out.push(`frontmatter: missing "${key}"`);
   }
   if (fm.client_tech_level && !TECH_LEVELS.includes(fm.client_tech_level)) {
     out.push(`frontmatter: client_tech_level must be ${TECH_LEVELS.join('|')}`);
   }
-  if (fm.scenario && !estimation.computed.scenarios[fm.scenario]) {
-    out.push(`frontmatter: scenario "${fm.scenario}" not in estimation.json`);
-  }
   checkValidUntil(fm.valid_until, today, out);
+}
+
+// Both of these priced a team. The estimate prices a package now, so a
+// document still carrying either is showing a number nothing computed.
+function checkRemoved({ fm, md }, out) {
+  if ('scenario' in fm) out.push('frontmatter: "scenario" was removed — the estimate has one price');
+  if (/^##\s+Team\s*$/m.test(md)) out.push('the Team section was removed — this estimate prices a package, not a staffing plan');
+  const investment = sectionText(md, 'Investment & Timeline') ?? '';
+  if (DURATION_HEADER.test(investment)) {
+    out.push('Investment & Timeline must not carry a Duration column — the estimate produces no timeline');
+  }
 }
 
 function checkValidUntil(raw, today, out) {
@@ -47,7 +56,8 @@ function checkPlaceholders(md, out) {
 }
 
 export function checkDoc({ fm, md, estimation, today }, out = []) {
-  checkFrontmatter({ fm, estimation, today }, out);
+  checkFrontmatter({ fm, today }, out);
+  checkRemoved({ fm, md }, out);
   checkSections(md, out);
   checkPlaceholders(md, out);
   return out;

@@ -51,8 +51,6 @@ M1 covers booking; M2 covers notifications. Weekly demos.
 | M2 | $2,000 – $3,000 |
 
 Total: $8,000 – $12,000.
-## Team
-One senior engineer.
 ## About Code Engine Studio
 We build software. Contact: hello@example.com
 ## Next Steps
@@ -131,4 +129,19 @@ test('the deny-list is lowercase and non-trivial', () => {
 test('a document with no frontmatter is a finding, not a crash', () => {
   assert.deepEqual(checkProposal({ md: '## Executive Summary\nHi.', estimation, today: new Date('2026-08-06') }),
     ['frontmatter: no frontmatter block']);
+});
+
+// R55/load-bearing: checkProposal must run the client-safety checks itself —
+// frontmatter no longer carries a scenario key to gate on, so checkClient
+// has to run whenever the estimate is priced. Break the gate in checks.mjs
+// (e.g. restore the old `fm.scenario && estimation.computed.scenarios[...]`
+// condition) and this test goes red because the invented figure below is
+// never caught.
+test('checkProposal refuses an invented money figure through the pipeline', () => {
+  const invented = md.replace(
+    'New booking system for $8,000 – $12,000.',
+    'New booking system for $8,000 – $12,000, plus a $6,500 setup fee.',
+  );
+  const findings = checkProposal({ md: invented, estimation, today: new Date('2026-08-06') });
+  assert.ok(findings.some((f) => f.includes('6,500')), findings.join('\n'));
 });

@@ -1,6 +1,6 @@
 ---
 name: proposal
-description: Assemble a pre-sales client proposal from analyze-requirements and estimate outputs — interviewed client context, one offered scenario as a price range, and a print-ready client page. Use when the user asks for a proposal, a client pitch document, a quote document, or "something I can send the client".
+description: Assemble a pre-sales client proposal from analyze-requirements and estimate outputs — interviewed client context, the estimate's price as a range, and a print-ready client page. Use when the user asks for a proposal, a client pitch document, a quote document, or "something I can send the client".
 ---
 
 # proposal
@@ -17,8 +17,9 @@ PDF.
    go in the document.
 2. Both prerequisites are hard: no ARCHITECTURE.md or no estimation.json →
    stop and name the skill to run (`analyze-requirements` / `estimate`).
-3. One scenario reaches the client — the one picked in the interview,
-   presented as a range. The others never leak.
+3. The client sees one price — the cost range and single-number figure the
+   estimate computed. No staffing plan, internal scoring, or timeline
+   leaks.
 4. `node scripts/validate.mjs` must exit 0 before the page renders;
    `render.mjs` re-runs the same checks and refuses on findings.
 5. Human review of proposal.md before anything is rendered for or sent to
@@ -28,11 +29,11 @@ PDF.
 
 1. **Prereq gate**: ARCHITECTURE.md and estimation.json both exist, or stop.
 2. **Interview**: follow `references/interview.md` — client context, tech
-   level, scenario pick, validity, firm profile (with storage-scope choice).
+   level, validity, firm profile (with storage-scope choice).
 3. **Figures**: `node scripts/derive.mjs --estimation <dir>/estimation.json
-   --scenario <id> --out <dir>/proposal-figures.json` — the only numbers
-   allowed in the document.
-4. **Write**: proposal.md per `references/writing.md` (ten sections,
+   --out <dir>/proposal-figures.json` — the only numbers allowed in the
+   document.
+4. **Write**: proposal.md per `references/writing.md` (nine sections,
    frontmatter contract, tech-level language).
 5. **Validate**: `node scripts/validate.mjs --md <dir>/proposal.md
    --estimation <dir>/estimation.json` — fix findings, re-run until clean.

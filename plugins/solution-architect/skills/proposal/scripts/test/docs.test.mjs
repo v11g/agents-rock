@@ -22,22 +22,24 @@ test('SKILL.md names the pipeline, both hard prerequisites, and the review gate'
   }
 });
 
-test('interview.md carries the prereq gate, tech levels, scenario pick, and profile scopes', () => {
+test('interview.md carries the prereq gate, tech levels, and profile scopes', () => {
   const d = doc('references/interview.md');
-  for (const needle of ['non-tech', 'low-tech', 'technical', 'scenario',
+  for (const needle of ['non-tech', 'low-tech', 'technical',
     'valid', 'proposal-profile.json', '.claude/', 'stop']) {
     assert.ok(d.includes(needle), `interview.md missing: ${needle}`);
   }
+  assert.doesNotMatch(d, /scenario/i);
 });
 
-test('writing.md states every validator rule family and the ten sections', () => {
+test('writing.md states every validator rule family and the nine sections', () => {
   const d = doc('references/writing.md');
   for (const needle of ['Executive Summary', 'Background & Objectives', 'Proposed Solution',
     'Scope', 'Out of Scope & Assumptions', 'Delivery Approach', 'Investment & Timeline',
-    'Team', 'About', 'Next Steps', 'valid_until', 'jargon_allow', 'proposal-figures.json',
-    'Never write a number', 'rates']) {
+    'About', 'Next Steps', 'valid_until', 'jargon_allow', 'proposal-figures.json',
+    'Never write a number', 'rates', 'carries no timeline']) {
     assert.ok(d.includes(needle), `writing.md missing: ${needle}`);
   }
+  assert.doesNotMatch(d, /\*\*Team\*\*/);
   for (const term of ['kubernetes', 'api']) {
     assert.ok(JARGON.includes(term), `jargon list lost its anchor term: ${term}`);
   }

@@ -12,8 +12,8 @@ Both files must exist or the skill stops:
 
 Read ARCHITECTURE.md, estimation.json, and estimation.md. Load the firm
 profile (see §3). Then state what is already known: scope, milestones,
-scenarios with cost/duration, risks, tech stack. The user corrects anything
-stale before questions begin.
+cost, risks, tech stack. The user corrects anything stale before questions
+begin.
 
 ## 1. Client context — the only-human-knows questions
 
@@ -26,10 +26,7 @@ stale before questions begin.
    Objectives.
 4. What the client cares about most: price, speed, or reliability — shapes
    the Executive Summary's emphasis.
-5. Which scenario to offer. List every scenario from estimation.json with
-   its cost and duration; the user picks exactly one. Only that one appears
-   in the proposal.
-6. Validity period — default 30 days from today; compute the date for
+5. Validity period — default 30 days from today; compute the date for
    `valid_until`.
 
 ## 2. Gaps + confirmation

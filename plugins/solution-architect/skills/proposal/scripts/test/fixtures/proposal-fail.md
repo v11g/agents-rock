@@ -19,4 +19,9 @@ TBD — we deploy the backend API for $9,999.
 | Booking | observed |
 
 ## Investment & Timeline
-Total: $9,999 over 1–99 months. Cheaper than 3eng-noai.
+| Milestone | Duration | Investment |
+| --- | --- | --- |
+| M1 | 2 months | $9,999 |
+
+## Team
+Two senior engineers.

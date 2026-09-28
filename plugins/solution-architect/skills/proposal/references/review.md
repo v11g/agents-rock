@@ -14,7 +14,7 @@ way the client will.
    costs, and how long it takes?
 3. **Honesty** — persuasive is fine, hype is not. Flag any claim the
    document itself cannot back.
-4. **Leaks** — anything internal: other scenarios, rates, provenance
+4. **Leaks** — anything internal: staffing detail, rates, provenance
    words, confidence internals.
 5. **Contradictions** — scope vs out-of-scope, price table vs summary,
    milestones vs delivery prose.

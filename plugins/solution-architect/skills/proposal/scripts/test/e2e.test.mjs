@@ -13,7 +13,7 @@ test('compute → derive → validate → render runs clean end to end', () => {
   execFileSync('node', [script('../../../estimate/scripts/compute.mjs'),
     '--inputs', script('../../../estimate/scripts/test/fixtures/booking-inputs.json'), '--out', json]);
   execFileSync('node', [script('../derive.mjs'),
-    '--estimation', json, '--scenario', '2eng-max5x', '--out', join(dir, 'proposal-figures.json')]);
+    '--estimation', json, '--out', join(dir, 'proposal-figures.json')]);
   execFileSync('node', [script('../validate.mjs'),
     '--md', script('./fixtures/proposal-pass.md'), '--estimation', json]);
   const bundle = join(dir, 'mermaid.js');
