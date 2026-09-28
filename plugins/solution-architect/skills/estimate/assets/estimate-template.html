@@ -391,12 +391,33 @@ badge.className = `${DATA.computed.projectConfidence.toLowerCase()} ${confLevel(
 const pctText = (v) => `${Math.round(v * 100)}%`;
 
 // The client-facing figures from proposal-figures.json, when render.mjs was
-// handed them — what the client is actually quoted, cost only.
+// handed them — what the client is actually quoted, cost only. Only
+// meaningful once this scope is priced.
 function summaryRange() {
   const f = DATA.figures;
   if (!f?.cost) return '';
   const single = f.singleNumber ? ` &middot; single number ${fmtMoney(f.singleNumber)}` : '';
   return `<p class="range">proposal ${fmtMoney(f.cost.low)} &ndash; ${fmtMoney(f.cost.high)}${single}</p>`;
+}
+
+// R50: "priced" keys on computed.price.p50 !== 0 (some feature scored), not
+// on depth or delivery mode. A QUICK-depth estimate scores no feature and
+// hits the same all-zero price an agentic estimate does (see
+// estimate-template-agentic.html), so it takes the same honest state instead
+// of presenting a bare zero as if it were a quote.
+function summaryUnpriced() {
+  const hours = DATA.inputs.features.reduce((n, f) => n + DATA.computed.features[f.id].hours, 0);
+  return `<p class="lead">Not priced</p>
+    <p class="figures">${hours.toFixed(2)} h</p>
+    <p class="meta">No feature carries a score at ${DATA.inputs.depth} depth — this scope is not
+    priced. Hours below are for planning only, not a quote.</p>`;
+}
+
+function summaryPriced(p) {
+  return `<p class="lead">Presented range</p>
+    <p class="figures">${fmtMoney(p.presentLow)}<span class="sep">&ndash;</span>${fmtMoney(p.presentHigh)}</p>
+    <p class="meta">single number, if one is required: ${fmtMoney(p.singleNumber)}</p>
+    <p class="meta">contingency ${pctText(p.contingencyRate)} · implied accuracy ${pctText(p.impliedAccuracy)}</p>`;
 }
 
 // Hours survive as delivery planning only — they size the backlog and they
@@ -433,16 +454,14 @@ function renderSummary() {
   const el = document.getElementById('summary');
   if (!el) return;
   const p = DATA.computed.price;
+  const priced = p.p50 !== 0;
   el.innerHTML = secHead('Summary',
     'What this scope is priced at, stated once: the range presented to the client, the '
     + 'single number to give if one is demanded, and the contingency and spread behind '
     + 'both. Shares of effort are shown below; no duration is produced anywhere.')
-    + `<p class="lead">Presented range</p>
-    <p class="figures">${fmtMoney(p.presentLow)}<span class="sep">&ndash;</span>${fmtMoney(p.presentHigh)}</p>
-    <p class="meta">single number, if one is required: ${fmtMoney(p.singleNumber)}</p>
-    <p class="meta">contingency ${pctText(p.contingencyRate)} · implied accuracy ${pctText(p.impliedAccuracy)}</p>
-    ${summaryRange()}
-    <p class="meta">${summarySize()}</p>
+    + (priced ? summaryPriced(p) : summaryUnpriced())
+    + (priced ? summaryRange() : '')
+    + `<p class="meta">${summarySize()}</p>
     <p class="meta">${summaryMethod()}</p>
     <p class="meta">${summaryRisks()}</p>
     ${summaryApproach()}
@@ -1272,7 +1291,10 @@ function tierReferenceTable() {
     <tbody>${rows}</tbody></table>`;
 }
 
-if (WORKING && DATA.computed.price?.overheads) {
+// R50: no price build-up to show once this scope is unpriced (p50 === 0) —
+// every row would read a bare zero, which the summary above already refuses
+// to print.
+if (WORKING && DATA.computed.price?.p50 && DATA.computed.price?.overheads) {
   WORKING.innerHTML = buildUpTable(DATA.computed.price) + (TIERED ? tierReferenceTable() : '');
 }
 </script><!-- internal:end -->

@@ -812,6 +812,30 @@ test('the client-only page shows the range and no working at all', skip, async (
   } finally { page.close(); }
 });
 
+// R50: a QUICK-depth estimate scores no feature and hits the same all-zero
+// price an agentic estimate does (estimate-template-agentic.html) — the
+// summary must say plainly that this scope is not priced, never present the
+// bare $0 that computed.price.presentLow/presentHigh/singleNumber all are,
+// and the internal price build-up must carry no zeroed rows either.
+test('a QUICK-depth estimate states it is not priced instead of presenting $0', skip, async () => {
+  const page = await openPage(buildPageWith((inputs) => {
+    inputs.depth = 'QUICK';
+    for (const f of inputs.features) {
+      delete f.scores; delete f.scoreNote; delete f.scoreProvenance;
+      f.tasks = [{ ...f.tasks[0], id: `${f.id}-band`, o: 60, m: 110, p: 160 }];
+    }
+  }));
+  try {
+    assert.deepEqual(page.errors, []);
+    assert.equal(await page.eval(`document.querySelector('#summary .lead').textContent`), 'Not priced');
+    assert.match(await page.eval(`document.querySelector('#summary .figures').textContent`), /^\d+(\.\d+)? h$/);
+    assert.equal(await page.eval(`document.querySelector('#summary .working').children.length`), 0);
+    const body = await page.eval(`document.body.textContent`);
+    assert.doesNotMatch(body, /\$0\b/);
+    assert.doesNotMatch(body, /month/i);
+  } finally { page.close(); }
+});
+
 // The roadmap draws computed.roadmap's shares: M1 is 76% of the booking
 // fixture's effort and M2 the remaining 24%, and neither is a duration.
 test('the roadmap bars are labelled with their share of effort', skip, async () => {

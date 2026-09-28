@@ -5,7 +5,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="description" content="Interactive project estimate with scenario comparison">
+<meta name="description" content="Measurement-based agentic project estimate">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' rx='3' fill='%230f766e'/%3E%3C/svg%3E">
 <title><!-- slot:TITLE --> — Estimate</title>
 <style>
@@ -101,8 +101,8 @@ main section h2, main aside h2 {
 }
 .sec-head { display:flex; align-items:center; gap:.45rem; margin:0 0 .8rem; }
 .sec-head h2 { margin:0; }
-/* summary: the estimate's headline — team, months and cost stated once, then
-   the committed alternatives as one small table (internal view only). */
+/* summary: the estimate's headline — measured hours stated once, and the
+   price they bought once this scope is priced (never before). */
 #summary .lead { font-size:1.02rem; font-weight:600; margin:0 0 .25rem; }
 #summary .figures {
   font-size:1.7rem; font-weight:600; letter-spacing:-.02em; line-height:1.15;
@@ -150,11 +150,11 @@ td details.help > p, caption details.help > p { left:auto; right:0; }
 #method li { margin-bottom:.35rem; }
 #method .sources { font-size:.78rem; color:var(--ink-dim); margin:0; }
 #method .sources span { display:block; margin-bottom:.2rem; }
-/* roadmap: Gantt-style shared axis. Every row is a flex triple (label |
-   track | months) with the same label/months widths as the axis strip below
-   it, so a given month lines up under the same x-position in every row's
-   track and in the axis ticks — one shared coordinate system, not a
-   per-row axis. */
+/* roadmap: shares of total effort on one shared axis. Every row is a flex
+   triple (label | track | share) with the same label/share widths as the axis
+   strip below it, so a given percentage lines up under the same x-position in
+   every row's track and in the axis ticks — one shared coordinate system, not
+   a per-row axis. */
 .roadmap-chart { display:flex; flex-direction:column; }
 .roadmap-row { display:flex; align-items:center; gap:.7rem; padding:.4rem 0; }
 .roadmap-row + .roadmap-row { border-top:1px solid var(--border); }
@@ -171,13 +171,13 @@ td details.help > p, caption details.help > p { left:auto; right:0; }
   display:flex; overflow:hidden; /* container segments fill it left to right */
 }
 .roadmap-seg { height:100%; }
-.roadmap-months {
+.roadmap-share {
   flex:0 0 auto; min-width:4.6rem; text-align:right;
   font-family:'IBM Plex Mono',monospace; font-size:.72rem;
   color:var(--ink-dim); font-variant-numeric:tabular-nums;
 }
-/* the axis mirrors the row's flex geometry (same label/months widths) so its
-   ticks land under the matching month position in every track above. */
+/* the axis mirrors the row's flex geometry (same label/share widths) so its
+   ticks land under the matching percentage in every track above. */
 .roadmap-axis {
   display:flex; align-items:flex-end; gap:.7rem; height:1rem; margin-top:.6rem;
   padding-top:.4rem; border-top:1px solid var(--border);
@@ -279,79 +279,48 @@ if (deliveryLine) {
     + `${DATA.inputs.agentContext.model}) · Baselines: ${evidenceIds.size} measurements`;
 }
 
-// Summary: the recommended scenario stated once — team, AI assistance,
-// months, cost — then the committed alternatives as one small table. Every
-// number is read from estimation.json; nothing is recomputed on the page.
-const recScenario = () => DATA.inputs.scenarios.find((s) => s.id === DATA.inputs.recommendedScenario);
-const sameTeam = (a, b) => a.team.length === b.team.length
-  && a.team.every((m, i) => m.seniority === b.team[i].seniority && m.rate === b.team[i].rate);
-const byMonths = (a, b) => DATA.computed.scenarios[a.id].months - DATA.computed.scenarios[b.id].months;
+// Summary: measured hours, stated once — and, only once this scope carries a
+// price, the range they bought. R50: "priced" keys on computed.price.p50 !==
+// 0 (some feature scored), not on delivery mode — a QUICK-depth team estimate
+// hits the same all-zero price and gets the same honest state (see
+// estimate-template.html). An agentic estimate never scores a feature, so it
+// always takes the unpriced branch. Every number is read from
+// estimation.json; nothing is recomputed on the page.
+const pctText = (v) => `${Math.round(v * 100)}%`;
 
-function scenarioLabel(s) {
-  const n = s.team.length;
-  const who = n === 1 ? `1 ${s.team[0].seniority} engineer`
-    : `${n} engineers (${s.team.map((m) => m.seniority).join(' · ')})`;
-  return `${who}, ${s.aiAssisted ? 'AI-assisted' : 'humans unaided'}`;
+function totalHours() {
+  return DATA.inputs.features.reduce((n, f) => n + DATA.computed.features[f.id].hours, 0);
 }
 
-// Signed month and cost deltas against the recommended scenario.
-function deltaText(c, rec) {
-  const dm = c.months - rec.months;
-  const dc = c.totalCost - rec.totalCost;
-  const sign = (v) => (v >= 0 ? '+' : '−');
-  return `${sign(dm)}${Math.abs(dm).toFixed(2)} mo · ${sign(dc)}${fmtMoney(Math.abs(dc))}`;
+function summaryUnpriced(hours) {
+  return `<p class="lead">Not priced</p>
+    <p class="figures">${hours.toFixed(2)} h</p>
+    <p class="meta">Agentic delivery is not priced under this model — no feature carries a score, so
+    no dollar figure is produced. The hours above are measured, not a quote.</p>`;
 }
 
-function altRow(s, rec) {
-  const c = DATA.computed.scenarios[s.id];
-  return `<tr><td>${scenarioLabel(s)}</td><td class="num">${c.months.toFixed(2)}</td>
-    <td class="num">${fmtMoney(c.totalCost)}</td><td><span class="delta">${deltaText(c, rec)}</span></td></tr>`;
-}
-
-// A same-roster scenario that differs only in AI assistance is one line, not
-// a row: the roster is what a reader chooses between.
-function aiVariantLine(s, rec) {
-  const c = DATA.computed.scenarios[s.id];
-  return `<p class="meta">${s.aiAssisted ? 'With' : 'Without'} AI assistance: ${c.months.toFixed(2)} months · `
-    + `${fmtMoney(c.totalCost)} (${deltaText(c, rec)})</p>`;
-}
-
-// One sentence, only when an alternative beats the recommendation on both
-// axes — the page must not bury a dominated choice.
-function insightLine(alts, rec) {
-  const c = (s) => DATA.computed.scenarios[s.id];
-  const win = alts.find((s) => c(s).months < rec.months && c(s).totalCost < rec.totalCost);
-  if (!win) return '';
-  return `<p class="insight">&#9656; ${scenarioLabel(win)} finishes ${(rec.months - c(win).months).toFixed(2)} months `
-    + `sooner for ${fmtMoney(rec.totalCost - c(win).totalCost)} less than the recommended plan.</p>`;
-}
-
-function summaryAlts(rec, recC) {
-  const others = DATA.inputs.scenarios.filter((s) => s.id !== rec.id);
-  if (!others.length) return '';
-  const teams = others.filter((s) => !sameTeam(s, rec)).sort(byMonths);
-  const variants = others.filter((s) => sameTeam(s, rec)).map((s) => aiVariantLine(s, recC)).join('');
-  const table = teams.length ? `<table><caption>Alternatives</caption><thead><tr><th>Team</th>
-    <th class="num">Months</th><th class="num">Cost</th><th></th></tr></thead>
-    <tbody>${teams.map((s) => altRow(s, recC)).join('')}</tbody></table>` : '';
-  const why = DATA.inputs.recommendedReason
-    ? `<p class="why">Approach: ${esc(DATA.inputs.recommendedReason)}.</p>` : '';
-  return `<div class="alts" ${INTERNAL_ATTR}>${why}${variants}${table}${insightLine(teams, recC)}</div>`;
+function summaryPriced(p) {
+  return `<p class="lead">Presented range</p>
+    <p class="figures">${fmtMoney(p.presentLow)}<span class="sep">&ndash;</span>${fmtMoney(p.presentHigh)}</p>
+    <p class="meta">single number, if one is required: ${fmtMoney(p.singleNumber)}</p>
+    <p class="meta">contingency ${pctText(p.contingencyRate)} · implied accuracy ${pctText(p.impliedAccuracy)}</p>`;
 }
 
 // The client-facing range from proposal-figures.json, when render.mjs was
-// handed it — the number the client is actually quoted.
+// handed it — the number the client is actually quoted. Only meaningful once
+// this scope is priced.
 function summaryRange() {
   const f = DATA.figures;
-  if (!f?.cost || !f?.months) return '';
-  return `<p class="range">range ${f.months.low} – ${f.months.high} months · ${fmtMoney(f.cost.low)} – ${fmtMoney(f.cost.high)}</p>`;
+  if (!f?.cost) return '';
+  const single = f.singleNumber ? ` &middot; single number ${fmtMoney(f.singleNumber)}` : '';
+  return `<p class="range">proposal ${fmtMoney(f.cost.low)} &ndash; ${fmtMoney(f.cost.high)}${single}</p>`;
 }
 
-function summarySize(recC) {
+function summarySize(hours) {
   const feats = DATA.inputs.features;
   const tasks = feats.reduce((n, f) => n + f.tasks.length, 0);
   const milestones = new Set(feats.map((f) => f.milestone).filter(Boolean)).size;
-  const parts = [`${Math.round(recC.hours).toLocaleString()} h`, `${feats.length} features`, `${tasks} tasks`];
+  const parts = [`${Math.round(hours).toLocaleString()} h`, `${feats.length} features`, `${tasks} tasks`];
   if (milestones) parts.push(`${milestones} milestones`);
   return parts.join(' · ');
 }
@@ -364,25 +333,24 @@ function summaryMethod() {
 }
 
 function summaryRisks() {
-  return `${DATA.inputs.risks.length} risks priced in (${DATA.computed.riskBufferHours} h) · `
-    + `${DATA.inputs.assumptions.length} assumptions`;
+  return `${DATA.inputs.risks.length} risks · ${DATA.inputs.assumptions.length} assumptions`;
 }
 
 function renderSummary() {
   const el = document.getElementById('summary');
   if (!el) return;
-  const rec = recScenario();
-  const recC = DATA.computed.scenarios[rec.id];
+  const p = DATA.computed.price;
+  const priced = p.p50 !== 0;
+  const hours = totalHours();
   el.innerHTML = secHead('Summary',
-    'The recommended way to deliver this scope, stated once: team, months and cost from the '
-    + 'committed estimate. Alternatives compare other rosters against it.')
-    + `<p class="lead">${scenarioLabel(rec)}</p>
-    <p class="figures">${recC.months.toFixed(2)} months<span class="sep">&middot;</span>${fmtMoney(recC.totalCost)}</p>
-    ${summaryRange()}
-    <p class="meta">${summarySize(recC)}</p>
+    'What this scope measured, stated once: expected hours from matched history, and — only '
+    + 'once a feature carries a score — the price they bought. An agentic estimate has no '
+    + 'scored features, so it states plainly that it is not priced.')
+    + (priced ? summaryPriced(p) : summaryUnpriced(hours))
+    + (priced ? summaryRange() : '')
+    + `<p class="meta">${summarySize(hours)}</p>
     <p class="meta">${summaryMethod()}</p>
-    <p class="meta">${summaryRisks()}</p>
-    ${summaryAlts(rec, recC)}`;
+    <p class="meta">${summaryRisks()}</p>`;
 }
 
 const fmtMoney = (v) => `$${Math.round(v).toLocaleString()}`;
@@ -396,10 +364,12 @@ const secHead = (title, text) => `<div class="sec-head"><h2>${title}</h2>${help(
 
 
 
-// Containers and roadmap are generic — they price/visualize hours, never a
-// task category — so they carry over unchanged. The task table and Evidence
-// section below are baseline-native: every column comes from a measured or
-// seeded baseline, never from a category/PERT calc.
+// Containers and the roadmap price/visualize hours, never a task category, so
+// their container logic carries over unchanged; the roadmap's own bands were
+// rebuilt below to match the share-based model — no scenario, no duration.
+// The task table and Evidence section below are baseline-native: every
+// column comes from a measured or seeded baseline, never from a
+// category/PERT calc.
 // Two levels max (schema-enforced), so a component's container is one parent
 // hop at most; a top-level id is its own container.
 const COMP_PARENT = Object.fromEntries((DATA.inputs.components ?? []).map((c) => [c.id, c.parent]));
@@ -423,21 +393,13 @@ function onPieHover(e) {
   }
 }
 
-// Ticks are whole months (0, 1, 2…) once the span is long enough for that to
-// read as a timeline; below that a whole-month grid would be a bare "0", so
-// fall back to each band's own start/end. Either way ticks are computed once
-// and shared by every row's gridlines and the axis strip below them — one
-// coordinate system, not a per-row axis.
-function roadmapTicks(total, roadmap) {
-  if (total >= 2) {
-    const whole = [];
-    for (let m = 0; m <= Math.floor(total); m++) whole.push(m);
-    return whole;
-  }
-  return [...new Set(roadmap.flatMap((b) => [b.startMonths, b.endMonths]))].sort((a, b) => a - b);
-}
+// The roadmap's scale is a share of the whole scope, not elapsed time: the
+// milestone shares computed.roadmap carries sum to 1, so the axis is a fixed
+// 0–100% and every row's gridlines and the axis strip below them read off the
+// same quarters — one coordinate system, not a per-row axis.
+const SHARE_TICKS = [0, 25, 50, 75, 100];
 
-const tickPct = (m, total) => (total > 0 ? (m / total) * 100 : 0);
+const edgeStyle = (pct, pin) => (pct <= 0 ? `left:0${pin}` : pct >= 100 ? `right:0${pin}` : `left:${pct}%`);
 
 // Milestone names and feature lists are the only free text the roadmap draws, and
 // they now land in an attribute as well as in the body — so both are escaped
@@ -463,59 +425,51 @@ function bandSegments(band) {
       title="${esc(`${names[c] ?? c} · ${h.toFixed(2)}h (${Math.round((h / sum) * 100)}%)`)}"></span>`).join('');
 }
 
-// total, names and ticks are one thing — the chart's scale, shared by every row
-// and by the axis beneath them — so they travel together.
-function roadmapRow(band, scale) {
-  const { total, names, ticks } = scale;
-  const left = (band.startMonths / total) * 100;
-  const width = ((band.endMonths - band.startMonths) / total) * 100;
-  const gridlines = ticks.map((m) => {
-    const pct = tickPct(m, total);
-    const style = pct <= 0 ? 'left:0' : pct >= 100 ? 'right:0' : `left:${pct}%`;
-    return `<span class="roadmap-gridline" style="${style}"></span>`;
-  }).join('');
+const ROADMAP_GRIDLINES = SHARE_TICKS
+  .map((t) => `<span class="roadmap-gridline" style="${edgeStyle(t, '')}"></span>`).join('');
+
+// Every bar starts at the left edge: the rows are shares of one whole, read
+// against each other, and sliding them along an axis would draw a sequence
+// in time that nothing computed.
+function roadmapRow(band, names) {
   // 150px of label column against "M1 - Foundation: the governed write path": every
-  // row clips, and a clipped Gantt label names nothing. Widening the column would
-  // cost the axis the span it needs, so each label carries its own full text as a
-  // hover title instead.
+  // row clips, and a clipped label names nothing. Widening the column would cost the
+  // bars the span they need, so each label carries its own full text as a hover
+  // title instead.
   const feats = band.features.map((id) => names[id]);
   return `<div class="roadmap-row" data-milestone="${esc(band.milestone)}">
     <div class="roadmap-label"><span class="roadmap-name" title="${esc(band.milestone)}">${esc(band.milestone)}</span>
       <span class="roadmap-feature-names" title="${esc(feats.join(' · '))}">${feats.map(esc).join(' &middot; ')}</span></div>
-    <div class="roadmap-track">${gridlines}<span class="roadmap-band" style="left:${left}%;width:${width}%">${bandSegments(band)}</span></div>
-    <span class="roadmap-months">${band.startMonths}&ndash;${band.endMonths} mo</span></div>`;
+    <div class="roadmap-track">${ROADMAP_GRIDLINES}<span class="roadmap-band" style="left:0;width:${(band.share * 100).toFixed(2)}%">${bandSegments(band)}</span></div>
+    <span class="roadmap-share">${pctText(band.share)}</span></div>`;
 }
 
 // The two edge ticks are pinned to the track's own edges instead of centered,
 // so they never overhang the section.
-function roadmapAxis({ total, ticks }) {
-  const tick = (m) => {
-    const pct = tickPct(m, total);
-    const style = pct <= 0 ? 'left:0;transform:none'
-      : pct >= 100 ? 'right:0;transform:none' : `left:${pct}%`;
-    return `<span style="${style}">${m}</span>`;
-  };
+function roadmapAxis() {
+  const tick = (t) => `<span style="${edgeStyle(t, ';transform:none')}">${t}</span>`;
   return `<div class="roadmap-axis"><span class="roadmap-axis-spacer"></span>
-    <div class="roadmap-axis-ticks">${ticks.map(tick).join('')}</div>
-    <span class="roadmap-axis-unit">months</span></div>`;
+    <div class="roadmap-axis-ticks">${SHARE_TICKS.map(tick).join('')}</div>
+    <span class="roadmap-axis-unit">% of effort</span></div>`;
 }
 
-// Committed numbers only: the roadmap draws the recommended scenario as
-// computed — nothing on this page recomputes a month or a cost.
+// Committed numbers only: the roadmap draws computed.roadmap as computed —
+// milestones in delivery order, each sized by its share of total effort. No
+// scenario or duration exists in this model; a delivery with no
+// milestone-tagged feature carries no computed.roadmap at all, and the
+// section is absent.
 function renderRoadmap() {
   const el = document.getElementById('roadmap');
   if (!el) return;
-  const roadmap = DATA.computed.scenarios[DATA.inputs.recommendedScenario]?.roadmap;
+  const roadmap = DATA.computed.roadmap;
   if (!roadmap) { el.remove(); return; }
-  const total = roadmap[roadmap.length - 1].endMonths;
   const names = Object.fromEntries(DATA.inputs.features.map((f) => [f.id, f.name]));
-  const scale = { total, names, ticks: roadmapTicks(total, roadmap) };
   el.innerHTML = secHead('Roadmap',
-    'Sequential delivery by the recommended scenario team. Bands are relative months from '
-    + 'kickoff, not calendar dates; each milestone\'s width is its share of the work. Band '
+    'Milestones in delivery order, each bar its share of total effort. Shares are not '
+    + 'durations and they are not dates — this estimate produces no timeline. Band '
     + 'colors are the containers the milestone touches (same palette as the chart above).')
-    + `<div class="roadmap-chart">${roadmap.map((b) => roadmapRow(b, scale)).join('')}`
-    + `${roadmapAxis(scale)}</div>`;
+    + `<div class="roadmap-chart">${roadmap.map((b) => roadmapRow(b, names)).join('')}`
+    + `${roadmapAxis()}</div>`;
 }
 
 // Committed numbers only, like every section: expected hours summed per
@@ -565,15 +519,20 @@ function renderContainers() {
 // 1 is the tightest match (same repo + agent + model), 0 means no evidence.
 const MATCH_LABELS = { 0: 'none', 1: 'repo+agent+model', 2: 'agent', 3: 'similar scope', 4: 'global shape' };
 
+// A --client-only render has redact.mjs strip a task's provenance and
+// assumptions (R49, same class as a score's cite) — null-guarded, not
+// assumed, same as every other stripped field on this page.
 function taskRow(t, c) {
+  const assump = (t.assumptions ?? []).join('; ') || 'none';
+  const prov = t.provenance ? `<span class="tag ${t.provenance}">${t.provenance}</span>` : '';
   return `<tr class="${confLevel(c.confidence)}">
     <td>${esc(t.id)}</td>
     <td class="num">${c.minutes ?? 'not estimated'}</td>
     <td class="num">${c.samples}</td>
     <td>${MATCH_LABELS[c.matchLevel] ?? 'none'}</td>
     <td><span class="conf">${c.confidence}</span></td>
-    <td class="task-assump">${esc(t.assumptions.join('; ') || 'none')}</td>
-    <td><span class="tag ${t.provenance}">${t.provenance}</span></td></tr>`;
+    <td class="task-assump">${esc(assump)}</td>
+    <td>${prov}</td></tr>`;
 }
 
 // Committed numbers only: every row is a task, baselined from measured
