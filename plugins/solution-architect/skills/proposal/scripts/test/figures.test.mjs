@@ -32,16 +32,28 @@ test('no months and no team survive in the figures', () => {
   for (const m of f.milestones) assert.equal(m.months, undefined);
 });
 
-test('milestone cost splits follow the roadmap shares', () => {
+test('milestone cost splits follow the roadmap shares; the last takes the remainder', () => {
   const f = deriveFigures(estimation());
   assert.equal(f.milestones[0].cost.low, 32300); // 43000 * 0.75, rounded to 100
-  assert.equal(f.milestones[1].cost.low, 10800); // 43000 * 0.25, rounded to 100
+  assert.equal(f.milestones[1].cost.low, 10700); // 43000 - 32300, not round100(10750) = 10800
 });
 
-test('milestone costs sum to within one rounding step of the total', () => {
-  const f = deriveFigures(estimation());
-  const sum = f.milestones.reduce((s, m) => s + m.cost.high, 0);
-  assert.ok(Math.abs(sum - f.cost.high) <= 100 * f.milestones.length, `${sum} vs ${f.cost.high}`);
+// R59: the rows above the bold Total line must add up to it exactly, and
+// checkMoney refuses any hand-corrected amount, so the figures have to.
+const withShares = (shares) => {
+  const e = estimation();
+  e.computed.roadmap = shares.map((share, i) => ({ milestone: `M${i + 1}`, features: [], share }));
+  return e;
+};
+
+test('milestone costs sum exactly to the presented range', () => {
+  for (const shares of [[0.75, 0.25], [0.33, 0.33, 0.33], [0.17, 0.42, 0.42]]) {
+    const f = deriveFigures(withShares(shares));
+    for (const bound of ['low', 'high']) {
+      const sum = f.milestones.reduce((s, m) => s + m.cost[bound], 0);
+      assert.equal(sum, f.cost[bound], `shares ${shares} ${bound}: rows sum to ${sum}`);
+    }
+  }
 });
 
 test('an estimate with no roadmap yields no milestones, not a crash', () => {
