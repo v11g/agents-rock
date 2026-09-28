@@ -35,7 +35,9 @@ makes both skills ask for it, one question at a time, before stopping.
 
 All three must hold for the interview to run:
 
-1. The framework has run once and its stopping rule has not fired.
+1. The framework has run once and its stopping rule has not fired, or
+   fired only by naming missing evidence (an empty level, an unevidenced
+   link, a `root_candidate`, a chain that stopped short).
 2. A specific gap blocking that rule can be named — a field, layer, or link
    (e.g. "`rca.contributing` is empty").
 3. `AskUserQuestion` is available — the same test step 2 already applies
@@ -79,7 +81,8 @@ A re-run is the same framework over more evidence, not a second
 framework, so the one-framework-per-run guardrail does not fire.
 
 The loop ends when the stopping rule fires, no askable gap remains, the
-human picks Stop, or round 6 completes. The output names which of these
+human picks Stop, an answer meets another class's definition, or round 6
+completes. The output names which of these
 ended it.
 
 ### Edge cases
@@ -87,7 +90,7 @@ ended it.
 | Situation | Handling |
 | --------- | -------- |
 | Answer contradicts existing evidence | Keep both, name the contradiction, lower confidence. Never drop either silently. |
-| Answer meets another class's definition in `problem-router` — recurrence (`complex`) or an actor adapting to fixes (`complex-adaptive`), e.g. "it happens every week" | End the interview, emit, and note that `problem-router` should be re-run. One framework per run still holds. |
+| Answer meets another class's definition in `problem-router` — in `problem-solving`, recurrence (`complex`) or an actor adapting to fixes (`complex-adaptive`), e.g. "it happens every week"; in `systems-thinking`, only `complex-adaptive` | End the interview, emit, and note that `problem-router` should be re-run. One framework per run still holds. |
 | Human asserts "the cause is X" | Record as `interview` evidence: "the human believes X". It is `root` only if an observation ties X to the symptom — the root test is unchanged. |
 | Human rejects the question to ask for clarification | Answer in chat, then re-ask the same question. The round does not count. |
 | Human rejects the question with no message | Treat as Stop. |

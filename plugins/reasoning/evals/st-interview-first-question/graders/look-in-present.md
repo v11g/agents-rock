@@ -1,6 +1,6 @@
 ---
 type: regex
-pattern: 'look in'
+pattern: 'look in:'
 flags: i
 match: contains
 target: last_message

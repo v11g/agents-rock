@@ -7,7 +7,9 @@ is often what's missing. Ask for it before stopping short.
 
 All three must hold for the interview to run.
 
-1. The framework has run and its stopping rule has not fired.
+1. The framework has run and its stopping rule (or test) has not fired,
+   or fired only by naming missing evidence — an empty level, an
+   unevidenced link, a `root_candidate`, a chain that stopped short.
 2. You can name the specific gap blocking that rule — a field, layer, or
    link, e.g. "`rca.contributing` is empty".
 3. `AskUserQuestion` is available — the same test step 2 applies before
@@ -50,7 +52,7 @@ A re-run is the same framework over more evidence, not a second framework.
 | Situation | Handling |
 | --------- | -------- |
 | Answer contradicts existing evidence | Keep both, name the contradiction, lower confidence. |
-| Answer shows recurrence (`complex`) or an actor adapting to fixes (`complex-adaptive`) | End the interview, emit, and recommend re-running `problem-router`. Do not start a second framework. |
+| Answer meets another class's definition in `problem-router` — in `problem-solving`, recurrence (`complex`) or an actor adapting to fixes (`complex-adaptive`); in `systems-thinking`, only `complex-adaptive` | End the interview, emit, and recommend re-running `problem-router`. Do not start a second framework. |
 | Human asserts "the cause is X" | Record as `interview` evidence: "the human believes X". It is `root` only if an observation ties X to the symptom. |
 | Human rejects the question to ask something | Answer in chat, then re-ask the same question. The round does not count. |
 | Human rejects the question with no message | Treat as Stop. |
@@ -58,5 +60,6 @@ A re-run is the same framework over more evidence, not a second framework.
 ## End
 
 The loop ends when the stopping rule fires, no askable gap remains, the
-human picks Stop, or round 6 completes. Say in the output which one ended
+human picks Stop, an answer meets another class's definition, or round 6
+completes. Say in the output which one ended
 it.
