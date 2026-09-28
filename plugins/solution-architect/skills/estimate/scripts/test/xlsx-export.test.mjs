@@ -1,6 +1,6 @@
 // The Feature breakdown's spreadsheet export: an internal-only button that
 // clones the v2 estimator workbook in the browser, fills the Ballpark
-// Estimator tab with the currently visible rows and the Project Roll-up tab
+// Estimator tab with every feature (never just the filtered view) and the Project Roll-up tab
 // with the interviewed context levels, and leaves every one of the template's
 // own formulas untouched so the workbook keeps repricing when a human edits a
 // score.
@@ -342,7 +342,10 @@ test('milestone and container fill N/O beside the template columns', skip, async
   } finally { page.close(); }
 });
 
-test('the export honours the active source filter', skip, async () => {
+// R60: the workbook prices the project from whatever rows it gets, so a
+// filtered subset would quote a different total than the page and the
+// proposal. The export ignores the breakdown filter.
+test('the export carries every feature even with a source filter on', skip, async () => {
   const page = await openPage(buildPage());
   try {
     await page.eval(`(() => {
@@ -350,10 +353,10 @@ test('the export honours the active source filter', skip, async () => {
       sel.value = 'stated';
       sel.dispatchEvent(new Event('change', { bubbles: true }));
     })()`);
-    const xml = ballpark(await exportedFiles(page));
-    assert.match(xml, /User can book appointment/);
-    assert.doesNotMatch(xml, /Email reminders/);
-    assert.equal(cell(xml, 'A8'), '', 'the filtered-out slot must be emptied');
+    const files = await exportedFiles(page);
+    const xml = ballpark(files);
+    assert.deepEqual(['A7', 'A8'].map((r) => nameAt(files, xml, r)),
+      ['User can book appointment', 'Email reminders'], 'a filtered-out feature must still export');
   } finally { page.close(); }
 });
 
@@ -441,7 +444,7 @@ test('the export adds a registered Task Breakdown tab', skip, async () => {
   } finally { page.close(); }
 });
 
-test('task rows carry the PERT formula in-cell and ride the feature filter', skip, async () => {
+test('task rows carry the PERT formula in-cell and ignore the feature filter', skip, async () => {
   const page = await openPage(buildPage());
   try {
     await page.eval(`(() => {
@@ -456,7 +459,7 @@ test('task rows carry the PERT formula in-cell and ride the feature filter', ski
     assert.match(cellFormula(cell(xml, 'G2')) ?? '', /\(D2\+4\*E2\+F2\)\/6/);
     assert.equal(inlineText(cell(xml, 'H2')), 'HIGH');
     assert.equal(inlineText(cell(xml, 'K2')), 'Booking API');
-    assert.doesNotMatch(xml, /Scheduled reminder jobs/, 'filtered-out feature tasks must not export');
+    assert.match(xml, /Scheduled reminder jobs/, 'a filtered-out feature\'s tasks must still export');
   } finally { page.close(); }
 });
 

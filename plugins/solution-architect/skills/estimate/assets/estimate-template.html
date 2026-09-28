@@ -699,7 +699,7 @@ function bdTabStrip() {
 function bdDownloadBtn() {
   return `<span class="bd-filter-group" role="group" aria-label="export">
     <button type="button" data-download ${INTERNAL_ATTR}
-      title="download visible rows as a scoring spreadsheet">download xlsx</button></span>`;
+      title="download every feature as a scoring spreadsheet">download xlsx</button></span>`;
 }
 
 function selectBox({ name, key, current, pairs }) {
@@ -1441,11 +1441,13 @@ function xlsxContainer(f) {
   return CT_NAMES[id] ?? id ?? '';
 }
 
-// Visible rows only, milestone as the primary order (roadmap order of first
-// appearance), the table's current sort preserved within each milestone.
+// Every feature, whatever the breakdown filter shows: the workbook prices the
+// project from the rows it gets, so a filtered subset would quote a total the
+// page and the proposal do not (R60). Milestone is the primary order (roadmap
+// order of first appearance), the table's current sort kept within each.
 function exportRows() {
   const msRank = [...new Set(DATA.inputs.features.map((f) => f.milestone))];
-  return bdVisible(bdSorted(breakdownData(), bdState.tab)).slice()
+  return bdSorted(breakdownData(), bdState.tab)
     .sort((a, b) => msRank.indexOf(a.milestone) - msRank.indexOf(b.milestone));
 }
 
