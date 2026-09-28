@@ -6,18 +6,21 @@ interactive page.
 ## What it produces
 
 **`estimation.md`** — scope split into `stated` vs `proposed` items, a task-level
-backlog with confidence and assumptions per row, an AI-aware scenario comparison
-(team composition × AI assistance), and the technique used, all backed by
-`estimation.json` (the numbers every table cell comes from — nothing in the
-doc is hand-totaled).
+backlog with confidence and assumptions per row, the score-driven price model
+(five weighted factor scores per feature rolled up into a project price), and
+the technique used, all backed by `estimation.json` (the numbers every table
+cell comes from — nothing in the doc is hand-totaled).
 
 **An interactive page** (`estimate.html`) — the same data rendered as a
-self-contained, offline-capable HTML file: a Summary (recommended team, months,
-cost, and the committed alternatives), the feature breakdown (the interview's
-five factor scores per feature, Σ, tier and hours side by side; a
+self-contained, offline-capable HTML file: a Summary (the presented range, the
+single number, and the milestone shares), the feature breakdown (the
+interview's five factor scores per feature, Σ, tier and hours side by side; a
 spreadsheet export with a scoring tab, a Score Rationale tab and a task
 tab), containers, roadmap and risks, served on `localhost:4173` (or the
-next free port).
+next free port). Hours are planning detail — they size and order the task
+backlog and roadmap shares — and never set price; only the feature scores do.
+Agentic delivery is not priced under this model: the page shows measured hours
+and states plainly that it is not priced, and a proposal cannot quote it.
 
 ## Two run modes
 
@@ -66,6 +69,7 @@ Node ≥ 20, declared in `SKILL.md`, the same as `analyze-requirements`.
 An estimate that hides its guesses is worse than no estimate — it looks precise
 right up until a date slips. estimate labels every scope item `stated` or
 `proposed`, renders anything nobody sized as `not estimated` rather than `0`,
-and never applies one blanket AI-speedup multiplier across a whole project —
-only per task category, because boilerplate and novel logic don't speed up the
-same amount.
+and never applies one blanket price or multiplier to a feature — every feature
+is scored on all five factors and the weighted score and bands set its price,
+with uncertainty weighted heaviest (30%) and size lightest (10%), because
+unclear requirements move the number more than volume of code does.

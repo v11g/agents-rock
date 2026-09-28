@@ -4,12 +4,17 @@ import { mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { pathToFileURL } from 'node:url';
 import { createServer } from '../../../analyze-requirements/scripts/serve.mjs';
 import { findFreePort } from '../../../analyze-requirements/scripts/lib/port.mjs';
+import { computeEstimation } from '../lib/rollup.mjs';
+import { findChrome } from '../../../analyze-requirements/scripts/lib/chrome.mjs';
+import { openPage } from '../../../analyze-requirements/scripts/lib/cdp.mjs';
 
 const scripts = new URL('..', import.meta.url).pathname;
 const fixture = join(scripts, 'test/fixtures/booking-inputs.json');
 const passMd = join(scripts, 'test/fixtures/estimation-pass.md');
+const skip = { skip: !findChrome() && 'no chrome on PATH' };
 
 test('SKILL.md exists with hard rules and auto-trigger description', () => {
   const skill = readFileSync(new URL('../../SKILL.md', import.meta.url), 'utf8');
@@ -58,4 +63,45 @@ test('agentic fixture flows compute → validate → render, and a vague range i
   const vagueMdPath = join(dir, 'vague.md');
   writeFileSync(vagueMdPath, vagueMd);
   assert.throws(() => execFileSync('node', [join(scripts, 'validate.mjs'), '--md', vagueMdPath, '--json', json]));
+});
+
+// The workbook export (assets/estimate-template.html's __buildWorkbook) is
+// deliberately left out of this check: it only runs inside a real page (it
+// reads live DOM/table state), and the price cells it writes are formulas
+// with their cached values stripped (dropCachedValues + recalcOnLoad) so
+// Excel recomputes on open — there is no computed presentLow/presentHigh to
+// read back from the raw xlsx bytes in Node.
+test('the page and the proposal quote the same range', skip, async () => {
+  const inputs = JSON.parse(readFileSync(fixture, 'utf8'));
+  const estimation = computeEstimation(inputs);
+  const { presentLow, presentHigh } = estimation.computed.price;
+
+  const dir = mkdtempSync(join(tmpdir(), 'estimate-e2e-figures-'));
+  const json = join(dir, 'estimation.json');
+  writeFileSync(json, JSON.stringify(estimation));
+  execFileSync('node', [join(scripts, 'render.mjs'), '--json', json, '--md', passMd, '--out', dir]);
+
+  // The presented range is formatted by the page's own client-side script,
+  // not baked into the static file, so this must run the page in a browser
+  // rather than grep the html text.
+  const page = await openPage(pathToFileURL(join(dir, 'estimate.html')).href);
+  try {
+    const body = await page.eval('document.body.textContent');
+    assert.ok(body.includes(presentLow.toLocaleString('en-US')), 'page range');
+  } finally { page.close(); }
+
+  const { deriveFigures } = await import(
+    '../../../proposal/scripts/lib/figures.mjs'
+  );
+  const figures = deriveFigures(estimation);
+  assert.equal(figures.cost.low, presentLow);
+  assert.equal(figures.cost.high, presentHigh);
+});
+
+test('no duration survives anywhere in the pipeline', () => {
+  const inputs = JSON.parse(readFileSync(fixture, 'utf8'));
+  const json = JSON.stringify(computeEstimation(inputs));
+  for (const gone of ['months', 'laborCost', 'toolingCost', 'totalCost', 'seniority', 'rate']) {
+    assert.ok(!json.includes(`"${gone}"`), `${gone} still present in estimation.json`);
+  }
 });
