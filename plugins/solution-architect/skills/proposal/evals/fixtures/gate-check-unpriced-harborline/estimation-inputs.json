@@ -1,0 +1,126 @@
+{
+  "project": "Harborline Dispatch Portal",
+  "currency": "USD",
+  "technique": "factor-scored-tiering",
+  "depth": "QUICK",
+  "calibration": {
+    "S": [
+      20,
+      60
+    ],
+    "M": [
+      60,
+      160
+    ],
+    "L": [
+      160,
+      400
+    ],
+    "XL": [
+      400,
+      800
+    ]
+  },
+  "verificationPct": 0.12,
+  "exposeRatesToClient": false,
+  "components": [
+    {
+      "id": "dispatch",
+      "name": "Dispatch Service"
+    },
+    {
+      "id": "driver",
+      "name": "Driver App"
+    },
+    {
+      "id": "tracking",
+      "name": "Customer Tracking"
+    },
+    {
+      "id": "billing",
+      "name": "Billing Integration",
+      "notEstimated": "phase 2, client keeps current invoicing"
+    }
+  ],
+  "features": [
+    {
+      "id": "dispatch-board",
+      "name": "Dispatcher assigns jobs on a live board",
+      "provenance": "stated",
+      "component": "dispatch",
+      "milestone": "M1 - Dispatch core",
+      "tasks": [
+        {
+          "id": "dispatch-board-band",
+          "name": "Dispatcher assigns jobs on a live board",
+          "category": "boilerplate",
+          "o": 60,
+          "m": 110,
+          "p": 160,
+          "confidence": "LOW",
+          "assumptions": [
+            "sized from the tier band only"
+          ],
+          "provenance": "proposed"
+        }
+      ]
+    },
+    {
+      "id": "driver-checkin",
+      "name": "Drivers check in and out from their phone",
+      "provenance": "stated",
+      "component": "driver",
+      "milestone": "M1 - Dispatch core",
+      "tasks": [
+        {
+          "id": "driver-checkin-band",
+          "name": "Drivers check in and out from their phone",
+          "category": "logic",
+          "o": 60,
+          "m": 110,
+          "p": 160,
+          "confidence": "LOW",
+          "assumptions": [
+            "sized from the tier band only"
+          ],
+          "provenance": "proposed"
+        }
+      ]
+    },
+    {
+      "id": "customer-tracking",
+      "name": "Customers see where their delivery is",
+      "provenance": "proposed",
+      "component": "tracking",
+      "milestone": "M2 - Customer tracking",
+      "tasks": [
+        {
+          "id": "customer-tracking-band",
+          "name": "Customers see where their delivery is",
+          "category": "logic",
+          "o": 20,
+          "m": 40,
+          "p": 60,
+          "confidence": "LOW",
+          "assumptions": [
+            "sized from the tier band only"
+          ],
+          "provenance": "proposed"
+        }
+      ]
+    }
+  ],
+  "risks": [
+    {
+      "name": "depot wifi blackspots delay driver rollout",
+      "probability": 0.3,
+      "impactHours": 40
+    }
+  ],
+  "assumptions": [
+    {
+      "text": "one depot, one timezone",
+      "impactIfWrong": "recompute board-api at logic category, +30%"
+    }
+  ]
+}

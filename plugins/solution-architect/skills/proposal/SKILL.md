@@ -32,7 +32,9 @@ PDF.
    level, validity, firm profile (with storage-scope choice).
 3. **Figures**: `node scripts/derive.mjs --estimation <dir>/estimation.json
    --out <dir>/proposal-figures.json` — the only numbers allowed in the
-   document.
+   document. It refuses an unpriced estimate (no scored features — QUICK
+   depth or agentic mode); stop there and name the `estimate` skill, to be
+   re-run with scored features. Never quote such an estimate at $0.
 4. **Write**: proposal.md per `references/writing.md` (nine sections,
    frontmatter contract, tech-level language).
 5. **Validate**: `node scripts/validate.mjs --md <dir>/proposal.md

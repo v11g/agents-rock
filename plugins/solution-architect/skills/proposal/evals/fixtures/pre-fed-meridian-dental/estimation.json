@@ -22,9 +22,47 @@
         800
       ]
     },
-    "overheadPct": 0.35,
     "verificationPct": 0.12,
     "exposeRatesToClient": false,
+    "contextLevels": {
+      "codebaseMaturity": 1,
+      "stackFamiliarity": 1,
+      "specQuality": 2,
+      "compliance": 2,
+      "clientDecisions": 3
+    },
+    "contextProvenance": {
+      "codebaseMaturity": {
+        "level": 1,
+        "anchor": "Greenfield",
+        "cite": "ARCHITECTURE.md §2: new portal reading a nightly export",
+        "source": "derived"
+      },
+      "stackFamiliarity": {
+        "level": 1,
+        "anchor": "Core stack, done before",
+        "cite": "interview",
+        "source": "stated"
+      },
+      "specQuality": {
+        "level": 2,
+        "anchor": "clear written brief",
+        "cite": "ARCHITECTURE.md §1-§8 plus brief.md, guardian access still open",
+        "source": "derived"
+      },
+      "compliance": {
+        "level": 2,
+        "anchor": "handles PII",
+        "cite": "ARCHITECTURE.md §2/§12: patient records, audited access, no named regulation",
+        "source": "derived"
+      },
+      "clientDecisions": {
+        "level": 3,
+        "anchor": "committee sign-off",
+        "cite": "brief.md: three partners sign off together",
+        "source": "derived"
+      }
+    },
     "components": [
       {
         "id": "portal",
@@ -224,48 +262,7 @@
         "text": "nightly export from the practice system",
         "impactIfWrong": "recompute records-screens at logic category, +40%"
       }
-    ],
-    "scenarios": [
-      {
-        "id": "lean-2eng",
-        "aiAssisted": true,
-        "toolingCostPerSeat": 100,
-        "team": [
-          {
-            "seniority": "senior",
-            "rate": 60
-          },
-          {
-            "seniority": "mid",
-            "rate": 45
-          }
-        ]
-      },
-      {
-        "id": "full-4eng",
-        "aiAssisted": false,
-        "toolingCostPerSeat": null,
-        "team": [
-          {
-            "seniority": "senior",
-            "rate": 60
-          },
-          {
-            "seniority": "mid",
-            "rate": 45
-          },
-          {
-            "seniority": "mid",
-            "rate": 45
-          },
-          {
-            "seniority": "junior",
-            "rate": 30
-          }
-        ]
-      }
-    ],
-    "recommendedScenario": "lean-2eng"
+    ]
   },
   "computed": {
     "tasks": {
@@ -291,22 +288,37 @@
         "hours": 156.17,
         "low": 95,
         "high": 250,
-        "scoreTotal": 14,
-        "tier": "M"
+        "scoreTotal": 13.5,
+        "tier": "M",
+        "point": 2333.33,
+        "spread": 0.31,
+        "priceLow": 1610,
+        "priceHigh": 3056.67,
+        "flag": ""
       },
       "recall-reminders": {
         "hours": 42.5,
         "low": 25,
         "high": 70,
         "scoreTotal": 11,
-        "tier": "S"
+        "tier": "S",
+        "point": 1423.08,
+        "spread": 0.25,
+        "priceLow": 1067.31,
+        "priceHigh": 1778.85,
+        "flag": ""
       },
       "records-view": {
         "hours": 67.17,
         "low": 42,
         "high": 105,
         "scoreTotal": 12,
-        "tier": "M"
+        "tier": "M",
+        "point": 1708.33,
+        "spread": 0.28,
+        "priceLow": 1230,
+        "priceHigh": 2186.67,
+        "flag": ""
       }
     },
     "components": {
@@ -315,79 +327,52 @@
       "recall": 42.5,
       "records": 67.17
     },
-    "devHours": 265.83,
-    "overheadHours": 93.04,
-    "spreadBufferHours": 22.74,
-    "riskBufferHours": 12.8,
-    "scenarios": {
-      "full-4eng": {
-        "taskHours": {
-          "login-access-rules": 92.83,
-          "login-identity": 63.33,
-          "recall-jobs": 42.5,
-          "records-screens": 67.17
-        },
-        "hours": 394.42,
-        "months": 1.01,
-        "laborCost": 25355.37,
-        "toolingCost": 0,
-        "totalCost": 25355.37,
-        "notes": [
-          "coordination overhead grows past 3 engineers"
+    "roadmap": [
+      {
+        "milestone": "M1 - Secure portal",
+        "features": [
+          "patient-login",
+          "records-view"
         ],
-        "roadmap": [
-          {
-            "milestone": "M1 - Secure portal",
-            "features": [
-              "patient-login",
-              "records-view"
-            ],
-            "startMonths": 0,
-            "endMonths": 0.85
-          },
-          {
-            "milestone": "M2 - Recall reminders",
-            "features": [
-              "recall-reminders"
-            ],
-            "startMonths": 0.85,
-            "endMonths": 1.01
-          }
-        ]
+        "share": 0.84
       },
-      "lean-2eng": {
-        "taskHours": {
-          "login-access-rules": 66.28,
-          "login-identity": 28.64,
-          "recall-jobs": 30.35,
-          "records-screens": 47.96
-        },
-        "hours": 269.39,
-        "months": 1.07,
-        "laborCost": 15714.69,
-        "toolingCost": 213.81,
-        "totalCost": 15928.5,
-        "notes": [],
-        "roadmap": [
-          {
-            "milestone": "M1 - Secure portal",
-            "features": [
-              "patient-login",
-              "records-view"
-            ],
-            "startMonths": 0,
-            "endMonths": 0.88
-          },
-          {
-            "milestone": "M2 - Recall reminders",
-            "features": [
-              "recall-reminders"
-            ],
-            "startMonths": 0.88,
-            "endMonths": 1.07
-          }
-        ]
+      {
+        "milestone": "M2 - Recall reminders",
+        "features": [
+          "recall-reminders"
+        ],
+        "share": 0.16
       }
+    ],
+    "price": {
+      "featurePoints": 5464.74,
+      "contextMultiplier": 1.4,
+      "adjustedBase": 7650.64,
+      "overheads": {
+        "lines": {
+          "foundation": 0.12,
+          "discovery": 0.06,
+          "ux": 0.08,
+          "qa": 0.08,
+          "devops": 0.05,
+          "docs": 0.03,
+          "pm": 0.1,
+          "integration": 0.06
+        },
+        "totalPct": 0.5800000000000001,
+        "amount": 4437.37
+      },
+      "contingencyRate": 0.15,
+      "contingencyAmount": 1813.2,
+      "p50": 13901.21,
+      "sigma": 2384.38,
+      "p20": 11898.34,
+      "p80": 15904.09,
+      "p95": 17823.52,
+      "presentLow": 14000,
+      "presentHigh": 18000,
+      "singleNumber": 16000,
+      "impliedAccuracy": 0.17
     },
     "projectConfidence": "MED"
   }
