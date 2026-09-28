@@ -4,7 +4,8 @@
 // summed feature-price subtotal), contextMultiplier and adjustedBase (the
 // multiplier and the base it scales — adjustedBase = featurePoints ×
 // contextMultiplier, so both factors have to go for either to be hidden),
-// and overheads (the line items and their total). Stripped, per feature in
+// and overheads (the line items and their total), plus inputs.contextLevels
+// and inputs.contextProvenance (see redactContext). Stripped, per feature in
 // computed.features: tier, point, priceLow and priceHigh — the score band
 // and the price it bought.
 //
@@ -74,6 +75,18 @@ function redactFeatureInputs(feature) {
   return { ...cited, tasks: cited.tasks.map((t) => omit(t, TASK_JUDGMENT)) };
 }
 
+// The five context levels are our written rating of the client's own spec
+// and decision-making, and the input to the context multiplier — pricing
+// working, so they leave the file with the rest of it. Exposed or not, the
+// cite is internal file references and is blanked like a score's cite.
+function redactContext(inputs, expose) {
+  const { contextLevels, contextProvenance, ...rest } = inputs;
+  if (!expose) return rest;
+  if (!contextProvenance) return inputs;
+  const blanked = Object.entries(contextProvenance).map(([k, p]) => [k, { ...p, cite: '' }]);
+  return { ...inputs, contextProvenance: Object.fromEntries(blanked) };
+}
+
 function redactComputedTasks(tasks) {
   return Object.fromEntries(Object.entries(tasks).map(([id, t]) => [
     id,
@@ -83,7 +96,8 @@ function redactComputedTasks(tasks) {
 
 export function redactForClient(estimation) {
   const agentic = redactRecommendedReason(redactAgenticInputs(estimation.inputs));
-  const inputs = { ...agentic, features: agentic.features.map(redactFeatureInputs) };
+  const context = redactContext(agentic, estimation.inputs.exposeRatesToClient);
+  const inputs = { ...context, features: context.features.map(redactFeatureInputs) };
   const computed = { ...estimation.computed, tasks: redactComputedTasks(estimation.computed.tasks) };
   if (estimation.inputs.exposeRatesToClient) return { ...estimation, inputs, computed };
   return {

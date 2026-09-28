@@ -228,8 +228,8 @@ Ask one thing at a time, in this order:
 6. **Expose-the-pricing-working** — y/n; sets `exposeRatesToClient`. Default
    no: the client render carries the presented range, the single number and
    the contingency rate, but not the working behind them — the context
-   multiplier, the overhead lines, the adjusted base, and the tier and price
-   band each feature landed in. Answer yes only when the client has asked to
+   multiplier and the five context levels behind it, the overhead lines, the
+   adjusted base, and the tier and price band each feature landed in. Answer yes only when the client has asked to
    see how the number was built and the team is content to show it.
 
 ## 5. Loop rule

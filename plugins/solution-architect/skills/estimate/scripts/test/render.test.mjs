@@ -291,6 +291,36 @@ test('--client-only blanks the evidence cites and keeps the anchors', () => {
   assert.match(renderedPage(), /slot conflict \+ cancellation rules/);
 });
 
+// The context levels are our written rating of the client's own spec and
+// decision-making, and the input to the context multiplier the client file
+// already hides. With rates hidden, both objects leave the bytes; with rates
+// exposed, the levels stay but the cite (our internal file references) never
+// ships, same as a score's cite.
+test('--client-only drops the context levels and provenance from the file', () => {
+  const internal = renderedPage();
+  for (const s of ['contextLevels', 'contextProvenance', 'requirements.json readiness 62']) {
+    assert.ok(internal.includes(s), `internal render must carry ${s}`);
+  }
+  const client = renderedPage(['--client-only']);
+  for (const s of ['contextLevels', 'contextProvenance', 'requirements.json readiness 62', 'outline or slide deck']) {
+    assert.ok(!client.includes(s), `client file leaks ${s}`);
+  }
+  const exposed = renderWith((inputs) => { inputs.exposeRatesToClient = true; }, ['--client-only']);
+  assert.equal(embedded(exposed).inputs.contextLevels.specQuality, 3);
+  assert.ok(!exposed.includes('requirements.json readiness 62'), 'a context cite ships with rates exposed');
+});
+
+// Spec §8: the xlsx export block stays inside internal: markers because the
+// embedded workbook carries the tier bands, overhead percentages and
+// contingency parameters. The build-up renderer sits in its own internal block.
+test('--client-only strips the embedded workbook and the build-up renderer', () => {
+  const NEEDLES = ['XLSX_TEMPLATE', 'buildUpTable', 'tierReferenceTable'];
+  const internal = renderedPage();
+  for (const s of NEEDLES) assert.ok(internal.includes(s), `internal render must carry ${s}`);
+  const client = renderedPage(['--client-only']);
+  for (const s of NEEDLES) assert.ok(!client.includes(s), `client file carries ${s}`);
+});
+
 test('--client-only keeps the pricing internals when exposeRatesToClient is true', () => {
   const dir = mkdtempSync(join(tmpdir(), 'estimate-render-'));
   const inputs = JSON.parse(readFileSync(fixture, 'utf8'));
