@@ -9,7 +9,7 @@ import { checkClient } from './checks-client.mjs';
 export function checkProposal({ md, estimation, today = new Date() }) {
   const { data: fm, error } = parseFrontmatter(md);
   if (!fm) return [`frontmatter: ${error}`];
-  const out = checkDoc({ fm, md, estimation, today });
+  const out = checkDoc({ fm, md, today });
   // checkClient derives its figures from the estimate itself; an unpriced
   // estimate can't quote a client, but that's a finding, not a crash.
   try {

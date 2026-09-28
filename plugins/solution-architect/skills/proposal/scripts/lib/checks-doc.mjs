@@ -55,7 +55,7 @@ function checkPlaceholders(md, out) {
   }
 }
 
-export function checkDoc({ fm, md, estimation, today }, out = []) {
+export function checkDoc({ fm, md, today }, out = []) {
   checkFrontmatter({ fm, today }, out);
   checkRemoved({ fm, md }, out);
   checkSections(md, out);

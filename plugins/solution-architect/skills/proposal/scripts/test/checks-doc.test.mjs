@@ -5,18 +5,6 @@ import { checkDoc } from '../lib/checks-doc.mjs';
 
 const TODAY = new Date('2026-08-06');
 
-function pricedEstimation() {
-  return {
-    computed: {
-      price: { presentLow: 8000, presentHigh: 12000, singleNumber: 10000, p50: 7998 },
-      roadmap: [
-        { milestone: 'M1', features: ['a'], share: 0.75 },
-        { milestone: 'M2', features: ['b'], share: 0.25 },
-      ],
-    },
-  };
-}
-
 function validFm() {
   return {
     client: 'Acme Corp',
@@ -75,9 +63,7 @@ Valid until 2099-12-31. Reply to accept.
 `;
 }
 
-const check = ({ fm = validFm(), md = fullDoc(), estimation = pricedEstimation(), today = TODAY } = {}) => (
-  checkDoc({ fm, md, estimation, today })
-);
+const check = ({ fm = validFm(), md = fullDoc(), today = TODAY } = {}) => checkDoc({ fm, md, today });
 
 test('a complete document produces no findings', () => {
   assert.deepEqual(check(), []);
@@ -140,13 +126,13 @@ test('the proposal has nine sections and no Team', () => {
 test('frontmatter no longer requires a scenario', () => {
   const fm = validFm();
   delete fm.scenario;
-  const out = checkDoc({ fm, md: fullDoc(), estimation: pricedEstimation(), today: new Date('2026-09-25') });
+  const out = checkDoc({ fm, md: fullDoc(), today: new Date('2026-09-25') });
   assert.ok(!out.some((f) => /scenario/i.test(f)), out.join('\n'));
 });
 
 test('a leftover scenario key in frontmatter is refused', () => {
   const fm = { ...validFm(), scenario: '2eng-max5x' };
-  const out = checkDoc({ fm, md: fullDoc(), estimation: pricedEstimation(), today: new Date('2026-09-25') });
+  const out = checkDoc({ fm, md: fullDoc(), today: new Date('2026-09-25') });
   assert.ok(out.some((f) => /scenario.*removed/i.test(f)), out.join('\n'));
 });
 
@@ -155,12 +141,12 @@ test('an Investment table with a Duration column is refused', () => {
     '## Investment & Timeline\n\n',
     '## Investment & Timeline\n\n| Milestone | Duration | Investment |\n|---|---|---|\n| M1 | 2 months | $32,300 |\n\n',
   );
-  const out = checkDoc({ fm: validFm(), md, estimation: pricedEstimation(), today: new Date('2026-09-25') });
+  const out = checkDoc({ fm: validFm(), md, today: new Date('2026-09-25') });
   assert.ok(out.some((f) => /Duration column/i.test(f)), out.join('\n'));
 });
 
 test('a proposal still carrying a Team section is refused', () => {
   const md = `${fullDoc()}\n## Team\n\nTwo senior engineers.\n`;
-  const out = checkDoc({ fm: validFm(), md, estimation: pricedEstimation(), today: new Date('2026-09-25') });
+  const out = checkDoc({ fm: validFm(), md, today: new Date('2026-09-25') });
   assert.ok(out.some((f) => /Team section was removed/i.test(f)), out.join('\n'));
 });
