@@ -97,6 +97,10 @@ runs — skip this section entirely, no confirmation step.
    because the problem feels straightforward.
 4. Stop at that file's own stopping test, not at a felt sense of
    completeness. Apply the test — see each file's Stop when section.
+4b. If the stopping test has not passed, follow
+   `references/interview.md`. With a human present it returns you to
+   step 3 with new evidence; headless, it shapes the first open question.
+   Then continue to step 5.
 5. Emit the result per Output contract below.
 
 ## Output contract
@@ -158,6 +162,12 @@ not a judgment call.
 - **Running this on a bounded defect.** One function, one service,
   reproducible — that's `problem-solving`. Say so and hand it back rather
   than producing an iceberg over a stack trace.
+- **Asking without naming the gap.** An interview question must fill a
+  specific field, layer, or link the stopping rule is blocked on. A
+  question that fills nothing named is an open-ended interview — cut it.
+- **A source hint that names what to expect.** `Look in:` names where the
+  evidence lives. Naming what the human will find there previews a cause
+  the evidence hasn't supported.
 
 ## Examples
 

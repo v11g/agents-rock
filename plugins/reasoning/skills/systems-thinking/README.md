@@ -25,6 +25,10 @@ first, iceberg last. The skill shortlists two and recommends one; you pick.
 
 Or let `problem-router` classify the problem first and hand it over.
 
+When the evidence runs out before the framework's stopping rule fires and
+you're there to answer, it asks you for the missing piece — one question
+at a time, each naming where to look — instead of stopping short.
+
 ## What it will not do
 
 - Name a fix, or write one.

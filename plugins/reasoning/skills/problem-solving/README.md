@@ -11,6 +11,10 @@ Run `/reasoning:problem-solving "<problem>"` to get a recommendation, or
 chosen framework. It also accepts a hand-off from `problem-router` once the
 human has confirmed the route.
 
+When the evidence runs out before the framework's stopping rule fires and
+you're there to answer, it asks you for the missing piece — one question
+at a time, each naming where to look — instead of stopping short.
+
 ## When to reach for it
 
 - A problem needs analysis, not a direct answer — recurring failures,

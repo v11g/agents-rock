@@ -95,6 +95,10 @@ proceed.
 4. Stop at that file's own stopping rule, not a fixed depth or section
    count. Apply the rule's test, not an impression of whether it feels
    done — see each file's Stop when section.
+4b. If the stopping rule has not fired, follow
+   `references/interview.md`. With a human present it returns you to
+   step 3 with new evidence; headless, it shapes the first open question.
+   Then continue to step 5.
 5. Emit the result per Output contract below.
 
 ## Output contract
@@ -155,6 +159,12 @@ test, not a judgment call.
   OODA, TRIZ, Design Sprint. Say it isn't built yet, and name the closest
   available framework from the table above with the difference stated,
   rather than silently substituting it.
+- **Asking without naming the gap.** An interview question must fill a
+  specific field, layer, or link the stopping rule is blocked on. A
+  question that fills nothing named is an open-ended interview — cut it.
+- **A source hint that names what to expect.** `Look in:` names where the
+  evidence lives. Naming what the human will find there previews a cause
+  the evidence hasn't supported.
 
 ## Examples
 
