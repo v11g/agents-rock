@@ -812,6 +812,25 @@ test('the client-only page shows the range and no working at all', skip, async (
   } finally { page.close(); }
 });
 
+// R61 / spec 3 + 12: no project hours total beside the price for a client.
+// Feature hours still ship (R49); only the Summary headline goes. Read from
+// the DOM text, not innerText, so a node merely hidden by CSS still fails.
+test('the client summary carries no project hours total', skip, async () => {
+  const client = await openPage(buildPage(['--client-only']));
+  try {
+    const text = await client.eval(`document.getElementById('summary').textContent`);
+    assert.doesNotMatch(text, /h to plan/, 'client-only summary shows a project hours total');
+    assert.match(text, /2 features/, 'the rest of the size line stays');
+    assert.deepEqual(client.errors, []);
+  } finally { client.close(); }
+  const internal = await openPage(buildPage());
+  try {
+    await internal.eval(`document.getElementById('view-toggle').click()`);
+    const shown = await internal.eval(`document.getElementById('summary').innerText`);
+    assert.doesNotMatch(shown, /h to plan/, 'the client-view preview shows a project hours total');
+  } finally { internal.close(); }
+});
+
 // What a reader actually sees: a clone of <body> with <script>/<style> torn
 // out, then its textContent. Not `document.body.textContent` (which walks
 // the JS source and embedded JSON, so it flags a `$0`/`month` sitting only

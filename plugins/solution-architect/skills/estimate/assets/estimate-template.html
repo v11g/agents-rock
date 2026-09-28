@@ -421,15 +421,23 @@ function summaryPriced(p) {
 }
 
 // Hours survive as delivery planning only — they size the backlog and they
-// never convert into the price above them.
+// never convert into the price above them. The project total is internal: a
+// client shown hours beside the price divides one by the other (spec §3/§12,
+// R61). A --client-only render has no view toggle and never draws it; the
+// internal page marks it so the client-view preview hides it too.
+function summaryHours(feats) {
+  if (!document.getElementById('view-toggle')) return '';
+  const hours = feats.reduce((n, f) => n + DATA.computed.features[f.id].hours, 0);
+  return `<span ${INTERNAL_ATTR}>${Math.round(hours).toLocaleString()} h to plan · </span>`;
+}
+
 function summarySize() {
   const feats = DATA.inputs.features;
-  const hours = feats.reduce((n, f) => n + DATA.computed.features[f.id].hours, 0);
   const tasks = feats.reduce((n, f) => n + f.tasks.length, 0);
   const milestones = new Set(feats.map((f) => f.milestone).filter(Boolean)).size;
-  const parts = [`${Math.round(hours).toLocaleString()} h to plan`, `${feats.length} features`, `${tasks} tasks`];
+  const parts = [`${feats.length} features`, `${tasks} tasks`];
   if (milestones) parts.push(`${milestones} milestones`);
-  return parts.join(' · ');
+  return summaryHours(feats) + parts.join(' · ');
 }
 
 function summaryMethod() {
