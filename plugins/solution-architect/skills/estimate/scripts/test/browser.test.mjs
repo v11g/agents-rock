@@ -443,11 +443,18 @@ const headTexts = stripArrow(BD_HEAD);
 const scoreHeadTexts = stripArrow(SCORE_HEAD);
 const clickTab = (tab) => `document.querySelector('#feature-table [role="tab"][data-tab="${tab}"]').click()`;
 
-test('the scoring tab carries the five factors, Σ and tier; values verbatim from inputs', skip, async () => {
+// The total is a weighted score, not a sum — (3,3,4,2,4) weighs 15.5, not
+// 16 — and the tier cut-offs are the v2 band edges, where an edge prices
+// into the upper band.
+test('the scoring tab carries the five factors, the weighted score and tier; values verbatim from inputs', skip, async () => {
   const page = await openPage(buildPage());
   try {
     assert.deepEqual(await page.eval(scoreHeadTexts),
-      ['Feature', 'Tech', 'Size', 'Deps', 'Unc', 'Risk', 'Σ', 'Tier']);
+      ['Feature', 'Tech', 'Size', 'Deps', 'Unc', 'Risk', 'Score', 'Tier']);
+    const hints = await page.eval(`[...document.querySelectorAll('#panel-scoring > .bd-scroll th button')].map((b) => b.title)`);
+    assert.match(hints[6], /weighted/i);
+    assert.doesNotMatch(hints[6], /sum of the five/);
+    assert.equal(hints[7], 'S < 11.5 / M < 17.5 / L < 22.5 / XL from 22.5');
     const booking = await page.eval(cellTexts('#panel-scoring tr[data-id="booking"] td.score'));
     assert.deepEqual(booking.slice(0, 5), ['3', '3', '2', '3', '3']);
     assert.equal(booking[5], '14');
@@ -575,7 +582,7 @@ test('each tab shows only its own columns', skip, async () => {
   try {
     assert.deepEqual(await page.eval(headTexts), ['Feature', 'Effort (h)', 'Confidence', 'Source']);
     assert.deepEqual(await page.eval(scoreHeadTexts),
-      ['Feature', 'Tech', 'Size', 'Deps', 'Unc', 'Risk', 'Σ', 'Tier']);
+      ['Feature', 'Tech', 'Size', 'Deps', 'Unc', 'Risk', 'Score', 'Tier']);
     await page.eval(clickTab('scoring'));
     assert.equal(await page.eval(`document.getElementById('panel-scoring').hidden`), false);
     assert.equal(await page.eval(`document.getElementById('panel-estimate').hidden`), true);

@@ -555,10 +555,11 @@ function bdCols(tab) {
     key: k, label: SCORE_LABELS[k], cls: 'score', val: (f) => f.scores[k].n, hint: `sort by ${SCORE_LABELS[k]} score`,
   }));
   const cols = [BASE_COLS.name, ...scoreCols,
-    { key: 'total', label: '&Sigma;', cls: 'score', val: (f) => f.scoreTotal, hint: 'sum of the five scores' }];
+    { key: 'total', label: 'Score', cls: 'score', val: (f) => f.scoreTotal,
+      hint: 'weighted score: uncertainty 30%, tech, deps and risk 20% each, size 10%, on a 5-25 scale' }];
   if (!TIERED) return cols;
   return [...cols, { key: 'tier', label: 'Tier', cls: 'score', internal: true,
-    val: (f) => f.scoreTotal, hint: 'S ≤ 11 / M ≤ 17 / L ≤ 22 / XL above' }];
+    val: (f) => f.scoreTotal, hint: 'S < 11.5 / M < 17.5 / L < 22.5 / XL from 22.5' }];
 }
 
 const bdTabs = () => (SCORED ? TABS.map(([id]) => id) : ['estimate']);
