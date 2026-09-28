@@ -827,13 +827,17 @@ test('a written approach note renders under the summary figures', skip, async ()
 // R45: the note is free text an internal agent writes under a contract that
 // never warns it reaches the client — the same reasoning that blanks a
 // score's cite unconditionally. A client-only render must not show it.
+// R48: redact.mjs blanks recommendedReason itself (not just the DOM node),
+// so a client-only page never has the data to render the note from — the
+// element is absent, not merely CSS-hidden. The byte-level guarantee (the
+// phrase is nowhere in the exported file) lives in render.test.mjs, since
+// that is what a client-only render actually promises.
 test('the client-only page does not show the written approach note', skip, async () => {
   const page = await openPage(buildPageWith((inputs) => {
     inputs.recommendedReason = 'we quoted low to beat the incumbent bid';
   }, ['--client-only']));
   try {
-    assert.equal(await page.eval(
-      `getComputedStyle(document.querySelector('#summary .why')).display`), 'none');
+    assert.equal(await page.eval(`document.querySelector('#summary .why')`), null);
     assert.deepEqual(page.errors, []);
   } finally { page.close(); }
 });

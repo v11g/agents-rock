@@ -177,6 +177,22 @@ test('recommendedReason travels with the data', () => {
   assert.match(html, /"recommendedReason":"client has one senior available"/);
 });
 
+// R48: recommendedReason is free text an internal agent writes under a
+// contract that never warns it reaches the client (same reasoning as a
+// score's cite). The client receives the file, not a rendered view, so this
+// checks the raw exported bytes rather than the DOM — a DOM-only or
+// rendered-text assertion would pass even if the phrase still sat in the
+// embedded JSON, which is exactly the gap this closes.
+test('--client-only strips recommendedReason from the file, not just the rendered view', () => {
+  const hazard = 'we quoted low to beat the incumbent bid';
+  const client = renderWith((inputs) => { inputs.recommendedReason = hazard; }, ['--client-only']);
+  assert.ok(!client.includes(hazard), 'client-only export leaks recommendedReason');
+  assert.doesNotMatch(client, /"recommendedReason":/);
+  // the internal render is the field's actual audience; it must still carry it
+  const internal = renderWith((inputs) => { inputs.recommendedReason = hazard; });
+  assert.ok(internal.includes(hazard), 'internal render lost recommendedReason');
+});
+
 test('the breakdown no longer carries a Range column', () => {
   assert.doesNotMatch(tpl(), /label: 'Range'/);
 });

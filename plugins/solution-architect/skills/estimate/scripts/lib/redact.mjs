@@ -25,6 +25,13 @@
 // descriptions (the global measurements store can carry other projects'
 // task descriptions). These fields don't exist in team-mode estimations, so
 // team-mode output is unaffected.
+//
+// recommendedReason is stripped unconditionally too, for the same reason as
+// a score's cite: it is free text an internal agent writes under a contract
+// (references/writing.md) that never warns it the sentence reaches the
+// client. The client receives the file, not a rendered view, so hiding the
+// node from the DOM is not enough — the key is removed from the JSON, the
+// same way measurementsPath/repository/evidence descriptions are (R48).
 const PRICE_WORKING = ['contextMultiplier', 'adjustedBase', 'overheads', 'featurePoints'];
 const FEATURE_WORKING = ['tier', 'point', 'priceLow', 'priceHigh'];
 
@@ -38,6 +45,10 @@ function redactAgenticInputs({ measurementsPath, agentContext, ...rest }) {
   if (!agentContext) return rest;
   const { repository, ...clientAgentContext } = agentContext;
   return { ...rest, agentContext: clientAgentContext };
+}
+
+function redactRecommendedReason({ recommendedReason, ...rest }) {
+  return rest;
 }
 
 // A score's cite is internal shorthand — the ticket phrase, file name or
@@ -58,7 +69,7 @@ function redactComputedTasks(tasks) {
 }
 
 export function redactForClient(estimation) {
-  const agentic = redactAgenticInputs(estimation.inputs);
+  const agentic = redactRecommendedReason(redactAgenticInputs(estimation.inputs));
   const inputs = { ...agentic, features: agentic.features.map(blankCites) };
   const computed = { ...estimation.computed, tasks: redactComputedTasks(estimation.computed.tasks) };
   if (estimation.inputs.exposeRatesToClient) return { ...estimation, inputs, computed };
