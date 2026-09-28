@@ -1,11 +1,22 @@
 // The --client-only export embeds the full estimation JSON in the page; this
-// strips the pricing working before it ships, unless the inputs opt out via
-// exposeRatesToClient. The working is the arithmetic behind the number: the
-// context multiplier, the overhead lines and the adjusted base they apply to,
-// plus the tier each feature landed in and the price band that tier bought.
-// What the client is quoted always survives — presentLow, presentHigh and
-// singleNumber — as do assumptions, risks, component names and the scores a
-// feature was judged on, which are client-facing per spec.
+// strips the pricing build-up before it ships, unless the inputs opt out via
+// exposeRatesToClient. Stripped, from computed.price: featurePoints (the
+// summed feature-price subtotal), contextMultiplier and adjustedBase (the
+// multiplier and the base it scales — adjustedBase = featurePoints ×
+// contextMultiplier, so both factors have to go for either to be hidden),
+// and overheads (the line items and their total). Stripped, per feature in
+// computed.features: tier, point, priceLow and priceHigh — the score band
+// and the price it bought.
+//
+// Deliberately kept, and not a gap: presentLow, presentHigh, singleNumber,
+// contingencyRate and impliedAccuracy are what the client is quoted, always.
+// p50, sigma, p20, p80, p95 also stay — presentLow/presentHigh are just
+// ceil(p50)/ceil(p95) rounded to the nearest 500, so those two are the
+// unrounded form of a number the client already has, not hidden working, and
+// sigma is recoverable from the percentiles regardless of whether it ships.
+// Per-feature spread and flag stay too: spread yields no price once tier,
+// point, priceLow and priceHigh are gone. Assumptions, risks, component names
+// and the scores a feature was judged on are client-facing per spec.
 //
 // Agentic-only fields are stripped unconditionally (not gated on
 // exposeRatesToClient, which is a pricing-transparency opt-out, not a
@@ -14,7 +25,7 @@
 // descriptions (the global measurements store can carry other projects'
 // task descriptions). These fields don't exist in team-mode estimations, so
 // team-mode output is unaffected.
-const PRICE_WORKING = ['contextMultiplier', 'adjustedBase', 'overheads'];
+const PRICE_WORKING = ['contextMultiplier', 'adjustedBase', 'overheads', 'featurePoints'];
 const FEATURE_WORKING = ['tier', 'point', 'priceLow', 'priceHigh'];
 
 const omit = (obj, keys) => Object.fromEntries(Object.entries(obj).filter(([k]) => !keys.includes(k)));

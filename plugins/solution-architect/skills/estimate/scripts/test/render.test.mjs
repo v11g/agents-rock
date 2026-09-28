@@ -136,7 +136,9 @@ test('the page carries the price block and no duration anywhere', () => {
   assert.deepEqual(
     [price.presentLow, price.presentHigh, price.singleNumber, price.contingencyRate],
     [10000, 14000, 12000, 0.15]);
-  assert.equal(price.scenarios, undefined);
+  // the retired key was one level up, computed.scenarios, not computed.price.scenarios —
+  // breaks if rollup.mjs/project-price.mjs ever puts a scenarios key back on computed
+  assert.equal(embedded(html).computed.scenarios, undefined);
   assert.ok(roadmap.length > 0);
   assert.ok(!/month/i.test(html.replace(/<!--[\s\S]*?-->/g, '')), 'no durations anywhere');
 });
@@ -193,7 +195,7 @@ test('--client-only strips every internal range', () => {
 // internal:start/end block, so a client file carries these in neither its data
 // nor its code, captions included. `Tier Reference` is that block's caption
 // and is checked the same way.
-const BARE_INTERNALS = ['contextMultiplier', 'adjustedBase', 'priceLow', 'priceHigh', 'Tier Reference'];
+const BARE_INTERNALS = ['contextMultiplier', 'adjustedBase', 'featurePoints', 'priceLow', 'priceHigh', 'Tier Reference'];
 // `overheads` is the one exception: the Method section explains in prose that
 // overheads are loaded onto the base, and that sentence is client-facing. Only
 // the numbers behind it are internal, so this one is matched as a quoted JSON
@@ -284,7 +286,7 @@ test('agentic client render strips the pricing internals too', () => {
   assert.equal(typeof fullPrice.overheads.totalPct, 'number');
 
   const client = renderAgentic({ clientOnly: true });
-  for (const field of ['contextMultiplier', 'overheads', 'adjustedBase']) {
+  for (const field of ['contextMultiplier', 'overheads', 'adjustedBase', 'featurePoints']) {
     assert.ok(!client.includes(field), `agentic client view leaks ${field}`);
   }
   assert.equal(embedded(client).computed.price.presentLow, 0);

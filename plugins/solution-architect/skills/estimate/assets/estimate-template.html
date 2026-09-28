@@ -426,7 +426,7 @@ function summaryRisks() {
 // explains a judgment call, not a choice between priced options.
 function summaryApproach() {
   const why = DATA.inputs.recommendedReason;
-  return why ? `<p class="why">Approach: ${esc(why)}.</p>` : '';
+  return why ? `<p class="why" ${INTERNAL_ATTR}>Approach: ${esc(why)}.</p>` : '';
 }
 
 function renderSummary() {

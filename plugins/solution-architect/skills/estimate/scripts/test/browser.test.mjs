@@ -34,12 +34,12 @@ function buildPage(extra = [], inputsPath = fixture) {
 
 // The booking inputs with a mutation applied, for pages whose shape depends
 // on an input the fixture does not carry (an extra feature, a written reason).
-function buildPageWith(mutate) {
+function buildPageWith(mutate, extra = []) {
   const dir = mkdtempSync(join(tmpdir(), 'estimate-browser-inputs-'));
   const inputs = JSON.parse(readFileSync(fixture, 'utf8'));
   mutate(inputs);
   writeFileSync(join(dir, 'inputs.json'), JSON.stringify(inputs));
-  return buildPage([], join(dir, 'inputs.json'));
+  return buildPage(extra, join(dir, 'inputs.json'));
 }
 
 
@@ -53,6 +53,8 @@ test('every section explains itself: help icons plus a rendered method section',
     assert.match(method, /three-point-pert/); // technique named from inputs
     assert.match(method, /PERT/);
     assert.match(method, /atomicobject\.com/);
+    // a field removed from schema.mjs or computed still must not print undefined/NaN
+    assert.doesNotMatch(method, /undefined|NaN/);
     // open by default: the method explains the page up front; still collapsible
     assert.equal(await page.eval(`document.querySelector('#method details.method-fold').open`), true);
     await page.eval(`document.querySelector('#method details.method-fold summary').click()`);
@@ -757,6 +759,9 @@ test('the summary states the presented range and the single number', skip, async
     assert.ok(meta.some((m) => m.startsWith('91 h to plan')), `no planning hours line: ${meta}`);
     // nothing on this page is a duration, in any section
     assert.doesNotMatch(await page.eval(`document.body.textContent`), /month/i);
+    // a field removed from computed.price or refused by schema.mjs still must
+    // not print undefined/NaN (riskBufferHours and overheadPct both did once)
+    assert.doesNotMatch(await page.eval(`document.getElementById('summary').textContent`), /undefined|NaN/);
     assert.deepEqual(page.errors, []);
   } finally { page.close(); }
 });
@@ -802,7 +807,10 @@ test('the roadmap bars are labelled with their share of effort', skip, async () 
 });
 
 // Free text about the approach taken, when the writer left any. It explains a
-// judgment call — delivery mode, technique — not a choice between prices.
+// judgment call — delivery mode, technique — not a choice between prices. It
+// is internal shorthand under the writing contract (references/writing.md),
+// same as a score's cite, so it is marked data-internal like the price
+// working above it (R45) — only the "Approach:" label is new.
 test('a written approach note renders under the summary figures', skip, async () => {
   const page = await openPage(buildPageWith((inputs) => {
     inputs.recommendedReason = 'the client has one senior available';
@@ -810,7 +818,22 @@ test('a written approach note renders under the summary figures', skip, async ()
   try {
     assert.equal(await page.eval(`document.querySelector('#summary .why').textContent`),
       'Approach: the client has one senior available.');
-    assert.equal(await page.eval(`document.querySelector('#summary .why')?.closest('[data-internal]')`), null);
+    assert.ok(await page.eval(`document.querySelector('#summary .why')?.closest('[data-internal]')`),
+      'the approach note must be marked internal-only');
+    assert.deepEqual(page.errors, []);
+  } finally { page.close(); }
+});
+
+// R45: the note is free text an internal agent writes under a contract that
+// never warns it reaches the client — the same reasoning that blanks a
+// score's cite unconditionally. A client-only render must not show it.
+test('the client-only page does not show the written approach note', skip, async () => {
+  const page = await openPage(buildPageWith((inputs) => {
+    inputs.recommendedReason = 'we quoted low to beat the incumbent bid';
+  }, ['--client-only']));
+  try {
+    assert.equal(await page.eval(
+      `getComputedStyle(document.querySelector('#summary .why')).display`), 'none');
     assert.deepEqual(page.errors, []);
   } finally { page.close(); }
 });
