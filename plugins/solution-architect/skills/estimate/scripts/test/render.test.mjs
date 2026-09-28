@@ -193,13 +193,51 @@ test('--client-only strips recommendedReason from the file, not just the rendere
   assert.ok(internal.includes(hazard), 'internal render lost recommendedReason');
 });
 
+// R49: a task's o/m/p/name/category are the estimate itself, the same class
+// as computed.features[*].hours/low/high, which already ship unconditionally
+// — so those stay. The judgment behind the number (confidence, provenance,
+// assumptions) is the same class as a score's cite, so it is stripped from
+// the file, not just hidden from the render. Checked at the file-byte level,
+// like R48, using the booking fixture's own task-level values (no mutation
+// needed). The task assumption's exact serialized form (a bare string array)
+// is the needle, not the word alone — inputs.assumptions is a project-level,
+// client-facing field that separately carries "single timezone" as prose,
+// and that one must survive.
+test('--client-only strips a task\'s judgment fields, not its estimate', () => {
+  const client = renderedPage(['--client-only']);
+  assert.doesNotMatch(client, /"assumptions":\["single timezone"\]/);
+  assert.doesNotMatch(client, /"confidence":/);
+  // provenance also names a feature-level field (client-facing per spec), so
+  // only the task-level key is checked, structurally rather than by string
+  for (const f of Object.values(embedded(client).inputs.features)) {
+    for (const t of f.tasks) {
+      assert.equal(t.confidence, undefined);
+      assert.equal(t.provenance, undefined);
+      assert.equal(t.assumptions, undefined);
+    }
+  }
+  assert.match(client, /"name":"Booking CRUD API"/);
+  assert.match(client, /"o":16,"m":24,"p":40/);
+
+  // the internal render is where the judgment belongs; it must still carry it
+  const internal = renderedPage();
+  assert.match(internal, /"assumptions":\["single timezone"\]/);
+  assert.match(internal, /"confidence":"HIGH"/);
+});
+
 test('the breakdown no longer carries a Range column', () => {
   assert.doesNotMatch(tpl(), /label: 'Range'/);
 });
 
+// `data-internal` and `ctl-team` were dropped from this check (were R49):
+// `data-internal` is built at runtime as ['data','internal'].join('-') so it
+// never appears as source text whether or not anything was stripped, and
+// `ctl-team` has zero occurrences anywhere in the template — both are
+// can't-fail. `internal:start` is real: it is the marker stripInternal
+// deletes, and the raw template carries it three times.
 test('--client-only strips every internal range', () => {
   const html = renderedPage(['--client-only']);
-  assert.doesNotMatch(html, /data-internal|internal:start|ctl-team/);
+  assert.doesNotMatch(html, /internal:start/);
   assert.match(stripInternal('a<!-- internal:start -->X<!-- internal:end -->b'), /^ab$/);
 });
 

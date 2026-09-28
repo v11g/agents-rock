@@ -32,8 +32,16 @@
 // client. The client receives the file, not a rendered view, so hiding the
 // node from the DOM is not enough — the key is removed from the JSON, the
 // same way measurementsPath/repository/evidence descriptions are (R48).
+//
+// A task's name, category and three-point o/m/p are the estimate itself —
+// the same class as computed.features[*].hours/low/high, which already ship
+// unconditionally. What's internal is the judgment behind that number: how
+// sure we were (confidence), where it came from (provenance) and what we
+// quietly assumed (assumptions) — the same class as a score's cite, so these
+// three are stripped unconditionally too, from every task (R49).
 const PRICE_WORKING = ['contextMultiplier', 'adjustedBase', 'overheads', 'featurePoints'];
 const FEATURE_WORKING = ['tier', 'point', 'priceLow', 'priceHigh'];
+const TASK_JUDGMENT = ['confidence', 'provenance', 'assumptions'];
 
 const omit = (obj, keys) => Object.fromEntries(Object.entries(obj).filter(([k]) => !keys.includes(k)));
 
@@ -61,6 +69,11 @@ function blankCites(feature) {
   return { ...feature, scores: Object.fromEntries(scores) };
 }
 
+function redactFeatureInputs(feature) {
+  const cited = blankCites(feature);
+  return { ...cited, tasks: cited.tasks.map((t) => omit(t, TASK_JUDGMENT)) };
+}
+
 function redactComputedTasks(tasks) {
   return Object.fromEntries(Object.entries(tasks).map(([id, t]) => [
     id,
@@ -70,7 +83,7 @@ function redactComputedTasks(tasks) {
 
 export function redactForClient(estimation) {
   const agentic = redactRecommendedReason(redactAgenticInputs(estimation.inputs));
-  const inputs = { ...agentic, features: agentic.features.map(blankCites) };
+  const inputs = { ...agentic, features: agentic.features.map(redactFeatureInputs) };
   const computed = { ...estimation.computed, tasks: redactComputedTasks(estimation.computed.tasks) };
   if (estimation.inputs.exposeRatesToClient) return { ...estimation, inputs, computed };
   return {

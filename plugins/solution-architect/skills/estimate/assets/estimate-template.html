@@ -793,11 +793,16 @@ function scoreRow(f) {
 // Task rows sit under the feature's name and fill the estimate tab's four
 // columns exactly — tasks carry three-point hours, a confidence and a
 // category, never scores, which is why they have no home on the other tab.
+// Task rows are internal-only in every render (the whole row carries
+// INTERNAL_ATTR), but the same JS builds both tabs' markup regardless of
+// which one is visible, so a --client-only page still runs this over tasks
+// whose confidence/assumptions redact.mjs has stripped (R49) — null-guarded,
+// not assumed, same as every other stripped field on this page.
 function taskRows(f) {
-  return f.tasks.map((t) => `<tr class="task-row ${confLevel(t.confidence)}" ${INTERNAL_ATTR}>
-    <td${ctEdge(f.component)}>${t.name}<div class="task-assump">${t.assumptions.join('; ') || 'none'}</div></td>
+  return f.tasks.map((t) => `<tr class="task-row ${t.confidence ? confLevel(t.confidence) : ''}" ${INTERNAL_ATTR}>
+    <td${ctEdge(f.component)}>${t.name}<div class="task-assump">${(t.assumptions ?? []).join('; ') || 'none'}</div></td>
     <td><span class="bd-cell"><span class="bd-num">${t.o}/${t.m}/${t.p}</span></span></td>
-    <td><span class="conf">${t.confidence}</span></td>
+    <td><span class="conf">${t.confidence ?? ''}</span></td>
     <td><span class="tag">${t.category}</span></td></tr>`).join('');
 }
 

@@ -85,6 +85,26 @@ test('the --client-only page boots clean without its stripped controls', skip, a
   } finally { page.close(); }
 });
 
+// render.test.mjs's byte check of a can't-fail assertion asked, in spirit,
+// "does the client page contain no internal-only nodes?" — a DOM question.
+// It is not "zero [data-internal] nodes exist": several are unconditional,
+// always-rendered UI chrome (the empty price-working container, the xlsx
+// download button, the expand-all control, a feature's expand button) that
+// exist in every render, client-only included, and rely entirely on the
+// `.view-client [data-internal] { display:none }` rule — not on being absent
+// — for the toggle-preview mechanism this template already uses everywhere.
+// A `=== null` assertion here would fail on that legitimate chrome, not on a
+// leak. The honest, breakable question is: is every one of them invisible?
+test('every internal-marked node on the client-only page is hidden, not just absent from data', skip, async () => {
+  const page = await openPage(buildPage(['--client-only']));
+  try {
+    const visible = await page.eval(`[...document.querySelectorAll('[data-internal]')]
+      .filter((el) => getComputedStyle(el).display !== 'none')
+      .map((el) => el.tagName + (el.id ? '#' + el.id : '') + (el.className ? '.' + el.className : ''))`);
+    assert.deepEqual(visible, []);
+  } finally { page.close(); }
+});
+
 test('feature breakdown absorbs the effort chart and the task register', skip, async () => {
   const page = await openPage(buildPage());
   try {
