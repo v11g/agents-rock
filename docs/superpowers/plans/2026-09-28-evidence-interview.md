@@ -125,6 +125,20 @@ Task 1 findings
 - Variant for Task 2:        A if judge-sees-input passed, else B
 ```
 
+Recorded 2026-09-28 (claude 2.1.283, $0.10):
+
+```
+Task 1 findings
+- AskUserQuestion headless:  absent — not in the tool list even when named
+                             in allowed_tools; ToolSearch: "No matching
+                             deferred tools found". No hang, no error.
+- called.md:                 fail (0 calls, both arms)
+- judge-sees-input.md:       untestable (no call made); llm grader config
+                             shows `focus: last_message` as its default
+- input-match.md:            schema accepted; untestable (no call made)
+- Variant for Task 2:        neither A nor B holds as written — see ledger
+```
+
 - [ ] **Step 4: Delete the probe and commit the findings**
 
 ```bash
