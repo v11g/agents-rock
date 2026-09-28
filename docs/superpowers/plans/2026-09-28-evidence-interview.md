@@ -154,16 +154,15 @@ Task 2's cases would hang too, and the verification design needs rework.
 
 ### Task 2: RED — two failing eval cases
 
+Amended after Task 1: evals cannot see `AskUserQuestion`, so they grade the
+headless form — the first `open_questions` entry (spec decision 7, amended).
+
 **Files:**
-- Create: `plugins/reasoning/evals/ps-interview-first-question/prompt.md` and `graders/*.md` (6 files)
-- Create: `plugins/reasoning/evals/st-interview-first-question/prompt.md` and `graders/*.md` (6 files)
+- Create: `plugins/reasoning/evals/ps-interview-first-question/prompt.md` and `graders/*.md` (5 files)
+- Create: `plugins/reasoning/evals/st-interview-first-question/prompt.md` and `graders/*.md` (5 files)
 
 **Interfaces:**
-- Consumes: Task 1 findings (variant A or B).
-- Produces: two case names that Task 3 re-runs with `--case`.
-
-The spec lists five graders per case. Each case also gets `skill-fired.md`,
-which every existing case carries.
+- Produces: two case names that Task 3 re-runs with `--case '*-interview-first-question'`.
 
 - [ ] **Step 1: Write the `ps` prompt**
 
@@ -171,7 +170,7 @@ which every existing case carries.
 ```markdown
 ---
 max_turns: 10
-allowed_tools: [Read, Glob, Grep, Skill, AskUserQuestion]
+allowed_tools: [Read, Glob, Grep, Skill]
 ---
 
 Use the problem-solving skill with rca on this: at 09:15 on Monday our
@@ -185,7 +184,7 @@ requests. Requests hang before they fail.
 ```markdown
 ---
 max_turns: 10
-allowed_tools: [Read, Glob, Grep, Skill, AskUserQuestion]
+allowed_tools: [Read, Glob, Grep, Skill]
 ---
 
 Use the systems-thinking skill with the iceberg model on this. On-call
@@ -193,7 +192,7 @@ engineers keep getting paged overnight for the same disk-full alert. It
 has fired on 11 of the last 14 nights.
 ```
 
-- [ ] **Step 3: Write the two tool graders (both cases, identical)**
+- [ ] **Step 3: Write the two deterministic graders (both cases, identical)**
 
 `graders/skill-fired.md`:
 ```markdown
@@ -206,41 +205,26 @@ min: 1
 The skill must actually be invoked, not merely described.
 ```
 
-`graders/asks-question.md`:
+`graders/look-in-present.md`:
 ```markdown
 ---
-type: tool_used
-tool: AskUserQuestion
-min: 1
+type: regex
+pattern: 'look in'
+flags: i
+match: contains
+target: last_message
 ---
 
-The framework's stopping rule cannot fire on this input and a human is
-available, so the skill must ask for evidence rather than stop short.
+The run is headless and the stopping rule cannot fire on this input, so
+the first open question must carry its source hint.
 ```
 
-Note: in the `st` case the skill may also use `AskUserQuestion` at step 2
-only if no framework is named. Both prompts name one, so every call here
-is an interview call.
+- [ ] **Step 4: Write the three LLM graders**
 
-- [ ] **Step 4: Write the four LLM graders — variant A (judge sees tool inputs)**
-
-Use these if Task 1 recorded variant A. The `{GAP}` line differs per case:
-`ps` → "RCA's `contributing` (or deeper) layer is empty: the input names
-the 504 but nothing about why upstream is slow."; `st` → "the iceberg's
-`structures` level is empty: the input gives an event and a pattern,
-nothing about what produces them."
-
-`graders/one-question.md`:
-```markdown
----
-type: llm
-weight: 1
----
-
-PASS if every AskUserQuestion call in the transcript carries exactly one
-question. FAIL if any call carries two or more questions, or if no
-AskUserQuestion call appears.
-```
+The `{GAP}` line differs per case: `ps` → "RCA's `contributing` (or
+deeper) layer is empty: the input names the 504 but nothing about why
+upstream is slow."; `st` → "the iceberg's `structures` level is empty: the
+input gives an event and a pattern, nothing about what produces them."
 
 `graders/targets-gap.md`:
 ```markdown
@@ -251,23 +235,11 @@ weight: 1
 
 {GAP}
 
-PASS if the first AskUserQuestion question asks for evidence that would
-fill that gap, and uses details from this input (its figures, times, or
-components) rather than generic wording.
-FAIL if the question asks about something the input already answers, asks
-about framework choice, or is generic enough to fit any incident.
-```
-
-`graders/fixed-exits.md`:
-```markdown
----
-type: llm
-weight: 1
----
-
-PASS if the first AskUserQuestion call's options include one meaning
-"don't know" and one meaning "stop and analyze now", in any language.
-FAIL if either is missing.
+PASS if the first entry in `open_questions` is a question asking for
+evidence that would fill that gap, and uses details from this input (its
+figures, times, or components) rather than generic wording.
+FAIL if it asks about something the input already answers, or is generic
+enough to fit any incident, or if `open_questions` is absent.
 ```
 
 `graders/source-hint.md`:
@@ -277,52 +249,41 @@ type: llm
 weight: 1
 ---
 
-PASS if the first AskUserQuestion question text contains a "Look in"
-line (or its equivalent in another language) naming where the evidence
-lives — a log, dashboard, trace, ticket, or owner — without saying what
-the human should expect to find there.
+PASS if the first entry in `open_questions` includes a "Look in" line (or
+its equivalent in another language) naming where the evidence lives — a
+log, dashboard, trace, ticket, or owner — without saying what the human
+should expect to find there.
 FAIL if the line is missing, or if it names an expected finding or cause
 (e.g. "check whether the DB pool is exhausted").
 ```
 
-If Task 1 recorded `input-match.md: pass`, replace `fixed-exits.md` with a
-cheaper deterministic grader:
+`graders/options-from-input.md`:
 ```markdown
 ---
-type: tool_used
-tool: AskUserQuestion
-input_match: "Stop"
-min: 1
+type: llm
+weight: 1
 ---
 
-The fixed "Stop, analyze now" exit must be offered.
+PASS if the first entry in `open_questions` offers two concrete answer
+options, each drawn from details in the input, that are dimensions to
+discriminate along (for example transaction type, node, night of week)
+rather than guessed causes.
+FAIL if there are no options, if either option is generic, or if an
+option asserts a cause (for example "a memory leak", "a bad deploy").
 ```
-
-- [ ] **Step 4 (variant B): judge sees the final message only**
-
-Use these instead if Task 1 recorded variant B. The skill falls back to
-headless on a tool error and emits the question it tried to ask in
-`open_questions`, so the judge grades that.
-
-`one-question.md` → drop it (not observable in the final message).
-`targets-gap.md`, `source-hint.md` → same text as variant A, with "the
-first AskUserQuestion question" replaced by "the first entry in
-`open_questions`". `fixed-exits.md` → use the `input_match` grader above
-if it passed in Task 1; otherwise drop it and record the gap in the Task 4
-manual checklist.
 
 - [ ] **Step 5: Run both cases and verify RED**
 
 Run:
 ```bash
 claude plugin eval plugins/reasoning --case '*-interview-first-question' \
-  --runs 1 --no-publish --trust-plugin
+  --runs 1 --ablation none --no-publish --trust-plugin
 ```
-Expected: `skill-fired` passes; `asks-question` fails in both cases (the
-skills do not interview yet). Under $2 total.
+Expected: `skill-fired` passes; `look-in-present` fails in both cases (the
+skills do not write source hints yet). Under $2 total.
 
-If `asks-question` passes in either case, the grader does not test the new
-behaviour — tighten the prompt until it fails before continuing.
+If `look-in-present` passes in either case, the grader does not test the
+new behaviour — tighten it before continuing.
 
 - [ ] **Step 6: Commit**
 
@@ -358,16 +319,19 @@ is often what's missing. Ask for it before stopping short.
 
 ## Trigger
 
-All three must hold. If any fails, stop short as before: emit the result
-and name what evidence would close each gap.
+All three must hold for the interview to run.
 
 1. The framework has run and its stopping rule has not fired.
 2. You can name the specific gap blocking that rule — a field, layer, or
    link, e.g. "`rca.contributing` is empty".
 3. `AskUserQuestion` is available — the same test step 2 applies before
    asking the human to pick a framework. If a call errors, the run is
-   headless from that point: put the question you tried to ask first in
-   `open_questions`.
+   headless from that point.
+
+**Headless.** If 1 and 2 hold but 3 does not, stop short, and make the
+first `open_questions` entry the question round 1 would have asked — the
+question, its `Look in:` line, and its two options, without the fixed
+exits. If 1 or 2 does not hold, emit as before.
 
 ## One round
 
@@ -427,9 +391,10 @@ Expected: `identical`
 In each file, insert directly after the step-4 paragraph and before
 `5. Emit the result per Output contract below.`:
 ```markdown
-4b. If the stopping rule has not fired and `AskUserQuestion` is
-   available, follow `references/interview.md`, then return to step 3
-   with the new evidence. Otherwise continue to step 5.
+4b. If the stopping rule has not fired, follow
+   `references/interview.md`. With a human present it returns you to
+   step 3 with new evidence; headless, it shapes the first open question.
+   Then continue to step 5.
 ```
 
 - [ ] **Step 4: Add two failure modes to both `SKILL.md` files**
@@ -524,9 +489,9 @@ each check:
 Then start a fresh run and reject the first question with no message →
 output says "stopped on request" (Review Focus 3). Start a third run and
 answer six rounds with "Other: nothing new in the logs" → output names the
-6-round cap as the reason it ended (Review Focus 5). If Task 2 dropped
-`fixed-exits.md` (variant B, no `input_match`), also check that every
-question offers `Don't know` and `Stop, analyze now`.
+6-round cap as the reason it ended (Review Focus 5). Also check that
+every question offers `Don't know` and `Stop, analyze now` — no eval can
+see the fixed exits.
 
 - [ ] **Step 3: Commit any fixes, then report**
 

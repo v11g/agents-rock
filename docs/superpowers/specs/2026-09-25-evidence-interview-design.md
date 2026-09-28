@@ -27,13 +27,13 @@ makes both skills ask for it, one question at a time, before stopping.
 | 4 | One question per round, cap 6 rounds | Matches `AskUserQuestion`'s shape; the cap bounds a run that keeps finding gaps. |
 | 5 | Every question carries a one-line source hint | "Don't know" often means "don't know where to look". Without a hint the loop ends early and the run stops short anyway. |
 | 6 | No contract change | The `interview` evidence type exists. Why the interview ended goes in the prose body; the six core fields never change. |
-| 7 | Headless behaviour is unchanged | No human → stop short and name the gap, as today. |
+| 7 | Headless: stop short, but the first `open_questions` entry is the question the interview would ask next | Amended 2026-09-28. A probe showed `AskUserQuestion` is absent from headless eval runs even when allowed, so the interview itself can't be observed by an eval. The headless question in the same form is what evals grade; the loop is checked by hand. |
 
 ## Protocol (`references/interview.md`)
 
 ### Trigger
 
-All three must hold, else stop short as today:
+All three must hold for the interview to run:
 
 1. The framework has run once and its stopping rule has not fired.
 2. A specific gap blocking that rule can be named — a field, layer, or link
@@ -41,6 +41,11 @@ All three must hold, else stop short as today:
 3. `AskUserQuestion` is available — the same test step 2 already applies
    before asking the human to pick a framework. If the call errors when
    made, treat the run as headless from that point.
+
+If 1 and 2 hold but 3 does not, the run is headless: stop short, and make
+the first `open_questions` entry the question round 1 would have asked —
+the question, its `Look in:` line, and its two options, without the fixed
+exits. If 1 or 2 does not hold, emit as before.
 
 ### One round
 
@@ -105,31 +110,29 @@ human is present. `plugin.json` goes `0.2.0` → `0.3.0`.
 
 ## Verification
 
-`claude plugin eval` has no scripted responder, so evals check the first
-question only. The multi-turn loop is checked by hand.
-
-**Step 0 — spike (one case, < $1).** Run a case with `AskUserQuestion` in
-`allowed_tools` and observe whether the headless call errors, hangs, or is
-recorded. The result decides whether grader 1 below is usable as
-`tool_used`, or must become an LLM grader over the transcript.
+`claude plugin eval` has no scripted responder, and a probe (2026-09-28)
+showed `AskUserQuestion` is absent from headless runs even when allowed.
+Evals therefore grade the headless form: the first `open_questions` entry.
+The multi-turn loop is checked by hand.
 
 **New cases**, each with five graders:
 
 | Case | Input |
 | ---- | ----- |
-| `ps-interview-first-question` | RCA named, thin outage input, `AskUserQuestion` allowed |
-| `st-interview-first-question` | iceberg named, thin recurring-symptom input, `AskUserQuestion` allowed |
+| `ps-interview-first-question` | RCA named, thin outage input |
+| `st-interview-first-question` | iceberg named, thin recurring-symptom input |
 
-1. `tool_used: AskUserQuestion`
-2. exactly one question in the call
-3. the question targets a gap that blocks the framework's stopping rule
-4. options include "Don't know" and "Stop"
-5. the source hint names a source, not an expected finding
+1. `tool_used: Skill` — the skill fired
+2. regex: the final message contains `Look in`
+3. the first `open_questions` entry targets a gap that blocks the stopping rule
+4. its source hint names a source, not an expected finding
+5. its two options come from the input and are dimensions, not causes
 
-**Existing cases.** None of the 16 lists `AskUserQuestion` in
-`allowed_tools`, so all take the headless branch and need no grader change.
+**Existing cases.** All 16 run headless, so where a stopping rule does not
+fire their first open question gains the headless form. The full suite
+run checks that no existing grader breaks on it.
 
-**Order.** Spike → write the two cases and confirm they fail (RED) → edit
+**Order.** Write the two cases and confirm they fail (RED) → edit
 the skills → targeted `--case` runs until green → full suite in the
 background.
 
