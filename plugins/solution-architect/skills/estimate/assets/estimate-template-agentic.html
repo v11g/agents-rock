@@ -582,8 +582,8 @@ function renderRegister() {
   if (!el) return;
   const riskRows = DATA.inputs.risks.map((r) => `<tr><td>${r.name}</td><td class="num">${Math.round(r.probability * 100)}%</td><td class="num">${r.impactMinutes}min</td></tr>`).join('');
   el.innerHTML = `<table><caption>Risk register ${help(
-    'Each risk adds probability &times; impact minutes to the risk buffer, so unlikely-but-costly '
-    + 'events are priced in without padding every task.')}</caption>
+    'Each risk states probability &times; impact minutes: the rework it would cost if it lands. '
+    + 'It is named, not padded into every task, and it is not added to any total.')}</caption>
     <thead><tr><th>Risk</th><th class="num">Probability</th><th class="num">Impact</th></tr></thead>
     <tbody>${riskRows}</tbody></table>`;
 }
@@ -597,7 +597,7 @@ function methodSteps() {
         narrowing from same repo + agent + model down to a global shape baseline.</li>
       <li>With &ge;5 samples, duration comes from a lognormal fit of the measured
         percentiles: the estimate is the distribution mean (means sum across tasks;
-        medians do not), the spread feeds a project-level &radic;&Sigma;&sigma;&sup2; buffer.</li>
+        medians do not); the spread is kept per task as its uncertainty.</li>
       <li>Tasks without history use the interview's seed guess and are labeled
         UNCALIBRATED — never presented as measured.</li>
       <li>Risks are explicit: probability &times; impact minutes, each with a stated
@@ -620,7 +620,7 @@ function renderMethod() {
     <p class="sources"><span>Lognormal task durations and median-vs-mean — Erik Bernhardsson,
       erikbern.com/2019/04/15/why-software-projects-take-longer-than-you-think-a-statistical-model.html.</span>
     <span>Percentile-based cycle-time forecasting — Daniel Vacanti, Actionable Agile Metrics for Predictability.</span>
-    <span>Buffer machinery — Atomic Object, atomicobject.com/client-resources/better-custom-software-estimates.</span></p></details>`;
+    <span>Risk as probability &times; impact — Atomic Object, atomicobject.com/client-resources/better-custom-software-estimates.</span></p></details>`;
 }
 
 function renderAll() {

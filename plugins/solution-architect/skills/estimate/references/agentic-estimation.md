@@ -137,8 +137,10 @@ whole estimate UNCALIBRATED.
   correctly across a project.
 - Vacanti, *Actionable Agile Metrics for Predictability* — percentile-based
   cycle-time forecasting from historical data, non-normal distributions.
-- Atomic Object (atomicobject.com) — buffer machinery (already the source
-  for `projectBuffer`/`√Σσ²` in team-mode estimation; unchanged here).
+- Atomic Object (atomicobject.com) — risk as probability × impact, and the
+  root-sum-of-squares (`√Σσ²`) spread arithmetic. Agentic mode keeps a σ per
+  task but builds no project buffer; team mode uses `√Σσ²` only for the price
+  spread in `project-price.mjs`.
 - The `1.645` constant is the standard normal 95th-percentile z-score,
   applied in log space to fit a lognormal from `p50`/`p95`.
 

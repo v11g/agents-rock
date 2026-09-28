@@ -94,12 +94,13 @@ cannot hold two entries with the same name.
 
 ## Registry sync
 
-Runs after `/proposal`, never after `/estimate` — `/estimate` emits several
-scenarios and picks none; the pick is `/proposal`'s interview.
+Runs after `/proposal`, never after `/estimate` — the lead's value is the
+range the proposal quotes to the client, which exists only once
+`proposal-figures.json` does. The estimate produces one price and no
+scenarios, so `scenario` stays `null`.
 
 | Field | Source |
 | --- | --- |
-| `scenario` | `proposal-figures.json` `.scenario` |
 | `value` | `.cost.low` / `.cost.high`, currency from `proposal.md` frontmatter |
 | `client` | `proposal.md` frontmatter, only when the entry's `client` is `null` |
 

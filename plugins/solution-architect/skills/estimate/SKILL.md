@@ -1,6 +1,6 @@
 ---
 name: estimate
-description: Interview-driven project estimation that prices work from weighted factor scores, not hours. Use when the user asks for an estimate, effort sizing, a quote, a timeline, staffing, or "how long would this take" — with or without existing architecture docs.
+description: Interview-driven project estimation that prices work from weighted factor scores, not hours. Use when the user asks for an estimate, effort sizing, or a quote — with or without existing architecture docs. It produces a price, not a timeline or a staffing plan; asked "how long would this take", it says so and prices the scope instead.
 ---
 
 # estimate
