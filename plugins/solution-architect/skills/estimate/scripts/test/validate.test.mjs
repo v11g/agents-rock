@@ -190,6 +190,24 @@ test('a feature flagged for a deep estimate needs a breakdown or a waiver', () =
   assert.ok(out.some((f) => new RegExp(id).test(f)), out.join('\n'));
 });
 
+// schema.mjs makes every feature carry at least one task, so "has tasks"
+// can never fail. One task is not a breakdown (R58): the deep pass needs two
+// or more, or a waiver.
+test('a flagged feature with a single ordinary task is refused; two tasks pass', () => {
+  const est = priced();
+  const id = 'reminders';
+  est.computed.features[id].flag = 'Deep estimate required';
+  const feature = est.inputs.features.find((f) => f.id === id);
+  assert.equal(feature.tasks.length, 1, 'fixture precondition: reminders has one task');
+  const one = [];
+  checkDeepEstimates(est, one);
+  assert.ok(one.some((f) => f.includes(id)), 'one task must not satisfy the deep-estimate gate');
+  feature.tasks = [feature.tasks[0], { ...feature.tasks[0], name: 'second task' }];
+  const two = [];
+  checkDeepEstimates(est, two);
+  assert.deepEqual(two, []);
+});
+
 test('a waived deep estimate passes', () => {
   const est = priced();
   const id = Object.keys(est.computed.features)[0];

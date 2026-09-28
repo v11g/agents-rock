@@ -84,15 +84,18 @@ export function checkPrice(md, estimation, out) {
 
 // v2's flag column is the handoff to the deep pass. A flagged feature that
 // nobody broke down and nobody waived is the one failure mode this whole
-// model has, so it is refused rather than reported.
+// model has, so it is refused rather than reported. schema.mjs already makes
+// every feature carry one task, so one task is not a breakdown — two are.
+const DEEP_MIN_TASKS = 2;
+
 export function checkDeepEstimates(estimation, out) {
   const byId = new Map((estimation.inputs.features ?? []).map((f) => [f.id, f]));
   for (const [id, row] of Object.entries(estimation.computed.features ?? {})) {
     if (!/^Deep estimate|^SPLIT/.test(row.flag ?? '')) continue;
     const feature = byId.get(id);
     if (typeof feature?.deepEstimateWaiver === 'string' && feature.deepEstimateWaiver.trim()) continue;
-    if (!(feature?.tasks?.length > 0)) {
-      out.push(`feature ${id}: flagged "${row.flag}" but has no task breakdown and no deepEstimateWaiver`);
+    if (!((feature?.tasks?.length ?? 0) >= DEEP_MIN_TASKS)) {
+      out.push(`feature ${id}: flagged "${row.flag}" but has fewer than ${DEEP_MIN_TASKS} tasks and no deepEstimateWaiver`);
     }
   }
 }

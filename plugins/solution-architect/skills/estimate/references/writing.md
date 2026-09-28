@@ -204,8 +204,9 @@ Roadmap (mirrors `checkRoadmap` in `scripts/lib/checks.mjs`):
 Deep estimates (mirrors `checkDeepEstimates` in `scripts/lib/checks.mjs`):
 
 17. A feature whose `computed.features[<id>].flag` starts with `Deep
-    estimate` or `SPLIT` needs either a real task breakdown (`inputs`
-    `tasks` is non-empty) or a `deepEstimateWaiver` — a non-empty string
+    estimate` or `SPLIT` needs either a real task breakdown (two or more
+    `inputs` `tasks` — one task is not a breakdown, and every feature
+    already has one) or a `deepEstimateWaiver` — a non-empty string
     naming why the band price stands without one (`schema.mjs` refuses a
     bare `true`). Neither present is refused.
 
