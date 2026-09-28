@@ -38,7 +38,9 @@ All three must hold, else stop short as today:
 1. The framework has run once and its stopping rule has not fired.
 2. A specific gap blocking that rule can be named — a field, layer, or link
    (e.g. "`rca.contributing` is empty").
-3. `AskUserQuestion` is available and does not error.
+3. `AskUserQuestion` is available — the same test step 2 already applies
+   before asking the human to pick a framework. If the call errors when
+   made, treat the run as headless from that point.
 
 ### One round
 
@@ -46,7 +48,7 @@ Ask exactly one question with `AskUserQuestion`:
 
 - **Question** — aimed at the one named gap, using this problem's details
   (its figures, times, components), not generic phrasing.
-- **Source hint** — one line, "Look in: …", naming where the evidence
+- **Source hint** — the question text's second line, "Look in: …", naming where the evidence
   lives: a log, dashboard, trace, ticket, or the person who owns it. It
   never names what the human should expect to find there. "Look in: the
   gateway access log" passes; "check whether the DB pool is exhausted"
@@ -60,13 +62,16 @@ Ask exactly one question with `AskUserQuestion`:
 
 | Answer | Recorded as | Then |
 | ------ | ----------- | ---- |
-| Content | `evidence`, type `interview` | re-run the framework from step 3 |
+| Content | `evidence`, type `interview`, ref `round N` | re-run the framework from step 3 |
 | Pasted log or figures | `evidence`, type `log` / `metric` | re-run |
-| Picked option | `evidence`, type `interview` | re-run |
+| Picked option | `evidence`, type `interview`, ref `round N` | re-run |
 | Don't know | `open_questions` | never ask about that gap again |
 | Stop | — | emit now, stating "stopped on request" |
 
 ### End
+
+A re-run is the same framework over more evidence, not a second
+framework, so the one-framework-per-run guardrail does not fire.
 
 The loop ends when the stopping rule fires, no askable gap remains, the
 human picks Stop, or round 6 completes. The output names which of these
@@ -77,9 +82,10 @@ ended it.
 | Situation | Handling |
 | --------- | -------- |
 | Answer contradicts existing evidence | Keep both, name the contradiction, lower confidence. Never drop either silently. |
-| Answer suggests a different class (e.g. "it happens every week") | End the interview, emit, and note that `problem-router` should be re-run. One framework per run still holds. |
+| Answer meets another class's definition in `problem-router` — recurrence (`complex`) or an actor adapting to fixes (`complex-adaptive`), e.g. "it happens every week" | End the interview, emit, and note that `problem-router` should be re-run. One framework per run still holds. |
 | Human asserts "the cause is X" | Record as `interview` evidence: "the human believes X". It is `root` only if an observation ties X to the symptom — the root test is unchanged. |
 | Human rejects the question to ask for clarification | Answer in chat, then re-ask the same question. The round does not count. |
+| Human rejects the question with no message | Treat as Stop. |
 
 ## `SKILL.md` changes (both skills)
 
