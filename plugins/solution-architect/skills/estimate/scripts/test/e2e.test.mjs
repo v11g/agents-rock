@@ -71,31 +71,37 @@ test('agentic fixture flows compute → validate → render, and a vague range i
 // with their cached values stripped (dropCachedValues + recalcOnLoad) so
 // Excel recomputes on open — there is no computed presentLow/presentHigh to
 // read back from the raw xlsx bytes in Node.
-test('the page and the proposal quote the same range', skip, async () => {
+
+// Browser-independent: must run (not skip) with no Chrome on PATH, so a
+// price-parity regression never comes back as a silent "skipped".
+test('the estimate and the proposal figures quote the same range', async () => {
   const inputs = JSON.parse(readFileSync(fixture, 'utf8'));
   const estimation = computeEstimation(inputs);
   const { presentLow, presentHigh } = estimation.computed.price;
+  const { deriveFigures } = await import('../../../proposal/scripts/lib/figures.mjs');
+  const figures = deriveFigures(estimation);
+  assert.equal(figures.cost.low, presentLow);
+  assert.equal(figures.cost.high, presentHigh);
+});
+
+// The presented range is formatted by the page's own client-side script,
+// not baked into the static file, so this needs a real browser — the one
+// part of this check that Chrome-gates.
+test('the rendered page shows the presented range', skip, async () => {
+  const inputs = JSON.parse(readFileSync(fixture, 'utf8'));
+  const estimation = computeEstimation(inputs);
+  const { presentLow } = estimation.computed.price;
 
   const dir = mkdtempSync(join(tmpdir(), 'estimate-e2e-figures-'));
   const json = join(dir, 'estimation.json');
   writeFileSync(json, JSON.stringify(estimation));
   execFileSync('node', [join(scripts, 'render.mjs'), '--json', json, '--md', passMd, '--out', dir]);
 
-  // The presented range is formatted by the page's own client-side script,
-  // not baked into the static file, so this must run the page in a browser
-  // rather than grep the html text.
   const page = await openPage(pathToFileURL(join(dir, 'estimate.html')).href);
   try {
     const body = await page.eval('document.body.textContent');
     assert.ok(body.includes(presentLow.toLocaleString('en-US')), 'page range');
   } finally { page.close(); }
-
-  const { deriveFigures } = await import(
-    '../../../proposal/scripts/lib/figures.mjs'
-  );
-  const figures = deriveFigures(estimation);
-  assert.equal(figures.cost.low, presentLow);
-  assert.equal(figures.cost.high, presentHigh);
 });
 
 test('no duration survives anywhere in the pipeline', () => {
