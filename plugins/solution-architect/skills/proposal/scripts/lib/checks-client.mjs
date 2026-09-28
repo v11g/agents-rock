@@ -6,8 +6,8 @@ import { sectionText, escapeRegExp } from './sections.mjs';
 import { JARGON } from './jargon.mjs';
 
 const flat = (f) => [
-  f.cost.low, f.cost.high, f.months.low, f.months.high,
-  ...f.milestones.flatMap((m) => [m.cost.low, m.cost.high, m.months.low, m.months.high]),
+  f.cost.low, f.cost.high, f.singleNumber,
+  ...f.milestones.flatMap((m) => [m.cost.low, m.cost.high]),
 ];
 
 function checkMoney(md, figures, out) {
@@ -15,15 +15,6 @@ function checkMoney(md, figures, out) {
   for (const m of md.matchAll(/[$€£]\s?([\d,]+(?:\.\d+)?)/g)) {
     const n = Number(m[1].replaceAll(',', ''));
     if (!allowed.has(n)) out.push(`money amount ${m[0].trim()} not derived from estimation.json`);
-  }
-  for (const m of md.matchAll(/(\d+(?:\.\d+)?)\s*[–-]\s*(\d+(?:\.\d+)?)\s+months/g)) {
-    for (const bound of [Number(m[1]), Number(m[2])]) {
-      if (!allowed.has(bound)) out.push(`duration bound ${bound} months not derived from estimation.json`);
-    }
-  }
-  for (const m of md.matchAll(/(\d+(?:\.\d+)?)\s+months\b/g)) {
-    const n = Number(m[1]);
-    if (!allowed.has(n)) out.push(`duration bound ${n} months not derived from estimation.json`);
   }
 }
 
@@ -34,17 +25,9 @@ function checkHeadline(md, figures, out) {
       out.push(`headline cost bound ${n.toLocaleString('en-US')} missing from Executive Summary`);
     }
   }
-  for (const n of [figures.months.low, figures.months.high]) {
-    if (!new RegExp(`\\b${escapeRegExp(String(n))}\\b`).test(summary)) {
-      out.push(`headline duration bound ${n} missing from Executive Summary`);
-    }
-  }
 }
 
-function checkLeaks({ md, fm, estimation }, out) {
-  for (const s of estimation.inputs.scenarios ?? []) {
-    if (s.id !== fm.scenario && md.includes(s.id)) out.push(`leak: scenario id "${s.id}"`);
-  }
+function checkLeaks({ md }, out) {
   if (/\|\s*src\s*\|/i.test(md)) out.push('leak: provenance "src" column');
   if (/data-internal/.test(md)) out.push('leak: data-internal marker');
   for (const word of ['observed', 'stated', 'researched', 'proposed']) {
@@ -66,10 +49,10 @@ function checkJargon({ md, fm }, out) {
 }
 
 export function checkClient({ md, fm, estimation }, out = []) {
-  const figures = deriveFigures(estimation, fm.scenario);
+  const figures = deriveFigures(estimation);
   checkMoney(md, figures, out);
   checkHeadline(md, figures, out);
-  checkLeaks({ md, fm, estimation }, out);
+  checkLeaks({ md }, out);
   checkJargon({ md, fm }, out);
   return out;
 }

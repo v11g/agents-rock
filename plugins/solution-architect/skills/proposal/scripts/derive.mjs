@@ -13,7 +13,7 @@ const args = parseArgs(process.argv.slice(2));
 const estimation = JSON.parse(readFileSync(args.estimation, 'utf8'));
 let figures;
 try {
-  figures = deriveFigures(estimation, args.scenario);
+  figures = deriveFigures(estimation);
 } catch (e) {
   console.error(e.message);
   process.exit(1);

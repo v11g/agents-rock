@@ -1,43 +1,24 @@
 // Client-facing figures derived from estimation.json — the proposal never
-// invents a number. Totals come from the chosen scenario; ranges scale by
-// the feature low/high spread; milestone splits follow the roadmap shares.
-export const round1 = (n) => Math.round(n * 10) / 10;
+// invents a number. The range is the estimate's own presented range, so the
+// proposal and the workbook always quote the same figures. Milestone splits
+// follow the roadmap's effort shares; there are no durations, because the
+// estimate produces none.
 export const round100 = (n) => Math.round(n / 100) * 100;
 export const formatMoney = (n) => `$${n.toLocaleString('en-US')}`;
 
-function spreadRatios(computed) {
-  const feats = Object.values(computed.features);
-  const hours = feats.reduce((s, f) => s + f.hours, 0);
+const split = (cost, share) => ({ low: round100(cost.low * share), high: round100(cost.high * share) });
+
+export function deriveFigures(estimation) {
+  const { price, roadmap } = estimation.computed;
+  if (!price || price.p50 === 0) {
+    throw new Error('estimate is not priced (no scored features) — a proposal cannot quote it');
+  }
+  const cost = { low: price.presentLow, high: price.presentHigh };
   return {
-    lo: feats.reduce((s, f) => s + f.low, 0) / hours,
-    hi: feats.reduce((s, f) => s + f.high, 0) / hours,
-  };
-}
-
-const range = (value, ratios, round) => ({ low: round(value * ratios.lo), high: round(value * ratios.hi) });
-
-function milestoneFigures(scenario, ratios) {
-  return (scenario.roadmap ?? []).map((band) => {
-    const width = band.endMonths - band.startMonths;
-    return {
-      name: band.milestone,
-      cost: range(scenario.totalCost * (width / scenario.months), ratios, round100),
-      months: range(width, ratios, round1),
-    };
-  });
-}
-
-export function deriveFigures(estimation, scenarioId) {
-  const scenario = estimation.computed.scenarios[scenarioId];
-  if (!scenario) throw new Error(`scenario "${scenarioId}" not in estimation.json`);
-  const ratios = spreadRatios(estimation.computed);
-  const team = (estimation.inputs.scenarios.find((s) => s.id === scenarioId)?.team ?? [])
-    .map((m) => m.seniority);
-  return {
-    scenario: scenarioId,
-    cost: range(scenario.totalCost, ratios, round100),
-    months: range(scenario.months, ratios, round1),
-    milestones: milestoneFigures(scenario, ratios),
-    team,
+    cost,
+    singleNumber: price.singleNumber,
+    milestones: (roadmap ?? []).map((b) => ({
+      name: b.milestone, cost: split(cost, b.share), share: b.share,
+    })),
   };
 }
