@@ -38,3 +38,22 @@ scored 5.
 Provenance: a score the human accepted as the agent proposed it is
 `proposed`; a score the human changed — or a rewritten plain-words note — is
 `stated`. One `scoreProvenance` per feature: `stated` if any cell changed.
+
+## Context factors — one level 1–4 per project
+
+Five project-wide factors (`CONTEXT_FACTORS` in `project-price.mjs`),
+copied from the v2 workbook's Project Roll-up level definitions (F11:F15).
+Level 1 is always the cheapest end. A factor's `contextProvenance.anchor` is
+the definition of the level chosen, quoted from this table.
+
+| Factor | 1 | 2 | 3 | 4 |
+| --- | --- | --- | --- | --- |
+| `codebaseMaturity` | Greenfield | young and clean | mature with history | legacy, low test coverage |
+| `stackFamiliarity` | Core stack, done before | adjacent, some learning | new to the team | new to the team |
+| `specQuality` | Signed-off AC | clear written brief | outline or slide deck | verbal conversation only |
+| `compliance` | None | handles PII | regulated - HIPAA, SOC2, GDPR audit | regulated |
+| `clientDecisions` | One fast approver | two or three | committee sign-off | committee plus external review |
+
+The workbook repeats its level-3 words at level 4 for `stackFamiliarity`
+and `compliance`, and gives both levels the same multiplier. The multipliers
+combine additively, capped at ×2.5 — see `CONTEXT_FACTORS` for the numbers.

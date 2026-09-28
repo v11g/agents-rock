@@ -5,6 +5,7 @@ import { AI_CATEGORIES } from '../lib/estimate-math.mjs';
 import { TASK_SHAPES } from '../lib/measurements.mjs';
 import { WEIGHTS, BANDS } from '../lib/pricing.mjs';
 import { CONTEXT_FACTORS } from '../lib/project-price.mjs';
+import { readZip } from './zip.mjs';
 
 const ref = (f) => readFileSync(new URL(`../../references/${f}`, import.meta.url), 'utf8');
 const ALL = ['interview.md', 'techniques.md', 'ai-multipliers.md', 'writing.md', 'slicing.md',
@@ -173,4 +174,42 @@ test('SKILL.md points the interview at the scoring guide and the review script',
   const skill = readFileSync(new URL('../../SKILL.md', import.meta.url), 'utf8');
   assert.match(skill, /scoring-guide\.md/);
   assert.match(skill, /score-review\.mjs/);
+});
+
+// The level definitions for the five context factors live in the v2 workbook
+// the page embeds (Project Roll-up F11:F15, rows in CONTEXT_FACTORS order).
+// Read them from those bytes so the rubric cannot drift from the workbook.
+function rollupDefinitions() {
+  const html = readFileSync(new URL('../../assets/estimate-template.html', import.meta.url), 'utf8');
+  const files = readZip(Buffer.from(/const XLSX_TEMPLATE = '([^']+)'/.exec(html)[1], 'base64'));
+  const strings = [...files.get('xl/sharedStrings.xml').toString('utf8').matchAll(/<si>([\s\S]*?)<\/si>/g)]
+    .map((m) => [...m[1].matchAll(/<t[^>]*>([^<]*)<\/t>/g)].map((t) => t[1]).join('').replace(/&amp;/g, '&'));
+  const sheet = files.get('xl/worksheets/sheet5.xml').toString('utf8');
+  return [11, 12, 13, 14, 15].map((row) => {
+    const idx = new RegExp(`<c r="F${row}"[^>]*t="s"[^>]*><v>(\\d+)</v>`).exec(sheet)[1];
+    return strings[Number(idx)].split(' / ');
+  });
+}
+
+test('the scoring guide carries the workbook\'s level definitions for every context factor', () => {
+  const doc = ref('scoring-guide.md');
+  const defs = rollupDefinitions();
+  Object.keys(CONTEXT_FACTORS).forEach((key, i) => {
+    const row = doc.split('\n').find((l) => l.startsWith(`| \`${key}\` |`));
+    assert.ok(row, `scoring-guide.md has no rubric row for ${key}`);
+    const cells = row.split('|').slice(2, -1).map((c) => c.trim());
+    assert.deepEqual(cells, defs[i], `${key} levels differ from Project Roll-up F${11 + i}`);
+  });
+});
+
+// Level 1 is the familiar, cheapest end (x1.00); level 3-4 is a stack new to
+// the team (x1.35). A pick-list that runs the other way prices backwards.
+test('interview.md asks stack familiarity with level 1 as the familiar stack', () => {
+  const doc = ref('interview.md');
+  const levels = rollupDefinitions()[1];
+  levels.forEach((words, i) => {
+    const re = new RegExp(`${i + 1}\\s+${words.replace(/ /g, '\\s+')}`, 'i');
+    assert.ok(re.test(doc), `stack pick-list level ${i + 1} must read "${words}"`);
+  });
+  assert.doesNotMatch(doc, /never used it/i, 'level 1 is the familiar stack, not "never used it"');
 });

@@ -212,7 +212,13 @@ Ask one thing at a time, in this order:
 
    One is **asked**: `stackFamiliarity`, a pick-list seeded from
    `ARCHITECTURE.md` §6's tech column ("how familiar is the delivery team
-   with each of: <§6 tech list>?" — 1 never used it, 4 shipped it before).
+   with each of: <§6 tech list>?" — 1 core stack, done before · 2 adjacent,
+   some learning · 3 new to the team · 4 new to the team). Level 1 is the
+   familiar, cheapest end (×1.00); a stack new to the team is ×1.35. The
+   workbook gives levels 3 and 4 the same words and the same multiplier.
+
+   Every level of every factor has a definition — the rubric table in
+   `references/scoring-guide.md`. The `anchor` is that definition, quoted.
 
    **Standalone mode** — no `ARCHITECTURE.md`, no business-analyst
    companion doc — asks all five directly; there is nothing to derive from.
