@@ -30,8 +30,11 @@ and visibly so.
    presenting it as observed.
 
 2. Build `points`. For each element, ask whether intervening there would
-   change the behaviour. Record `intervention`, `level`, `expected_effect`,
-   `risks`, and `evidence`.
+   change the behaviour. Record `intervention`, `element` (the id of the
+   `elements` row it sits on), `level`, `expected_effect`, and `risks`.
+   Evidence for the point is not a field here — it lives in the core
+   `evidence`/`assumptions` lists, which `supports` the element and the
+   point by id.
 
 3. `level` must match the `kind` of a row in `elements`. A level with no
    matching row is an intervention into a part of the system you have not
@@ -52,18 +55,24 @@ Emit the `leverage_points` block from `references/contract.md`: `elements`,
 ```yaml
 leverage_points:
   elements:
-    - element:   "senior engineers triage all inbound requests"
+    - id:        c1
+      element:   "senior engineers triage all inbound requests"
       kind:      rule
       evidence:  user-provided fact
-    - element:   "throughput is measured per-team"
+    - id:        c2
+      element:   "throughput is measured per-team"
       kind:      incentive
       evidence:  inferred
   points:
-    - intervention:    "route triage through a rota"
+    - id:              c3
+      intervention:    "route triage through a rota"
+      element:         c1
       level:           rule
       expected_effect: "spreads interrupt load off the two named seniors"
       risks:           "triage quality drops while the rota ramps"
-      evidence:        "user-provided fact: seniors are constantly interrupted"
+# Evidence and assumptions are core fields, not a point field: an
+# `evidence` entry with `supports: [c1, c3]` backs the element and the
+# point that sits on it.
 ```
 
 `elements` is a flat kind-tagged list. It is not a system map — no

@@ -41,6 +41,8 @@ does it, in what order, and by when is `systemic-design`.
   recommended skill, and reasoning.
 - A prior systems-thinking result, when the human hands one in. It is
   ordinary input — richer than raw text, not a special mode.
+- The problem folder a hand-off names, per `references/contract.md`
+  Saving. Write this run's file there.
 
 ## Entry paths
 

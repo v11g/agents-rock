@@ -39,6 +39,8 @@ recommend `systems-thinking` first, and run here only if the human says so.
 - A prior `systems-thinking` result, read through its six core fields and
   its one block. Its `evidence` stays evidence; its `assumptions` keep
   their status. Nothing is promoted on the way in.
+- The problem folder a hand-off names, per `references/contract.md`
+  Saving. Write this run's file there.
 
 ## Entry paths
 

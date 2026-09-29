@@ -40,3 +40,6 @@ it asks you for it — one question at a time, each naming where to look.
 
 Six core fields plus exactly one framework block, per the shared contract
 in `references/contract.md`.
+Every run is also saved under `~/.reasoning/problems/`, one folder per
+problem and one file per run. If Claude Code isn't allowed to write
+there, the run says "not saved" and carries on.

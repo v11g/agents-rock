@@ -142,6 +142,10 @@ evidence types, assumption status, and confidence rules. Don't guess at
 any of it here; the contract is the single source of truth for the field
 set.
 
+Save the run per `references/contract.md` Saving. When you recommend a
+skill, name the problem folder path in the hand-off so that skill writes
+into it. If this run started from a hand-off that names a folder, use it.
+
 ## Degradation
 
 `complex` routes to `systems-thinking`, which is built. Route to it

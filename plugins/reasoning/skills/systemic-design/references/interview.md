@@ -49,6 +49,8 @@ Ask exactly one question with `AskUserQuestion`.
 | Stop | nothing | emit now, stating "stopped on request" |
 
 A re-run is the same framework over more evidence, not a second framework.
+After each re-run, rewrite the saved file per `references/contract.md`
+Saving, keeping every existing id.
 
 | Situation | Handling |
 | --------- | -------- |

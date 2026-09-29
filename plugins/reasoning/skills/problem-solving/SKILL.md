@@ -39,6 +39,8 @@ see Guardrails.
   `double_diamond`, `a3`, or `pdca`.
 - Whatever the `problem-router` hand-off carries: its classification,
   recommended framework, and reasoning, when this run started there.
+- The problem folder a hand-off names, per `references/contract.md`
+  Saving. Write this run's file there.
 
 ## Entry paths
 

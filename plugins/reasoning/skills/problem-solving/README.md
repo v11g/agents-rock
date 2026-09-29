@@ -49,3 +49,9 @@ block, sized to what a two-line problem with one log actually supports.
 - Doesn't pad a small problem out to fill every section of a framework —
   length scales to the evidence, not to the template.
 - Doesn't emit numeric confidence — only `low` / `medium` / `high`.
+
+## Output
+
+Every run is also saved under `~/.reasoning/problems/`, one folder per
+problem and one file per run. If Claude Code isn't allowed to write
+there, the run says "not saved" and carries on.
