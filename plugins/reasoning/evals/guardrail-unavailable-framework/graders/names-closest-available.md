@@ -3,9 +3,8 @@ type: llm
 weight: 1
 ---
 
-PASS if the response names a closest-available framework from the
-problem-solving table (`double_diamond`, `rca`, `five_whys`, `a3`, or
-`pdca`) together with a stated difference — what that framework will not
-surface compared to three horizons.
-FAIL if no closest-available framework is named, or one is named with no
-stated difference from what was asked for.
+PASS if the response names a closest available framework from the
+systemic-design table (`systemic_design`, `theory_of_change`, or
+`three_horizons`) together with a stated difference from transition
+design.
+FAIL if none is named, or one is named with no stated difference.

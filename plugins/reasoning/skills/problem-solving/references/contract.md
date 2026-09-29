@@ -31,6 +31,9 @@ in the input supports the analysis, and the output says so.
 | `system_map` | `system_boundary`, `actors`, `components`, `relationships`, `dependencies`, `external_factors` |
 | `causal_loop` | `variables`, `links`, `loops`, `delays` |
 | `leverage_points` | `elements`, `points` |
+| `systemic_design` | `explore`, `reframe`, `create`, `catalyse` |
+| `theory_of_change` | `inputs`, `activities`, `outputs`, `short_term_outcomes`, `long_term_outcomes`, `impact`, `links` |
+| `three_horizons` | `h1`, `h2`, `h3` |
 
 Later skills add blocks. The core never changes — that is what lets one
 skill consume another's result without knowing which framework produced
@@ -89,6 +92,9 @@ assumptions:
     status: unverified
 open_questions:
   - Who owns the runner image?
+  - |
+    Which runner pool failed — shared or dedicated?
+    Look in: the CI runner dashboard
 five_whys:
   why_chain:
     - Deploys fail -> the runner cannot pull the base image

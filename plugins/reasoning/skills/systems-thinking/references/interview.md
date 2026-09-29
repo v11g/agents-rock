@@ -44,6 +44,7 @@ Ask exactly one question with `AskUserQuestion`.
 | Content | `evidence`, type `interview`, ref `round N` | re-run the framework from step 3 |
 | Pasted log or figures | `evidence`, type `log` or `metric` | re-run |
 | Picked option | `evidence`, type `interview`, ref `round N` | re-run |
+| Confirms an assumption | that assumption's status becomes `confirmed` | re-run |
 | Don't know | `open_questions` | never ask about that gap again |
 | Stop | nothing | emit now, stating "stopped on request" |
 
@@ -51,9 +52,9 @@ A re-run is the same framework over more evidence, not a second framework.
 
 | Situation | Handling |
 | --------- | -------- |
-| Answer contradicts existing evidence | Keep both, name the contradiction, lower confidence. |
-| Answer meets another class's definition in `problem-router` — in `problem-solving`, recurrence (`complex`) or an actor adapting to fixes (`complex-adaptive`); in `systems-thinking`, only `complex-adaptive` | End the interview, emit, and recommend re-running `problem-router`. Do not start a second framework. |
-| Human asserts "the cause is X" | Record as `interview` evidence: "the human believes X". It is `root` only if an observation ties X to the symptom. |
+| Answer contradicts existing evidence | Keep both, and name the contradiction in `open_questions`. |
+| Answer meets another class's definition in `problem-router` — in `problem-solving`, recurrence (`complex`) or an actor adapting to fixes (`complex-adaptive`); in `systems-thinking`, only `complex-adaptive`; in `systemic-design`, `simple` or `ambiguous` | End the interview and emit. In `systems-thinking`, name `systemic-design` as the next run; elsewhere, recommend re-running `problem-router`. Do not start a second framework. |
+| Human asserts "the cause is X" | Record as `interview` evidence: "the human believes X". It supports a cause only if an observation ties X to the symptom. |
 | Human rejects the question to ask something | Answer in chat, then re-ask the same question. The round does not count. |
 | Human rejects the question with no message | Treat as Stop. |
 

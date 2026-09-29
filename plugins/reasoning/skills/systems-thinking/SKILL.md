@@ -16,8 +16,8 @@ write the fix, or edit files.
 Answer one question: **what system is producing this?**
 
 Not what the cause is and what to try next — that is `problem-solving`. Not
-how to change the system over time — that is `systemic-design`, which is
-not built in this release.
+how to change the system over time — that is `systemic-design`, the next
+run once this model exists.
 
 ## When to use / When not to use
 
@@ -152,9 +152,9 @@ not a judgment call.
 ## Failure modes
 
 - **Framework named that belongs to another skill** — theory of change,
-  three horizons, explore/reframe/create/catalyse. Say `systemic-design`
-  owns it and that the skill isn't built in this release. Don't improvise
-  the framework here.
+  three horizons, explore/reframe/create/catalyse. That skill is built:
+  say `systemic-design` owns the framework and hand the problem over.
+  Don't run the framework here, and don't refuse it.
 - **Framework named but unavailable** — from PRD §17's later set: Stock and
   Flow, Rich Picture. Say it isn't built yet, and name the closest available
   framework from the table above with the difference stated, rather than
@@ -189,7 +189,7 @@ the recurrence, but the immediate gap is who connects to whom). Recommend
 Run `frameworks/system-map.md`: seed sales, provisioning, and the named
 downstream teams; record only the handoff relationships the input states.
 "Three different fixes" is evidence of recurrence but names no new node, so
-nothing is added for it. Candidate nodes like "the CRM" are mentioned
+nothing is added for it. Seeded nodes like "the CRM" are mentioned
 nowhere and break no recorded relationship — `external_factors`. The
 recorded relationships form no cycle, so the output is prose, not Mermaid.
 Emit the six core fields plus one `system_map` block.

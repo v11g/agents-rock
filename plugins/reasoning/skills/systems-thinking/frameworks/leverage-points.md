@@ -77,4 +77,4 @@ explicit "none identified, because …".
 
 Seven kinds, one pass. This framework names where to push, the expected
 effect, and the risks. It does not produce an adoption plan, a sequence, or
-an owner — that is `systemic-design`, which is not built in this release.
+an owner — that is `systemic-design`, the next run.

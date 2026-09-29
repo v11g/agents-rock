@@ -148,20 +148,16 @@ set.
 normally — no caveat, no substitute.
 
 `complex-adaptive` routes to `systems-thinking` first and then
-`systemic-design`. The second is not built in this release. Say so plainly
-when you route there: the systems-thinking pass will run and produce a
-model, and the design pass that would turn that model into a coordinated
-intervention programme does not exist yet.
+`systemic-design`. Both are built. Route to them in that order, normally —
+the first produces the model, the second plans the change.
 
-Naming that gap is where this stops. Don't preview, hint at, or hedge what
-`systemic-design` would probably conclude — no "would likely land on X", no
+Don't preview what either would conclude — no "would likely land on X", no
 floating a probable intervention even provisionally. Those findings belong
-to the skill that runs it, not to the router.
+to the skills that run them, not to the router.
 
-Never quietly downgrade the classification to fit what's built. A
-complex-adaptive problem stays classified as complex-adaptive even though
-only the first leg of its route can run — the human needs the honest class
-to know the route is partial.
+Never quietly downgrade the classification. A complex-adaptive problem
+stays classified as complex-adaptive — the human needs the honest class to
+know which route fits.
 
 ## Failure modes
 
