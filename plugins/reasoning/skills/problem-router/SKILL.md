@@ -142,26 +142,26 @@ evidence types, assumption status, and confidence rules. Don't guess at
 any of it here; the contract is the single source of truth for the field
 set.
 
+Save the run per `references/contract.md` Saving. When you recommend a
+skill, name the problem folder path in the hand-off so that skill writes
+into it. If this run started from a hand-off that names a folder, use it.
+
 ## Degradation
 
 `complex` routes to `systems-thinking`, which is built. Route to it
 normally — no caveat, no substitute.
 
 `complex-adaptive` routes to `systems-thinking` first and then
-`systemic-design`. The second is not built in this release. Say so plainly
-when you route there: the systems-thinking pass will run and produce a
-model, and the design pass that would turn that model into a coordinated
-intervention programme does not exist yet.
+`systemic-design`. Both are built. Route to them in that order, normally —
+the first produces the model, the second plans the change.
 
-Naming that gap is where this stops. Don't preview, hint at, or hedge what
-`systemic-design` would probably conclude — no "would likely land on X", no
+Don't preview what either would conclude — no "would likely land on X", no
 floating a probable intervention even provisionally. Those findings belong
-to the skill that runs it, not to the router.
+to the skills that run them, not to the router.
 
-Never quietly downgrade the classification to fit what's built. A
-complex-adaptive problem stays classified as complex-adaptive even though
-only the first leg of its route can run — the human needs the honest class
-to know the route is partial.
+Never quietly downgrade the classification. A complex-adaptive problem
+stays classified as complex-adaptive — the human needs the honest class to
+know which route fits.
 
 ## Failure modes
 

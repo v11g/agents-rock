@@ -8,13 +8,13 @@ Answers: **what system is producing this?**
 
 | Framework | Use it when |
 | --- | --- |
-| Iceberg Model | A symptom keeps returning and the layers under it are unexamined. |
-| System Map | Two or more actors, and the relationships between them are unclear. |
-| Causal Loop | The variables are known and suspected of feeding back on each other. |
 | Leverage Points | You need to know where to intervene. |
+| Causal Loop | The variables are known and suspected of feeding back on each other. |
+| System Map | Two or more actors, and the relationships between them are unclear. |
+| Iceberg Model | A symptom keeps returning and the layers under it are unexamined. |
 
-Selection is first-match-wins in that reverse order — where-to-intervene
-first, iceberg last. The skill shortlists two and recommends one; you pick.
+Selection is first-match-wins, top to bottom. The skill shortlists two
+and recommends one; you pick.
 
 ## Usage
 
@@ -25,11 +25,15 @@ first, iceberg last. The skill shortlists two and recommends one; you pick.
 
 Or let `problem-router` classify the problem first and hand it over.
 
+When the evidence runs out before the framework's stopping rule fires and
+you're there to answer, it asks you for the missing piece — one question
+at a time, each naming where to look — instead of stopping short.
+
 ## What it will not do
 
 - Name a fix, or write one.
 - Produce an adoption plan, a sequence, or an owner — that is
-  `systemic-design`, which is not built in this release.
+  `systemic-design`, the next run once the model exists.
 - Run on a bounded one-function defect. That is `problem-solving`.
 
 ## Output
@@ -37,3 +41,6 @@ Or let `problem-router` classify the problem first and hand it over.
 Six core fields plus exactly one framework block, per the shared contract
 in `references/contract.md`. Evidence and assumptions stay separable, and
 a diagram appears only when the structure contains a cycle.
+Every run is also saved under `~/.reasoning/problems/`, one folder per
+problem and one file per run. If Claude Code isn't allowed to write
+there, the run says "not saved" and carries on.

@@ -11,6 +11,10 @@ Run `/reasoning:problem-solving "<problem>"` to get a recommendation, or
 chosen framework. It also accepts a hand-off from `problem-router` once the
 human has confirmed the route.
 
+When the evidence runs out before the framework's stopping rule fires and
+you're there to answer, it asks you for the missing piece — one question
+at a time, each naming where to look — instead of stopping short.
+
 ## When to reach for it
 
 - A problem needs analysis, not a direct answer — recurring failures,
@@ -45,3 +49,9 @@ block, sized to what a two-line problem with one log actually supports.
 - Doesn't pad a small problem out to fill every section of a framework —
   length scales to the evidence, not to the template.
 - Doesn't emit numeric confidence — only `low` / `medium` / `high`.
+
+## Output
+
+Every run is also saved under `~/.reasoning/problems/`, one folder per
+problem and one file per run. If Claude Code isn't allowed to write
+there, the run says "not saved" and carries on.

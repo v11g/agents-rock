@@ -28,8 +28,11 @@ not earned.
 5. For each loop, state whether it is reinforcing (the effect feeds the
    cause) or balancing (the effect dampens the cause), and name the link
    that makes it so.
-6. Record a `delays` entry only where the input states a lag. An inferred
-   delay is an `assumptions` entry, not a `delays` entry.
+6. Record a `delays` entry only where the input states a lag: a duration
+   ("about six weeks later") or an explicit "after a delay". A dated
+   sequence ("prices rose in March, churn rose in April") is not a stated
+   lag. An inferred delay, including one read off dates, is an
+   `assumptions` entry, not a `delays` entry.
 
 ## Output block
 

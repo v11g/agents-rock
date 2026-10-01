@@ -16,8 +16,8 @@ write the fix, or edit files.
 Answer one question: **what system is producing this?**
 
 Not what the cause is and what to try next — that is `problem-solving`. Not
-how to change the system over time — that is `systemic-design`, which is
-not built in this release.
+how to change the system over time — that is `systemic-design`, the next
+run once this model exists.
 
 ## When to use / When not to use
 
@@ -41,6 +41,8 @@ does it, in what order, and by when is `systemic-design`.
   recommended skill, and reasoning.
 - A prior systems-thinking result, when the human hands one in. It is
   ordinary input — richer than raw text, not a special mode.
+- The problem folder a hand-off names, per `references/contract.md`
+  Saving. Write this run's file there.
 
 ## Entry paths
 
@@ -97,6 +99,10 @@ runs — skip this section entirely, no confirmation step.
    because the problem feels straightforward.
 4. Stop at that file's own stopping test, not at a felt sense of
    completeness. Apply the test — see each file's Stop when section.
+4b. If the stopping test has not passed, follow
+   `references/interview.md`. With a human present it returns you to
+   step 3 with new evidence; headless, it shapes the first open question.
+   Then continue to step 5.
 5. Emit the result per Output contract below.
 
 ## Output contract
@@ -148,9 +154,9 @@ not a judgment call.
 ## Failure modes
 
 - **Framework named that belongs to another skill** — theory of change,
-  three horizons, explore/reframe/create/catalyse. Say `systemic-design`
-  owns it and that the skill isn't built in this release. Don't improvise
-  the framework here.
+  three horizons, explore/reframe/create/catalyse. That skill is built:
+  say `systemic-design` owns the framework and hand the problem over.
+  Don't run the framework here, and don't refuse it.
 - **Framework named but unavailable** — from PRD §17's later set: Stock and
   Flow, Rich Picture. Say it isn't built yet, and name the closest available
   framework from the table above with the difference stated, rather than
@@ -158,6 +164,12 @@ not a judgment call.
 - **Running this on a bounded defect.** One function, one service,
   reproducible — that's `problem-solving`. Say so and hand it back rather
   than producing an iceberg over a stack trace.
+- **Asking without naming the gap.** An interview question must fill a
+  specific field, layer, or link the stopping rule is blocked on. A
+  question that fills nothing named is an open-ended interview — cut it.
+- **A source hint that names what to expect.** `Look in:` names where the
+  evidence lives. Naming what the human will find there previews a cause
+  the evidence hasn't supported.
 
 ## Examples
 
@@ -179,7 +191,7 @@ the recurrence, but the immediate gap is who connects to whom). Recommend
 Run `frameworks/system-map.md`: seed sales, provisioning, and the named
 downstream teams; record only the handoff relationships the input states.
 "Three different fixes" is evidence of recurrence but names no new node, so
-nothing is added for it. Candidate nodes like "the CRM" are mentioned
+nothing is added for it. Seeded nodes like "the CRM" are mentioned
 nowhere and break no recorded relationship — `external_factors`. The
 recorded relationships form no cycle, so the output is prose, not Mermaid.
 Emit the six core fields plus one `system_map` block.

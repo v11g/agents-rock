@@ -44,3 +44,9 @@ for classification only.
   because `systems-thinking` and `systemic-design` aren't built yet — it
   says so and offers the closest available option with its limitation named.
 - Doesn't emit numeric confidence — only `low` / `medium` / `high`.
+
+## Output
+
+Every run is also saved under `~/.reasoning/problems/`, one folder per
+problem and one file per run. If Claude Code isn't allowed to write
+there, the run says "not saved" and carries on.
