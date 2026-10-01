@@ -384,7 +384,7 @@ body {
 }
 .doc { max-width: var(--measure); margin: 0 auto; }
 .main :is(h1, h2, h3, h4, h5, h6) { scroll-margin-top: calc(var(--topbar-h) + 20px); }
-.diagram-shell, .table-wrap { scroll-margin-top: calc(var(--topbar-h) + 20px); }
+.diagram-shell, .table-wrap, .view-tabs { scroll-margin-top: calc(var(--topbar-h) + 20px); }
 
 /* The document title. It used to carry a "Document 07" eyebrow and a hairline
    above it, both of which separated one document from the next in a single
@@ -1351,6 +1351,9 @@ document.querySelectorAll('.doc table').forEach(function (t) {
 });
 
 /* ---- view tabs: one system at several zoom levels, one panel at a time ---- */
+/* Panel id → its tab's select, so the router can open the view a link names:
+   another page (the estimate) links to #panel-containers rather than redraw C2. */
+var revealPanel = {};
 document.querySelectorAll('.view-tabs').forEach(function (group) {
   var tabs = [].slice.call(group.querySelectorAll('.view-tab'));
   var panels = [].slice.call(group.querySelectorAll('.view-panel'));
@@ -1363,6 +1366,7 @@ document.querySelectorAll('.view-tabs').forEach(function (group) {
     if (focus) tabs[n].focus();
     dispatchEvent(new Event('resize'));
   }
+  panels.forEach(function (p, i) { revealPanel[p.id] = function () { select(i, false); }; });
   tabs.forEach(function (tab, i) {
     tab.addEventListener('click', function () { select(i, false); });
     tab.addEventListener('keydown', function (e) {
@@ -1922,6 +1926,12 @@ function navigate(jump) {
   closeDrawer();
   if (!jump) return;
   var el = parts.id && document.getElementById(parts.id);
+  /* A link into a hidden view panel opens its tab first; scrolling to a panel
+     that is still display:none goes nowhere. */
+  var panel = el && el.closest('.view-panel');
+  if (panel && panel.hidden && revealPanel[panel.id]) revealPanel[panel.id]();
+  /* ...and lands on its tab bar, so the reader sees which view is open. */
+  if (panel) el = panel.closest('.view-tabs');
   /* Instant when the router changed the page, smooth when it did not.
      `scroll-behavior: smooth` cannot tell the two apart, so a deep link into
      another document used to animate the whole way there — through content the

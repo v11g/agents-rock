@@ -71,6 +71,14 @@ const REFLOW_DOC = [
     // injectSectionHelp still leaves "an excluded document grew an explainer"
     // green, because none of this fixture's real headings matches a lookup key.
     ['## Security', ''],
+    // Two consecutive view markers render as one tab group, the shape §5 of a real
+    // architecture document has. Another page links to a single view by its panel
+    // id, so the second tab is the one a deep link has to open.
+    // Prose after the group gives the jump room to overshoot: at the end of the
+    // page the scroll clamps, and a link that lands past the tab bar looks fine.
+    ['## Views', '', '<!-- likec4:view index -->', '<!-- likec4:view containers -->', ''],
+    Array.from({ length: 12 }, (_, i) => `Paragraph ${i + 1} after the views keeps the page`
+      + ' long enough that a jump to the second view is not clamped by the end of the document.\n'),
   ).join('\n');
 
 function buildViewer() {
@@ -210,6 +218,25 @@ describe('the viewer in a real browser', { skip: findChrome() ? false : 'no chro
     })()`);
     assert.equal(nav.first, 1, `${nav.first} pages were in the layout at once`);
     assert.equal(nav.after, 1, 'navigation left more than one page visible');
+  });
+
+  // The estimate's component page links straight to the C2 or C3 view instead of
+  // redrawing it. Those views are tabs, and a panel that is not the first one is
+  // hidden, so a link to its id used to land on the tab group's first view.
+  test('a link to a view panel opens that tab', async () => {
+    const tab = await page.eval(`(async () => {
+      location.hash = '#panel-containers';
+      await new Promise((r) => setTimeout(r, 100));
+      const panel = document.getElementById('panel-containers');
+      return { hidden: panel.hidden, selected: document.getElementById('tab-containers').getAttribute('aria-selected'),
+        first: document.getElementById('panel-index').hidden, onPage: Boolean(panel.closest('.page').offsetParent),
+        // the reader lands on the tab bar, not under the sticky top bar past it
+        barTop: Math.round(panel.closest('.view-tabs').querySelector('.view-tabs__bar').getBoundingClientRect().top),
+        topbar: Math.round(document.querySelector('.topbar')?.getBoundingClientRect().bottom ?? 0) };
+    })()`);
+    assert.ok(tab.barTop >= tab.topbar, `tab bar at ${tab.barTop}px is under the top bar (ends ${tab.topbar}px)`);
+    delete tab.barTop; delete tab.topbar;
+    assert.deepEqual(tab, { hidden: false, selected: 'true', first: true, onPage: true });
   });
 
   // Paper has no router. Every page is already in the DOM, only hidden, so print
