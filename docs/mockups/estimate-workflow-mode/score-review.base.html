@@ -1,0 +1,508 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sin Kowa — score review</title>
+<style>
+:root {
+  color-scheme:light;
+  --paper:#e8ecef; --sheet:#fbfcfd; --ink:#141c24; --ink-dim:#5d6c78;
+  --rule:#d3dbe1; --grid:#edf1f4; --meter:#44586a; --mark:#b4232f; --mark-soft:#b4232f14;
+  --ok:#2f6b4a; --ok-soft:#2f6b4a14; --hi:#fbf1cf; --hi-line:#c8960c;
+  --t-s:#dfe6ec; --t-s-ink:#4a5a68; --t-m:#c3d2df; --t-m-ink:#2b3d4c; --t-l:#7d96ab; --t-l-ink:#fff; --t-xl:#2f4a60; --t-xl-ink:#fff;
+  --serif:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,"Liberation Serif",serif;
+  --sans:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+}
+@media (prefers-color-scheme:dark) { :root:not([data-theme="light"]) {
+  color-scheme:dark; --paper:#11171c; --sheet:#1a2229; --ink:#e6ecf1; --ink-dim:#93a3b0;
+  --rule:#2c3740; --grid:#222c34; --meter:#8fa8bb; --mark:#e26c60; --mark-soft:#e26c6021;
+  --ok:#7cc39a; --ok-soft:#7cc39a1c; --hi:#3b3519; --hi-line:#d9a92a;
+  --t-s:#263039; --t-s-ink:#9fb0bd; --t-m:#3a4a57; --t-m-ink:#d3dfe8; --t-l:#7d96ab; --t-l-ink:#0f161b; --t-xl:#bacdda; --t-xl-ink:#0f161b; } }
+:root[data-theme="dark"] {
+  color-scheme:dark; --paper:#11171c; --sheet:#1a2229; --ink:#e6ecf1; --ink-dim:#93a3b0;
+  --rule:#2c3740; --grid:#222c34; --meter:#8fa8bb; --mark:#e26c60; --mark-soft:#e26c6021;
+  --ok:#7cc39a; --ok-soft:#7cc39a1c; --hi:#3b3519; --hi-line:#d9a92a;
+  --t-s:#263039; --t-s-ink:#9fb0bd; --t-m:#3a4a57; --t-m-ink:#d3dfe8; --t-l:#7d96ab; --t-l-ink:#0f161b; --t-xl:#bacdda; --t-xl-ink:#0f161b; }
+* { box-sizing:border-box; }
+body { margin:0; padding:2rem 1.5rem 6rem; background:var(--paper); color:var(--ink); font-family:var(--sans); font-size:.9rem; line-height:1.5; }
+.page { max-width:78rem; margin:0 auto; }
+:focus-visible { outline:2px solid var(--ink); outline-offset:2px; }
+button, input, textarea { font:inherit; color:var(--ink); }
+.hide { display:none !important; }
+.mock { background:var(--mark); color:#fff; font-size:.72rem; font-weight:600; letter-spacing:.04em; padding:.2rem .6rem; display:inline-block; border-radius:.2rem; margin-bottom:.8rem; }
+.head { display:flex; justify-content:space-between; gap:1rem; align-items:flex-start; }
+h1 { font-family:var(--serif); font-size:2.1rem; font-weight:600; letter-spacing:-.015em; margin:0; }
+.sub { margin:.15rem 0 .9rem; color:var(--ink-dim); font-size:.82rem; }
+.lead { margin:0 0 1.2rem; max-width:70ch; color:var(--ink-dim); }
+.btn { font-size:.78rem; font-weight:600; padding:.3rem .7rem; color:var(--ink-dim); background:var(--sheet); border:1px solid var(--rule); border-radius:.2rem; cursor:pointer; }
+.btn:hover { color:var(--ink); border-color:var(--ink-dim); }
+.btn.primary { background:var(--ink); color:var(--sheet); border-color:var(--ink); }
+.btn.next { border-color:var(--mark); color:var(--mark); }
+.btn:disabled { opacity:.55; cursor:default; }
+.internal { font-size:.7rem; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:var(--mark); border:1px solid var(--mark); padding:0 .4rem; border-radius:.2rem; margin-left:.4rem; vertical-align:middle; }
+
+/* strip */
+.strip { display:grid; grid-template-columns:repeat(auto-fit,minmax(9rem,1fr)); background:var(--sheet); border:1px solid var(--rule); margin-bottom:1rem; }
+.strip div { padding:.6rem .9rem; border-left:1px solid var(--rule); }
+.strip div:first-child { border-left:0; }
+.strip b { display:block; font-family:var(--serif); font-size:1.4rem; font-variant-numeric:tabular-nums; }
+.strip span { font-size:.74rem; color:var(--ink-dim); }
+.strip .warn b { color:var(--mark); }
+
+/* spine: one dot per feature on its weighted score */
+.spine-wrap { background:var(--sheet); border:1px solid var(--rule); padding:.9rem 1rem .7rem; margin-bottom:1rem; }
+.spine, .zones { display:grid; grid-template-columns:repeat(21,1fr); }
+.spine { align-items:end; min-height:2.6rem; }
+.spine .col { display:flex; flex-direction:column-reverse; align-items:center; gap:2px; border-left:1px solid var(--grid); }
+.dot { width:11px; height:11px; padding:0; border:1px solid var(--ink); border-radius:50%; background:var(--sheet); cursor:pointer; }
+.dot:hover, .dot.hl { background:var(--hi-line); border-color:var(--hi-line); }
+.dot.changed { border-color:var(--mark); background:var(--mark); }
+.dot.flag { box-shadow:0 0 0 2px var(--sheet), 0 0 0 3px var(--hi-line); }
+.zones { border-top:1px solid var(--rule); margin-top:.35rem; padding-top:.3rem; font-size:.72rem; color:var(--ink-dim); }
+.zones span { border-left:1px solid var(--rule); padding-left:.35rem; } .zones span:first-child { border-left:0; }
+.zones b { color:var(--ink); }
+.spine-note { margin:.45rem 0 0; font-size:.75rem; color:var(--ink-dim); }
+
+/* nav + filters */
+nav.sys { position:sticky; top:0; z-index:5; display:flex; gap:.4rem; flex-wrap:wrap; align-items:center; padding:.6rem 0; background:var(--paper); border-bottom:1px solid var(--rule); margin-bottom:1rem; }
+nav.sys a { font-size:.8rem; text-decoration:none; color:var(--ink-dim); padding:.25rem .6rem; border:1px solid var(--rule); border-radius:1rem; background:var(--sheet); }
+nav.sys a:hover { color:var(--ink); }
+nav.sys a .n { font-variant-numeric:tabular-nums; margin-left:.35rem; font-weight:600; color:var(--ink); }
+nav.sys .filters { margin-left:auto; display:flex; gap:.25rem; }
+nav.sys .filters button { font-size:.74rem; padding:.2rem .6rem; border:1px solid var(--rule); border-radius:1rem; background:var(--sheet); color:var(--ink-dim); cursor:pointer; }
+nav.sys .filters button[aria-pressed="true"] { background:var(--ink); color:var(--sheet); border-color:var(--ink); }
+
+/* system */
+section.system { background:var(--sheet); border:1px solid var(--rule); padding:1.2rem 1.4rem 1.2rem; margin-bottom:1.6rem; scroll-margin-top:3.5rem; }
+.sys-head { display:flex; justify-content:space-between; gap:1rem; align-items:flex-end; border-bottom:1px solid var(--rule); padding-bottom:.8rem; margin-bottom:.8rem; }
+.eyebrow { font-size:.7rem; letter-spacing:.08em; text-transform:uppercase; color:var(--ink-dim); font-weight:600; }
+h2 { font-family:var(--serif); font-size:1.5rem; font-weight:600; margin:.05rem 0 0; }
+.subtotal { text-align:right; font-variant-numeric:tabular-nums; }
+.subtotal b { font-family:var(--serif); font-size:1.35rem; display:block; }
+.subtotal span { font-size:.74rem; color:var(--ink-dim); }
+.subtotal .was { color:var(--mark); }
+details.wf { margin:0 0 .6rem; }
+details.wf summary { cursor:pointer; font-size:.74rem; letter-spacing:.07em; text-transform:uppercase; color:var(--ink-dim); font-weight:700; }
+.flow { border:1px solid var(--grid); background:var(--paper); padding:.6rem; overflow-x:auto; margin-top:.4rem; }
+.flow-name { font-size:.72rem; color:var(--ink-dim); margin:.5rem 0 0; }
+.flow g.node.hl rect, .flow g.node.hl polygon { stroke:var(--hi-line) !important; stroke-width:3px !important; }
+
+/* feature card */
+.feat { display:grid; grid-template-columns:17rem 1fr; gap:1.4rem; padding:1rem 0; border-top:1px solid var(--rule); scroll-margin-top:4rem; }
+.feat.hl { background:linear-gradient(90deg,var(--hi),transparent 60%); }
+.feat.flash { animation:flash 1.4s ease-out; }
+@keyframes flash { 0%,40% { box-shadow:inset 3px 0 0 var(--hi-line); } 100% { box-shadow:inset 3px 0 0 transparent; } }
+.rail h3 { font-family:var(--serif); font-size:1.05rem; font-weight:600; margin:0 0 .15rem; }
+.rail .id { font-size:.72rem; color:var(--ink-dim); font-variant-numeric:tabular-nums; }
+.rail .does { margin:.2rem 0 .4rem; font-size:.78rem; color:var(--ink-dim); }
+.chip { display:inline-block; font-size:.7rem; padding:0 .4rem; margin:0 .2rem .2rem 0; border:1px solid var(--rule); border-radius:.8rem; background:var(--paper); white-space:nowrap; }
+.verdict { display:flex; align-items:center; gap:.5rem; flex-wrap:wrap; margin:.5rem 0 .2rem; font-variant-numeric:tabular-nums; }
+.verdict .total { font-size:.8rem; color:var(--ink-dim); } .verdict .total b { font-size:1.15rem; color:var(--ink); }
+.tier { font-size:.75rem; font-weight:700; padding:.08rem .45rem; border:1px solid var(--rule); border-radius:.2rem; }
+.tier.t-S { background:var(--t-s); color:var(--t-s-ink); } .tier.t-M { background:var(--t-m); color:var(--t-m-ink); }
+.tier.t-L { background:var(--t-l); color:var(--t-l-ink); border-color:var(--t-l); } .tier.t-XL { background:var(--t-xl); color:var(--t-xl-ink); border-color:var(--t-xl); }
+.price { font-size:.8rem; font-variant-numeric:tabular-nums; } .price b { font-size:.95rem; }
+.moved { font-size:.72rem; color:var(--mark); font-weight:600; }
+.flagchip { font-size:.7rem; font-weight:700; color:var(--hi-line); border:1px solid var(--hi-line); border-radius:.8rem; padding:0 .45rem; }
+
+.factors { display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:.8rem 1rem; }
+.factor .flabel { font-size:.72rem; font-weight:700; color:var(--ink-dim); display:flex; justify-content:space-between; }
+.factor .flabel i { font-style:normal; font-weight:500; }
+.pick { display:flex; gap:3px; margin:.3rem 0 .3rem; }
+.pick button { flex:1; min-width:0; font-size:.78rem; font-weight:600; padding:.22rem 0; border:1px solid var(--rule); border-radius:.2rem; background:var(--sheet); color:var(--ink-dim); cursor:pointer; font-variant-numeric:tabular-nums; }
+.pick button:hover { color:var(--ink); border-color:var(--ink-dim); }
+.pick button.on { background:var(--meter); border-color:var(--meter); color:var(--sheet); }
+.pick button.orig { box-shadow:inset 0 -2px 0 var(--ink-dim); }
+.factor.changed .pick button.on { background:var(--mark); border-color:var(--mark); color:#fff; }
+.anchor { margin:0; font-size:.74rem; line-height:1.35; color:var(--ink-dim); }
+.why { margin:.2rem 0 0; font-size:.74rem; line-height:1.35; color:var(--ink); }
+.why::before { content:'Evidence: '; color:var(--ink-dim); }
+.factor.changed .why { text-decoration:line-through; opacity:.55; }
+.note { display:block; margin-top:.7rem; font-size:.72rem; font-weight:700; color:var(--ink-dim); }
+.note textarea { display:block; width:100%; max-width:70ch; margin-top:.25rem; padding:.35rem .5rem; min-height:2.2rem; field-sizing:content;
+  font-family:var(--serif); font-size:.86rem; font-weight:400; border:1px solid var(--rule); border-radius:.2rem; background:var(--sheet); resize:vertical; }
+
+details.guide { margin:1.6rem 0; background:var(--sheet); border:1px solid var(--rule); padding:.8rem 1rem; }
+details.guide summary { cursor:pointer; font-weight:600; }
+.guide-table { border-collapse:collapse; width:100%; margin-top:.7rem; font-size:.76rem; }
+.guide-table th, .guide-table td { border:1px solid var(--rule); padding:.35rem .45rem; text-align:left; vertical-align:top; }
+.guide-table th { color:var(--ink-dim); } .guide-table td.dim { font-weight:600; white-space:nowrap; }
+
+/* bottom bar + dialog */
+.bar { position:fixed; left:0; right:0; bottom:0; background:var(--sheet); border-top:1px solid var(--rule); z-index:10; }
+.bar .in { max-width:84rem; margin:0 auto; padding:.7rem 1.5rem; display:flex; gap:1rem; align-items:center; justify-content:space-between; flex-wrap:wrap; }
+.bar .stat { font-size:.8rem; color:var(--ink-dim); font-variant-numeric:tabular-nums; } .bar .stat b { color:var(--ink); }
+.saved { font-size:.72rem; color:var(--ink-dim); }
+dialog { max-width:64rem; width:calc(100% - 3rem); border:1px solid var(--rule); background:var(--sheet); color:var(--ink); padding:1rem 1.2rem; box-shadow:0 18px 60px #0006; border-radius:.4rem; }
+dialog::backdrop { background:rgb(10 14 18 / .45); backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px); }
+dialog .sum { max-height:62vh; overflow:auto; }
+.sum h4 { font-family:var(--serif); font-size:1.05rem; margin:1rem 0 .3rem; }
+.sum table { width:100%; border-collapse:collapse; font-size:.82rem; font-variant-numeric:tabular-nums; }
+.sum th { text-align:left; font-size:.7rem; text-transform:uppercase; letter-spacing:.05em; color:var(--ink-dim); padding:.3rem .4rem; border-bottom:1px solid var(--rule); }
+.sum td { padding:.3rem .4rem; border-bottom:1px solid var(--grid); vertical-align:top; }
+.sum .up { color:var(--mark); font-weight:600; } .sum .down { color:var(--ok); font-weight:600; }
+.quiet { color:var(--ink-dim); font-size:.82rem; }
+#feedback { display:block; width:100%; min-height:5rem; margin-top:.5rem; padding:.5rem; font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:.7rem; border:1px solid var(--rule); background:var(--paper); color:var(--ink-dim); }
+.dlg-foot { display:flex; justify-content:flex-end; align-items:center; gap:.5rem; margin-top:.8rem; border-top:1px solid var(--rule); padding-top:.8rem; }
+#copied { font-size:.78rem; color:var(--ok); }
+@media (max-width:980px) { .factors { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+@media (max-width:760px) { body { padding:1.2rem 1rem 8rem; } .feat { grid-template-columns:1fr; gap:.8rem; } nav.sys .filters { margin-left:0; } }
+.reason { margin-top:.3rem; }
+.reason .was { margin:0 0 .2rem; font-size:.72rem; color:var(--mark); font-weight:600; }
+.reason textarea { display:block; width:100%; min-height:3.2rem; field-sizing:content; resize:vertical; font-size:.8rem; line-height:1.4;
+  padding:.35rem .45rem; border:1px solid var(--mark); border-radius:.2rem; background:var(--sheet); }
+.reason:not(.missing) textarea { border-color:var(--rule); }
+.warnbox { background:var(--mark-soft); color:var(--mark); padding:.5rem .7rem; font-size:.84rem; margin:.2rem 0 .6rem; }
+.pinbar { position:fixed; right:1.2rem; bottom:4.6rem; z-index:11; display:flex; gap:.4rem; align-items:center; background:var(--sheet);
+  border:1px solid var(--hi-line); box-shadow:0 4px 18px #0002; padding:.45rem .6rem; border-radius:.3rem; max-width:calc(100% - 2.4rem); }
+.pin-txt { display:flex; flex-direction:column; min-width:0; margin-right:.3rem; }
+.pin-txt b { font-size:.8rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:22rem; }
+.pin-txt small { font-size:.72rem; color:var(--ink-dim); }
+.feat.cur { box-shadow:inset 3px 0 0 var(--hi-line); }
+.flow g.node.cur rect, .flow g.node.cur polygon { stroke-width:5px !important; }
+.flow g.node, .rail h3, .dot { cursor:pointer; }
+.page { max-width:84rem; }
+.feat { grid-template-columns:1fr; gap:.8rem; padding:1.2rem 0 1.3rem; }
+.rail { display:flex; justify-content:space-between; gap:1.5rem; align-items:flex-start; }
+.rail .who { max-width:44rem; }
+.score-box { flex:none; min-width:15rem; text-align:right; }
+.score-box .verdict { justify-content:flex-end; margin-top:0; }
+.factors { grid-template-columns:repeat(5,minmax(0,1fr)); gap:0; border:1px solid var(--grid); border-radius:.3rem; background:var(--paper); }
+.factor { padding:.7rem .9rem .8rem; border-left:1px solid var(--rule); }
+.factor:first-child { border-left:0; }
+.factor .flabel { font-size:.76rem; }
+.pick { gap:5px; margin:.45rem 0 .45rem; }
+.pick button { padding:.34rem 0; font-size:.84rem; }
+.anchor { font-size:.76rem; line-height:1.4; }
+@media (max-width:980px) { .factors { grid-template-columns:repeat(2,minmax(0,1fr)); } .factor:nth-child(odd) { border-left:0; } .factor { border-top:1px solid var(--rule); } .rail { flex-direction:column; } .score-box { text-align:left; } .score-box .verdict { justify-content:flex-start; } }
+.bar .actions { display:flex; gap:.5rem; align-items:center; margin-left:auto; }
+</style>
+</head>
+<body>
+<div class="page">
+  <span class="mock">MOCKUP — Sin Kowa scores from the ballpark workbook</span>
+  <div class="head">
+    <div>
+      <h1>Sin Kowa — score review <span class="internal">internal</span></h1>
+      <p class="sub">After the PO's scope review · 19 features in 4 systems · weights tech 20 · size 10 · deps 20 · uncertainty 30 · risk 20</p>
+    </div>
+    <button class="btn" id="theme" type="button">Dark</button>
+  </div>
+  <p class="lead">Every score below is the agent's proposal, grouped by the systems and workflows the PO just confirmed. Click a number to change it; the rubric line for that number shows underneath, and the evidence the agent used is crossed out once you disagree, and a box asks for yours. Prices move as you score. When done, press <b>Review &amp; send</b> and paste the feedback block back into the chat.</p>
+
+  <div class="strip" id="strip"></div>
+  <div class="spine-wrap">
+    <div class="spine" id="spine"></div>
+    <div class="zones">
+      <span style="grid-column:1/8">S <b>&lt;11.5</b></span><span style="grid-column:8/14">M <b>11.5–17.4</b></span>
+      <span style="grid-column:14/19">L <b>17.5–22.4</b></span><span style="grid-column:19/22">XL <b>22.5+</b></span>
+    </div>
+    <p class="spine-note">Each dot is one feature on its weighted score (5–25). Hover to see it, click to pin it and jump to its card. Click any diagram box or feature name to pin its connections. Red = you changed it; ringed = flagged for a deep estimate.</p>
+  </div>
+
+  <nav class="sys" id="nav"></nav>
+  <div id="systems"></div>
+
+  <details class="guide"><summary>Scoring guide — what each 1–5 means</summary><div id="guide"></div></details>
+</div>
+
+<div class="bar"><div class="in">
+  <span class="stat" id="stat"></span>
+  <span class="saved" id="saved">Your edits are saved in this browser as you go.</span>
+  <div class="actions">
+    <button class="btn" id="reset" type="button">Start over</button>
+    <button class="btn next" id="nextc" type="button" title="Jump to the next changed or flagged feature (n)">Next flagged ↓</button>
+    <button class="btn primary" id="preview" type="button">Review &amp; send →</button>
+  </div>
+</div></div>
+
+<div class="pinbar hide" id="pinbar" role="status">
+  <span>📌</span><div class="pin-txt"><b id="pinLabel"></b><small id="pinCount"></small></div>
+  <button class="btn" id="pinPrev" type="button" title="Previous (k)">↑</button>
+  <button class="btn" id="pinNext" type="button" title="Next (j)">↓ Next</button>
+  <button class="btn" id="pinClear" type="button" title="Esc">Clear</button>
+</div>
+<dialog id="dlg"><p><b>Your score changes, before you send them</b></p><div class="sum" id="sum"></div>
+  <p class="quiet" style="margin:.8rem 0 0">Feedback block — paste this into the chat. The agent asks why for every score you moved.</p>
+  <textarea id="feedback" readonly></textarea>
+  <div class="dlg-foot"><span id="copied"></span><form method="dialog"><button class="btn">Keep editing</button></form>
+    <button class="btn primary" id="copy" type="button">Copy feedback</button></div></dialog>
+
+<script type="module">
+/*DATA*/
+// ---- the agent's proposed scores (from the Sin Kowa ballpark workbook) ----
+const K = ['tech', 'size', 'deps', 'unc', 'risk'];
+const LABEL = { tech: 'Tech', size: 'Size', deps: 'Deps', unc: 'Uncertainty', risk: 'Risk' };
+const PROPOSED = { F01: [3,4,3,3,3], F02: [2,2,3,3,3], F03: [2,3,2,2,2], F04: [2,3,2,3,2], F05: [4,3,2,4,2], F06: [2,3,2,3,3],
+  F07: [3,4,3,2,4], F08: [3,4,3,3,3], F09: [1,2,2,1,2], F10: [2,3,2,2,3], F11: [3,2,2,3,3], F12: [2,4,2,2,2], F13: [3,3,3,3,3],
+  F14: [2,3,3,2,2], F15: [2,3,2,2,2], F16: [2,2,2,2,2], F17: [3,4,3,2,3], F18: [2,2,2,1,3], F19: [3,2,2,3,2] };
+// evidence the agent cited (a real run cites every factor; the mockup shows a few)
+const WHY = {
+  F01: { unc: '24-hour pack-trigger rule is a discovery-phase decision (proposal, Scope)', size: 'Five stages, role-scoped task views' },
+  F02: { deps: 'Raises an Ops + Invoicing alert — touches WMS and Orders/Invoicing' },
+  F05: { tech: 'Parses free-text email/fax into a structured order', unc: 'No sample emails or fax scans provided yet' },
+  F07: { risk: 'Wrong invoice = revenue loss and a client dispute', size: 'Invoice, billing checks, payment status' },
+  F08: { deps: 'Vendor PO, receiving, then earmarking in Inventory and the WMS pipeline' },
+  F13: { deps: 'Reads committed quantity from Orders and the custom-order sub-flow' },
+  F18: { risk: 'The record is Sin Kowa\'s proof in a billing dispute; must not be editable' },
+  F19: { tech: 'Local queue plus sync and conflict handling on reconnect' } };
+const ANCHOR = {
+  tech: ['Standard CRUD, well-documented library usage, established patterns', 'Minor customisation of standard patterns, simple state management', 'Custom business logic, moderate algorithmic complexity, multiple states', 'Non-trivial algorithms, real-time systems, complex data transforms', 'Novel architecture, distributed systems, R&D territory'],
+  size: ['Single UI element or micro-function, one screen, no persistence', 'Small self-contained feature, simple form or display component', 'Medium feature with multiple components and backend logic', 'Large feature spanning frontend, backend, database and tests', 'Epic-scale feature with sub-features — split it before scoring'],
+  deps: ['Fully standalone, no external services or shared state', 'One internal dependency, e.g. an auth check', 'Two or three internal services, or one third-party API', 'Multiple third-party APIs, or tightly coupled internal systems', 'Deep cross-system dependencies, legacy integrations, shared infra changes'],
+  unc: ['Fully defined spec, written acceptance criteria, precedent exists', 'Minor ambiguities, resolvable with one clarifying question', 'Some open questions, design decisions to be made during the build', 'Significant unknowns, exploratory work needed, spec likely to change', 'Highly experimental, no clear solution path'],
+  risk: ['Fully reversible, no user data, isolated module', 'Low stakes, easy rollback, minimal user impact', 'Moderate impact if broken, requires testing, affects multiple users', 'Payments, auth, data migrations or PII — high business impact', 'Core infrastructure, compliance requirements, irreversible operations'] };
+
+// ---- v2 pricing, transcribed from scripts/lib/pricing.mjs ----
+const WEIGHTS = { tech: 0.2, size: 0.1, deps: 0.2, unc: 0.3, risk: 0.2 };
+const BANDS = [{ tier: 'S', start: 5, end: 11.5, lo: 500, hi: 1500 }, { tier: 'M', start: 11.5, end: 17.5, lo: 1500, hi: 4000 },
+  { tier: 'L', start: 17.5, end: 22.5, lo: 4000, hi: 10000 }, { tier: 'XL', start: 22.5, end: 25, lo: 10000, hi: 25000 }];
+const weighted = (s) => K.reduce((n, k) => n + s[k] * WEIGHTS[k], 0) * 5;
+const bandFor = (x) => BANDS.reduce((b, c) => (x >= c.start ? c : b), BANDS[0]);
+function price(s) {
+  const score = weighted(s); const b = bandFor(score);
+  const point = b.lo + (Math.min(score, b.end) - b.start) / (b.end - b.start) * (b.hi - b.lo);
+  const spread = 0.15 + Math.max(0, s.unc - 1) * 0.07 + Math.max(0, s.risk - 1) * 0.03;
+  const flag = score >= 22.5 && s.size === 5 ? 'Split into sub-features' : score >= 22.5 ? 'Deep estimate required'
+    : spread >= 0.4 || point >= 6000 ? 'Deep estimate recommended' : '';
+  return { score, tier: b.tier, point, low: point * (1 - spread), high: point * (1 + spread), spread, flag };
+}
+const money = (n) => `$${Math.round(n).toLocaleString('en-US')}`;
+
+// ---- state ----
+const $ = (s, el = document) => el.querySelector(s);
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const FEATS = DATA.systems.flatMap((s) => s.features.map((f) => ({ ...f, sys: s })));
+const orig = (id) => Object.fromEntries(K.map((k, i) => [k, PROPOSED[id][i]]));
+const cur = Object.fromEntries(FEATS.map((f) => [f.id, orig(f.id)]));
+const notes = {}; const reasons = {};
+let pin = null; // pinned highlight, see the hover/pin section
+const STORE = `score-review:${DATA.project}:v1`;
+try { const v = JSON.parse(localStorage.getItem(STORE) || '{}'); Object.assign(notes, v.notes || {}); Object.assign(reasons, v.reasons || {});
+  for (const [id, sc] of Object.entries(v.scores || {})) if (cur[id]) Object.assign(cur[id], sc); } catch { /* start fresh */ }
+function save() {
+  try { localStorage.setItem(STORE, JSON.stringify({ scores: cur, notes, reasons })); $('#saved').textContent = `Saved in this browser at ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`; }
+  catch { $('#saved').textContent = 'This browser cannot save; copy the feedback before closing.'; }
+}
+const changedKeys = (id) => K.filter((k) => cur[id][k] !== orig(id)[k]);
+const isChanged = (id) => changedKeys(id).length > 0;
+
+// ---- workflow diagram per system (steps light up for the hovered feature) ----
+function flowCode(fl) {
+  const ids = new Map(); const id = (n) => { if (!ids.has(n)) ids.set(n, `n${ids.size}`); return ids.get(n); };
+  const L = ['flowchart LR'];
+  fl.steps.forEach((st, i) => { if (i) L.push(`  ${id(fl.steps[i - 1])} --> ${id(st)}`); });
+  fl.branches.forEach((b) => L.push(`  ${id(b.from)} -.-> ${id(b.to)}`));
+  const map = {}; for (const [n, i] of ids) { L.push(`  ${i}["${n.replace(/"/g, "'")}"]`); map[i] = `${fl.id}:${n}`; }
+  return { code: L.join('\n'), map };
+}
+const flowsOf = (s) => [s.main, ...s.subs].filter(Boolean);
+function diagrams(s) {
+  return flowsOf(s).map((fl) => { const m = flowCode(fl);
+    return `<p class="flow-name">${fl === s.main ? 'Main' : 'Sub'} · ${esc(fl.name)}</p><div class="flow" data-map="${esc(JSON.stringify(m.map))}"><pre class="mermaid">${esc(m.code)}</pre></div>`; }).join('');
+}
+
+// ---- render ----
+function factorHtml(f, k) {
+  const pick = [1, 2, 3, 4, 5].map((n) => `<button type="button" data-f="${f.id}" data-k="${k}" data-n="${n}" title="${n} — ${esc(ANCHOR[k][n - 1])}">${n}</button>`).join('');
+  // the read-back contract: one hidden select per score, value 1–5, title = rubric anchor
+  const sel = `<select class="hide" data-id="${f.id}" data-key="${k}">${[1, 2, 3, 4, 5].map((n) => `<option value="${n}" title="${esc(ANCHOR[k][n - 1])}">${n}</option>`).join('')}</select>`;
+  return `<div class="factor" data-fk="${f.id}:${k}"><div class="flabel">${LABEL[k]}<i>${WEIGHTS[k] * 100}%</i></div>${sel}
+    <div class="pick">${pick}</div><p class="anchor"></p>${WHY[f.id]?.[k] ? `<p class="why">${esc(WHY[f.id][k])}</p>` : ''}<div class="reason hide"><p class="was"></p><textarea data-reason="${f.id}:${k}" rows="2" placeholder="Why this score? e.g. no sample emails yet"></textarea></div></div>`;
+}
+function featHtml(f) {
+  const steps = f.steps.includes('*') ? '<span class="chip">every system</span>' : f.steps.length
+    ? f.steps.map((r) => `<span class="chip">${esc(r.slice(r.indexOf(':') + 1))}</span>`).join('') : '<span class="chip">not on a workflow step</span>';
+  return `<article class="feat" id="c-${f.id}" data-feat="${f.id}">
+    <div class="rail"><div class="who"><div class="id">${f.id}</div><h3>${esc(f.name)}</h3><div>${steps}</div><p class="does">${esc(f.does)}</p></div>
+      <div class="score-box"><div class="verdict"><span class="total">Σ <b data-total="${f.id}"></b></span><span class="tier" data-tier="${f.id}"></span><span class="moved" data-moved="${f.id}"></span></div>
+      <div class="price" data-price="${f.id}"></div><div data-flag="${f.id}"></div></div></div>
+    <div><div class="factors">${K.map((k) => factorHtml(f, k)).join('')}</div>
+      <label class="note">Note in plain words (optional)<textarea data-note="${f.id}" placeholder="e.g. AI pre-fill needs sample emails before we can price it tighter"></textarea></label></div>
+  </article>`;
+}
+function render() {
+  $('#systems').innerHTML = DATA.systems.map((s, i) => `<section class="system" id="${s.id}">
+    <div class="sys-head"><div><div class="eyebrow">System ${i + 1} · ${s.features.length} features</div><h2>${esc(s.name)}</h2></div>
+      <div class="subtotal" data-sub="${s.id}"></div></div>
+    <details class="wf"><summary>Workflow (hover a feature to see its steps)</summary>${diagrams(s)}</details>
+    ${s.features.map((f) => featHtml({ ...f, sys: s })).join('')}</section>`).join('');
+  $('#guide').innerHTML = `<table class="guide-table"><tr><th></th>${[1, 2, 3, 4, 5].map((n) => `<th>${n}</th>`).join('')}</tr>${K.map((k) =>
+    `<tr><td class="dim">${LABEL[k]} ${WEIGHTS[k] * 100}%</td>${ANCHOR[k].map((a) => `<td>${esc(a)}</td>`).join('')}</tr>`).join('')}</table>`;
+  FEATS.forEach((f) => { $(`[data-note="${f.id}"]`).value = notes[f.id] || ''; });
+}
+
+function paint(id) {
+  const s = cur[id]; const p = price(s); const o = price(orig(id));
+  $(`[data-total="${id}"]`).textContent = p.score.toFixed(1);
+  const t = $(`[data-tier="${id}"]`); t.textContent = p.tier; t.className = `tier t-${p.tier}`;
+  $(`[data-moved="${id}"]`).textContent = p.tier !== o.tier ? `was ${o.tier}` : '';
+  $(`[data-price="${id}"]`).innerHTML = `<b>${money(p.point)}</b> <span class="quiet">(${money(p.low)}–${money(p.high)})</span>${Math.round(p.point) !== Math.round(o.point) ? ` <span class="moved">was ${money(o.point)}</span>` : ''}`;
+  $(`[data-flag="${id}"]`).innerHTML = p.flag ? `<span class="flagchip">⚑ ${p.flag}</span>` : '';
+  K.forEach((k) => {
+    const box = $(`[data-fk="${id}:${k}"]`); const was = orig(id)[k];
+    box.classList.toggle('changed', s[k] !== was);
+    box.querySelectorAll('.pick button').forEach((b) => { b.classList.toggle('on', +b.dataset.n === s[k]); b.classList.toggle('orig', +b.dataset.n === was && s[k] !== was); });
+    $('select', box).value = String(s[k]);
+    $('.anchor', box).textContent = ANCHOR[k][s[k] - 1];
+    const r = $('.reason', box); r.classList.toggle('hide', s[k] === was);
+    $('.was', r).textContent = `Agent proposed ${was}. Your evidence for ${s[k]}:`;
+    const inp = $('textarea', r); if (document.activeElement !== inp) inp.value = reasons[`${id}:${k}`] || '';
+    r.classList.toggle('missing', s[k] !== was && !(reasons[`${id}:${k}`] || '').trim());
+  });
+}
+function totals() {
+  let now = 0; let was = 0; let flags = 0; let changed = 0; const tiers = { S: 0, M: 0, L: 0, XL: 0 };
+  DATA.systems.forEach((s) => {
+    let sn = 0; let sw = 0;
+    s.features.forEach((f) => { const p = price(cur[f.id]); sn += p.point; sw += price(orig(f.id)).point; tiers[p.tier] += 1; if (p.flag) flags += 1; if (isChanged(f.id)) changed += 1; });
+    now += sn; was += sw;
+    $(`[data-sub="${s.id}"]`).innerHTML = `<b>${money(sn)}</b><span>feature build subtotal</span>${Math.round(sn) !== Math.round(sw) ? `<span class="was"> · was ${money(sw)}</span>` : ''}`;
+  });
+  $('#strip').innerHTML = `<div><b>${FEATS.length}</b><span>features</span></div>
+    <div><b>${tiers.S} · ${tiers.M} · ${tiers.L} · ${tiers.XL}</b><span>S · M · L · XL</span></div>
+    <div><b>${money(now)}</b><span>feature build subtotal (before context, overheads, contingency)</span></div>
+    <div class="${flags ? 'warn' : ''}"><b>${flags}</b><span>flagged for a deep estimate</span></div>
+    <div class="${changed ? 'warn' : ''}"><b>${changed}</b><span>features you changed</span></div>`;
+  $('#stat').innerHTML = `<b>${changed}</b> changed · subtotal <b>${money(now)}</b>${Math.round(now) !== Math.round(was) ? ` (was ${money(was)})` : ''}`;
+  $('#nav').innerHTML = DATA.systems.map((s, i) => { const c = s.features.filter((f) => isChanged(f.id)).length;
+    return `<a href="#${s.id}">${i + 1}. ${esc(s.name.split(' (')[0])}${c ? `<span class="n">${c} changed</span>` : ''}</a>`; }).join('')
+    + `<span class="filters">${['all', 'flagged', 'changed'].map((f) => `<button type="button" data-filter="${f}" aria-pressed="${filter === f}">${f}</button>`).join('')}</span>`;
+  spine();
+  if (pin) highlight(...pin.hit);
+}
+function spine() {
+  const cols = Array.from({ length: 21 }, () => []);
+  FEATS.forEach((f) => { const p = price(cur[f.id]); cols[Math.min(20, Math.round(p.score) - 5)].push({ f, p }); });
+  $('#spine').innerHTML = cols.map((c) => `<div class="col">${c.map(({ f, p }) =>
+    `<button class="dot${isChanged(f.id) ? ' changed' : ''}${p.flag ? ' flag' : ''}" data-go="${f.id}" title="${f.id} ${esc(f.name)} · ${p.score.toFixed(1)} ${p.tier}"></button>`).join('')}</div>`).join('');
+}
+let filter = 'all';
+function applyFilter() {
+  FEATS.forEach((f) => { const el = $(`#c-${f.id}`);
+    const show = filter === 'all' || (filter === 'changed' ? isChanged(f.id) : !!price(cur[f.id]).flag);
+    el.classList.toggle('hide', !show); });
+}
+const refresh = (id) => { if (id) paint(id); totals(); applyFilter(); };
+
+// ---- feedback: the --read contract ----
+const reasonsFor = (id) => Object.fromEntries(changedKeys(id).map((k) => [k, (reasons[`${id}:${k}`] || '').trim()]).filter(([, v]) => v));
+window.__feedback = () => ({ features: FEATS.map((f) => ({ id: f.id, scores: { ...cur[f.id] }, scoreNote: notes[f.id] || '',
+  ...(changedKeys(f.id).length ? { reasons: reasonsFor(f.id) } : {}) })) });
+const missingReasons = () => FEATS.flatMap((f) => changedKeys(f.id).filter((k) => !(reasons[`${f.id}:${k}`] || '').trim()).map((k) => `${f.id} ${LABEL[k]}`));
+function summaryHtml() {
+  const rows = (s) => s.features.filter((f) => isChanged(f.id) || notes[f.id]).map((f) => {
+    const p = price(cur[f.id]); const o = price(orig(f.id)); const d = p.point - o.point;
+    return `<tr><td><b>${f.id}</b> ${esc(f.name)}</td><td>${changedKeys(f.id).map((k) => { const why = (reasons[`${f.id}:${k}`] || '').trim();
+        return `${LABEL[k]} ${orig(f.id)[k]}→${cur[f.id][k]}<div class="${why ? 'quiet' : 'up'}">${why ? `“${esc(why)}”` : 'no reason yet'}</div>`; }).join('') || '—'}</td>
+      <td>${o.tier}${p.tier !== o.tier ? ` → <b>${p.tier}</b>` : ''}</td><td>${money(o.point)} → ${money(p.point)} <span class="${d > 0 ? 'up' : 'down'}">${d ? `${d > 0 ? '+' : '−'}${money(Math.abs(d))}` : ''}</span></td>
+      <td>${notes[f.id] ? `“${esc(notes[f.id])}”` : ''}</td></tr>`; }).join('');
+  const parts = DATA.systems.map((s) => { const r = rows(s); return r ? `<h4>${esc(s.name)}</h4><table><tr><th>Feature</th><th>Scores moved</th><th>Tier</th><th>Point price</th><th>Note</th></tr>${r}</table>` : ''; }).join('');
+  const miss = missingReasons();
+  const warn = miss.length ? `<div class="warnbox">${miss.length} changed score${miss.length > 1 ? 's have' : ' has'} no reason (${esc(miss.join(', '))}). You can still send; the agent will ask about ${miss.length > 1 ? 'those' : 'that one'} in chat.</div>` : '';
+  return warn + (parts || '<p class="quiet">No changes: you accepted every proposed score. The feedback block still records that.</p>');
+}
+
+// ---- wiring ----
+render(); FEATS.forEach((f) => paint(f.id)); totals();
+document.addEventListener('click', (e) => {
+  const b = e.target.closest('.pick button');
+  if (b) { const { f, k } = b.dataset; cur[f][k] = +b.dataset.n; refresh(f); save(); return; }
+  const go = e.target.closest('[data-go]');
+  if (go && $(`#c-${go.dataset.go}`).classList.contains('hide')) { filter = 'all'; applyFilter(); totals(); }
+  const fl = e.target.closest('[data-filter]'); if (fl) { filter = fl.dataset.filter; totals(); applyFilter(); }
+});
+document.addEventListener('input', (e) => {
+  const n = e.target.dataset.note; if (n) { notes[n] = e.target.value; save(); }
+  const r = e.target.dataset.reason;
+  if (r) { reasons[r] = e.target.value; e.target.closest('.reason').classList.toggle('missing', !e.target.value.trim()); save(); }
+});
+// ---- hover previews, click pins: diagram box ↔ feature card ↔ spine dot ----
+// Same model as the scope review page. Refs are "<flowId>:<step>" and unique
+// page-wide, so a feature lights steps in another system's diagram too.
+const refsOfFeat = (f) => new Set(f.steps.includes('*') ? flowsOf(f.sys).flatMap((fl) => [...fl.steps, ...fl.branches.map((b) => b.to)].map((st) => `${fl.id}:${st}`)) : f.steps);
+const fromStep = (ref) => [new Set([ref]), new Set(FEATS.filter((f) => f.steps.includes(ref)).map((f) => f.id))];
+const fromFeat = (id) => [refsOfFeat(FEATS.find((x) => x.id === id)), new Set([id])];
+function highlight(refs, feats) {
+  document.querySelectorAll('.feat').forEach((c) => c.classList.toggle('hl', feats.has(c.dataset.feat)));
+  document.querySelectorAll('.dot').forEach((d) => d.classList.toggle('hl', feats.has(d.dataset.go)));
+  document.querySelectorAll('.flow').forEach((d) => { const map = JSON.parse(d.dataset.map);
+    d.querySelectorAll('g.node').forEach((g) => g.classList.toggle('hl', refs.has(map[(g.id.match(/flowchart-(n\d+)-/) || [])[1]]))); });
+}
+const clearHl = () => document.querySelectorAll('.hl, .cur').forEach((x) => x.classList.remove('hl', 'cur'));
+function hitAt(t) {
+  if (t.closest('button:not(.dot), input, textarea, select, .factors, nav, .bar, dialog')) return null;
+  const node = t.closest('.flow g.node');
+  if (node) { const ref = JSON.parse(node.closest('.flow').dataset.map)[(node.id.match(/flowchart-(n\d+)-/) || [])[1]];
+    return ref ? { hit: fromStep(ref), label: `Step “${ref.slice(ref.indexOf(':') + 1)}”` } : null; }
+  const id = t.closest('.rail')?.closest('[data-feat]')?.dataset.feat || t.closest('.dot')?.dataset.go;
+  return id ? { hit: fromFeat(id), label: `${id} ${FEATS.find((x) => x.id === id).name}` } : null;
+}
+const litParts = () => [...document.querySelectorAll('.flow g.node.hl, .feat.hl')].filter((x) => !x.closest('.hide'));
+function showPin() {
+  const n = litParts(); const [refs, feats] = pin.hit;
+  $('#pinLabel').textContent = pin.label;
+  $('#pinCount').textContent = `${refs.size} step${refs.size === 1 ? '' : 's'} · ${feats.size} feature${feats.size === 1 ? '' : 's'} · ${pin.i + 1}/${n.length}`;
+  $('#pinbar').classList.remove('hide');
+}
+function jump(d) {
+  const n = litParts(); if (!n.length) return;
+  pin.i = (pin.i + d + n.length) % n.length;
+  n.forEach((x) => x.classList.remove('cur')); n[pin.i].classList.add('cur');
+  n[pin.i].scrollIntoView({ block: 'center', behavior: 'smooth' }); showPin();
+}
+function unpin() { pin = null; clearHl(); $('#pinbar').classList.add('hide'); }
+document.addEventListener('mouseover', (e) => { if (pin) return; const h2 = hitAt(e.target); if (h2) highlight(...h2.hit); else clearHl(); });
+document.addEventListener('click', (e) => {
+  if (e.target.closest('#pinbar')) return;
+  const h2 = hitAt(e.target); if (!h2) return;
+  if (pin && pin.label === h2.label) { unpin(); return; }
+  pin = { ...h2, i: -1 }; clearHl(); highlight(...h2.hit); showPin();
+  const dot = e.target.closest('.dot'); // a spine dot pins and goes straight to its card
+  if (dot) { pin.i = litParts().indexOf($(`#c-${dot.dataset.go}`)) - 1; jump(1); }
+});
+document.addEventListener('keydown', (e) => {
+  if (!pin || e.target.closest('input, textarea')) return;
+  if (e.key === 'Escape') unpin(); else if (e.key === 'j') jump(1); else if (e.key === 'k') jump(-1);
+});
+$('#pinNext').onclick = () => jump(1); $('#pinPrev').onclick = () => jump(-1); $('#pinClear').onclick = unpin;
+// next changed-or-flagged feature, in page order after the last one visited
+let lastC = null;
+function nextFlagged() {
+  const items = FEATS.filter((f) => isChanged(f.id) || price(cur[f.id]).flag).map((f) => $(`#c-${f.id}`)).filter((el) => !el.classList.contains('hide'));
+  if (!items.length) return;
+  const el = (lastC?.isConnected && items.find((x) => lastC.compareDocumentPosition(x) & Node.DOCUMENT_POSITION_FOLLOWING)) || items[0]; lastC = el;
+  el.scrollIntoView({ block: 'center', behavior: 'smooth' }); el.classList.remove('flash'); void el.offsetWidth; el.classList.add('flash');
+}
+$('#nextc').onclick = nextFlagged;
+document.addEventListener('keydown', (e) => { if (e.key === 'n' && !e.target.closest('input, textarea') && !pin) nextFlagged(); });
+$('#preview').onclick = () => { $('#sum').innerHTML = summaryHtml(); $('#feedback').value = JSON.stringify(window.__feedback()); $('#copied').textContent = ''; $('#dlg').showModal(); };
+$('#copy').onclick = async () => { try { await navigator.clipboard.writeText($('#feedback').value); $('#copied').textContent = 'Copied — paste it into the chat'; }
+  catch { $('#feedback').select(); $('#copied').textContent = 'Press Ctrl+C to copy'; } };
+let armed = false;
+$('#reset').onclick = () => { if (!armed) { armed = true; $('#reset').textContent = 'Click again to reset all scores'; setTimeout(() => { armed = false; $('#reset').textContent = 'Start over'; }, 4000); return; }
+  try { localStorage.removeItem(STORE); } catch { /* nothing saved */ } location.reload(); };
+
+// ---- theme + diagrams (mockup loads mermaid from a CDN; the real page inlines the skill's bundle) ----
+const dark = () => document.documentElement.dataset.theme === 'dark' || (!document.documentElement.dataset.theme && matchMedia('(prefers-color-scheme: dark)').matches);
+const src = [...document.querySelectorAll('pre.mermaid')].map((p) => p.textContent);
+let mermaid;
+async function draw() {
+  try {
+    mermaid ??= (await import('https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs')).default;
+    const t = (v) => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+    mermaid.initialize({ startOnLoad: false, theme: 'base', flowchart: { curve: 'basis', padding: 10 }, themeVariables: { fontFamily: 'system-ui,sans-serif', fontSize: '12px',
+      background: t('--paper'), primaryColor: t('--sheet'), primaryTextColor: t('--ink'), primaryBorderColor: t('--meter'), lineColor: t('--ink-dim'), edgeLabelBackground: t('--paper'), textColor: t('--ink') } });
+    const pres = [...document.querySelectorAll('pre.mermaid')];
+    pres.forEach((p, i) => { p.removeAttribute('data-processed'); p.textContent = src[i]; });
+    await mermaid.run({ nodes: pres });
+    if (pin) highlight(...pin.hit); // redraw makes new boxes; re-light a pinned selection
+  } catch { /* diagrams need a connection in this mockup */ }
+}
+$('#theme').onclick = () => { document.documentElement.dataset.theme = dark() ? 'light' : 'dark'; $('#theme').textContent = dark() ? 'Light' : 'Dark'; draw(); };
+$('#theme').textContent = dark() ? 'Light' : 'Dark';
+draw();
+</script>
+</body>
+</html>

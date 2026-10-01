@@ -1,0 +1,865 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sin Kowa — scope review</title>
+<style>
+:root {
+  color-scheme:light;
+  --paper:#e8ecef; --sheet:#fbfcfd; --ink:#141c24; --ink-dim:#5d6c78;
+  --rule:#d3dbe1; --grid:#edf1f4; --meter:#44586a; --mark:#b4232f; --mark-soft:#b4232f14;
+  --ok:#2f6b4a; --ok-soft:#2f6b4a14; --hi:#fbf1cf; --hi-line:#c8960c;
+  --serif:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,"Liberation Serif",serif;
+  --sans:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+}
+@media (prefers-color-scheme:dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme:dark;
+    --paper:#11171c; --sheet:#1a2229; --ink:#e6ecf1; --ink-dim:#93a3b0;
+    --rule:#2c3740; --grid:#222c34; --meter:#8fa8bb; --mark:#e26c60; --mark-soft:#e26c6021;
+    --ok:#7cc39a; --ok-soft:#7cc39a1c; --hi:#3b3519; --hi-line:#d9a92a;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme:dark;
+  --paper:#11171c; --sheet:#1a2229; --ink:#e6ecf1; --ink-dim:#93a3b0;
+  --rule:#2c3740; --grid:#222c34; --meter:#8fa8bb; --mark:#e26c60; --mark-soft:#e26c6021;
+  --ok:#7cc39a; --ok-soft:#7cc39a1c; --hi:#3b3519; --hi-line:#d9a92a;
+}
+* { box-sizing:border-box; }
+body { margin:0; padding:2rem 1.5rem 7rem; background:var(--paper); color:var(--ink);
+  font-family:var(--sans); font-size:.9rem; line-height:1.5; }
+.page { max-width:74rem; margin:0 auto; }
+:focus-visible { outline:2px solid var(--ink); outline-offset:2px; }
+.mock { background:var(--mark); color:#fff; font-size:.72rem; font-weight:600; letter-spacing:.04em;
+  padding:.2rem .6rem; display:inline-block; border-radius:.2rem; margin-bottom:.8rem; }
+
+/* header */
+.head { display:flex; justify-content:space-between; gap:1rem; align-items:flex-start; }
+h1 { font-family:var(--serif); font-size:2.1rem; font-weight:600; letter-spacing:-.015em; margin:0; }
+.sub { margin:.15rem 0 .9rem; color:var(--ink-dim); font-size:.82rem; }
+.lead { margin:0 0 1rem; max-width:66ch; color:var(--ink-dim); }
+button, select, input, textarea { font:inherit; color:var(--ink); }
+.btn { font-size:.78rem; font-weight:600; padding:.3rem .7rem; color:var(--ink-dim); background:var(--sheet);
+  border:1px solid var(--rule); border-radius:.2rem; cursor:pointer; }
+.btn:hover { color:var(--ink); border-color:var(--ink-dim); }
+.btn.primary { background:var(--ink); color:var(--sheet); border-color:var(--ink); }
+.who { display:flex; gap:.6rem; align-items:center; flex-wrap:wrap; margin-bottom:1.4rem; }
+.who input { padding:.3rem .5rem; border:1px solid var(--rule); background:var(--sheet); border-radius:.2rem; min-width:14rem; }
+.who label { font-size:.78rem; color:var(--ink-dim); font-weight:600; }
+
+/* legend + summary */
+.strip { display:grid; grid-template-columns:repeat(auto-fit,minmax(9rem,1fr)); background:var(--sheet);
+  border:1px solid var(--rule); margin-bottom:1rem; }
+.strip div { padding:.6rem .9rem; border-left:1px solid var(--rule); }
+.strip div:first-child { border-left:0; }
+.strip b { display:block; font-family:var(--serif); font-size:1.4rem; font-variant-numeric:tabular-nums; }
+.strip span { font-size:.74rem; color:var(--ink-dim); }
+.strip .warn b { color:var(--mark); }
+.legend { display:flex; gap:1.2rem; flex-wrap:wrap; font-size:.76rem; color:var(--ink-dim); margin:0 0 1.6rem; }
+.src { font-size:.68rem; font-weight:600; padding:.05rem .4rem; border-radius:.2rem; border:1px solid var(--rule); white-space:nowrap; }
+.src.prd { color:var(--ok); background:var(--ok-soft); border-color:transparent; }
+.src.us { color:var(--ink-dim); border-style:dashed; }
+
+/* nav */
+nav.sys { position:sticky; top:0; z-index:5; display:flex; gap:.4rem; flex-wrap:wrap; padding:.6rem 0;
+  background:var(--paper); border-bottom:1px solid var(--rule); margin-bottom:1rem; }
+nav.sys a { font-size:.8rem; text-decoration:none; color:var(--ink-dim); padding:.25rem .6rem;
+  border:1px solid var(--rule); border-radius:1rem; background:var(--sheet); }
+nav.sys a:hover { color:var(--ink); }
+nav.sys a .n { font-variant-numeric:tabular-nums; margin-left:.35rem; font-weight:600; }
+nav.sys a.done { border-color:var(--ok); color:var(--ok); }
+
+/* system */
+section.system { background:var(--sheet); border:1px solid var(--rule); padding:1.3rem 1.4rem 1.4rem; margin-bottom:1.6rem; scroll-margin-top:3.5rem; }
+.sys-head { display:flex; justify-content:space-between; gap:1rem; align-items:flex-start; border-bottom:1px solid var(--rule); padding-bottom:.9rem; margin-bottom:1rem; }
+.eyebrow { font-size:.7rem; letter-spacing:.08em; text-transform:uppercase; color:var(--ink-dim); font-weight:600; }
+h2 { font-family:var(--serif); font-size:1.5rem; font-weight:600; margin:.05rem 0 .3rem; }
+.purpose { margin:0; max-width:70ch; }
+.map { font-size:.76rem; color:var(--ink-dim); margin:.35rem 0 0; }
+h3 { font-size:.76rem; letter-spacing:.07em; text-transform:uppercase; color:var(--ink-dim); margin:1.3rem 0 .5rem; font-weight:700;
+  display:flex; gap:.6rem; align-items:center; }
+.flow { border:1px solid var(--grid); background:var(--paper); padding:.8rem; overflow-x:auto; min-height:4rem; }
+.flow .fallback { font-size:.82rem; color:var(--ink-dim); }
+.subflow-title { font-size:.8rem; font-weight:600; margin:.9rem 0 .3rem; }
+
+/* tables */
+table { width:100%; border-collapse:collapse; font-size:.84rem; }
+th { text-align:left; font-size:.7rem; letter-spacing:.05em; text-transform:uppercase; color:var(--ink-dim);
+  font-weight:600; padding:.35rem .5rem; border-bottom:1px solid var(--rule); }
+td { padding:.45rem .5rem; border-bottom:1px solid var(--grid); vertical-align:top; }
+tr.hl td { background:var(--hi); }
+tr.uncovered td { background:var(--mark-soft); }
+td.num { font-variant-numeric:tabular-nums; color:var(--ink-dim); width:2rem; }
+.fname { font-weight:600; }
+.fdoes { color:var(--ink-dim); font-size:.8rem; margin-top:.1rem; max-width:52ch; }
+.chip { display:inline-block; font-size:.72rem; padding:0 .4rem; margin:0 .2rem .2rem 0; border:1px solid var(--rule);
+  border-radius:.8rem; background:var(--paper); cursor:default; white-space:nowrap; }
+.chip.none { color:var(--mark); border-color:var(--mark); background:transparent; font-weight:600; }
+div.ctl { display:flex; flex-direction:column; gap:.3rem; min-width:10rem; }
+td.ctl { min-width:10rem; }
+td.ctl > * + * { margin-top:.3rem; }
+.ctl select, .ctl input, td textarea { padding:.2rem .35rem; border:1px solid var(--rule); background:var(--sheet); border-radius:.2rem; font-size:.8rem; }
+td textarea { width:100%; min-height:2rem; resize:vertical; }
+select.set { border-color:var(--ok); }
+select.chg { border-color:var(--mark); color:var(--mark); font-weight:600; }
+.hide { display:none !important; }
+.add { margin-top:.6rem; display:flex; gap:.5rem; flex-wrap:wrap; }
+.accept { white-space:nowrap; }
+.req { width:100%; min-height:3.2rem; padding:.4rem .5rem; border:1px solid var(--rule); background:var(--sheet); border-radius:.2rem; }
+.hint { font-size:.76rem; color:var(--ink-dim); margin:.2rem 0 .4rem; }
+
+/* bottom bar */
+.bar { position:fixed; left:0; right:0; bottom:0; background:var(--sheet); border-top:1px solid var(--rule); z-index:10; }
+.bar .in { max-width:74rem; margin:0 auto; padding:.7rem 1.5rem; display:flex; gap:1rem; align-items:center; justify-content:space-between; flex-wrap:wrap; }
+.meter { flex:1; min-width:12rem; }
+.meter .track { height:6px; background:var(--grid); border-radius:3px; overflow:hidden; }
+.meter .fill { height:100%; background:var(--meter); width:0; transition:width .2s; }
+.meter small { color:var(--ink-dim); font-size:.74rem; }
+.system.collapsed .body { display:none; }
+.system.collapsed .sys-head { border-bottom:0; padding-bottom:0; margin-bottom:0; }
+.system.collapsed h2, .system.collapsed .purpose { color:var(--ink-dim); text-decoration:line-through; }
+.gone-note { display:none; margin:.6rem 0 0; font-size:.8rem; color:var(--mark); }
+.system.collapsed .gone-note { display:block; }
+.flow g.node { cursor:pointer; }
+.flow g.node.hl rect, .flow g.node.hl polygon { stroke:var(--hi-line) !important; stroke-width:3px !important; }
+.chip.hl { background:var(--hi); border-color:var(--hi-line); color:var(--ink); }
+.saved { font-size:.72rem; color:var(--ink-dim); }
+.sum h4 { font-family:var(--serif); font-size:1.05rem; margin:1rem 0 .3rem; }
+.sum h4 .tag { font-family:var(--sans); font-size:.7rem; font-weight:600; margin-left:.4rem; padding:.05rem .4rem; border-radius:.2rem; }
+.tag.keep { color:var(--ok); background:var(--ok-soft); } .tag.chg { color:var(--mark); background:var(--mark-soft); } .tag.none { color:var(--ink-dim); border:1px dashed var(--rule); }
+.sum ul { margin:.2rem 0 .4rem; padding-left:1.1rem; } .sum li { margin:.15rem 0; }
+.sum .quiet { color:var(--ink-dim); font-size:.82rem; margin:.2rem 0; }
+.sum .warnbox { background:var(--mark-soft); color:var(--mark); padding:.5rem .7rem; font-size:.84rem; margin:.4rem 0 .8rem; }
+.dlg-foot { display:flex; justify-content:flex-end; gap:.5rem; margin-top:1rem; border-top:1px solid var(--rule); padding-top:.8rem; }
+dialog { max-width:88rem; width:calc(100% - 3rem); border:1px solid var(--rule); background:var(--sheet); color:var(--ink); padding:1rem 1.2rem; }
+dialog .sum { max-height:74vh; overflow:auto; }
+@media (max-width:760px) {
+  body { padding:1.2rem 1rem 9rem; }
+  .sys-head { flex-direction:column; }
+  table, thead, tbody, tr, td { display:block; }
+  thead { display:none; }
+  tr { border-bottom:1px solid var(--rule); padding:.4rem 0; }
+  td { border:0; padding:.2rem 0; }
+}
+.flowblock { border-left:3px solid var(--rule); padding:.1rem 0 .4rem 1rem; margin:1rem 0 1.4rem; }
+.flowblock.main { border-left-color:var(--meter); }
+.flowblock.sub { border-left-style:dashed; margin-left:1.2rem; }
+.flowblock h3 { margin-top:.4rem; }
+.gapnote { background:var(--mark-soft); color:var(--mark); font-size:.8rem; padding:.35rem .6rem; margin:.2rem 0 .6rem; }
+.linkline { font-size:.82rem; margin:.1rem 0 .5rem; }
+.warnchip { font-size:.7rem; font-weight:600; color:var(--mark); border:1px solid var(--mark); border-radius:.8rem; padding:0 .4rem; white-space:nowrap; }
+.linkctl { display:flex; gap:.5rem; align-items:center; flex-wrap:wrap; font-size:.8rem; margin:0 0 .7rem; }
+.linkctl label { color:var(--ink-dim); font-weight:600; }
+.linkctl select, .linkctl input { padding:.2rem .35rem; border:1px solid var(--rule); background:var(--sheet); border-radius:.2rem; font-size:.8rem; }
+.linkctl input { flex:1; min-width:12rem; }
+.pinbar { position:fixed; right:1.2rem; bottom:4.6rem; z-index:11; display:flex; gap:.4rem; align-items:center;
+  background:var(--sheet); border:1px solid var(--hi-line); box-shadow:0 4px 18px #0002; padding:.45rem .6rem; border-radius:.3rem; max-width:calc(100% - 2.4rem); }
+.pin-txt { display:flex; flex-direction:column; min-width:0; margin-right:.3rem; }
+.pin-txt b { font-size:.8rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:22rem; }
+.pin-txt small { font-size:.72rem; color:var(--ink-dim); }
+tr.cur td { box-shadow:inset 0 2px 0 var(--hi-line), inset 0 -2px 0 var(--hi-line); }
+.flow g.node.cur rect, .flow g.node.cur polygon { stroke-width:5px !important; }
+.pin-hint { font-size:.76rem; color:var(--ink-dim); }
+.seg { display:flex; flex-wrap:wrap; gap:.25rem; }
+.seg button { font-size:.74rem; line-height:1.3; padding:.2rem .55rem; border:1px solid var(--rule); border-radius:1rem;
+  background:var(--sheet); color:var(--ink-dim); cursor:pointer; }
+.seg button:hover { color:var(--ink); border-color:var(--ink-dim); }
+.seg button.ok { background:var(--ok); border-color:var(--ok); color:var(--sheet); font-weight:600; }
+.seg button.chg { background:var(--mark); border-color:var(--mark); color:#fff; font-weight:600; }
+.linkctl .seg { flex:none; }
+.sname-cell { position:relative; }
+.sname-cell input[data-rename] { width:100%; font-size:.84rem; line-height:1.5; padding:0 .3rem; margin:-.05rem 0;
+  border:1px solid var(--mark); border-radius:.2rem; background:var(--sheet); }
+.ssys { border-top:1px solid var(--rule); padding:.4rem 0 .6rem; }
+.ssys.gone h4 { color:var(--ink-dim); }
+.sflow { margin:.5rem 0 .2rem .2rem; }
+.sflow h5 { font-size:.72rem; letter-spacing:.06em; text-transform:uppercase; color:var(--ink-dim); margin:.4rem 0 .1rem; }
+.sflow .arrow { margin:0 0 .3rem; }
+.sflow ol { margin:0; padding-left:1.4rem; } .sflow li { margin:.18rem 0; }
+.sflow li.open span { color:var(--ink-dim); }
+.say { font-size:.8rem; color:var(--ink); font-style:italic; margin:.1rem 0 .2rem; }
+.linkrow { text-transform:none; letter-spacing:0; font-size:.78rem; margin-top:.2rem; font-weight:400; color:var(--ink); }
+.sum .tag { font-size:.68rem; font-weight:600; padding:.05rem .4rem; border-radius:.2rem; margin-right:.2rem; white-space:nowrap; }
+.sdiagram { border:1px solid var(--grid); background:var(--paper); padding:.5rem; overflow-x:auto; margin:.2rem 0 .1rem; }
+.legend-s { font-size:.7rem; margin:0 0 .35rem; }
+.seg button.dflt { background:var(--grid); border-color:var(--rule); color:var(--ink-dim); font-weight:600; }
+.need { font-size:.68rem; font-weight:700; color:var(--mark); align-self:center; margin-left:.2rem; white-space:nowrap; }
+.need.hide { display:none; }
+.tag.dflt { color:var(--ink-dim); background:var(--grid); } .tag.need { color:var(--mark); border:1px solid var(--mark); }
+.sflow li.quietrow span { color:var(--ink-dim); }
+.confirm { display:flex; justify-content:space-between; align-items:center; gap:1rem; flex-wrap:wrap; margin-top:1.4rem;
+  padding:.8rem 1rem; border:1px dashed var(--rule); border-radius:.3rem; background:var(--paper); }
+.confirm > div:first-child { display:flex; flex-direction:column; }
+.confirm .seg button { font-size:.88rem; padding:.45rem 1.1rem; border-radius:.25rem; border-style:solid; color:var(--ink); background:var(--sheet); }
+.btn.next { border-color:var(--mark); color:var(--mark); }
+.btn.next:disabled { border-color:var(--ok); color:var(--ok); cursor:default; }
+@keyframes flash { 0%,40% { box-shadow:0 0 0 3px var(--hi-line); } 100% { box-shadow:0 0 0 3px transparent; } }
+tr.flash td { animation:flash 1.6s ease-out; } .linkctl.flash, .confirm.flash { animation:flash 1.6s ease-out; border-radius:.3rem; }
+.seg .switch, .confirm .seg .switch { display:inline-flex; align-items:center; gap:.6rem; border:0; background:none; padding:.2rem 0;
+  border-radius:0; color:var(--ink); font-size:.86rem; font-weight:600; cursor:pointer; }
+.knob { position:relative; flex:none; width:2.4rem; height:1.35rem; border-radius:1rem; background:var(--rule); transition:background .15s; }
+.knob::after { content:''; position:absolute; top:.175rem; left:.175rem; width:1rem; height:1rem; border-radius:50%;
+  background:#fff; box-shadow:0 1px 3px #0004; transition:left .15s; }
+.switch[aria-checked="true"] .knob { background:var(--ok); }
+.switch[aria-checked="true"] .knob::after { left:1.225rem; }
+.sw-sys[aria-checked="false"] .knob { background:var(--mark); }
+.sw-sys[aria-checked="false"] .swl::after { content:' — off, not needed'; color:var(--mark); font-weight:600; }
+.confirm:has(.switch[aria-checked="true"]) { border-style:solid; border-color:var(--ok); background:var(--ok-soft); }
+.confirm-l { flex:1; min-width:16rem; }
+.confirm-l textarea { display:block; width:100%; max-width:40rem; margin-top:.45rem; min-height:2.2rem; padding:.3rem .45rem; font-size:.8rem;
+  border:1px solid var(--rule); border-radius:.2rem; background:var(--sheet); resize:vertical; }
+.btn.primary:disabled { background:var(--grid); border-color:var(--rule); color:var(--ink-dim); cursor:not-allowed; }
+.warnbox .btn { margin-left:.5rem; font-size:.74rem; padding:.15rem .55rem; }
+dialog::backdrop { background:rgb(10 14 18 / .45); backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px); }
+dialog { box-shadow:0 18px 60px #0006; border-radius:.4rem; }
+@media (prefers-reduced-transparency:reduce) { dialog::backdrop { backdrop-filter:none; background:rgb(10 14 18 / .7); } }
+.bar .actions { display:flex; gap:.5rem; align-items:center; margin-left:auto; }
+/*READING-START*/
+/* long-reading comfort: bigger type, wider leading, shorter lines, calmer contrast */
+body { font-size:1rem; line-height:1.65; }
+.page { max-width:76rem; }
+h1 { font-size:2.35rem; line-height:1.15; }
+h2, section.card h2, section.system h2 { font-size:1.65rem; line-height:1.25; }
+.sub { font-size:.9rem; }
+.lead, .sec-lead, p.quiet { font-size:.98rem; line-height:1.7; max-width:68ch; }
+.does, .fdoes, .demo, .anchor, .why, .meta, .spine-note, .bhead .hint { font-size:.9rem; line-height:1.6; }
+section.card, section.system { padding:1.9rem 2.1rem; margin-bottom:2.2rem; }
+.eyebrow, section.card h3, th, .bhead, .flabel { font-size:.76rem !important; letter-spacing:.06em; }
+table.bd, table.caps, table.kv, details.tasks table, .sum table { font-size:.92rem; line-height:1.55; }
+table.bd td, table.caps td, table.kv td, details.tasks td { padding-top:.55rem; padding-bottom:.55rem; }
+.chip { font-size:.78rem; padding:.05rem .5rem; }
+.twocol li { font-size:.96rem; line-height:1.65; margin:.4rem 0; }
+.headline span { font-size:.84rem; }
+.m .demo { font-size:.92rem; }
+.feat { padding-top:1.6rem; padding-bottom:1.7rem; }
+.rail h3 { font-size:1.25rem; margin-bottom:.25rem; }
+.rail .does { font-size:.92rem; line-height:1.6; } .rail .id { font-size:.8rem; }
+.cap { font-size:.84rem; }
+@media (prefers-color-scheme:dark) { :root:not([data-theme="light"]) { --ink:#dbe2e8; --ink-dim:#a3b2be; } }
+:root[data-theme="dark"] { --ink:#dbe2e8; --ink-dim:#a3b2be; }
+.sys .meta, .sys .eyebrow { font-size:.82rem !important; line-height:1.5; }
+body.client .headline { grid-template-columns:1.4fr 1fr; }
+/* every page: tables, strips, nav chips, hints and small notes */
+table td { font-size:.92rem; line-height:1.55; }
+.strip span, .legend, .pin-hint, small, nav.sys a, nav.toc a, p.map, .hint, .gone-note, .gapnote, .saved, .pin-txt small, .zones, label { font-size:.85rem; line-height:1.5; }
+.pick button, .seg button, .view button, .btn { font-size:.84rem; }
+textarea, input, select { font-size:.92rem; }
+.flow-name { font-size:.84rem; } .cap .csys { font-size:.76rem; } .cap .cid { font-size:.78rem; } .flagchip { font-size:.78rem; }
+
+/* how to read: the System → Feature → Block chain at the top of every page */
+.howto { margin:0 0 1.4rem; padding:.85rem 1rem .8rem; border:1px solid var(--rule); border-radius:.35rem; background:var(--sheet); max-width:60rem; }
+.howto-t { display:block; font-size:.74rem; font-weight:700; letter-spacing:.07em; text-transform:uppercase; color:var(--ink-dim); margin-bottom:.55rem; }
+.howto-chain { display:flex; flex-wrap:wrap; align-items:stretch; gap:.45rem; }
+.howto-chain > span { flex:1 1 12rem; display:flex; flex-direction:column; gap:.1rem; padding:.5rem .7rem; border:1px solid var(--grid); border-radius:.3rem; background:var(--paper); font-size:.9rem; line-height:1.4; }
+.howto-chain > span b { font-family:var(--serif); font-size:1.05rem; }
+.howto-chain small { font-size:.8rem; color:var(--ink-dim); }
+.howto-chain > i { align-self:center; font-style:normal; color:var(--ink-dim); }
+.howto-rule { margin:.6rem 0 0; font-size:.9rem; color:var(--ink-dim); max-width:68ch; }
+.howto-rule b { color:var(--ink); }
+.howto-page { display:block; margin-top:.25rem; color:var(--ink); }
+@media (max-width:640px) { .howto-chain > i { display:none; } }
+
+/* native dropdowns follow the theme: dark popups in dark mode, readable option text */
+:root { color-scheme:light; }
+@media (prefers-color-scheme:dark) { :root:not([data-theme="light"]) { color-scheme:dark; } }
+:root[data-theme="dark"] { color-scheme:dark; }
+select option, select optgroup { background:var(--sheet); color:var(--ink); }
+
+/*READING-END*/
+</style>
+</head>
+<body>
+<div class="page">
+  <span class="mock">MOCKUP — sample data from the Sin Kowa proposal</span>
+  <div class="head">
+    <div>
+      <h1>Sin Kowa — scope review</h1>
+      <p class="sub">Phase 1 · prepared by Code Engine Studio · 1 Oct 2026 · please return by 8 Oct 2026</p>
+    </div>
+    <button class="btn" id="theme" type="button">Dark</button>
+  </div>
+  <p class="lead">This is what we understood from your requirements document: the systems, how work flows through each one, and the features we plan to build for each step. Everything is kept as written unless you change it. Only the rows marked <b>needs your answer</b> need a click, and when a system looks right, press <b>✓ I've reviewed this system</b>. There are no prices on this page; this is only about scope.</p>
+  <div class="howto"><b class="howto-t">How to read this page</b>
+    <div class="howto-chain"><span><b>System</b>a part of the business<small>e.g. Warehouse Mgmt System</small></span><i>→</i><span><b>Workflow</b>the steps work moves through<small>e.g. Order In → Pack → Pack Review</small></span><i>→</i><span><b>Feature</b>something you asked for, on the steps it serves<small>e.g. F04 Order intake &amp; quotation entry</small></span></div>
+    <p class="howto-rule">Check top to bottom: is each system right, do its workflow steps match how work really moves, and does each step have the features it needs?</p></div>
+  <div class="who">
+    <label for="reviewer">Your name</label>
+    <input id="reviewer" placeholder="e.g. Jane Tan, Operations Manager">
+  </div>
+
+  <div class="strip" id="strip"></div>
+  <div class="legend">
+    <span><span class="src prd">from your document</span> you told us this</span>
+    <span><span class="src us">our suggestion</span> we filled a gap; please check closely</span>
+    <span class="pin-hint">Tip: click any box, step or feature to pin its connections, then use ↓ Next to jump between them.</span>
+    <span><span class="chip none">no feature</span> a step nothing covers: is it out of scope, or did we miss it?</span>
+  </div>
+
+  <nav class="sys" id="nav"></nav>
+  <div id="systems"></div>
+
+  <section class="system">
+    <h3>New systems you need that are not listed</h3>
+    <p class="hint">Anything missing from the four systems above. One per line, with a sentence about why.</p>
+    <textarea class="req" id="newSystems" placeholder="e.g. Returns handling — we lose track of rejected goods"></textarea>
+  </section>
+</div>
+
+<div class="pinbar hide" id="pinbar" role="status">
+  <span class="pin-ico">📌</span><div class="pin-txt"><b id="pinLabel"></b><small id="pinCount"></small></div>
+  <button class="btn" id="pinPrev" type="button" title="Previous (k)">↑</button>
+  <button class="btn" id="pinNext" type="button" title="Next (j)">↓ Next</button>
+  <button class="btn" id="pinClear" type="button" title="Esc">Clear</button>
+</div>
+<div class="bar"><div class="in">
+  <div class="meter"><div class="track"><div class="fill" id="fill"></div></div><small id="progress"></small></div>
+  <span class="saved" id="saved">Your answers are saved in this browser as you go.</span>
+  <div class="actions">
+    <button class="btn" id="reset" type="button">Start over</button>
+    <button class="btn next" id="nextq" type="button" title="Jump to the next question (n)">Next question ↓</button>
+    <button class="btn primary" id="preview" type="button">Review &amp; send →</button>
+  </div>
+</div></div>
+
+<dialog id="dlg"><p><b>Your review, before you send it</b></p><div class="sum" id="sum"></div>
+  <div class="dlg-foot"><form method="dialog"><button class="btn">Keep editing</button></form>
+    <button class="btn primary" id="download2" type="button">Download &amp; share with your engineer</button></div></dialog>
+
+<script type="module">
+// Workflow model: every system has at most one MAIN workflow; SUB-workflows
+// branch off a step (startsAt) and may rejoin a step in another system
+// (rejoins). A step is addressed as "<flowId>:<step>" so names only need to be
+// unique inside one flow. Features point at step refs and may cover steps in
+// another system's flow (F13 Inventory covers the custom-order "Earmark" step).
+const DATA = {
+  project: 'Sin Kowa', mapLabel: 'IMDA roadmap pillar',
+  systems: [
+    { id: 'wms', name: 'Warehouse Mgmt System (WMS)', src: 'prd', map: 'Warehouse Automation/Transformation (coordination layer)',
+      purpose: 'The coordination layer. It moves an order through five stages and is the single screen a warehouse worker needs.',
+      main: { id: 'wms', name: 'Order pipeline', src: 'prd',
+        steps: ['Order In', 'Pack', 'Pack Review', 'Storing', 'Shipped'],
+        branches: [{ from: 'Pack', to: 'Short-pack exception', label: "can't fulfil" }, { from: 'Short-pack exception', to: 'Ops + Invoicing alert' }] },
+      subs: [],
+      features: [
+        { id: 'F01', name: 'Order pipeline & stage engine', src: 'prd', steps: ['wms:Order In', 'wms:Pack', 'wms:Pack Review', 'wms:Storing', 'wms:Shipped'], does: "Moves an order through Order In → Pack → Pack Review → Storing → Shipped, with task views scoped to each worker's role" },
+        { id: 'F02', name: 'Exception / short-pack alert workflow', src: 'prd', steps: ['wms:Short-pack exception', 'wms:Ops + Invoicing alert'], does: "Flags a can't-fulfil item the moment it's discovered, in time to purchase or cancel, and auto-flags the order for a quote/invoice adjustment" },
+        { id: 'F03', name: 'Unified role-based UI shell & authentication', src: 'prd', steps: ['*'], does: 'One login for the whole platform; a warehouse worker sees only Pack/Audit tasks, office staff see Orders/Invoicing/Inventory' } ] },
+    { id: 'ord', name: 'Orders/Invoicing', src: 'prd', map: 'Finance/Documentation',
+      purpose: "Covers quotation through to a paid invoice, and closes the paper-DO gap that currently delays Sin Kowa's cash collection by weeks.",
+      main: { id: 'ord', name: 'Order to cash', src: 'us', missing: true,
+        steps: ['Order received', 'Quote', 'Order confirmed', 'Proof of delivery', 'Invoice', 'Paid'],
+        branches: [{ from: 'Paid', to: 'Dispute / credit adjustment', label: 'client disputes' }] },
+      subs: [{ id: 'custom', name: 'Custom order', src: 'prd', share: 'roughly 20% of orders, sourced rather than stocked',
+        startsAt: 'ord:Order received', rejoins: { system: 'wms', step: null, text: 'join WMS pipeline' },
+        steps: ['Intake: flag as custom', 'Source & quote cost-plus', 'Vendor PO', 'Receiving & inspection', 'Earmark to order'],
+        branches: [{ from: 'Vendor PO', to: 'Vendor late / unsourceable' }, { from: 'Vendor late / unsourceable', to: 'Cancel or substitute, notify client' }] }],
+      features: [
+        { id: 'F04', name: 'Order intake & quotation entry', src: 'prd', steps: ['ord:Order received', 'ord:Quote', 'custom:Intake: flag as custom', 'custom:Source & quote cost-plus'], does: 'Captures orders from email/phone/fax; prices routine items from a catalog and custom items on a cost-plus-markup rule' },
+        { id: 'F05', name: 'AI-assisted intake pre-fill', src: 'prd', steps: ['ord:Order received'], does: 'Drafts a structured order from the incoming email/fax text for staff to review and confirm' },
+        { id: 'F06', name: 'Digital proof-of-delivery capture', src: 'prd', steps: ['ord:Proof of delivery'], does: 'E-signature or photo of the DO captured on a phone at the dock handoff, which becomes the invoice trigger' },
+        { id: 'F07', name: 'Invoice generation & billing workflow', src: 'prd', steps: ['ord:Invoice', 'ord:Paid'], does: 'Auto-generates the invoice off packed-and-audited quantities plus the digital DO, with billing checks and payment status' },
+        { id: 'F08', name: 'Custom order & vendor procurement sub-flow', src: 'prd', steps: ['custom:Vendor PO', 'custom:Receiving & inspection', 'custom:Vendor late / unsourceable', 'custom:Cancel or substitute, notify client'], does: "Flags when a vendor's expected delivery leaves too little buffer before the ship's ETA" },
+        { id: 'F09', name: 'Ad hoc / local purchase logging', src: 'prd', steps: [], does: 'A two-tap entry for an emergency off-the-shelf buy, so it still hits inventory and margin correctly' },
+        { id: 'F10', name: 'Post-shipment adjustment & dispute/credit-memo log', src: 'prd', steps: ['ord:Dispute / credit adjustment'], does: 'Records any billing dispute, its root cause and the credit adjustment' },
+        { id: 'F11', name: 'InvoiceNow / Peppol-ready invoice data model', src: 'prd', steps: ['ord:Invoice'], does: 'Structures line items, GST fields and buyer/seller identifiers so a future InvoiceNow connection is a bolt-on' } ] },
+    { id: 'inv', name: 'Inventory', src: 'prd', map: 'Inventory/Fulfilment',
+      purpose: 'Tracks routine and special-order stock, and closes the gap where multiple orders quietly deplete an item before there is time to reorder.',
+      main: { id: 'inv', name: 'Stock cycle', src: 'us', missing: true, steps: ['Stock received', 'On hand', 'Earmarked to order', 'Low-stock alert', 'Reorder'], branches: [] },
+      subs: [],
+      features: [
+        { id: 'F12', name: 'Core inventory tracking', src: 'prd', steps: ['inv:Stock received', 'inv:On hand'], does: 'On-hand quantities and item master data for routine and special-order SKUs' },
+        { id: 'F13', name: 'Available-to-promise / earmarking engine', src: 'prd', steps: ['inv:Earmarked to order', 'custom:Earmark to order'], does: 'On-hand minus committed quantity, reserved per order, so contention is visible before it becomes a shortfall' },
+        { id: 'F14', name: 'Configurable reorder threshold & low-stock alerts', src: 'prd', steps: ['inv:Low-stock alert', 'inv:Reorder'], does: 'Per-SKU minimum threshold that accounts for earmarked (not just on-hand) quantity' },
+        { id: 'F15', name: 'Vendor & purchase-order price-history tracking', src: 'prd', steps: ['inv:Reorder'], does: 'Records PO history and fluctuating repeat-item vendor costs' } ] },
+    { id: 'aud', name: 'Audit/Pack Validation', src: 'prd', map: 'Inventory/Fulfilment (traceability)',
+      purpose: "The single highest-value piece: the proof that stops a client disputing a charge after the ship has sailed. Reuses the manufacturer barcodes already on products and adds one label per pallet/carton.",
+      main: { id: 'aud', name: 'Proof of pack', src: 'us', missing: true, steps: ['Print pallet ID', 'Scan items', 'Check against order', 'Lock the record', 'Hand over'], branches: [] },
+      subs: [],
+      features: [
+        { id: 'F16', name: 'Pallet/container ID generation & label printing', src: 'prd', steps: ['aud:Print pallet ID'], does: 'Prints a system-generated pallet/carton ID at the pack stage that ties scanned items to one order' },
+        { id: 'F17', name: 'Mobile barcode scan-to-verify app', src: 'prd', steps: ['aud:Scan items', 'aud:Check against order'], does: 'Phone-camera scanning of existing product barcodes against the pallet ID and order' },
+        { id: 'F18', name: 'Immutable audit / proof-of-pack record', src: 'prd', steps: ['aud:Lock the record'], does: 'Timestamped, worker-tagged log of exactly what was packed, not editable after the fact' },
+        { id: 'F19', name: 'Offline scan queue & sync', src: 'prd', steps: ['aud:Scan items'], does: 'Queues scans locally and syncs once connectivity returns, for WiFi/cellular dead spots' } ] } ] };
+
+const $ = (s, el = document) => el.querySelector(s);
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const SRC = { prd: '<span class="src prd">from your document</span>', us: '<span class="src us">our suggestion</span>' };
+const lines = (t) => t.split('\n').map((x) => x.trim()).filter(Boolean);
+
+// ---- model helpers ----
+const ALL_FEATS = DATA.systems.flatMap((s) => s.features.map((f) => ({ ...f, sys: s })));
+const flowsOf = (s) => [s.main, ...s.subs].filter(Boolean);
+const FLOWS = Object.fromEntries(DATA.systems.flatMap((s) => flowsOf(s).map((f) => [f.id, { ...f, sys: s }])));
+const stepsOf = (fl) => [...new Set([...fl.steps, ...fl.branches.flatMap((b) => [b.from, b.to])])];
+const refsOf = (fl) => stepsOf(fl).map((st) => `${fl.id}:${st}`);
+const sysRefs = (s) => flowsOf(s).flatMap(refsOf);
+const stepName = (ref) => ref.slice(ref.indexOf(':') + 1);
+const flowLabel = (ref) => { const f = FLOWS[ref.slice(0, ref.indexOf(':'))]; return f.id === f.sys.main?.id ? f.sys.name.split(' (')[0] : `${f.name} sub-workflow`; };
+// a "*" feature (login) spans every step; it does not count as covering a step on its own
+const coveredBy = (ref) => ALL_FEATS.filter((f) => f.steps.includes(ref) || f.steps.includes('*'));
+const realCover = (ref) => ALL_FEATS.filter((f) => f.steps.includes(ref));
+const subsInto = (s) => DATA.systems.flatMap((o) => o.subs.filter((sb) => sb.rejoins.system === s.id).map((sb) => ({ ...sb, owner: o })));
+
+function mermaidFor(fl, s) {
+  const ids = new Map(); const id = (n) => { if (!ids.has(n)) ids.set(n, `n${ids.size}`); return ids.get(n); };
+  const L = ['flowchart LR'];
+  fl.steps.forEach((st, i) => { if (i) L.push(`  ${id(fl.steps[i - 1])} --> ${id(st)}`); });
+  fl.branches.forEach((b) => L.push(`  ${id(b.from)} -.${b.label ? ` ${b.label} ` : ''}.-> ${id(b.to)}`));
+  const map = {}; for (const [n, i] of ids) { L.push(`  ${i}["${n.replace(/"/g, "'")}"]`); map[i] = `${fl.id}:${n}`; }
+  // exits to sub-workflows that start here, and entries from sub-workflows that rejoin here
+  const extra = [];
+  s.subs.filter((sb) => fl === s.main && sb.startsAt.startsWith(`${fl.id}:`)).forEach((sb, k) => {
+    L.push(`  x${k}(["↳ ${sb.name} sub-workflow"])`, `  ${id(stepName(sb.startsAt))} -.-> x${k}`); extra.push(`x${k}`); });
+  if (fl === s.main) subsInto(s).forEach((sb, k) => {
+    L.push(`  y${k}(["↲ from ${sb.name} (${sb.owner.name.split(' (')[0]})"])`);
+    L.push(sb.rejoins.step ? `  y${k} -.-> ${id(sb.rejoins.step)}` : `  y${k} -. step not stated .-> ${id(fl.steps[0])}`); extra.push(`y${k}`); });
+  const gaps = [...ids].filter(([n]) => !realCover(`${fl.id}:${n}`).length).map(([, i]) => i);
+  L.push('  classDef gap stroke:#b4232f,stroke-width:2px,stroke-dasharray:4 3', '  classDef link fill:transparent,stroke-dasharray:2 3');
+  if (gaps.length) L.push(`  class ${gaps.join(',')} gap`);
+  if (extra.length) L.push(`  class ${extra.join(',')} link`);
+  return { code: L.join('\n'), map };
+}
+
+// ---- rendering ----
+const decisionSelect = (k, t, gap) => `<select data-k="${esc(k)}" data-t="${t}"${gap ? ' data-req="1"' : ''}>
+  <option value="">— review —</option><option value="keep">keep</option><option value="rename">rename</option><option value="remove">remove</option>
+  ${gap ? '<option value="out">out of scope</option><option value="missing">needs a feature</option>' : ''}</select>`;
+
+function stepTable(fl) {
+  const rows = refsOf(fl).map((ref, n) => {
+    const cov = coveredBy(ref); const gap = !realCover(ref).length;
+    const chips = cov.filter((f) => f.steps.includes(ref)).map((f) => `<span class="chip" data-f="${f.id}" title="${esc(f.name)} · ${esc(f.sys.name)}">${f.id}${f.sys.id !== fl.sys.id ? ` · ${esc(f.sys.name.split(' (')[0])}` : ''}</span>`).join('')
+      || '<span class="chip none">no feature</span>';
+    return `<tr data-step="${esc(ref)}" class="${gap ? 'uncovered' : ''}"><td class="num">${n + 1}</td><td class="sname-cell"><span class="sname">${esc(stepName(ref))}</span><input class="hide" data-rename placeholder="${esc(stepName(ref))}" aria-label="New name for ${esc(stepName(ref))}"></td><td>${chips}</td>
+      <td class="ctl">${decisionSelect(ref, 'step', gap)}</td>
+      <td><textarea data-c placeholder="comment"></textarea></td></tr>`;
+  }).join('');
+  return `<table><thead><tr><th>#</th><th>Step</th><th>Covered by</th><th>Your decision</th><th>Comment</th></tr></thead><tbody>${rows}</tbody></table>
+    <div class="add"><input class="req" style="min-height:0;flex:1" data-addstep="${fl.id}" placeholder="Missing a step in this workflow? e.g. Returns — after Shipped"></div>`;
+}
+
+function flowDiagram(fl, s) { const m = mermaidFor(fl, s); return `<div class="flow" data-map="${esc(JSON.stringify(m.map))}"><pre class="mermaid">${esc(m.code)}</pre></div>`; }
+
+function mainBlock(s) {
+  const fl = s.main; const into = subsInto(s);
+  const note = fl.missing ? '<p class="gapnote">Your document has no main workflow for this system. This is our suggestion, so please correct it.</p>' : '';
+  const joins = into.map((sb) => `<p class="linkline">↲ <b>${esc(sb.name)} sub-workflow</b> (${esc(sb.owner.name)}) rejoins here: “${esc(sb.rejoins.text)}”${sb.rejoins.step ? ` at <b>${esc(sb.rejoins.step)}</b>` : ' <span class="warnchip">which step? not stated</span>'}</p>`).join('');
+  // a workflow we invented needs an explicit yes/no; its steps then default to keep
+  const ask = fl.missing ? `<div class="linkctl" data-link="flow-${fl.id}"><label>Is this workflow right?</label>
+      <select data-k="flowok:${fl.id}" data-t="link" data-req="1"><option value="">—</option><option value="keep">yes, correct</option><option value="change">no, see comment</option></select>
+      <input data-c placeholder="e.g. we confirm the order before we quote"></div>` : '';
+  return `<div class="flowblock main"><h3>Main workflow · ${esc(fl.name)} ${SRC[fl.src]}</h3>${note}${ask}${joins}${flowDiagram(fl, s)}${stepTable({ ...fl, sys: s })}</div>`;
+}
+
+function subBlock(sb, s) {
+  const start = sb.startsAt ? `starts at <b>${esc(stepName(sb.startsAt))}</b> in the main workflow` : '<span class="warnchip">start point not stated</span>';
+  const tgt = DATA.systems.find((o) => o.id === sb.rejoins.system);
+  const rejoin = `rejoins <b>${esc(tgt.name)}</b>${sb.rejoins.step ? ` at <b>${esc(sb.rejoins.step)}</b>` : ` (“${esc(sb.rejoins.text)}”) <span class="warnchip">which step? not stated</span>`}`;
+  return `<div class="flowblock sub"><h3>Sub-workflow · ${esc(sb.name)} ${SRC[sb.src]}</h3>
+    <p class="linkline">${start} · ${rejoin} · ${esc(sb.share)}</p>
+    <div class="linkctl" data-link="${sb.id}"><label>Are the start and rejoin points right?</label>
+      <select data-k="link:${sb.id}" data-t="link" data-req="1"><option value="">— review —</option><option value="keep">yes, correct</option><option value="change">no, see comment</option></select>
+      <input data-c placeholder="e.g. it rejoins at Pack"></div>
+    ${flowDiagram(sb, s)}${stepTable({ ...sb, sys: s })}</div>`;
+}
+
+function featRows(s) {
+  return s.features.map((f) => {
+    const steps = f.steps.includes('*') ? '<span class="chip">every system</span>'
+      : f.steps.length ? f.steps.map((r) => `<span class="chip" title="${esc(flowLabel(r))}">${FLOWS[r.split(':')[0]].id !== s.main?.id ? `${esc(flowLabel(r).replace(' sub-workflow', ''))} · ` : ''}${esc(stepName(r))}</span>`).join('')
+      : '<span class="chip">not on a workflow step</span>';
+    return `<tr data-feat="${f.id}"><td class="num">${f.id}</td>
+      <td><div class="fname">${esc(f.name)} ${SRC[f.src]}</div><div class="fdoes">${esc(f.does)}</div></td><td>${steps}</td>
+      <td class="ctl"><select data-k="${f.id}" data-t="feat"><option value="">— review —</option><option value="keep">keep</option><option value="change">change</option>
+        <option value="remove">remove</option></select></td>
+      <td><textarea data-c placeholder="What should change? e.g. wrong step, it is used at Order confirmed"></textarea></td></tr>`;
+  }).join('');
+}
+
+function systemHtml(s, i) {
+  return `<section class="system" id="${s.id}">
+    <div class="sys-head"><div>
+      <div class="eyebrow">System ${i + 1} ${SRC[s.src]}</div><h2>${esc(s.name)}</h2><p class="purpose">${esc(s.purpose)}</p>
+      <p class="map">${esc(DATA.mapLabel)}: ${esc(s.map)}</p></div>
+      <div class="ctl"><select data-k="${s.id}" data-t="sys"><option value="">—</option><option value="remove">not needed</option></select>
+        </div></div>
+    <p class="gone-note">Switched off as not needed, so its workflows and features are hidden and won't be sent. Switch it back on to bring it back.</p>
+    <div class="body">
+      ${mainBlock(s)}${s.subs.map((sb) => subBlock(sb, s)).join('')}
+      <h3>Features</h3>
+      <table><thead><tr><th>ID</th><th>Feature</th><th>Workflow steps</th><th>Your decision</th><th>Comment</th></tr></thead><tbody>${featRows(s)}</tbody></table>
+      <p class="hint" style="margin-top:.9rem">Features you need that are not listed (one per line, and say which step):</p>
+      <textarea class="req" data-newfeat="${s.id}" placeholder="e.g. Bin location lookup — step Storing"></textarea>
+      <div class="confirm"><div class="confirm-l"><b>Done with ${esc(s.name)}?</b><span class="hint">Anything you didn't change stays as written.</span>
+        <textarea data-c placeholder="Anything else about this system? e.g. call it Sales &amp; Billing (optional)"></textarea></div>
+        <select id="ok-${s.id}" data-k="ok:${s.id}" data-t="sysok" data-req="1"><option value=""></option><option value="ok">✓ I've reviewed this system</option></select></div>
+    </div></section>`;
+}
+
+function render() {
+  $('#systems').innerHTML = DATA.systems.map(systemHtml).join('');
+  const refs = DATA.systems.flatMap(sysRefs);
+  const subs = DATA.systems.reduce((n, s) => n + s.subs.length, 0);
+  const missing = DATA.systems.filter((s) => s.main?.missing).length;
+  const gaps = refs.filter((r) => !realCover(r).length).length;
+  $('#strip').innerHTML = `<div><b>${DATA.systems.length}</b><span>systems</span></div>
+    <div><b>${DATA.systems.length - missing} + ${subs}</b><span>main + sub workflows from your document</span></div>
+    <div class="${missing ? 'warn' : ''}"><b>${missing}</b><span>main workflows we had to suggest</span></div>
+    <div><b>${ALL_FEATS.length}</b><span>features</span></div>
+    <div class="${gaps ? 'warn' : ''}"><b>${gaps}</b><span>steps with no feature</span></div>`;
+}
+
+// ---- progress ----
+const isReq = (sel) => sel.dataset.req === '1';
+// a system marked "not needed" counts as one finished item; otherwise every
+// required answer plus the system's own confirm
+function counts(sec) {
+  if (sec.classList.contains('collapsed')) return { done: 1, total: 1, open: [] };
+  const req = [...sec.querySelectorAll('select[data-req]')];
+  return { done: req.filter((x) => x.value).length, total: req.length, open: req.filter((x) => !x.value) };
+}
+function nav() {
+  $('#nav').innerHTML = DATA.systems.map((s, i) => {
+    const sec = $(`#${s.id}`); const c = counts(sec);
+    const off = sec.classList.contains('collapsed') ? ' — not needed' : '';
+    return `<a href="#${s.id}" class="${c.done === c.total ? 'done' : ''}">${i + 1}. ${esc(s.name)}${off}<span class="n">${c.done}/${c.total}</span></a>`;
+  }).join('');
+  const all = [...document.querySelectorAll('section.system[id]')].map(counts);
+  const done = all.reduce((n, c) => n + c.done, 0); const total = all.reduce((n, c) => n + c.total, 0);
+  $('#fill').style.width = `${(done / total) * 100}%`;
+  $('#progress').textContent = `${done} of ${total} answers given · everything else is kept as written`;
+  const left = total - done;
+  $('#nextq').textContent = left ? `Next question ↓ (${left} left)` : 'All answered ✓';
+  $('#nextq').disabled = !left;
+}
+function decorate(sel) {
+  sel.classList.toggle('set', sel.value === 'keep' || sel.value === 'out');
+  sel.classList.toggle('chg', !!sel.value && !['keep', 'out'].includes(sel.value));
+  const rn = sel.closest('tr')?.querySelector('[data-rename]');
+  if (rn) { const on = sel.value === 'rename'; const was = rn.classList.contains('hide');
+    rn.classList.toggle('hide', !on); rn.previousElementSibling.classList.toggle('hide', on);
+    if (on && was && document.activeElement?.closest('.seg')) rn.focus(); }
+  syncSeg(sel);
+}
+function applyChoice(sel) { decorate(sel); if (sel.dataset.t === 'sys') sel.closest('section').classList.toggle('collapsed', sel.value === 'remove'); }
+
+// ---- reading answers ----
+function rowVal(tr) {
+  const sel = $('select', tr); const c = ($('[data-c]', tr)?.value || '').trim(); const rn = $('[data-rename]', tr);
+  let d = sel.value || (isReq(sel) ? 'not answered' : 'keep (default)');
+  if (d === 'rename') d = `rename → "${rn.value.trim() || '?'}"`;
+  if (d === 'out') d = 'out of scope'; if (d === 'missing') d = 'needs a feature';
+  return { d, c: c.replace(/\|/g, '/').replace(/\n/g, ' ') };
+}
+const linkVal = (id) => { const el = $(`[data-link="${id}"]`); return { d: $('select', el).value || 'not answered', c: $('[data-c]', el).value.trim() }; };
+const linkWord = (d) => ({ keep: 'correct', change: 'not right' }[d] || d);
+// The engineer's copy of each workflow is a mermaid block drawn from the same
+// data as the page, with the PO's decisions painted on: renamed steps read
+// "old → new", removed steps are struck, requested new steps ride along as
+// %% comments (free text, so the engineer places them).
+function paintedMermaid(sec, fl, s) {
+  const { code, map } = mermaidFor(fl, s);
+  let L = code.split('\n'); const rm = []; const rn = [];
+  const q = (t) => t.replace(/"/g, "'");
+  for (const [id, ref] of Object.entries(map)) {
+    const tr = sec.querySelector(`tr[data-step="${CSS.escape(ref)}"]`); const v = $('select', tr).value;
+    const at = L.indexOf(`  ${id}["${q(stepName(ref))}"]`);
+    if (v === 'rename') { L[at] = `  ${id}["${q(stepName(ref))} → ${q($('[data-rename]', tr).value.trim() || '?')}"]`; rn.push(id); }
+    if (v === 'remove') { L[at] = `  ${id}["✗ ${q(stepName(ref))}"]`; rm.push(id); }
+  }
+  L.push('  classDef rm fill:#b4232f22,stroke:#b4232f,stroke-width:2px,color:#b4232f', '  classDef rn stroke:#c8960c,stroke-width:3px');
+  if (rm.length) L.push(`  class ${rm.join(',')} rm`);
+  if (rn.length) L.push(`  class ${rn.join(',')} rn`);
+  lines($(`[data-addstep="${fl.id}"]`).value).forEach((l) => L.push(`  %% PO asked to add a step: ${l}`));
+  return L;
+}
+const LEGEND = 'Red dashed outline = no feature yet · ✗ red = asked to remove · amber = renamed';
+const mermaidMd = (sec, fl, s) => ['```mermaid', ...paintedMermaid(sec, fl, s), '```', `_${LEGEND}_`];
+
+// ---- the engineer's file: system → main workflow → sub-workflows → features ----
+function stepMd(out, sec, fl) {
+  out.push('', '| # | Step | Decision | Comment |', '|---|---|---|---|');
+  refsOf(fl).forEach((ref, n) => { const v = rowVal(sec.querySelector(`tr[data-step="${CSS.escape(ref)}"]`)); out.push(`| ${n + 1} | ${stepName(ref)} | ${v.d} | ${v.c} |`); });
+  lines($(`[data-addstep="${fl.id}"]`).value).forEach((l) => out.push(`| + | ${l} | add | |`));
+}
+function toMarkdown() {
+  const who = $('#reviewer').value.trim() || 'not given';
+  const out = [`# Scope review — ${DATA.project} — reviewed by ${who}, ${new Date().toISOString().slice(0, 10)}`, ''];
+  DATA.systems.forEach((s, i) => {
+    const sec = $(`#${s.id}`); const head = $('.sys-head', sec);
+    const sc = $('.confirm [data-c]', sec).value.trim(); const sv = $('select', head).value || (sc ? 'change' : 'keep (default)');
+    const okd = $(`#ok-${s.id}`).value ? 'reviewed' : 'NOT confirmed by reviewer';
+    if (sv === 'remove') { out.push(`## System ${i + 1}: ${s.name} — not needed${sc ? ` — ${sc}` : ''}`, ''); return; }
+    out.push(`## System ${i + 1}: ${s.name} — ${sv} — ${okd}${sc ? ` — ${sc}` : ''}`, '');
+    out.push(`### Main workflow: ${s.main.name}${s.main.missing ? ' (our suggestion — not in your document)' : ''}`);
+    if (s.main.missing) { const fv = linkVal(`flow-${s.main.id}`); out.push(`Workflow correct: ${linkWord(fv.d)}${fv.c ? ` — ${fv.c}` : ''}`); }
+    out.push(...mermaidMd(sec, s.main, s));
+    stepMd(out, sec, s.main);
+    s.subs.forEach((sb) => {
+      const lv = linkVal(sb.id);
+      out.push('', `### Sub-workflow: ${sb.name} — starts at ${stepName(sb.startsAt)}, rejoins ${DATA.systems.find((o) => o.id === sb.rejoins.system).name}${sb.rejoins.step ? ` at ${sb.rejoins.step}` : ' (step not stated)'}, ${sb.share}`,
+        `Start/rejoin points: ${linkWord(lv.d)}${lv.c ? ` — ${lv.c}` : ''}`, ...mermaidMd(sec, sb, s));
+      stepMd(out, sec, sb);
+    });
+    out.push('', '### Features', '| Feature | Steps | Decision | Comment |', '|---|---|---|---|');
+    s.features.forEach((f) => { const v = rowVal($(`tr[data-feat="${f.id}"]`, sec));
+      out.push(`| ${f.id} ${f.name} | ${f.steps.includes('*') ? 'all' : f.steps.map((r) => `${r.split(':')[0]}: ${stepName(r)}`).join('; ') || '—'} | ${v.d} | ${v.c} |`); });
+    const nf = lines($(`[data-newfeat="${s.id}"]`).value);
+    if (nf.length) out.push('', '### New features requested', ...nf.map((l) => `- ${l}`));
+    out.push('');
+  });
+  const ns = lines($('#newSystems').value);
+  out.push('## New systems requested', ...(ns.length ? ns.map((l) => `- ${l}`) : ['- none']), '');
+  return out.join('\n');
+}
+
+// ---- the PO's summary: every workflow, step and feature, with its decision ----
+const BADGE = { keep: ['keep', 'Keep'], out: ['keep', 'Out of scope'], rename: ['chg', 'Rename'], remove: ['chg', 'Remove'],
+  change: ['chg', 'Change'], missing: ['chg', 'Needs a feature'], dflt: ['dflt', 'Keep (no change)'], need: ['need', 'Needs your answer'] };
+const badge = (v, text) => { const b = BADGE[v] || BADGE.dflt; return `<span class="tag ${b[0]}">${esc(text || b[1])}</span>`; };
+const stateOf = (sel) => sel.value || (isReq(sel) ? 'need' : 'dflt');
+function sumRow(label, sel, extra, comment) {
+  const st = stateOf(sel);
+  return `<li class="${st === 'dflt' ? 'quietrow' : st === 'need' ? 'open' : ''}">${badge(st, extra)} <span>${label}</span>${comment ? `<div class="say">“${esc(comment)}”</div>` : ''}</li>`;
+}
+function linkRow(label, id) {
+  const lv = linkVal(id); const st = lv.d === 'not answered' ? 'need' : lv.d;
+  return `<div class="linkrow">${label}: ${badge(st, { keep: 'Correct', change: 'Not right' }[lv.d])}${lv.c ? ` <span class="say">“${esc(lv.c)}”</span>` : ''}</div>`;
+}
+function sumFlow(sec, fl, kind, s) {
+  const rows = refsOf(fl).map((ref) => {
+    const tr = sec.querySelector(`tr[data-step="${CSS.escape(ref)}"]`);
+    const sel = $('select', tr); const rn = $('[data-rename]', tr).value.trim();
+    return sumRow(esc(stepName(ref)), sel, sel.value === 'rename' ? `Rename → ${rn || '?'}` : '', $('[data-c]', tr).value.trim());
+  });
+  lines($(`[data-addstep="${fl.id}"]`).value).forEach((l) => rows.push(`<li>${badge('change', 'New step')} <span>${esc(l)}</span></li>`));
+  let head = `${kind} · ${esc(fl.name)}${fl.missing ? ' <span class="quiet">(our suggestion)</span>' : ''}`;
+  if (kind === 'Sub-workflow') head += linkRow('Start and rejoin points', fl.id);
+  if (fl.missing) head += linkRow('Is this workflow right', `flow-${fl.id}`);
+  // .sdiagram, not .flow: the page's hover/pin code only reads live .flow diagrams
+  return `<div class="sflow"><h5>${head}</h5><div class="sdiagram"><pre class="mermaid">${esc(paintedMermaid(sec, fl, s).join('\n'))}</pre></div>
+    <p class="quiet legend-s">${LEGEND}</p><ol>${rows.join('')}</ol></div>`;
+}
+function summaryHtml() {
+  let open = 0;
+  const parts = DATA.systems.map((s, i) => {
+    const sec = $(`#${s.id}`); const head = $('.sys-head', sec);
+    const sv = $('select', head).value; const sc = $('.confirm [data-c]', sec).value.trim();
+    const sysBadge = (sv === 'remove' ? badge('remove', 'Not needed') : sc ? badge('change', 'Change requested') : badge('dflt', 'Keep as described'))
+      + ($(`#ok-${s.id}`).value || sv === 'remove' ? ' <span class="tag keep">✓ Reviewed</span>' : ' <span class="tag need">Not confirmed yet</span>');
+    open += counts(sec).open.length;
+    const note = sc ? `<p class="say">“${esc(sc)}”</p>` : '';
+    if (sv === 'remove') return `<div class="ssys gone"><h4>System ${i + 1}: ${esc(s.name)} ${sysBadge}</h4>${note}<p class="quiet">Its workflows and features are left out.</p></div>`;
+    const flows = [sumFlow(sec, s.main, 'Main workflow', s), ...s.subs.map((sb) => sumFlow(sec, sb, 'Sub-workflow', s))].join('');
+    const feats = s.features.map((f) => { const tr = $(`tr[data-feat="${f.id}"]`, sec);
+      return sumRow(`<b>${f.id}</b> ${esc(f.name)}`, $('select', tr), '', $('[data-c]', tr).value.trim()); });
+    lines($(`[data-newfeat="${s.id}"]`).value).forEach((l) => feats.push(`<li>${badge('change', 'New feature')} <span>${esc(l)}</span></li>`));
+    return `<div class="ssys"><h4>System ${i + 1}: ${esc(s.name)} ${sysBadge}</h4>${note}${flows}
+      <div class="sflow"><h5>Features</h5><ol>${feats.join('')}</ol></div></div>`;
+  });
+  const ns = lines($('#newSystems').value);
+  if (ns.length) parts.push(`<div class="ssys"><h4>New systems you asked for</h4><ul>${ns.map((l) => `<li>${esc(l)}</li>`).join('')}</ul></div>`);
+  const who = $('#reviewer').value.trim();
+  const warn = [!who && 'Please add your name at the top.', open && `${open} answer${open > 1 ? 's are' : ' is'} still missing (marked “Needs your answer” or “Not confirmed yet”). Download unlocks once every question is answered. <button class="btn" type="button" id="goNext">Take me to the next one</button>`].filter(Boolean);
+  return `${warn.map((w) => `<div class="warnbox">${w}</div>`).join('')}<p class="quiet">Reviewed by ${esc(who || '—')}</p>${parts.join('')}`;
+}
+
+// ---- remember answers across reloads (this browser only) ----
+const STORE = `scope-review:${DATA.project}:v4`;
+function keyOf(el) {
+  if (el.id) return `#${el.id}`;
+  for (const a of ['addstep', 'newfeat']) if (el.dataset[a]) return `${a}:${el.dataset[a]}`;
+  const link = el.closest('[data-link]'); const tr = el.closest('tr');
+  const owner = link ? `link:${link.dataset.link}` : tr?.dataset.step ? `step:${tr.dataset.step}` : tr?.dataset.feat ? `feat:${tr.dataset.feat}` : `sys:${el.closest('section').id}`;
+  return `${owner}:${el.matches('select') ? 'd' : el.matches('[data-rename]') ? 'rn' : 'c'}`;
+}
+const fields = () => [...document.querySelectorAll('input, select, textarea')];
+function save() {
+  const v = {}; fields().forEach((el) => { if (el.value) v[keyOf(el)] = el.value; });
+  try { localStorage.setItem(STORE, JSON.stringify(v)); $('#saved').textContent = `Saved in this browser at ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`; }
+  catch { $('#saved').textContent = 'This browser cannot save; download before closing.'; }
+}
+function restore() {
+  let v = {}; try { v = JSON.parse(localStorage.getItem(STORE) || '{}'); } catch { /* private window: start empty */ }
+  fields().forEach((el) => { const k = keyOf(el); if (k in v) el.value = v[k]; });
+}
+
+// ---- hover: diagram box ↔ step row ↔ feature light up together ----
+function highlight(_sec, refs, feats) {
+  const sec = document; // refs and feature ids are unique page-wide, so links reach other systems
+  sec.querySelectorAll('tr[data-step]').forEach((tr) => tr.classList.toggle('hl', refs.has(tr.dataset.step)));
+  sec.querySelectorAll('tr[data-feat]').forEach((tr) => tr.classList.toggle('hl', feats.has(tr.dataset.feat)));
+  sec.querySelectorAll('.chip[data-f]').forEach((c) => c.classList.toggle('hl', feats.has(c.dataset.f)));
+  sec.querySelectorAll('.flow').forEach((fl) => { const map = JSON.parse(fl.dataset.map);
+    fl.querySelectorAll('g.node').forEach((g) => g.classList.toggle('hl', refs.has(map[(g.id.match(/flowchart-(n\d+)-/) || [])[1]]))); });
+}
+const fromStep = (ref) => [new Set([ref]), new Set(realCover(ref).map((f) => f.id))];
+const fromFeat = (sys, fid) => { const f = ALL_FEATS.find((x) => x.id === fid); return [new Set(f.steps.includes('*') ? sysRefs(sys) : f.steps), new Set([fid])]; };
+const clearHl = () => document.querySelectorAll('.hl').forEach((x) => x.classList.remove('hl'));
+
+// ---- click-only decision buttons ----
+// Each <select> stays in the DOM (hidden) as the value holder, so saving,
+// the summary and the feedback file read it unchanged; the buttons only set
+// it. A hidden select cannot be nudged by a mouse wheel. Clicking the active
+// button again clears the decision.
+const OKISH = ['keep', 'out', 'ok'];
+// system-level controls are on/off switches; `on` reads the hidden select, `flip` writes it
+const SWITCH = {
+  sys: { label: 'Include this system', on: (v) => v !== 'remove', flip: (v) => (v === 'remove' ? '' : 'remove') },
+  sysok: { label: "I've reviewed this system", on: (v) => v === 'ok', flip: (v) => (v === 'ok' ? '' : 'ok') },
+};
+function segmentize() {
+  document.querySelectorAll('#systems select').forEach((sel) => {
+    if (SWITCH[sel.dataset.t]) {
+      sel.insertAdjacentHTML('afterend', `<div class="seg sw"><button type="button" role="switch" class="switch sw-${sel.dataset.t}" aria-checked="false"><span class="knob"></span><span class="swl">${SWITCH[sel.dataset.t].label}</span></button></div>`);
+      sel.classList.add('hide'); return;
+    }
+    const b = (o) => `<button type="button" data-v="${esc(o.value)}" aria-pressed="false">${esc(o.textContent)}</button>`;
+    const need = isReq(sel) && sel.dataset.t !== 'sysok' ? '<span class="need">needs your answer</span>' : '';
+    sel.insertAdjacentHTML('afterend', `<div class="seg" role="group">${[...sel.options].filter((o) => o.value).map(b).join('')}${need}</div>`);
+    sel.classList.add('hide');
+  });
+}
+function syncSeg(sel) {
+  const seg = sel.nextElementSibling; if (!seg?.classList.contains('seg')) return;
+  if (seg.classList.contains('sw')) { $('.switch', seg).setAttribute('aria-checked', String(SWITCH[sel.dataset.t].on(sel.value))); return; }
+  seg.querySelectorAll('button[data-v]').forEach((x) => {
+    const on = x.dataset.v === sel.value;
+    x.setAttribute('aria-pressed', String(on));
+    x.classList.toggle('ok', on && OKISH.includes(x.dataset.v)); x.classList.toggle('chg', on && !OKISH.includes(x.dataset.v));
+    x.classList.toggle('dflt', !sel.value && !isReq(sel) && x.dataset.v === 'keep');
+  });
+  $('.need', seg)?.classList.toggle('hide', !!sel.value);
+}
+document.addEventListener('click', (e) => {
+  const sw = e.target.closest('.seg.sw .switch');
+  if (sw) { const sel = sw.closest('.seg').previousElementSibling; sel.value = SWITCH[sel.dataset.t].flip(sel.value); sel.dispatchEvent(new Event('change', { bubbles: true })); return; }
+  const btn = e.target.closest('.seg button[data-v]'); if (!btn) return;
+  const sel = btn.closest('.seg').previousElementSibling;
+  sel.value = sel.value === btn.dataset.v ? '' : btn.dataset.v;
+  sel.dispatchEvent(new Event('change', { bubbles: true }));
+});
+
+// ---- jump to the next unanswered required item, in reading order ----
+// "next" is the first open item after the last one we jumped to, in page
+// order, wrapping to the top; the first press starts from the screen's middle.
+// Page order (not scroll position) keeps repeated presses walking forward even
+// while a smooth scroll is still running.
+const openItems = () => [...document.querySelectorAll('section.system[id]')].flatMap((sec) => counts(sec).open)
+  .map((sel) => sel.closest('tr, .linkctl, .confirm'));
+let lastQ = null;
+function nextQuestion() {
+  const items = openItems(); if (!items.length) return;
+  const after = lastQ?.isConnected ? items.find((x) => lastQ.compareDocumentPosition(x) & Node.DOCUMENT_POSITION_FOLLOWING)
+    : items.find((x) => x.getBoundingClientRect().top > innerHeight / 2);
+  const el = after || items[0]; lastQ = el;
+  el.scrollIntoView({ block: 'center', behavior: 'smooth' });
+  el.classList.remove('flash'); void el.offsetWidth; el.classList.add('flash');
+  $('button', el.querySelector('.seg'))?.focus({ preventScroll: true });
+}
+$('#nextq').onclick = nextQuestion;
+document.addEventListener('keydown', (e) => { if (e.key === 'n' && !e.target.closest('input, textarea, select') && !pin) nextQuestion(); });
+
+// ---- wiring ----
+render(); segmentize(); restore();
+document.querySelectorAll('#systems select').forEach(applyChoice);
+document.addEventListener('change', (e) => { if (e.target.matches('select')) { applyChoice(e.target); nav(); } save(); });
+document.addEventListener('input', save);
+// hover previews; a click PINS the highlight so it survives scrolling, and
+// the pin bar steps through every lit part (diagram box, step row, feature)
+let pin = null;
+function hitAt(target) {
+  const sec = target.closest('section.system[id]'); if (!sec) return null;
+  if (target.closest('select, textarea, input, button, .linkctl')) return null;
+  const sys = DATA.systems.find((s) => s.id === sec.id);
+  const node = target.closest('.flow g.node'); const step = target.closest('tr[data-step]');
+  const fid = target.closest('tr[data-feat]')?.dataset.feat || target.closest('.chip[data-f]')?.dataset.f;
+  if (node) { const ref = JSON.parse(node.closest('.flow').dataset.map)[(node.id.match(/flowchart-(n\d+)-/) || [])[1]];
+    return ref ? { sec, hit: fromStep(ref), label: `Step “${stepName(ref)}”` } : null; }
+  if (fid) return { sec, hit: fromFeat(sys, fid), label: `${fid} ${ALL_FEATS.find((f) => f.id === fid).name}` };
+  if (step) return { sec, hit: fromStep(step.dataset.step), label: `Step “${stepName(step.dataset.step)}”` };
+  return null;
+}
+// only what is on screen: skip parts inside a collapsed system or a hidden section
+const onScreen = (x) => !x.closest('.hide, details:not([open])') && x.getClientRects().length > 0;
+const litParts = () => [...document.querySelectorAll('.flow g.node.hl, tr.hl')].filter(onScreen);
+function showPin() {
+  const n = litParts(); const f = pin.hit[1].size; const s = pin.hit[0].size;
+  $('#pinLabel').textContent = pin.label;
+  $('#pinCount').textContent = `${s} step${s === 1 ? '' : 's'} · ${f} feature${f === 1 ? '' : 's'} · ${pin.i + 1}/${n.length}`;
+  $('#pinbar').classList.remove('hide');
+}
+function jump(d) {
+  const n = litParts(); if (!n.length) return;
+  pin.i = (pin.i + d + n.length) % n.length;
+  n.forEach((x) => x.classList.remove('cur')); n[pin.i].classList.add('cur');
+  n[pin.i].scrollIntoView({ block: 'center', behavior: 'smooth' }); showPin();
+}
+function unpin() { pin = null; clearHl(); document.querySelectorAll('.cur').forEach((x) => x.classList.remove('cur')); $('#pinbar').classList.add('hide'); }
+document.addEventListener('mouseover', (e) => {
+  if (pin) return; const h = hitAt(e.target);
+  if (h) highlight(h.sec, ...h.hit); else clearHl();
+});
+document.addEventListener('click', (e) => {
+  if (e.target.closest('#pinbar')) return;
+  const h = hitAt(e.target); if (!h) return;
+  if (pin && pin.label === h.label) { unpin(); return; }
+  pin = { ...h, i: -1 }; clearHl(); highlight(h.sec, ...h.hit); showPin();
+});
+document.addEventListener('keydown', (e) => {
+  if (!pin || e.target.closest('select, textarea, input')) return;
+  if (e.key === 'Escape') unpin(); else if (e.key === 'j' || e.key === 'ArrowDown' && e.altKey) jump(1); else if (e.key === 'k') jump(-1);
+});
+$('#pinNext').onclick = () => jump(1); $('#pinPrev').onclick = () => jump(-1); $('#pinClear').onclick = unpin;
+// download stays locked until every required answer is in
+const missing = () => [...document.querySelectorAll('section.system[id]')].reduce((n, sec) => n + counts(sec).open.length, 0);
+$('#preview').onclick = async () => {
+  $('#sum').innerHTML = summaryHtml(); $('#dlg').showModal();
+  const left = missing(); $('#download2').disabled = left > 0;
+  $('#download2').title = left ? `Answer the ${left} remaining question${left > 1 ? 's' : ''} first` : '';
+  $('#goNext')?.addEventListener('click', () => { $('#dlg').close(); nextQuestion(); });
+  try { if (!mermaid) await draw(); await mermaid.run({ nodes: [...document.querySelectorAll('#sum pre.mermaid')] }); }
+  catch { document.querySelectorAll('#sum .sdiagram').forEach((d) => d.insertAdjacentHTML('beforeend', '<p class="fallback">Diagram needs a connection in this mockup.</p>')); }
+};
+let armed = false;
+$('#reset').onclick = () => {
+  if (!armed) { armed = true; $('#reset').textContent = 'Click again to clear everything'; setTimeout(() => { armed = false; $('#reset').textContent = 'Start over'; }, 4000); return; }
+  try { localStorage.removeItem(STORE); } catch { /* nothing saved */ }
+  location.reload();
+};
+const download = () => {
+  if (missing()) return;
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([toMarkdown()], { type: 'text/markdown' }));
+  a.download = `${DATA.project.toLowerCase().replace(/\s+/g, '-')}-scope-review.md`; a.click();
+};
+$('#download2').onclick = download;
+
+// theme + diagrams (mockup loads mermaid from CDN; the real page inlines the skill's bundle)
+const dark = () => document.documentElement.dataset.theme === 'dark'
+  || (!document.documentElement.dataset.theme && matchMedia('(prefers-color-scheme: dark)').matches);
+const src = [...document.querySelectorAll('#systems pre.mermaid')].map((p) => p.textContent);
+let mermaid;
+async function draw() {
+  try {
+    mermaid ??= (await import('https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs')).default;
+    const t = (v) => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+    mermaid.initialize({ startOnLoad: false, theme: 'base', flowchart: { curve: 'basis', padding: 12 },
+      themeVariables: { fontFamily: 'system-ui,-apple-system,"Segoe UI",Roboto,sans-serif', fontSize: '13px',
+        background: t('--paper'), primaryColor: t('--sheet'), primaryTextColor: t('--ink'), primaryBorderColor: t('--meter'),
+        lineColor: t('--ink-dim'), secondaryColor: t('--sheet'), tertiaryColor: t('--paper'),
+        edgeLabelBackground: t('--paper'), textColor: t('--ink') } });
+    const pres = [...document.querySelectorAll('#systems pre.mermaid')];
+    pres.forEach((p, i) => { p.removeAttribute('data-processed'); p.textContent = src[i]; });
+    await mermaid.run({ nodes: pres });
+    if (pin) highlight(null, ...pin.hit); // redraw makes new boxes; re-light a pinned selection
+  } catch { document.querySelectorAll('.flow').forEach((f) => f.insertAdjacentHTML('beforeend', '<p class="fallback">Diagram needs a connection in this mockup.</p>')); }
+}
+$('#theme').onclick = () => { document.documentElement.dataset.theme = dark() ? 'light' : 'dark'; $('#theme').textContent = dark() ? 'Light' : 'Dark'; draw(); };
+$('#theme').textContent = dark() ? 'Light' : 'Dark';
+draw(); nav();
+</script>
+</body>
+</html>

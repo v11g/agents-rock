@@ -1,0 +1,49 @@
+/* long-reading comfort: bigger type, wider leading, shorter lines, calmer contrast */
+body { font-size:1rem; line-height:1.65; }
+.page { max-width:76rem; }
+h1 { font-size:2.35rem; line-height:1.15; }
+h2, section.card h2, section.system h2 { font-size:1.65rem; line-height:1.25; }
+.sub { font-size:.9rem; }
+.lead, .sec-lead, p.quiet { font-size:.98rem; line-height:1.7; max-width:68ch; }
+.does, .fdoes, .demo, .anchor, .why, .meta, .spine-note, .bhead .hint { font-size:.9rem; line-height:1.6; }
+section.card, section.system { padding:1.9rem 2.1rem; margin-bottom:2.2rem; }
+.eyebrow, section.card h3, th, .bhead, .flabel { font-size:.76rem !important; letter-spacing:.06em; }
+table.bd, table.caps, table.kv, details.tasks table, .sum table { font-size:.92rem; line-height:1.55; }
+table.bd td, table.caps td, table.kv td, details.tasks td { padding-top:.55rem; padding-bottom:.55rem; }
+.chip { font-size:.78rem; padding:.05rem .5rem; }
+.twocol li { font-size:.96rem; line-height:1.65; margin:.4rem 0; }
+.headline span { font-size:.84rem; }
+.m .demo { font-size:.92rem; }
+.feat { padding-top:1.6rem; padding-bottom:1.7rem; }
+.rail h3 { font-size:1.25rem; margin-bottom:.25rem; }
+.rail .does { font-size:.92rem; line-height:1.6; } .rail .id { font-size:.8rem; }
+.cap { font-size:.84rem; }
+@media (prefers-color-scheme:dark) { :root:not([data-theme="light"]) { --ink:#dbe2e8; --ink-dim:#a3b2be; } }
+:root[data-theme="dark"] { --ink:#dbe2e8; --ink-dim:#a3b2be; }
+.sys .meta, .sys .eyebrow { font-size:.82rem !important; line-height:1.5; }
+body.client .headline { grid-template-columns:1.4fr 1fr; }
+/* every page: tables, strips, nav chips, hints and small notes */
+table td { font-size:.92rem; line-height:1.55; }
+.strip span, .legend, .pin-hint, small, nav.sys a, nav.toc a, p.map, .hint, .gone-note, .gapnote, .saved, .pin-txt small, .zones, label { font-size:.85rem; line-height:1.5; }
+.pick button, .seg button, .view button, .btn { font-size:.84rem; }
+textarea, input, select { font-size:.92rem; }
+.flow-name { font-size:.84rem; } .cap .csys { font-size:.76rem; } .cap .cid { font-size:.78rem; } .flagchip { font-size:.78rem; }
+
+/* how to read: the System → Feature → Block chain at the top of every page */
+.howto { margin:0 0 1.4rem; padding:.85rem 1rem .8rem; border:1px solid var(--rule); border-radius:.35rem; background:var(--sheet); max-width:60rem; }
+.howto-t { display:block; font-size:.74rem; font-weight:700; letter-spacing:.07em; text-transform:uppercase; color:var(--ink-dim); margin-bottom:.55rem; }
+.howto-chain { display:flex; flex-wrap:wrap; align-items:stretch; gap:.45rem; }
+.howto-chain > span { flex:1 1 12rem; display:flex; flex-direction:column; gap:.1rem; padding:.5rem .7rem; border:1px solid var(--grid); border-radius:.3rem; background:var(--paper); font-size:.9rem; line-height:1.4; }
+.howto-chain > span b { font-family:var(--serif); font-size:1.05rem; }
+.howto-chain small { font-size:.8rem; color:var(--ink-dim); }
+.howto-chain > i { align-self:center; font-style:normal; color:var(--ink-dim); }
+.howto-rule { margin:.6rem 0 0; font-size:.9rem; color:var(--ink-dim); max-width:68ch; }
+.howto-rule b { color:var(--ink); }
+.howto-page { display:block; margin-top:.25rem; color:var(--ink); }
+@media (max-width:640px) { .howto-chain > i { display:none; } }
+
+/* native dropdowns follow the theme: dark popups in dark mode, readable option text */
+:root { color-scheme:light; }
+@media (prefers-color-scheme:dark) { :root:not([data-theme="light"]) { color-scheme:dark; } }
+:root[data-theme="dark"] { color-scheme:dark; }
+select option, select optgroup { background:var(--sheet); color:var(--ink); }

@@ -1,0 +1,113 @@
+* { box-sizing:border-box; }
+body { margin:0; padding:2rem 1.25rem 5rem; background:var(--paper); color:var(--ink); font-family:var(--sans); }
+.doc { max-width:52rem; margin:0 auto; }
+.mock { background:var(--mark); color:#fff; font-size:.72rem; font-weight:600; letter-spacing:.04em; padding:.2rem .6rem; display:inline-block; border-radius:.2rem; margin-bottom:1rem; }
+.head { display:flex; justify-content:space-between; gap:1rem; align-items:flex-start; }
+.btn { font:inherit; font-size:.84rem; color:var(--ink); background:var(--sheet); border:1px solid var(--rule); border-radius:.25rem; padding:.3rem .7rem; cursor:pointer; }
+h1 { font-family:var(--serif); font-size:2.1rem; font-weight:600; letter-spacing:-.015em; line-height:1.2; margin:0 0 .4rem; }
+.byline { color:var(--ink-dim); font-size:.92rem; margin:0 0 1.6rem; }
+h2 { font-family:var(--serif); font-size:1.45rem; font-weight:600; margin:2.6rem 0 .7rem; padding-top:1.2rem; border-top:1px solid var(--rule); scroll-margin-top:1rem; }
+h2 .sysno { color:var(--ink-dim); font-weight:500; }
+p { margin:0 0 .9rem; max-width:68ch; }
+table.t { width:100%; border-collapse:collapse; margin:.6rem 0 1.2rem; background:var(--sheet); border:1px solid var(--rule); }
+table.t th { text-align:left; font-size:.76rem; letter-spacing:.06em; text-transform:uppercase; color:var(--ink-dim); padding:.55rem .75rem; border-bottom:1px solid var(--rule); background:var(--paper); }
+table.t td { padding:.6rem .75rem; border-bottom:1px solid var(--grid); vertical-align:top; font-size:.92rem; }
+table.t td:first-child { width:34%; font-weight:600; }
+table.t .fid { color:var(--ink-dim); font-weight:500; font-size:.8rem; margin-right:.35rem; font-variant-numeric:tabular-nums; }
+.flow-name { font-size:.84rem; font-weight:700; color:var(--ink-dim); margin:1rem 0 .3rem; }
+.flow { background:var(--sheet); border:1px solid var(--rule); border-radius:.3rem; padding:.6rem; overflow-x:auto; }
+.flow pre.mermaid { margin:0; background:none; color:var(--ink-dim); font-size:.8rem; white-space:pre; }
+ul.reg { margin:.3rem 0 1rem; padding-left:1.2rem; max-width:68ch; } ul.reg li { margin:.3rem 0; }
+h3 { font-size:.8rem; letter-spacing:.07em; text-transform:uppercase; color:var(--ink-dim); margin:1.3rem 0 .3rem; }
+.price { display:flex; flex-wrap:wrap; gap:1rem; margin:.8rem 0 1rem; }
+.price > div { flex:1 1 14rem; background:var(--sheet); border:1px solid var(--rule); border-radius:.3rem; padding:.8rem 1rem; }
+.price span { display:block; font-size:.8rem; color:var(--ink-dim); }
+.price b { display:block; font-family:var(--serif); font-size:1.6rem; font-weight:600; margin:.15rem 0; font-variant-numeric:tabular-nums; }
+.toc { display:flex; flex-wrap:wrap; gap:.3rem .9rem; font-size:.88rem; margin:0 0 1.2rem; }
+.toc a, .link { color:var(--ink); text-underline-offset:2px; }
+</style>
+</head>
+<body>
+<article class="doc">
+  <span class="mock">MOCKUP — proposal built from the same data as the estimate pages</span>
+  <div class="head"><h1 id="title"></h1><button class="btn" id="theme" type="button">Dark</button></div>
+  <p class="byline" id="byline"></p>
+  <div class="howto"><b class="howto-t">How to read this proposal</b>
+    <div class="howto-chain"><span><b>System</b>a part of the business<small>e.g. Warehouse Mgmt System</small></span><i>→</i><span><b>Workflow</b>the steps work moves through<small>e.g. Order In → Pack → Pack Review</small></span><i>→</i><span><b>Feature</b>something you asked for, on the steps it serves<small>e.g. F04 Order intake &amp; quotation entry</small></span></div>
+    <p class="howto-rule">Each system below shows its workflows, then the features that serve them. Milestones group the features into deliveries; the cost estimate prices every feature in this document.</p></div>
+  <nav class="toc" id="toc"></nav>
+  <section id="scope"></section>
+  <div id="systems"></div>
+  <section id="milestones"></section>
+  <section id="register"></section>
+  <section id="cost"></section>
+</article>
+<script type="module">
+/*DATA*/
+/*ENG*/
+/*ROLLUP*/
+// ---- the proposal: the client's view of the same scope, milestones, register and price ----
+const DOC = { title: `${DATA.project} Digital Transformation — Systems & Workflows Proposal`, date: 'Oct 1, 2026', by: 'Code Engine Studio' };
+const short = (n) => n.split(' (')[0];
+const list = (xs) => (xs.length > 1 ? `${xs.slice(0, -1).join(', ')} and ${xs[xs.length - 1]}` : xs[0]);
+function flowCode(fl) {
+  const ids = new Map(); const id = (n) => { if (!ids.has(n)) ids.set(n, `n${ids.size}`); return ids.get(n); };
+  const L = ['flowchart LR'];
+  fl.steps.forEach((st, i) => { if (i) L.push(`  ${id(fl.steps[i - 1])} --> ${id(st)}`); });
+  fl.branches.forEach((b) => L.push(`  ${id(b.from)} -.-> ${id(b.to)}`));
+  for (const [n, i] of ids) L.push(`  ${i}["${n.replace(/"/g, "'")}"]`);
+  return L.join('\n');
+}
+const flows = (s) => [s.main, ...s.subs].filter(Boolean);
+function scope() {
+  const names = DATA.systems.map((s) => short(s.name));
+  return `<h2>Scope: what this proposal covers</h2>
+    <p>This proposal covers ${DATA.systems.length} systems for Phase 1: ${list(names)}. Each is described below by its workflows and the features that serve them.</p>
+    <table class="t"><tr><th>Code Engine Studio system</th><th>${esc(DATA.mapLabel)}</th></tr>${DATA.systems.map((s) => `<tr><td>${esc(s.name)}</td><td>${esc(s.map)}</td></tr>`).join('')}</table>
+    <p>What is out of scope, and the rules settled in a discovery phase at kickoff, are listed under <a class="link" href="#register">Assumptions &amp; exclusions</a>.</p>`;
+}
+function system(s, i) {
+  const diagrams = flows(s).map((fl) => `<p class="flow-name">${fl === s.main ? 'Main workflow' : 'Sub-workflow'} · ${esc(fl.name)}</p><div class="flow"><pre class="mermaid">${esc(flowCode(fl))}</pre></div>`).join('');
+  return `<section id="sys-${s.id}"><h2><span class="sysno">System ${i + 1}:</span> ${esc(s.name)}</h2><p>${esc(s.purpose)}</p>${diagrams}
+    <table class="t"><tr><th>Feature</th><th>What it does</th></tr>${s.features.map((f) => `<tr><td><span class="fid">${f.id}</span>${esc(f.name)}</td><td>${esc(f.does)}</td></tr>`).join('')}</table></section>`;
+}
+function milestones() {
+  const rows = MS_ORDER.map((ms, i) => { const caps = CAP_LIST.filter((c) => capMilestone(c.id) === ms);
+    return `<tr><td>${esc(ms.replace(/^M\d - /, `${i + 1}. `))}</td><td>${esc(caps.map((c) => c.name).join(', '))}</td><td>${esc(MS_TEXT[ms] || '')}</td></tr>`; }).join('');
+  return `<h2>Milestones</h2><p>The ${CAP_LIST.length} features sequence into ${MS_ORDER.length} milestones; each one ends with something working you can see.</p>
+    <table class="t"><tr><th>Milestone</th><th>Includes</th><th>What it demonstrates</th></tr>${rows}</table>`;
+}
+const register = () => `<h2>Assumptions &amp; exclusions</h2><p>These are the same lines as the companion estimate, word for word, so the price and the scope never drift apart.</p>
+  <h3>Assumptions</h3><ul class="reg">${ASSUME.map((a) => `<li>${esc(a)}</li>`).join('')}</ul>
+  <h3>Exclusions</h3><ul class="reg">${EXCLUDE.map((a) => `<li>${esc(a)}</li>`).join('')}</ul>`;
+const cost = () => `<h2>Cost estimate</h2><p>The companion estimate scores the work behind all ${CAP_LIST.length} features above and rolls it up into a project range, including design, testing, project management and contingency.</p>
+  <div class="price"><div><span>Range</span><b>${money(present.low)} – ${money(present.high)}</b><span>expected cost to worst realistic case, USD</span></div>
+    <div><span>If one fixed number is needed</span><b>${money(present.single)}</b><span>confident figure: 80% chance the project comes in at or under</span></div></div>`;
+$("#title").textContent = DOC.title; document.title = `${DATA.project} — proposal`;
+$('#byline').textContent = `${DOC.date} · ${DOC.by}`;
+$('#scope').innerHTML = scope();
+$('#systems').innerHTML = DATA.systems.map(system).join('');
+$('#milestones').innerHTML = milestones(); $('#register').innerHTML = register(); $('#cost').innerHTML = cost();
+$('#toc').innerHTML = [['scope', 'Scope'], ...DATA.systems.map((s, i) => [`sys-${s.id}`, `System ${i + 1}`]), ['milestones', 'Milestones'], ['register', 'Assumptions & exclusions'], ['cost', 'Cost']]
+  .map(([id, l]) => `<a href="#${id}">${esc(l)}</a>`).join('');
+// ---- theme + diagrams (mockup loads mermaid from a CDN) ----
+const dark = () => document.documentElement.dataset.theme === 'dark' || (!document.documentElement.dataset.theme && matchMedia('(prefers-color-scheme: dark)').matches);
+const src = [...document.querySelectorAll('pre.mermaid')].map((p) => p.textContent);
+let mermaid;
+async function draw() {
+  try {
+    mermaid ??= (await import('https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs')).default;
+    const t = (v) => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+    mermaid.initialize({ startOnLoad: false, theme: 'base', flowchart: { curve: 'basis', padding: 10 }, themeVariables: { fontFamily: 'system-ui,sans-serif', fontSize: '13px',
+      background: t('--sheet'), primaryColor: t('--sheet'), primaryTextColor: t('--ink'), primaryBorderColor: t('--meter'), lineColor: t('--ink-dim'), textColor: t('--ink') } });
+    const pres = [...document.querySelectorAll('pre.mermaid')];
+    pres.forEach((p, i) => { p.removeAttribute('data-processed'); p.textContent = src[i]; });
+    await mermaid.run({ nodes: pres });
+  } catch { /* diagrams need a connection in this mockup; the step list stays readable */ }
+}
+$('#theme').onclick = () => { document.documentElement.dataset.theme = dark() ? 'light' : 'dark'; $('#theme').textContent = dark() ? 'Light' : 'Dark'; draw(); };
+$('#theme').textContent = dark() ? 'Light' : 'Dark';
+draw();
+</script>
+</body>
+</html>

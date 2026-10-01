@@ -1,0 +1,365 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sin Kowa — proposal</title>
+<style>
+:root {
+  color-scheme:light;
+  --paper:#e8ecef; --sheet:#fbfcfd; --ink:#141c24; --ink-dim:#5d6c78;
+  --rule:#d3dbe1; --grid:#edf1f4; --meter:#44586a; --mark:#b4232f; --mark-soft:#b4232f14;
+  --ok:#2f6b4a; --ok-soft:#2f6b4a14; --hi:#fbf1cf; --hi-line:#c8960c;
+  --c1:#44586a; --c2:#7d96ab; --c3:#a9bccb; --c4:#cdd8e1;
+  --t-s:#dfe6ec; --t-s-ink:#4a5a68; --t-m:#c3d2df; --t-m-ink:#2b3d4c; --t-l:#7d96ab; --t-l-ink:#fff; --t-xl:#2f4a60; --t-xl-ink:#fff;
+  --serif:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,"Liberation Serif",serif;
+  --sans:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+}
+@media (prefers-color-scheme:dark) { :root:not([data-theme="light"]) {
+  color-scheme:dark; --paper:#11171c; --sheet:#1a2229; --ink:#e6ecf1; --ink-dim:#93a3b0;
+  --rule:#2c3740; --grid:#222c34; --meter:#8fa8bb; --mark:#e26c60; --mark-soft:#e26c6021;
+  --ok:#7cc39a; --ok-soft:#7cc39a1c; --hi:#3b3519; --hi-line:#d9a92a;
+  --c1:#bacdda; --c2:#8fa8bb; --c3:#5f7688; --c4:#3a4a57;
+  --t-s:#263039; --t-s-ink:#9fb0bd; --t-m:#3a4a57; --t-m-ink:#d3dfe8; --t-l:#7d96ab; --t-l-ink:#0f161b; --t-xl:#bacdda; --t-xl-ink:#0f161b; } }
+:root[data-theme="dark"] {
+  color-scheme:dark; --paper:#11171c; --sheet:#1a2229; --ink:#e6ecf1; --ink-dim:#93a3b0;
+  --rule:#2c3740; --grid:#222c34; --meter:#8fa8bb; --mark:#e26c60; --mark-soft:#e26c6021;
+  --ok:#7cc39a; --ok-soft:#7cc39a1c; --hi:#3b3519; --hi-line:#d9a92a;
+  --c1:#bacdda; --c2:#8fa8bb; --c3:#5f7688; --c4:#3a4a57;
+  --t-s:#263039; --t-s-ink:#9fb0bd; --t-m:#3a4a57; --t-m-ink:#d3dfe8; --t-l:#7d96ab; --t-l-ink:#0f161b; --t-xl:#bacdda; --t-xl-ink:#0f161b; }
+* { box-sizing:border-box; }
+body { margin:0; padding:2rem 1.25rem 5rem; background:var(--paper); color:var(--ink); font-family:var(--sans); }
+.doc { max-width:52rem; margin:0 auto; }
+.mock { background:var(--mark); color:#fff; font-size:.72rem; font-weight:600; letter-spacing:.04em; padding:.2rem .6rem; display:inline-block; border-radius:.2rem; margin-bottom:1rem; }
+.head { display:flex; justify-content:space-between; gap:1rem; align-items:flex-start; }
+.btn { font:inherit; font-size:.84rem; color:var(--ink); background:var(--sheet); border:1px solid var(--rule); border-radius:.25rem; padding:.3rem .7rem; cursor:pointer; }
+h1 { font-family:var(--serif); font-size:2.1rem; font-weight:600; letter-spacing:-.015em; line-height:1.2; margin:0 0 .4rem; }
+.byline { color:var(--ink-dim); font-size:.92rem; margin:0 0 1.6rem; }
+h2 { font-family:var(--serif); font-size:1.45rem; font-weight:600; margin:2.6rem 0 .7rem; padding-top:1.2rem; border-top:1px solid var(--rule); scroll-margin-top:1rem; }
+h2 .sysno { color:var(--ink-dim); font-weight:500; }
+p { margin:0 0 .9rem; max-width:68ch; }
+table.t { width:100%; border-collapse:collapse; margin:.6rem 0 1.2rem; background:var(--sheet); border:1px solid var(--rule); }
+table.t th { text-align:left; font-size:.76rem; letter-spacing:.06em; text-transform:uppercase; color:var(--ink-dim); padding:.55rem .75rem; border-bottom:1px solid var(--rule); background:var(--paper); }
+table.t td { padding:.6rem .75rem; border-bottom:1px solid var(--grid); vertical-align:top; font-size:.92rem; }
+table.t td:first-child { width:34%; font-weight:600; }
+table.t .fid { color:var(--ink-dim); font-weight:500; font-size:.8rem; margin-right:.35rem; font-variant-numeric:tabular-nums; }
+.flow-name { font-size:.84rem; font-weight:700; color:var(--ink-dim); margin:1rem 0 .3rem; }
+.flow { background:var(--sheet); border:1px solid var(--rule); border-radius:.3rem; padding:.6rem; overflow-x:auto; }
+.flow pre.mermaid { margin:0; background:none; color:var(--ink-dim); font-size:.8rem; white-space:pre; }
+ul.reg { margin:.3rem 0 1rem; padding-left:1.2rem; max-width:68ch; } ul.reg li { margin:.3rem 0; }
+h3 { font-size:.8rem; letter-spacing:.07em; text-transform:uppercase; color:var(--ink-dim); margin:1.3rem 0 .3rem; }
+.price { display:flex; flex-wrap:wrap; gap:1rem; margin:.8rem 0 1rem; }
+.price > div { flex:1 1 14rem; background:var(--sheet); border:1px solid var(--rule); border-radius:.3rem; padding:.8rem 1rem; }
+.price span { display:block; font-size:.8rem; color:var(--ink-dim); }
+.price b { display:block; font-family:var(--serif); font-size:1.6rem; font-weight:600; margin:.15rem 0; font-variant-numeric:tabular-nums; }
+.toc { display:flex; flex-wrap:wrap; gap:.3rem .9rem; font-size:.88rem; margin:0 0 1.2rem; }
+.toc a, .link { color:var(--ink); text-underline-offset:2px; }
+/* long-reading comfort: bigger type, wider leading, shorter lines, calmer contrast */
+body { font-size:1rem; line-height:1.65; }
+.page { max-width:76rem; }
+h1 { font-size:2.35rem; line-height:1.15; }
+h2, section.card h2, section.system h2 { font-size:1.65rem; line-height:1.25; }
+.sub { font-size:.9rem; }
+.lead, .sec-lead, p.quiet { font-size:.98rem; line-height:1.7; max-width:68ch; }
+.does, .fdoes, .demo, .anchor, .why, .meta, .spine-note, .bhead .hint { font-size:.9rem; line-height:1.6; }
+section.card, section.system { padding:1.9rem 2.1rem; margin-bottom:2.2rem; }
+.eyebrow, section.card h3, th, .bhead, .flabel { font-size:.76rem !important; letter-spacing:.06em; }
+table.bd, table.caps, table.kv, details.tasks table, .sum table { font-size:.92rem; line-height:1.55; }
+table.bd td, table.caps td, table.kv td, details.tasks td { padding-top:.55rem; padding-bottom:.55rem; }
+.chip { font-size:.78rem; padding:.05rem .5rem; }
+.twocol li { font-size:.96rem; line-height:1.65; margin:.4rem 0; }
+.headline span { font-size:.84rem; }
+.m .demo { font-size:.92rem; }
+.feat { padding-top:1.6rem; padding-bottom:1.7rem; }
+.rail h3 { font-size:1.25rem; margin-bottom:.25rem; }
+.rail .does { font-size:.92rem; line-height:1.6; } .rail .id { font-size:.8rem; }
+.cap { font-size:.84rem; }
+@media (prefers-color-scheme:dark) { :root:not([data-theme="light"]) { --ink:#dbe2e8; --ink-dim:#a3b2be; } }
+:root[data-theme="dark"] { --ink:#dbe2e8; --ink-dim:#a3b2be; }
+.sys .meta, .sys .eyebrow { font-size:.82rem !important; line-height:1.5; }
+body.client .headline { grid-template-columns:1.4fr 1fr; }
+/* every page: tables, strips, nav chips, hints and small notes */
+table td { font-size:.92rem; line-height:1.55; }
+.strip span, .legend, .pin-hint, small, nav.sys a, nav.toc a, p.map, .hint, .gone-note, .gapnote, .saved, .pin-txt small, .zones, label { font-size:.85rem; line-height:1.5; }
+.pick button, .seg button, .view button, .btn { font-size:.84rem; }
+textarea, input, select { font-size:.92rem; }
+.flow-name { font-size:.84rem; } .cap .csys { font-size:.76rem; } .cap .cid { font-size:.78rem; } .flagchip { font-size:.78rem; }
+
+/* how to read: the System → Feature → Block chain at the top of every page */
+.howto { margin:0 0 1.4rem; padding:.85rem 1rem .8rem; border:1px solid var(--rule); border-radius:.35rem; background:var(--sheet); max-width:60rem; }
+.howto-t { display:block; font-size:.74rem; font-weight:700; letter-spacing:.07em; text-transform:uppercase; color:var(--ink-dim); margin-bottom:.55rem; }
+.howto-chain { display:flex; flex-wrap:wrap; align-items:stretch; gap:.45rem; }
+.howto-chain > span { flex:1 1 12rem; display:flex; flex-direction:column; gap:.1rem; padding:.5rem .7rem; border:1px solid var(--grid); border-radius:.3rem; background:var(--paper); font-size:.9rem; line-height:1.4; }
+.howto-chain > span b { font-family:var(--serif); font-size:1.05rem; }
+.howto-chain small { font-size:.8rem; color:var(--ink-dim); }
+.howto-chain > i { align-self:center; font-style:normal; color:var(--ink-dim); }
+.howto-rule { margin:.6rem 0 0; font-size:.9rem; color:var(--ink-dim); max-width:68ch; }
+.howto-rule b { color:var(--ink); }
+.howto-page { display:block; margin-top:.25rem; color:var(--ink); }
+@media (max-width:640px) { .howto-chain > i { display:none; } }
+
+/* native dropdowns follow the theme: dark popups in dark mode, readable option text */
+:root { color-scheme:light; }
+@media (prefers-color-scheme:dark) { :root:not([data-theme="light"]) { color-scheme:dark; } }
+:root[data-theme="dark"] { color-scheme:dark; }
+select option, select optgroup { background:var(--sheet); color:var(--ink); }
+</style>
+</head>
+<body>
+<article class="doc">
+  <span class="mock">MOCKUP — proposal built from the same data as the estimate pages</span>
+  <div class="head"><h1 id="title"></h1><button class="btn" id="theme" type="button">Dark</button></div>
+  <p class="byline" id="byline"></p>
+  <div class="howto"><b class="howto-t">How to read this proposal</b>
+    <div class="howto-chain"><span><b>System</b>a part of the business<small>e.g. Warehouse Mgmt System</small></span><i>→</i><span><b>Workflow</b>the steps work moves through<small>e.g. Order In → Pack → Pack Review</small></span><i>→</i><span><b>Feature</b>something you asked for, on the steps it serves<small>e.g. F04 Order intake &amp; quotation entry</small></span></div>
+    <p class="howto-rule">Each system below shows its workflows, then the features that serve them. Milestones group the features into deliveries; the cost estimate prices every feature in this document.</p></div>
+  <nav class="toc" id="toc"></nav>
+  <section id="scope"></section>
+  <div id="systems"></div>
+  <section id="milestones"></section>
+  <section id="register"></section>
+  <section id="cost"></section>
+</article>
+<script type="module">
+const DATA = {
+  project: 'Sin Kowa', mapLabel: 'IMDA roadmap pillar',
+  systems: [
+    { id: 'wms', name: 'Warehouse Mgmt System (WMS)', src: 'prd', map: 'Warehouse Automation/Transformation (coordination layer)',
+      purpose: 'The coordination layer. It moves an order through five stages and is the single screen a warehouse worker needs.',
+      main: { id: 'wms', name: 'Order pipeline', src: 'prd',
+        steps: ['Order In', 'Pack', 'Pack Review', 'Storing', 'Shipped'],
+        branches: [{ from: 'Pack', to: 'Short-pack exception', label: "can't fulfil" }, { from: 'Short-pack exception', to: 'Ops + Invoicing alert' }] },
+      subs: [],
+      features: [
+        { id: 'F01', name: 'Order pipeline & stage engine', src: 'prd', steps: ['wms:Order In', 'wms:Pack', 'wms:Pack Review', 'wms:Storing', 'wms:Shipped'], does: "Moves an order through Order In → Pack → Pack Review → Storing → Shipped, with task views scoped to each worker's role" },
+        { id: 'F02', name: 'Exception / short-pack alert workflow', src: 'prd', steps: ['wms:Short-pack exception', 'wms:Ops + Invoicing alert'], does: "Flags a can't-fulfil item the moment it's discovered, in time to purchase or cancel, and auto-flags the order for a quote/invoice adjustment" },
+        { id: 'F03', name: 'Unified role-based UI shell & authentication', src: 'prd', steps: ['*'], does: 'One login for the whole platform; a warehouse worker sees only Pack/Audit tasks, office staff see Orders/Invoicing/Inventory' } ] },
+    { id: 'ord', name: 'Orders/Invoicing', src: 'prd', map: 'Finance/Documentation',
+      purpose: "Covers quotation through to a paid invoice, and closes the paper-DO gap that currently delays Sin Kowa's cash collection by weeks.",
+      main: { id: 'ord', name: 'Order to cash', src: 'us', missing: true,
+        steps: ['Order received', 'Quote', 'Order confirmed', 'Proof of delivery', 'Invoice', 'Paid'],
+        branches: [{ from: 'Paid', to: 'Dispute / credit adjustment', label: 'client disputes' }] },
+      subs: [{ id: 'custom', name: 'Custom order', src: 'prd', share: 'roughly 20% of orders, sourced rather than stocked',
+        startsAt: 'ord:Order received', rejoins: { system: 'wms', step: null, text: 'join WMS pipeline' },
+        steps: ['Intake: flag as custom', 'Source & quote cost-plus', 'Vendor PO', 'Receiving & inspection', 'Earmark to order'],
+        branches: [{ from: 'Vendor PO', to: 'Vendor late / unsourceable' }, { from: 'Vendor late / unsourceable', to: 'Cancel or substitute, notify client' }] }],
+      features: [
+        { id: 'F04', name: 'Order intake & quotation entry', src: 'prd', steps: ['ord:Order received', 'ord:Quote', 'custom:Intake: flag as custom', 'custom:Source & quote cost-plus'], does: 'Captures orders from email/phone/fax; prices routine items from a catalog and custom items on a cost-plus-markup rule' },
+        { id: 'F05', name: 'AI-assisted intake pre-fill', src: 'prd', steps: ['ord:Order received'], does: 'Drafts a structured order from the incoming email/fax text for staff to review and confirm' },
+        { id: 'F06', name: 'Digital proof-of-delivery capture', src: 'prd', steps: ['ord:Proof of delivery'], does: 'E-signature or photo of the DO captured on a phone at the dock handoff, which becomes the invoice trigger' },
+        { id: 'F07', name: 'Invoice generation & billing workflow', src: 'prd', steps: ['ord:Invoice', 'ord:Paid'], does: 'Auto-generates the invoice off packed-and-audited quantities plus the digital DO, with billing checks and payment status' },
+        { id: 'F08', name: 'Custom order & vendor procurement sub-flow', src: 'prd', steps: ['custom:Vendor PO', 'custom:Receiving & inspection', 'custom:Vendor late / unsourceable', 'custom:Cancel or substitute, notify client'], does: "Flags when a vendor's expected delivery leaves too little buffer before the ship's ETA" },
+        { id: 'F09', name: 'Ad hoc / local purchase logging', src: 'prd', steps: [], does: 'A two-tap entry for an emergency off-the-shelf buy, so it still hits inventory and margin correctly' },
+        { id: 'F10', name: 'Post-shipment adjustment & dispute/credit-memo log', src: 'prd', steps: ['ord:Dispute / credit adjustment'], does: 'Records any billing dispute, its root cause and the credit adjustment' },
+        { id: 'F11', name: 'InvoiceNow / Peppol-ready invoice data model', src: 'prd', steps: ['ord:Invoice'], does: 'Structures line items, GST fields and buyer/seller identifiers so a future InvoiceNow connection is a bolt-on' } ] },
+    { id: 'inv', name: 'Inventory', src: 'prd', map: 'Inventory/Fulfilment',
+      purpose: 'Tracks routine and special-order stock, and closes the gap where multiple orders quietly deplete an item before there is time to reorder.',
+      main: { id: 'inv', name: 'Stock cycle', src: 'us', missing: true, steps: ['Stock received', 'On hand', 'Earmarked to order', 'Low-stock alert', 'Reorder'], branches: [] },
+      subs: [],
+      features: [
+        { id: 'F12', name: 'Core inventory tracking', src: 'prd', steps: ['inv:Stock received', 'inv:On hand'], does: 'On-hand quantities and item master data for routine and special-order SKUs' },
+        { id: 'F13', name: 'Available-to-promise / earmarking engine', src: 'prd', steps: ['inv:Earmarked to order', 'custom:Earmark to order'], does: 'On-hand minus committed quantity, reserved per order, so contention is visible before it becomes a shortfall' },
+        { id: 'F14', name: 'Configurable reorder threshold & low-stock alerts', src: 'prd', steps: ['inv:Low-stock alert', 'inv:Reorder'], does: 'Per-SKU minimum threshold that accounts for earmarked (not just on-hand) quantity' },
+        { id: 'F15', name: 'Vendor & purchase-order price-history tracking', src: 'prd', steps: ['inv:Reorder'], does: 'Records PO history and fluctuating repeat-item vendor costs' } ] },
+    { id: 'aud', name: 'Audit/Pack Validation', src: 'prd', map: 'Inventory/Fulfilment (traceability)',
+      purpose: "The single highest-value piece: the proof that stops a client disputing a charge after the ship has sailed. Reuses the manufacturer barcodes already on products and adds one label per pallet/carton.",
+      main: { id: 'aud', name: 'Proof of pack', src: 'us', missing: true, steps: ['Print pallet ID', 'Scan items', 'Check against order', 'Lock the record', 'Hand over'], branches: [] },
+      subs: [],
+      features: [
+        { id: 'F16', name: 'Pallet/container ID generation & label printing', src: 'prd', steps: ['aud:Print pallet ID'], does: 'Prints a system-generated pallet/carton ID at the pack stage that ties scanned items to one order' },
+        { id: 'F17', name: 'Mobile barcode scan-to-verify app', src: 'prd', steps: ['aud:Scan items', 'aud:Check against order'], does: 'Phone-camera scanning of existing product barcodes against the pallet ID and order' },
+        { id: 'F18', name: 'Immutable audit / proof-of-pack record', src: 'prd', steps: ['aud:Lock the record'], does: 'Timestamped, worker-tagged log of exactly what was packed, not editable after the fact' },
+        { id: 'F19', name: 'Offline scan queue & sync', src: 'prd', steps: ['aud:Scan items'], does: 'Queues scans locally and syncs once connectivity returns, for WiFi/cellular dead spots' } ] } ] };
+
+// engineering features: today's Sin Kowa estimate (dist/estimate.html), scored by the agent
+const ENG = [{"id": "catalogue", "name": "Catalogue and item identity", "container": "Backend API", "part": "Catalogue and Item Identity", "milestone": "M1 - Walking skeleton", "does": "The list of goods and the codes they are known by, which is unsettled until the client confirms how they identify items today.", "scores": [3, 3, 3, 4, 3], "cite": {"tech": "one item resolving from many physical codes plus catalogue codes", "size": "items, identifiers, store categories and the bonded flag", "deps": "imports the industry marine stores catalogue", "unc": "whether the client uses industry catalogue codes today is unanswered", "risk": "wrong identity resolution mis-picks goods"}}, {"id": "vessel", "name": "Vessel and port call records", "container": "Backend API", "part": "Vessel and Port Call", "milestone": "M1 - Walking skeleton", "does": "Records for each ship and each port visit.", "scores": [1, 2, 2, 2, 2], "cite": {"tech": "straightforward records for ships and port calls", "size": "two related record types with forms and lists", "deps": "referenced by orders only", "unc": "fields follow the researched procurement cycle", "risk": "reference data, easily corrected"}}, {"id": "quotation", "name": "Enquiry and quotation", "container": "Backend API", "part": "Enquiry and Quotation", "milestone": "M1 - Walking skeleton", "does": "Capturing an enquiry from a ship and the priced offer sent back, with pricing still done by hand.", "scores": [2, 3, 2, 3, 3], "cite": {"tech": "four states on one aggregate, pricing entered by hand", "size": "enquiry capture, versioned offers and the screens for both", "deps": "hands a confirmed quotation to order intake", "unc": "response-time measurement is inferred, not stated", "risk": "a wrong quotation reference misprices an order"}}, {"id": "orders", "name": "Sales order intake", "container": "Backend API", "part": "Sales Orders", "milestone": "M1 - Walking skeleton", "does": "Entering a vessel order and its lines, where how many lines an order really has is still disputed.", "scores": [3, 4, 3, 4, 3], "cite": {"tech": "requisition lines with brand, specification, urgency and substitution", "size": "order header, lines, amendment, cancellation and entry screens", "deps": "reads vessels and port calls, drives reservations", "unc": "order line count is contested and partial fulfilment is undecided", "risk": "a wrong order ships wrong goods to a sailing vessel"}}, {"id": "ledger", "name": "Stock ledger", "container": "Backend API", "part": "Stock Ledger", "milestone": "M1 - Walking skeleton", "does": "The permanent record of every stock movement, which must never lose or double-count a unit.", "scores": [4, 3, 2, 3, 5], "cite": {"tech": "append-only signed-quantity ledger with a rebuildable projection", "size": "ledger, reason codes, projection and compensating corrections", "deps": "sole writer of stock change for every other module", "unc": "the movement lifecycle is a working assumption pending client answer", "risk": "corrections are append-only and the record cannot be rewritten"}}, {"id": "earmark", "name": "Stock position and earmarking", "container": "Backend API", "part": "Stock Position and Earmarking", "milestone": "M1 - Walking skeleton", "does": "Holding stock against a confirmed order so two people cannot promise the same goods.", "scores": [4, 3, 2, 3, 4], "cite": {"tech": "row locking so two coordinators cannot commit the same stock", "size": "projection, reservations and shortfall detection", "deps": "reads the ledger, drives the pack queue", "unc": "what happens on a shortfall is an open question", "risk": "a race here double-promises stock and hides shrinkage"}}, {"id": "officeshell", "name": "Office web application shell", "container": "Office Web App", "part": "Office Web App", "milestone": "M1 - Walking skeleton", "does": "The shared frame for the office screens.", "scores": [2, 2, 2, 1, 2], "cite": {"tech": "off-the-shelf component library, lightly restyled", "size": "routing, layout and shared frame only", "deps": "calls the one internal interface", "unc": "no custom design system, settled at interview", "risk": "presentation only, no data at stake"}}, {"id": "packqueue", "name": "Pack queue and board", "container": "Backend API", "part": "Pack Queue", "milestone": "M2 - Warehouse floor", "does": "The list telling the floor which orders to pack, with the board stage names still to be agreed.", "scores": [2, 2, 2, 3, 2], "cite": {"tech": "queue position computed from the port call rather than stored", "size": "one ranked list plus a stage board", "deps": "reads orders and port calls", "unc": "board stage names are unanswered", "risk": "a wrong order can be re-queued"}}, {"id": "scan", "name": "Scan validation", "container": "Backend API", "part": "Scan Validation", "milestone": "M2 - Warehouse floor", "does": "Checking each packed item against the order by scanning it, and whether this must work without a network is undecided.", "scores": [4, 3, 3, 4, 4], "cite": {"tech": "one idempotent command keyed on a client scan id", "size": "resolution, validation, container recording and pick movements", "deps": "reaches catalogue, containers and the ledger", "unc": "whether it must work with no network is undecided", "risk": "the only path where an outage stops physical work"}}, {"id": "labels", "name": "Containers and label printing", "container": "Backend API", "part": "Containers and Labels", "milestone": "M2 - Warehouse floor", "does": "Pallet and box identity plus printing labels for goods that arrive with no code on them.", "scores": [3, 3, 3, 4, 3], "cite": {"tech": "self-referencing pallet and box hierarchy plus printer language composition", "size": "hierarchy, identifier generation and the print path", "deps": "one external print broker", "unc": "which goods arrive already coded is unanswered", "risk": "unlabelled boxes break return traceability"}}, {"id": "handheld", "name": "Handheld PWA and packing screen", "container": "Handheld PWA", "part": "Handheld PWA", "milestone": "M2 - Warehouse floor", "does": "The warehouse screen itself, which has to work for staff who have never used it before.", "scores": [3, 4, 2, 4, 3], "cite": {"tech": "installable offline-capable shell with device enrolment", "size": "shell, packing screen and observed usability sessions", "deps": "calls scan validation and the pack queue only", "unc": "device class unchosen and the first-attempt target unproven", "risk": "floor staff cannot work if it confuses them"}}, {"id": "access", "name": "Identity, access and device enrolment", "container": "Backend API", "part": "Identity and Access", "milestone": "M2 - Warehouse floor", "does": "Logins for office staff and shared device sessions on the floor that still name who did what.", "scores": [4, 3, 2, 3, 4], "cite": {"tech": "device-bound sessions with per-worker attribution, security-sensitive design", "size": "accounts, grants, enrolment and session handling", "deps": "consulted by every state-changing endpoint", "unc": "whether access control is wanted at all is unanswered", "risk": "authentication and authorisation for the whole platform"}}, {"id": "dispatch", "name": "Dispatch and delivery coordination", "container": "Backend API", "part": "Dispatch and Delivery Coordination", "milestone": "M3 - Money", "does": "Instructing what goes to which ship and how it travels.", "scores": [2, 2, 2, 3, 3], "cite": {"tech": "delivery mode derived from berth or anchorage then confirmed", "size": "instruction record plus coordination fields", "deps": "reads port calls, writes goods issue", "unc": "port agent coordination is researched, not client-stated", "risk": "a wrong instruction sends goods to the wrong berth"}}, {"id": "proof", "name": "Proof of delivery capture", "container": "Backend API", "part": "Proof of Delivery and Evidence", "milestone": "M3 - Money", "does": "Recording the signed paper that comes back from the ship weeks later.", "scores": [2, 3, 2, 2, 4], "cite": {"tech": "separate signed date and document received date", "size": "note, proof, variance records and capture screens", "deps": "feeds the invoicing gate", "unc": "the document flow is confirmed in the source material", "risk": "this record is what releases money"}}, {"id": "evidencestore", "name": "Evidence store and document pipeline", "container": "Evidence Object Store", "part": "Evidence Object Store", "milestone": "M3 - Money", "does": "Storing signed documents and certificates so they cannot be altered or deleted afterwards.", "scores": [3, 3, 3, 3, 5], "cite": {"tech": "content sniffing, re-encoding, scanning and short-lived signed access", "size": "bucket configuration plus the upload pipeline", "deps": "one managed object storage service", "unc": "compliance document workflows are out of scope for now", "risk": "write-once evidence under legal hold, deletion is not available"}}, {"id": "gate", "name": "Invoice gate and override", "container": "Backend API", "part": "Invoice Gate", "milestone": "M3 - Money", "does": "The block that stops an invoice being raised before proof of delivery exists.", "scores": [3, 3, 2, 3, 5], "cite": {"tech": "a database constraint plus a reason-coded second-approver override", "size": "predicate, constraint, override and its tests", "deps": "sits between proof of delivery and invoicing", "unc": "behaviour when a document never returns is unanswered", "risk": "the primary financial control of the platform"}}, {"id": "invoicing", "name": "Invoicing, three-way match and reminders", "container": "Backend API", "part": "Invoicing and Receivables", "milestone": "M3 - Money", "does": "Producing the invoice, checking it against what was ordered and delivered, and chasing payment.", "scores": [4, 4, 3, 3, 4], "cite": {"tech": "three-way match across order, goods issue and signed note", "size": "match, generation, printable output, receivables and reminders", "deps": "reads the gate, writes documents, sends mail", "unc": "payment terms and reminder cadence are unanswered", "risk": "money leaving and arriving"}}, {"id": "restock", "name": "Distributor restocking and goods receipt", "container": "Backend API", "part": "Replenishment and Goods Receipt", "milestone": "M4 - Operations", "does": "Ordering from suppliers and checking goods in when they arrive.", "scores": [2, 3, 2, 3, 3], "cite": {"tech": "receipt capture with condition, expiry and variance photographs", "size": "purchase orders, receipts and their screens", "deps": "appends receipt movements to the ledger", "unc": "the purchase order stages are an unconfirmed placeholder", "risk": "a wrong receipt overstates available stock"}}, {"id": "returns", "name": "Returns and discrepancy reporting", "container": "Backend API", "part": "Returns", "milestone": "M4 - Operations", "does": "Logging goods coming back, where handling of damaged or partial returns is still open.", "scores": [2, 2, 2, 4, 3], "cite": {"tech": "disposition routing with only restock writing back", "size": "return log against four levels plus a difference report", "deps": "writes to the ledger for restocked goods", "unc": "damaged and partial return handling is unanswered", "risk": "wrong disposition corrupts the stock position"}}, {"id": "notify", "name": "Notifications", "container": "Backend API", "part": "Notifications", "milestone": "M4 - Operations", "does": "Alerts for low stock and order changes, in the app and by email.", "scores": [2, 2, 3, 3, 2], "cite": {"tech": "subscriber over domain events rather than direct calls", "size": "in-app centre plus an outbound mail path", "deps": "one external mail service on the client domain", "unc": "which events notify whom is unanswered", "risk": "a missed alert delays work but loses no data"}}, {"id": "reporting", "name": "Reporting, KPIs and audit trail", "container": "Backend API", "part": "Reporting, KPI and Audit", "milestone": "M4 - Operations", "does": "Dashboards for management plus the trail of who changed what.", "scores": [3, 4, 2, 3, 4], "cite": {"tech": "append-only trail through an insert-only database role", "size": "audit capture, five measures and the dashboards", "deps": "reads across every other module", "unc": "what management actually wants reported is unanswered", "risk": "the trail is the evidence in a dispute"}}];
+// proposed links: engineering feature → business capabilities it builds (F05 AI pre-fill has none: a gap)
+const IMPLEMENTS = {"orders": ["F01", "F04"], "packqueue": ["F01", "F02"], "notify": ["F01", "F02", "F08", "F14"], "access": ["F03"], "officeshell": ["F03"], "handheld": ["F03", "F17", "F19"], "quotation": ["F04", "F08"], "catalogue": ["F04", "F12"], "vessel": ["F04"], "proof": ["F06"], "evidencestore": ["F06", "F18"], "dispatch": ["F06"], "invoicing": ["F07", "F10", "F11"], "gate": ["F07"], "restock": ["F08", "F09", "F14", "F15"], "earmark": ["F08", "F13"], "returns": ["F10"], "ledger": ["F12", "F13"], "reporting": ["F15", "F18"], "labels": ["F16"], "scan": ["F17", "F18"]};
+// signed-off state for the final estimate: the agent added the feature the score review asked for (F05)
+ENG.push({"id": "aiprefill", "name": "AI intake pre-fill", "container": "Backend API", "part": "AI Intake", "milestone": "M4 - Operations", "does": "Reads incoming emails and faxes and drafts the order for staff to confirm. Added after the score review asked for it.", "scores": [4, 3, 2, 4, 2], "cite": {"tech": "free-text email and fax parsed into a structured order", "size": "extraction, a review screen and an inbox hookup", "deps": "one model API plus the shared inbox", "unc": "no sample emails or fax scans provided yet", "risk": "staff confirm every draft, so a wrong pre-fill is caught"}});
+IMPLEMENTS.aiprefill = ['F05'];
+// tasks per engineering feature, from today's estimate: [name, optimistic, most likely, pessimistic h, confidence, assumptions]
+const TASKS = {"schema": [["schema plan", 8, 16, 32, "MED", "entity set from ARCHITECTURE.md section 8 is stable"], ["schema core", 22, 43, 86, "MED", "single warehouse, so location is a seeded column not a dimension"], ["schema partition", 8, 16, 32, "MED", "month partitioning on the four append-only tables"]], "deploy": [["deploy iac", 16, 32, 65, "HIGH", "Terraform against one cloud account, three environments"], ["deploy ci", 11, 22, 43, "HIGH", "expand-contract migrations, rolling deploys"]], "catalogue": [["cat scaffold", 4, 8, 16, "LOW", ""], ["cat identity", 14, 27, 54, "LOW", "one item resolves from many physical codes; catalogue code plus barcodes"], ["cat tests", 5, 11, 22, "LOW", ""]], "vessel": [["vessel impl", 10, 20, 41, "HIGH", "port agent stored as a party, distinct from owner"], ["vessel tests", 4, 7, 14, "HIGH", ""]], "quotation": [["quote impl", 14, 27, 54, "MED", "pricing entered by hand, never computed"], ["quote ui", 14, 27, 54, "MED", "off-the-shelf component library, no design system"], ["quote tests", 5, 9, 18, "MED", ""]], "orders": [["orders impl", 17, 34, 68, "LOW", "orders run to hundreds of lines, not thousands"], ["orders ui", 17, 34, 68, "LOW", "line entry by bulk paste plus search, no rich grid"], ["orders tests", 5, 11, 22, "LOW", ""]], "ledger": [["ledger plan", 8, 16, 32, "MED", "reserve on confirm, pick on validate, deduct at dispatch"], ["ledger impl", 20, 41, 81, "MED", "append-only with compensating corrections, never edits"], ["ledger tests", 8, 16, 32, "MED", ""]], "earmark": [["earmark impl", 20, 41, 81, "MED", "row lock on the position row inside the reservation transaction"], ["earmark race", 11, 22, 43, "MED", "concurrency tests, not example tests"]], "officeshell": [["office scaffold", 8, 16, 32, "HIGH", "off-the-shelf component library, restyled lightly, no design system"], ["office tests", 5, 9, 18, "HIGH", ""]], "packqueue": [["packq impl", 14, 27, 54, "MED", "queue position computed from the port call, board stages are config rows"], ["packq tests", 5, 9, 18, "MED", ""]], "scan": [["scan plan", 6, 12, 24, "LOW", "one idempotent command is the floor's entire write surface"], ["scan impl", 20, 41, 81, "LOW", "idempotency keyed on a client scan id"], ["scan tests", 8, 16, 32, "LOW", "replay and idempotency tests"], ["scan outcomes: wrong item, over-quantity, duplicate", 12, 20, 36, "LOW", "outcome set matched, wrong_item, over_quantity per the scan event design"], ["manual line confirmation for goods with no scannable code", 10, 18, 32, "LOW", "separate explicit path rather than silently passing; which goods this covers is Q-014"], ["short-ship a line so an order can close incomplete", 8, 14, 24, "LOW", "partial despatch permitted per ASM-020"], ["worker PIN prompt at each scan commit", 6, 10, 18, "LOW", "PIN mechanism itself lives in identity and access; this is the per-commit prompt on the scan flow"], ["per-device rate limit on scan endpoints", 4, 8, 14, "LOW", "a cloned handheld must not out-validate a human"], ["append-only scan event table, month-partitioned", 4, 8, 14, "LOW", ""]], "labels": [["cont impl", 14, 27, 54, "LOW", "self-referencing handling unit hierarchy, identifiers generated at packing"], ["cont print", 17, 34, 68, "LOW", "barcode composed in process with an MIT library, broker is transport only"], ["cont tests", 5, 9, 18, "LOW", ""]], "handheld": [["hh scaffold", 10, 20, 41, "LOW", "installable PWA on the same origin, device enrolment at install"], ["hh packscreen", 20, 41, 81, "LOW", "one screen, one action, large targets, no menus or filters"], ["hh usability", 16, 32, 65, "LOW", "observed sessions with real floor staff plus rework, to prove first-attempt success"]], "access": [["access impl", 20, 41, 81, "MED", "five capability grants, device-bound floor sessions, per-worker PIN"], ["access tests", 5, 11, 22, "MED", ""]], "dispatch": [["disp impl", 14, 27, 54, "MED", "delivery mode derived from berth or anchorage, then confirmed"], ["disp tests", 5, 9, 18, "MED", ""]], "proof": [["proof impl", 17, 34, 68, "HIGH", "signed date and document received date are separate fields"], ["proof ui", 10, 20, 41, "HIGH", ""]], "evidencestore": [["ev config", 11, 22, 43, "MED", "object lock, versioning, lifecycle policy with legal hold"], ["ev pipeline", 20, 41, 81, "MED", "content sniffing, re-encode, antivirus scan, short-lived signed URLs"]], "gate": [["gate plan", 6, 12, 24, "MED", "gate and its override designed together with segregation of duties"], ["gate db", 8, 16, 32, "MED", "not-null foreign key plus a trigger, enforced in the database"], ["gate impl", 14, 27, 54, "MED", "override needs a second approver, a typed reason and its own audit event"], ["gate tests", 8, 16, 32, "MED", ""]], "invoicing": [["inv match", 20, 41, 81, "MED", "order, goods issue and signed note must agree on line identity and quantity"], ["inv tests", 6, 13, 25, "MED", ""], ["printable invoice document, rendered in process", 10, 16, 28, "MED", "no third-party document service, so commercial terms never leave the boundary"], ["sequence-backed document numbers and company profile on documents", 6, 10, 18, "MED", "numbers are never foreign-key targets"], ["match exception resolution with an attributed human decision", 10, 18, 32, "MED", "any variance halts generation; someone named must resolve it"], ["outstanding tracking and payment status", 10, 16, 28, "MED", "no payment terms in phase one; outstanding means not yet paid"], ["reminder cadence job, defaulting to 14, 30 and 60 days", 8, 12, 22, "MED", "cadence configurable; mechanism is email via notifications"], ["void and credit records; nothing financial is hard-deleted", 8, 12, 22, "MED", "cancellation is a status transition, not a delete"], ["CSV and PDF export with spreadsheet formula escaping", 6, 10, 18, "MED", "stands in for an accounting integration in phase one"], ["invoice list, detail and release screens", 12, 20, 36, "MED", "off-the-shelf components, no design system"]], "restock": [["restock impl", 17, 34, 68, "MED", "receipt captures description, quantity, condition and expiry with variance photos"], ["restock ui", 14, 27, 54, "MED", ""], ["restock tests", 5, 9, 18, "MED", ""]], "returns": [["ret impl", 14, 27, 54, "LOW", "disposition of restock, scrap or credit; only restock writes back to the ledger"], ["ret tests", 5, 9, 18, "LOW", ""]], "notify": [["notify impl", 14, 27, 54, "MED", "event subscriber model, in-app centre plus email"], ["notify email", 10, 20, 41, "MED", "client domain with sender authentication configured before go-live"]], "reporting": [["rep audit", 14, 27, 54, "MED", "append-only table written through an insert-only database role"], ["rep kpi", 17, 34, 68, "MED", "the five supplier KPIs derive from timestamps already recorded"], ["rep ui", 14, 27, 54, "MED", "fixed dashboards, no report builder"]], "migration": [["mig plan", 6, 12, 24, "LOW", "dated cutover with a parallel run over one order cycle"], ["mig import", 27, 54, 108, "LOW", "client supplies cleansed CSV extracts; per-row rejection with a reject report"], ["mig runbook", 4, 8, 16, "LOW", ""], ["field mapping per entity: catalogue, vessels, open orders", 12, 20, 36, "LOW", "eight store categories with IMPA or ISSA codes where held"], ["opening stock count loaded as ledger movements", 8, 14, 24, "LOW", "physical count taken on cutover day"], ["dry-run mode with reconciliation report", 10, 16, 28, "LOW", "client owns data cleansing; the dry run is what shows them what to fix"], ["cutover rehearsal on staging", 8, 14, 24, "LOW", "staging is production-shaped with anonymised data"], ["parallel run beside paper for one order cycle, daily reconciliation", 16, 28, 48, "LOW", "7 to 14 days matching normal lead time; mostly human reconciliation time"], ["cutover-day execution and rollback plan", 8, 12, 20, "LOW", "runs under a separate credential revoked afterwards"]], "aiprefill": [["extraction schema and prompt", 10, 16, 30, "LOW", "sample emails and fax scans arrive before build"], ["review-and-confirm screen", 8, 12, 20, "MED", "staff confirm every draft order"], ["inbox and fax-to-text hookup", 6, 10, 18, "MED", "one shared mailbox; fax arrives as PDF"]]};
+// milestones in the client's words
+const MS_TEXT = {"M1 - Walking skeleton": "Log in, keep the item catalogue, take orders and quotes, and see stock in one place.", "M2 - Warehouse floor": "Packing on phones: the pack queue, scan-to-verify against the order, and pallet labels.", "M3 - Money": "Proof of delivery on every shipment, invoices that only go out once delivery is proven, and payment tracking.", "M4 - Operations": "Restocking, returns, alerts, reporting and the audit trail, AI order pre-fill, and the move off today's tools."};
+// features: the five scores from the sent workbook (Sin_Kowa_Ballpark_Cost_Estimate.xlsx, tab 1)
+const CAP_SCORES = { F01: [3, 4, 3, 3, 3], F02: [2, 2, 3, 3, 3], F03: [2, 3, 2, 2, 2], F04: [2, 3, 2, 3, 2], F05: [4, 3, 2, 4, 2],
+  F06: [2, 3, 2, 3, 3], F07: [3, 4, 3, 2, 4], F08: [3, 4, 3, 3, 3], F09: [1, 2, 2, 1, 2], F10: [2, 3, 2, 2, 3], F11: [3, 2, 2, 3, 3],
+  F12: [2, 4, 2, 2, 2], F13: [3, 3, 3, 3, 3], F14: [2, 3, 3, 2, 2], F15: [2, 3, 2, 2, 2], F16: [2, 2, 2, 2, 2], F17: [3, 4, 3, 2, 3],
+  F18: [2, 2, 2, 1, 3], F19: [3, 2, 2, 3, 2] };
+
+// ---- project roll-up (scripts/lib/pricing.mjs + project-price.mjs), shared by the Workflow and Build pages ----
+// Priced from the features scored in the score review: the business piece is
+// what gets scored. The components under them are structure: each feature lands
+// in the milestone of its main component, and the components' tasks and hours
+// are a cross-check on the price.
+const RK = ['tech', 'size', 'deps', 'unc', 'risk'];
+const LEVELS = { codebaseMaturity: [1, 'Greenfield'], stackFamiliarity: [2, 'Adjacent, some learning'], specQuality: [3, 'Outline or slide deck'],
+  compliance: [2, 'Handles PII'], clientDecisions: [3, 'Committee sign-off'] };
+const ASSUME = ['Sin Kowa nominates a single approver per system for consolidated feedback.',
+  'The 24-hour pack-trigger rule, rush-order handling and item-allocation priority are finalised in a discovery phase at kickoff; scope assumes standard-path behaviour only.',
+  'No existing system is migrated; the previously purchased, unused inventory system is retired, not integrated against.',
+  'Ship-side order intake stays email/phone/fax; no change to those channels is in scope.',
+  'InvoiceNow scope is a Peppol-ready data model only; a live Access Point connection is a separately priced follow-on.',
+  'Client confirms warehouse WiFi or cellular coverage is adequate for phone-based scanning.'];
+const EXCLUDE = ['Hosting, infrastructure and third-party subscription fees (billed to Sin Kowa directly).',
+  'A live InvoiceNow/Peppol Access Point subscription and its transaction fees.', 'Dedicated handheld barcode scanner hardware (phone-based scanning assumed).',
+  'Last-mile delivery/logistics visibility and all AMR/autonomous-vehicle systems.', 'Load testing, penetration testing and formal security audit.',
+  'Post-launch support and maintenance, quoted separately.'];
+const RW = { tech: 0.2, size: 0.1, deps: 0.2, unc: 0.3, risk: 0.2 };
+const RBANDS = [{ tier: 'S', start: 5, end: 11.5, lo: 500, hi: 1500 }, { tier: 'M', start: 11.5, end: 17.5, lo: 1500, hi: 4000 },
+  { tier: 'L', start: 17.5, end: 22.5, lo: 4000, hi: 10000 }, { tier: 'XL', start: 22.5, end: 25, lo: 10000, hi: 25000 }];
+const CTX = { codebaseMaturity: [1.0, 1.1, 1.2, 1.45], stackFamiliarity: [1.0, 1.15, 1.35, 1.35], specQuality: [0.95, 1.0, 1.2, 1.45], compliance: [1.0, 1.15, 1.4, 1.4], clientDecisions: [1.0, 1.1, 1.25, 1.4] };
+const CTX_LABEL = { codebaseMaturity: 'Codebase maturity', stackFamiliarity: 'Stack & domain familiarity', specQuality: 'Specification quality', compliance: 'Compliance & data sensitivity', clientDecisions: 'Client decision structure' };
+const OVH = { 'Shared foundation & scaffolding': 0.12, 'Discovery & specification': 0.06, 'UX / UI design': 0.08, 'QA & user acceptance testing': 0.08,
+  'DevOps, environments & release': 0.05, 'Documentation & handover': 0.03, 'Project management & client comms': 0.10 };
+function featPrice(a) {
+  const s = Object.fromEntries(RK.map((k, i) => [k, a[i]])); const score = RK.reduce((n, k) => n + s[k] * RW[k], 0) * 5;
+  const b = RBANDS.reduce((x, c) => (score >= c.start ? c : x), RBANDS[0]);
+  const point = b.lo + (Math.min(score, b.end) - b.start) / (b.end - b.start) * (b.hi - b.lo);
+  const spread = 0.15 + Math.max(0, s.unc - 1) * 0.07 + Math.max(0, s.risk - 1) * 0.03;
+  const flag = score >= 22.5 ? 'Deep estimate required' : spread >= 0.4 || point >= 6000 ? 'Deep estimate recommended' : '';
+  return { ...s, score, tier: b.tier, point, spread, low: point * (1 - spread), high: point * (1 + spread), flag };
+}
+const $ = (s, el = document) => el.querySelector(s);
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const money = (n) => `$${Math.round(n).toLocaleString('en-US')}`;
+const ceilTo = (n, st) => Math.ceil(n / st) * st;
+const CAP_LIST = DATA.systems.flatMap((s) => s.features.map((c) => ({ ...c, sysName: s.name })));
+const PRICED = CAP_LIST.map((c) => ({ ...c, p: featPrice(CAP_SCORES[c.id]) }));
+const sub = PRICED.reduce((n, f) => n + f.p.point, 0);
+const mult = Math.min(2.5, 1 + Object.entries(LEVELS).reduce((n, [k, [lv]]) => n + (CTX[k][lv - 1] - 1), 0));
+const base = sub * mult;
+const integ = Math.min(0.25, 0.02 * PRICED.length);
+const ovhPct = Object.values(OVH).reduce((a, b) => a + b, 0) + integ;
+const ovh = base * ovhPct;
+const avg = (k) => PRICED.reduce((n, f) => n + f.p[k], 0) / PRICED.length;
+const contRate = 0.05 + 0.02 * avg('unc') + 0.02 * avg('risk');
+const cont = (base + ovh) * contRate;
+const p50 = base + ovh + cont;
+const sigma = Math.sqrt(PRICED.reduce((n, f) => n + (f.p.point * f.p.spread) ** 2, 0)) * p50 / sub;
+const P = { p20: p50 - 0.84 * sigma, p80: p50 + 0.84 * sigma, p95: p50 + 1.645 * sigma };
+const present = { low: ceilTo(p50, 500), high: ceilTo(P.p95, 500), single: ceilTo(P.p80, 500) };
+// milestones: a client feature lands with its main builder, the engineering
+// feature most specific to it (fewest other capabilities; earliest milestone on
+// a tie), so shared work like Notifications does not drag everything to the end
+const MS_ORDER = [...new Set(ENG.map((f) => f.milestone))].sort();
+const buildersOf_ = (capId) => ENG.filter((f) => IMPLEMENTS[f.id]?.includes(capId));
+const mainBuilder = (capId) => buildersOf_(capId).sort((a, b) => IMPLEMENTS[a.id].length - IMPLEMENTS[b.id].length || a.milestone.localeCompare(b.milestone))[0];
+const capMilestone = (capId) => mainBuilder(capId)?.milestone;
+// cross-check: the engineering hours behind the price
+const pertH = ([, o, m, pp]) => (o + 4 * m + pp) / 6;
+const ENG_HOURS = ENG.reduce((n, f) => n + Math.round((TASKS[f.id] || []).reduce((h, x) => h + pertH(x), 0)), 0); // per-feature rounded, as the cards show
+const TASK_COUNT = ENG.reduce((n, f) => n + (TASKS[f.id] || []).length, 0);
+
+function renderSummary() {
+  $('#headline').innerHTML = `<div class="big"><span>Range to present</span><b>${money(present.low)} – ${money(present.high)}</b><span>expected cost to worst realistic case</span></div>
+    <div><span>If one fixed number is unavoidable</span><b>${money(present.single)}</b><span>confident figure (80% chance at or under)</span></div>
+    <div class="internal"><span>Expected cost</span><b>${money(p50)}</b><span>half the time lower, half higher</span></div>
+    <div class="internal"><span>Implied accuracy</span><b>±${Math.round(sigma / p50 * 100)}%</b><span>under 30%: a ballpark you can quote</span></div>`;
+  const max = present.high;
+  const row = (lbl, note, from, to, amt, cls = '') => `<div class="bu-row ${cls}"><div class="lbl">${lbl}<small>${note}</small></div>
+    <div class="bu-bar"><i style="left:${from / max * 100}%;width:${Math.max(0.4, (to - from) / max * 100)}%"></i></div><div class="amt">${amt}</div></div>`;
+  $('#buildup').innerHTML = `<h3>How the price builds up</h3>
+    ${row('Feature build', `${PRICED.length} scored features`, 0, sub, money(sub))}
+    ${row(`× ${mult.toFixed(2)} project context`, 'spec quality, decisions, compliance, familiarity', sub, base, `+${money(base - sub)}`)}
+    ${row(`+ ${Math.round(ovhPct * 100)}% work outside features`, 'foundation, discovery, UX, QA, DevOps, docs, PM, integration', base, base + ovh, `+${money(ovh)}`)}
+    ${row(`+ ${(contRate * 100).toFixed(1)}% contingency`, 'known unknowns inside the agreed scope', base + ovh, p50, `+${money(cont)}`)}
+    ${row('= Expected cost', '', 0, p50, money(p50), 'total')}
+    ${row('Range to present', 'expected cost → worst realistic case, rounded up to $500', present.low, present.high, `${money(present.low)}–${money(present.high)}`, 'range')}`;
+}
+function renderRoadmap() {
+  $('#ms').innerHTML = MS_ORDER.map((ms) => {
+    const caps = CAP_LIST.filter((c) => capMilestone(c.id) === ms);
+    const fs = ENG.filter((f) => f.milestone === ms); const sh = PRICED.filter((c) => capMilestone(c.id) === ms).reduce((n, c) => n + c.p.point, 0) / sub;
+    return `<div class="m"><div class="dim num">${caps.length} feature${caps.length === 1 ? '' : 's'} finished<span class="internal"> · ${fs.length} components</span></div>
+      <h4>${esc(ms.replace(/^M(\d) - /, '$1. '))}</h4><p class="demo">${esc(MS_TEXT[ms] || '')}</p>
+      <div class="amt internal"><b>${money(present.low * sh)}–${money(present.high * sh)}</b> · ${(sh * 100).toFixed(0)}% of the build</div>
+      <div>${caps.map((c) => `<span class="chip" data-f="${c.id}" title="${esc(c.sysName)}">${esc(c.name)}</span>`).join('')}</div></div>`; }).join('');
+  $('#assume').innerHTML = ASSUME.map((a) => `<li>${esc(a)}</li>`).join('');
+  $('#exclude').innerHTML = EXCLUDE.map((a) => `<li>${esc(a)}</li>`).join('');
+}
+function renderMethod() {
+  $('#ctx').innerHTML = `<tr><th>Factor</th><th>Level</th><th class="r">Multiplier</th></tr>${Object.entries(LEVELS).map(([k, [lv, txt]]) =>
+    `<tr><td>${CTX_LABEL[k]}</td><td>${lv} · ${esc(txt)}</td><td class="r">${CTX[k][lv - 1].toFixed(2)}</td></tr>`).join('')}
+    <tr class="sum"><td colspan="2">Composite (1 + sum of deviations, cap 2.5)</td><td class="r">${mult.toFixed(2)}</td></tr>`;
+  $('#ovh').innerHTML = `<tr><th>Cost line</th><th class="r">% of base</th><th class="r">Amount</th></tr>${Object.entries(OVH).map(([k, v]) =>
+    `<tr><td>${k}</td><td class="r">${Math.round(v * 100)}%</td><td class="r">${money(base * v)}</td></tr>`).join('')}
+    <tr><td>Cross-feature integration (2% × ${PRICED.length}, cap 25%)</td><td class="r">${Math.round(integ * 100)}%</td><td class="r">${money(base * integ)}</td></tr>
+    <tr class="sum"><td>Total</td><td class="r">${Math.round(ovhPct * 100)}%</td><td class="r">${money(ovh)}</td></tr>`;
+  $('#cont').innerHTML = `<tr><td>Average uncertainty across features</td><td class="r">${avg('unc').toFixed(2)}</td></tr><tr><td>Average risk across features</td><td class="r">${avg('risk').toFixed(2)}</td></tr>
+    <tr><td>Rate: 5% + 2% × uncertainty + 2% × risk</td><td class="r">${(contRate * 100).toFixed(1)}%</td></tr>
+    <tr class="sum"><td>On build + outside work (${money(base + ovh)})</td><td class="r">${money(cont)}</td></tr>`;
+  $('#rng').innerHTML = `<tr><td>Optimistic (20% chance at or under)</td><td class="r">${money(P.p20)}</td></tr><tr><td>Expected cost</td><td class="r">${money(p50)}</td></tr>
+    <tr><td>Confident (80%)</td><td class="r">${money(P.p80)}</td></tr><tr><td>Worst realistic case (95%)</td><td class="r">${money(P.p95)}</td></tr>
+    <tr class="sum"><td>Presented: expected → worst, rounded up to $500</td><td class="r">${money(present.low)}–${money(present.high)}</td></tr>`;
+  $('#xcheck').innerHTML = `<tr><td>Components</td><td class="r">${ENG.length}</td></tr><tr><td>Tasks</td><td class="r">${TASK_COUNT}</td></tr>
+    <tr><td>Expected effort, (O + 4M + P) / 6 summed</td><td class="r">${Math.round(ENG_HOURS).toLocaleString('en-US')}h</td></tr>
+    <tr class="sum"><td>Implied rate at the expected cost (${money(p50)} ÷ hours)</td><td class="r">${money(p50 / ENG_HOURS)}/h</td></tr>`;
+}
+
+// ---- the proposal: the client's view of the same scope, milestones, register and price ----
+const DOC = { title: `${DATA.project} Digital Transformation — Systems & Workflows Proposal`, date: 'Oct 1, 2026', by: 'Code Engine Studio' };
+const short = (n) => n.split(' (')[0];
+const list = (xs) => (xs.length > 1 ? `${xs.slice(0, -1).join(', ')} and ${xs[xs.length - 1]}` : xs[0]);
+function flowCode(fl) {
+  const ids = new Map(); const id = (n) => { if (!ids.has(n)) ids.set(n, `n${ids.size}`); return ids.get(n); };
+  const L = ['flowchart LR'];
+  fl.steps.forEach((st, i) => { if (i) L.push(`  ${id(fl.steps[i - 1])} --> ${id(st)}`); });
+  fl.branches.forEach((b) => L.push(`  ${id(b.from)} -.-> ${id(b.to)}`));
+  for (const [n, i] of ids) L.push(`  ${i}["${n.replace(/"/g, "'")}"]`);
+  return L.join('\n');
+}
+const flows = (s) => [s.main, ...s.subs].filter(Boolean);
+function scope() {
+  const names = DATA.systems.map((s) => short(s.name));
+  return `<h2>Scope: what this proposal covers</h2>
+    <p>This proposal covers ${DATA.systems.length} systems for Phase 1: ${list(names)}. Each is described below by its workflows and the features that serve them.</p>
+    <table class="t"><tr><th>Code Engine Studio system</th><th>${esc(DATA.mapLabel)}</th></tr>${DATA.systems.map((s) => `<tr><td>${esc(s.name)}</td><td>${esc(s.map)}</td></tr>`).join('')}</table>
+    <p>What is out of scope, and the rules settled in a discovery phase at kickoff, are listed under <a class="link" href="#register">Assumptions &amp; exclusions</a>.</p>`;
+}
+function system(s, i) {
+  const diagrams = flows(s).map((fl) => `<p class="flow-name">${fl === s.main ? 'Main workflow' : 'Sub-workflow'} · ${esc(fl.name)}</p><div class="flow"><pre class="mermaid">${esc(flowCode(fl))}</pre></div>`).join('');
+  return `<section id="sys-${s.id}"><h2><span class="sysno">System ${i + 1}:</span> ${esc(s.name)}</h2><p>${esc(s.purpose)}</p>${diagrams}
+    <table class="t"><tr><th>Feature</th><th>What it does</th></tr>${s.features.map((f) => `<tr><td><span class="fid">${f.id}</span>${esc(f.name)}</td><td>${esc(f.does)}</td></tr>`).join('')}</table></section>`;
+}
+function milestones() {
+  const rows = MS_ORDER.map((ms, i) => { const caps = CAP_LIST.filter((c) => capMilestone(c.id) === ms);
+    return `<tr><td>${esc(ms.replace(/^M\d - /, `${i + 1}. `))}</td><td>${esc(caps.map((c) => c.name).join(', '))}</td><td>${esc(MS_TEXT[ms] || '')}</td></tr>`; }).join('');
+  return `<h2>Milestones</h2><p>The ${CAP_LIST.length} features sequence into ${MS_ORDER.length} milestones; each one ends with something working you can see.</p>
+    <table class="t"><tr><th>Milestone</th><th>Includes</th><th>What it demonstrates</th></tr>${rows}</table>`;
+}
+const register = () => `<h2>Assumptions &amp; exclusions</h2><p>These are the same lines as the companion estimate, word for word, so the price and the scope never drift apart.</p>
+  <h3>Assumptions</h3><ul class="reg">${ASSUME.map((a) => `<li>${esc(a)}</li>`).join('')}</ul>
+  <h3>Exclusions</h3><ul class="reg">${EXCLUDE.map((a) => `<li>${esc(a)}</li>`).join('')}</ul>`;
+const cost = () => `<h2>Cost estimate</h2><p>The companion estimate scores the work behind all ${CAP_LIST.length} features above and rolls it up into a project range, including design, testing, project management and contingency.</p>
+  <div class="price"><div><span>Range</span><b>${money(present.low)} – ${money(present.high)}</b><span>expected cost to worst realistic case, USD</span></div>
+    <div><span>If one fixed number is needed</span><b>${money(present.single)}</b><span>confident figure: 80% chance the project comes in at or under</span></div></div>`;
+$("#title").textContent = DOC.title; document.title = `${DATA.project} — proposal`;
+$('#byline').textContent = `${DOC.date} · ${DOC.by}`;
+$('#scope').innerHTML = scope();
+$('#systems').innerHTML = DATA.systems.map(system).join('');
+$('#milestones').innerHTML = milestones(); $('#register').innerHTML = register(); $('#cost').innerHTML = cost();
+$('#toc').innerHTML = [['scope', 'Scope'], ...DATA.systems.map((s, i) => [`sys-${s.id}`, `System ${i + 1}`]), ['milestones', 'Milestones'], ['register', 'Assumptions & exclusions'], ['cost', 'Cost']]
+  .map(([id, l]) => `<a href="#${id}">${esc(l)}</a>`).join('');
+// ---- theme + diagrams (mockup loads mermaid from a CDN) ----
+const dark = () => document.documentElement.dataset.theme === 'dark' || (!document.documentElement.dataset.theme && matchMedia('(prefers-color-scheme: dark)').matches);
+const src = [...document.querySelectorAll('pre.mermaid')].map((p) => p.textContent);
+let mermaid;
+async function draw() {
+  try {
+    mermaid ??= (await import('https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs')).default;
+    const t = (v) => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+    mermaid.initialize({ startOnLoad: false, theme: 'base', flowchart: { curve: 'basis', padding: 10 }, themeVariables: { fontFamily: 'system-ui,sans-serif', fontSize: '13px',
+      background: t('--sheet'), primaryColor: t('--sheet'), primaryTextColor: t('--ink'), primaryBorderColor: t('--meter'), lineColor: t('--ink-dim'), textColor: t('--ink') } });
+    const pres = [...document.querySelectorAll('pre.mermaid')];
+    pres.forEach((p, i) => { p.removeAttribute('data-processed'); p.textContent = src[i]; });
+    await mermaid.run({ nodes: pres });
+  } catch { /* diagrams need a connection in this mockup; the step list stays readable */ }
+}
+$('#theme').onclick = () => { document.documentElement.dataset.theme = dark() ? 'light' : 'dark'; $('#theme').textContent = dark() ? 'Light' : 'Dark'; draw(); };
+$('#theme').textContent = dark() ? 'Light' : 'Dark';
+draw();
+</script>
+</body>
+</html>

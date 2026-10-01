@@ -1,0 +1,324 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sin Kowa — estimate</title>
+<style>
+:root {
+  color-scheme:light;
+  --paper:#e8ecef; --sheet:#fbfcfd; --ink:#141c24; --ink-dim:#5d6c78;
+  --rule:#d3dbe1; --grid:#edf1f4; --meter:#44586a; --mark:#b4232f; --mark-soft:#b4232f14;
+  --ok:#2f6b4a; --ok-soft:#2f6b4a14; --hi:#fbf1cf; --hi-line:#c8960c;
+  --c1:#44586a; --c2:#7d96ab; --c3:#a9bccb; --c4:#cdd8e1;
+  --t-s:#dfe6ec; --t-s-ink:#4a5a68; --t-m:#c3d2df; --t-m-ink:#2b3d4c; --t-l:#7d96ab; --t-l-ink:#fff; --t-xl:#2f4a60; --t-xl-ink:#fff;
+  --serif:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,"Liberation Serif",serif;
+  --sans:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+}
+@media (prefers-color-scheme:dark) { :root:not([data-theme="light"]) {
+  color-scheme:dark; --paper:#11171c; --sheet:#1a2229; --ink:#e6ecf1; --ink-dim:#93a3b0;
+  --rule:#2c3740; --grid:#222c34; --meter:#8fa8bb; --mark:#e26c60; --mark-soft:#e26c6021;
+  --ok:#7cc39a; --ok-soft:#7cc39a1c; --hi:#3b3519; --hi-line:#d9a92a;
+  --c1:#bacdda; --c2:#8fa8bb; --c3:#5f7688; --c4:#3a4a57;
+  --t-s:#263039; --t-s-ink:#9fb0bd; --t-m:#3a4a57; --t-m-ink:#d3dfe8; --t-l:#7d96ab; --t-l-ink:#0f161b; --t-xl:#bacdda; --t-xl-ink:#0f161b; } }
+:root[data-theme="dark"] {
+  color-scheme:dark; --paper:#11171c; --sheet:#1a2229; --ink:#e6ecf1; --ink-dim:#93a3b0;
+  --rule:#2c3740; --grid:#222c34; --meter:#8fa8bb; --mark:#e26c60; --mark-soft:#e26c6021;
+  --ok:#7cc39a; --ok-soft:#7cc39a1c; --hi:#3b3519; --hi-line:#d9a92a;
+  --c1:#bacdda; --c2:#8fa8bb; --c3:#5f7688; --c4:#3a4a57;
+  --t-s:#263039; --t-s-ink:#9fb0bd; --t-m:#3a4a57; --t-m-ink:#d3dfe8; --t-l:#7d96ab; --t-l-ink:#0f161b; --t-xl:#bacdda; --t-xl-ink:#0f161b; }
+* { box-sizing:border-box; }
+body { margin:0; padding:2rem 1.5rem 4rem; background:var(--paper); color:var(--ink); font-family:var(--sans); font-size:.9rem; line-height:1.5; }
+.page { max-width:84rem; margin:0 auto; }
+:focus-visible { outline:2px solid var(--ink); outline-offset:2px; }
+button { font:inherit; color:var(--ink); }
+.hide { display:none !important; }
+.num { font-variant-numeric:tabular-nums; }
+.mock { background:var(--mark); color:#fff; font-size:.72rem; font-weight:600; letter-spacing:.04em; padding:.2rem .6rem; display:inline-block; border-radius:.2rem; margin-bottom:.8rem; }
+.head { display:flex; justify-content:space-between; gap:1rem; align-items:flex-start; }
+.head-ctl { display:flex; gap:.5rem; align-items:center; }
+h1 { font-family:var(--serif); font-size:2.1rem; font-weight:600; letter-spacing:-.015em; margin:0; }
+.sub { margin:.15rem 0 1rem; color:var(--ink-dim); font-size:.82rem; }
+.btn { font-size:.78rem; font-weight:600; padding:.3rem .7rem; color:var(--ink-dim); background:var(--sheet); border:1px solid var(--rule); border-radius:.2rem; cursor:pointer; }
+.btn:hover { color:var(--ink); border-color:var(--ink-dim); }
+.view { display:inline-flex; border:1px solid var(--rule); border-radius:.25rem; overflow:hidden; }
+.view button { border:0; background:var(--sheet); color:var(--ink-dim); font-size:.78rem; font-weight:600; padding:.3rem .75rem; cursor:pointer; }
+.view button[aria-pressed="true"] { background:var(--ink); color:var(--sheet); }
+nav.toc { position:sticky; top:0; z-index:5; display:flex; gap:.4rem; flex-wrap:wrap; padding:.6rem 0; background:var(--paper); border-bottom:1px solid var(--rule); margin-bottom:1.2rem; }
+nav.toc a { font-size:.8rem; text-decoration:none; color:var(--ink-dim); padding:.25rem .65rem; border:1px solid var(--rule); border-radius:1rem; background:var(--sheet); }
+nav.toc a:hover { color:var(--ink); }
+section.card { background:var(--sheet); border:1px solid var(--rule); padding:1.3rem 1.4rem; margin-bottom:1.4rem; scroll-margin-top:3.5rem; }
+h2 { font-family:var(--serif); font-size:1.45rem; font-weight:600; margin:0 0 .2rem; }
+.sec-lead { margin:0 0 1rem; color:var(--ink-dim); max-width:72ch; font-size:.84rem; }
+h3 { font-size:.74rem; letter-spacing:.07em; text-transform:uppercase; color:var(--ink-dim); margin:1.2rem 0 .5rem; font-weight:700; }
+
+/* summary */
+.headline { display:grid; grid-template-columns:1.4fr 1fr 1fr 1fr; border:1px solid var(--rule); }
+.headline > div { padding:.9rem 1.1rem; border-left:1px solid var(--rule); }
+.headline > div:first-child { border-left:0; background:var(--paper); }
+.headline b { display:block; font-family:var(--serif); font-size:1.5rem; font-variant-numeric:tabular-nums; line-height:1.2; }
+.headline .big b { font-size:2rem; }
+.headline span { font-size:.74rem; color:var(--ink-dim); }
+.buildup { margin-top:1.2rem; }
+.bu-row { display:grid; grid-template-columns:16rem 1fr 7rem; gap:.8rem; align-items:center; padding:.25rem 0; font-size:.84rem; }
+.bu-row .lbl small { display:block; color:var(--ink-dim); font-size:.72rem; }
+.bu-bar { height:1.1rem; position:relative; background:var(--grid); border-radius:.15rem; }
+.bu-bar i { position:absolute; top:0; bottom:0; border-radius:.15rem; background:var(--c2); }
+.bu-row.total { border-top:1px solid var(--rule); margin-top:.3rem; padding-top:.5rem; font-weight:700; }
+.bu-row.total .bu-bar i { background:var(--c1); }
+.bu-row .amt { text-align:right; font-variant-numeric:tabular-nums; }
+.bu-row.range .bu-bar i { background:repeating-linear-gradient(90deg,var(--hi-line) 0 6px,transparent 6px 9px); opacity:.8; }
+
+/* systems */
+.systems { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:.9rem; }
+.sys { border:1px solid var(--rule); border-radius:.3rem; padding:.9rem 1rem; background:var(--sheet); cursor:pointer; text-align:left; }
+.sys:hover, .sys.hl { border-color:var(--hi-line); background:var(--hi); }
+.sys .eyebrow { font-size:.68rem; letter-spacing:.08em; text-transform:uppercase; color:var(--ink-dim); font-weight:700; }
+.sys h4 { font-family:var(--serif); font-size:1.08rem; margin:.1rem 0 .5rem; font-weight:600; }
+.sys .amt { font-family:var(--serif); font-size:1.35rem; font-variant-numeric:tabular-nums; }
+.sys .meta { font-size:.74rem; color:var(--ink-dim); margin:.1rem 0 .5rem; }
+
+/* breakdown */
+.sys-block { border-top:1px solid var(--rule); padding-top:1rem; margin-top:1rem; scroll-margin-top:3.5rem; }
+.sys-block:first-of-type { border-top:0; margin-top:0; padding-top:0; }
+.sb-head { display:flex; justify-content:space-between; align-items:baseline; gap:1rem; }
+.sb-head h4 { font-family:var(--serif); font-size:1.2rem; margin:0; }
+.sb-head .amt { font-variant-numeric:tabular-nums; font-size:.9rem; } .sb-head .amt b { font-family:var(--serif); font-size:1.15rem; }
+.flow { border:1px solid var(--grid); background:var(--paper); padding:.6rem; overflow-x:auto; margin:.4rem 0; }
+.flow-name { font-size:.72rem; color:var(--ink-dim); margin:.5rem 0 0; }
+.flow g.node { cursor:pointer; }
+.flow g.node.hl rect, .flow g.node.hl polygon { stroke:var(--hi-line) !important; stroke-width:3px !important; }
+.flow g.node.cur rect, .flow g.node.cur polygon { stroke-width:5px !important; }
+table.bd { width:100%; border-collapse:collapse; font-size:.83rem; margin-top:.5rem; }
+table.bd th { text-align:left; font-size:.7rem; letter-spacing:.05em; text-transform:uppercase; color:var(--ink-dim); font-weight:600; padding:.35rem .5rem; border-bottom:1px solid var(--rule); }
+table.bd td { padding:.45rem .5rem; border-bottom:1px solid var(--grid); vertical-align:top; }
+table.bd td.r, table.bd th.r { text-align:right; font-variant-numeric:tabular-nums; white-space:nowrap; }
+table.bd tr[data-feat] { cursor:pointer; }
+table.bd tr.hl td { background:var(--hi); }
+table.bd tr.cur td { box-shadow:inset 0 2px 0 var(--hi-line), inset 0 -2px 0 var(--hi-line); }
+.fname { font-weight:600; } .fdoes { color:var(--ink-dim); font-size:.78rem; }
+.chip { display:inline-block; font-size:.7rem; padding:0 .4rem; margin:0 .2rem .2rem 0; border:1px solid var(--rule); border-radius:.8rem; background:var(--paper); white-space:nowrap; }
+.chip.hl { background:var(--hi); border-color:var(--hi-line); }
+.tier { font-size:.72rem; font-weight:700; padding:.05rem .4rem; border:1px solid var(--rule); border-radius:.2rem; }
+.tier.t-S { background:var(--t-s); color:var(--t-s-ink); } .tier.t-M { background:var(--t-m); color:var(--t-m-ink); }
+.tier.t-L { background:var(--t-l); color:var(--t-l-ink); border-color:var(--t-l); } .tier.t-XL { background:var(--t-xl); color:var(--t-xl-ink); border-color:var(--t-xl); }
+.flag { font-size:.7rem; font-weight:700; color:var(--hi-line); }
+.dim { color:var(--ink-dim); }
+
+/* roadmap */
+.ms { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:.9rem; }
+.m { border:1px solid var(--rule); border-radius:.3rem; padding:.9rem 1rem; }
+.m h4 { margin:.1rem 0 .3rem; font-family:var(--serif); font-size:1.05rem; }
+.m .demo { font-size:.8rem; color:var(--ink-dim); margin:0 0 .6rem; }
+.m .amt { font-variant-numeric:tabular-nums; font-size:.84rem; margin-bottom:.5rem; } .m .amt b { font-family:var(--serif); font-size:1.15rem; }
+.m .chip { cursor:pointer; }
+
+/* register + method */
+.twocol { display:grid; grid-template-columns:1fr 1fr; gap:1.4rem; }
+.twocol ul { margin:.2rem 0; padding-left:1.1rem; } .twocol li { margin:.25rem 0; font-size:.84rem; }
+table.kv { width:100%; border-collapse:collapse; font-size:.82rem; }
+table.kv td, table.kv th { padding:.35rem .5rem; border-bottom:1px solid var(--grid); text-align:left; }
+table.kv th { font-size:.7rem; text-transform:uppercase; letter-spacing:.05em; color:var(--ink-dim); font-weight:600; border-bottom-color:var(--rule); }
+table.kv td.r, table.kv th.r { text-align:right; font-variant-numeric:tabular-nums; }
+table.kv tr.sum td { font-weight:700; border-top:1px solid var(--rule); }
+
+/* internal-only parts disappear in client view */
+body.client .internal { display:none !important; }
+
+.pinbar { position:fixed; right:1.2rem; bottom:1.2rem; z-index:11; display:flex; gap:.4rem; align-items:center; background:var(--sheet);
+  border:1px solid var(--hi-line); box-shadow:0 4px 18px #0002; padding:.45rem .6rem; border-radius:.3rem; max-width:calc(100% - 2.4rem); }
+.pin-txt { display:flex; flex-direction:column; min-width:0; margin-right:.3rem; }
+.pin-txt b { font-size:.8rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:22rem; }
+.pin-txt small { font-size:.72rem; color:var(--ink-dim); }
+@media (max-width:980px) { .systems, .ms { grid-template-columns:repeat(2,minmax(0,1fr)); } .headline { grid-template-columns:1fr 1fr; } .twocol { grid-template-columns:1fr; } }
+@media (max-width:640px) { .systems, .ms, .headline { grid-template-columns:1fr; } .bu-row { grid-template-columns:1fr 6rem; } .bu-row .bu-bar { display:none; } }
+.chip.none { color:var(--mark); border-color:var(--mark); }
+.view.pages a { display:inline-block; text-decoration:none; color:var(--ink-dim); background:var(--sheet); font-size:.78rem; font-weight:600; padding:.3rem .75rem; }
+.view.pages a[aria-current="page"] { background:var(--ink); color:var(--sheet); }
+</style>
+</head>
+<body class="client">
+<div class="page">
+  <span class="mock">MOCKUP — Sin Kowa, priced from the components signed off in the score review</span>
+  <div class="head">
+    <div>
+      <h1>Sin Kowa Digital Transformation — estimate</h1>
+      <p class="sub">Phase 1 · 4 systems · 19 features · scope reviewed by the PO, scores reviewed internally · prices in USD</p>
+    </div>
+    <div class="head-ctl">
+      <nav class="view pages" aria-label="Estimate view"><a href="estimate-mockup.html" aria-current="page">Workflow-based</a><a href="estimate-feature-mockup.html">Component-based</a></nav>
+      <button class="btn" id="theme" type="button">Dark</button>
+    </div>
+  </div>
+  <nav class="toc">
+    <a href="#summary">Summary</a><a href="#systems">By system</a><a href="#breakdown">Workflows &amp; features</a>
+    <a href="#roadmap">Milestones</a><a href="#register">Assumptions &amp; exclusions</a><a href="#method" class="internal">Method</a>
+  </nav>
+  <div class="howto"><b class="howto-t">How to read this page</b>
+    <div class="howto-chain"><span><b>System</b>a part of the business<small>e.g. Warehouse Mgmt System</small></span><i>→</i><span><b>Workflow</b>the steps work moves through<small>e.g. Order In → Pack → Pack Review</small></span><i>→</i><span><b>Feature</b>something you asked for, on the steps it serves<small>e.g. F04 Order intake &amp; quotation entry</small></span></div>
+    <p class="howto-rule">Each system has its workflows; each feature sits on the workflow steps it serves. The price covers every feature on this page, and each milestone lists the features it finishes.</p></div>
+
+  <section class="card" id="summary">
+    <h2>Summary</h2>
+    <p class="sec-lead">The price for this scope, stated once. Lead with the range; if a single fixed number is unavoidable, quote the confident figure.</p>
+    <div class="headline" id="headline"></div>
+    <div class="buildup internal" id="buildup"></div>
+  </section>
+
+  <section class="card" id="systems">
+    <h2>By system</h2>
+    <p class="sec-lead">The systems and workflows the PO confirmed. The price is quoted for the whole project and per milestone, not per system: shared features such as notifications serve several systems at once. <span class="internal">Hours and tasks per feature are on the Component-based page.</span></p>
+    <div class="systems" id="syscards"></div>
+  </section>
+
+  <section class="card" id="breakdown">
+    <h2>Workflows &amp; features</h2>
+    <p class="sec-lead">Every feature sits on the workflow step it serves. Hover a diagram box or a feature to see the connections; click to pin them. <span class="internal">A pinned step opens on the Component-based page with its hours and tasks.</span></p>
+    <div id="blocks"></div>
+  </section>
+
+  <section class="card" id="roadmap">
+    <h2>Milestones</h2>
+    <p class="sec-lead">What Sin Kowa can use at the end of each milestone. A feature is finished when everything it needs is built. <span class="internal">Each milestone's range is its share of the build applied to the project range.</span></p>
+    <div class="ms" id="ms"></div>
+  </section>
+
+  <section class="card" id="register">
+    <h2>Assumptions &amp; exclusions</h2>
+    <p class="sec-lead">What this price rests on, and what it does not cover. Shared word for word with the proposal.</p>
+    <div class="twocol"><div><h3>Assumptions</h3><ul id="assume"></ul></div><div><h3>Exclusions</h3><ul id="exclude"></ul></div></div>
+  </section>
+
+  <section class="card internal" id="method">
+    <h2>Method</h2>
+    <p class="sec-lead">Estimator v2: five weighted scores per feature price it on continuous bands; the project roll-up adds the work feature scoring never captures.</p>
+    <div class="twocol"><div><h3>Project context factors</h3><table class="kv" id="ctx"></table></div>
+      <div><h3>Work outside the features</h3><table class="kv" id="ovh"></table></div></div>
+    <div class="twocol"><div><h3>Contingency</h3><table class="kv" id="cont"></table></div><div><h3>Range</h3><table class="kv" id="rng"></table></div></div>
+    <h3>Cross-check: the engineering work behind the price</h3><p class="sec-lead">Hours from the components' tasks. If the implied rate sits far from what the team costs, the scores or the task list need another look.</p><table class="kv" id="xcheck" style="max-width:40rem"></table>
+  </section>
+</div>
+
+<div class="pinbar hide" id="pinbar" role="status">
+  <span>📌</span><div class="pin-txt"><b id="pinLabel"></b><small id="pinCount"></small></div>
+  <a class="btn internal hide" id="pinFeat" href="#">Hours &amp; tasks on Component-based page →</a>
+  <button class="btn" id="pinPrev" type="button" title="Previous (k)">↑</button>
+  <button class="btn" id="pinNext" type="button" title="Next (j)">↓ Next</button>
+  <button class="btn" id="pinClear" type="button" title="Esc">Clear</button>
+</div>
+
+<script type="module">
+/*DATA*/
+/*ENG*/
+/*ROLLUP*/
+// the client's features (business capabilities) on their workflow steps; priced through the engineering features above
+const FEATS = DATA.systems.flatMap((s) => s.features.map((f) => ({ ...f, sys: s })));
+const byId = Object.fromEntries(FEATS.map((f) => [f.id, f]));
+
+// ---- systems ----
+function renderSystems() {
+  $('#syscards').innerHTML = DATA.systems.map((s, i) => {
+    return `<button type="button" class="sys" data-sys="${s.id}"><div class="eyebrow">System ${i + 1}</div><h4>${esc(s.name)}</h4>
+      <div class="meta">${s.features.length} features · ${s.main.missing ? 'workflow suggested by us, confirmed by PO' : 'workflow from the PO\'s document'}${s.subs.length ? ` · ${s.subs.length} sub-workflow` : ''}</div></button>`;
+  }).join('');
+}
+
+function flowCode(fl) {
+  const ids = new Map(); const id = (n) => { if (!ids.has(n)) ids.set(n, `n${ids.size}`); return ids.get(n); };
+  const L = ['flowchart LR'];
+  fl.steps.forEach((st, i) => { if (i) L.push(`  ${id(fl.steps[i - 1])} --> ${id(st)}`); });
+  fl.branches.forEach((b) => L.push(`  ${id(b.from)} -.-> ${id(b.to)}`));
+  const map = {}; for (const [n, i] of ids) { L.push(`  ${i}["${n.replace(/"/g, "'")}"]`); map[i] = `${fl.id}:${n}`; }
+  return { code: L.join('\n'), map };
+}
+const flowsOf = (s) => [s.main, ...s.subs].filter(Boolean);
+const stepName = (r) => r.slice(r.indexOf(':') + 1);
+function featureView(s) {
+  return `<table class="bd"><tr><th>ID</th><th>Feature</th><th>Workflow steps</th></tr>${s.features.map((f0) => {
+    const f = byId[f0.id];
+    const steps = f.steps.includes('*') ? '<span class="chip">every system</span>' : f.steps.length ? f.steps.map((r) => `<span class="chip">${esc(stepName(r))}</span>`).join('') : '<span class="chip">not on a workflow step</span>';
+    return `<tr data-feat="${f.id}"><td class="dim num">${f.id}</td><td><div class="fname">${esc(f.name)}</div><div class="fdoes">${esc(f.does)}</div></td><td>${steps}</td></tr>`; }).join('')}</table>`;
+}
+function renderBreakdown() {
+  $('#blocks').innerHTML = DATA.systems.map((s, i) => {
+    const flows = flowsOf(s).map((fl) => { const m = flowCode(fl);
+      return `<p class="flow-name">${fl === s.main ? 'Main workflow' : 'Sub-workflow'} · ${esc(fl.name)}</p><div class="flow" data-map="${esc(JSON.stringify(m.map))}"><pre class="mermaid">${esc(m.code)}</pre></div>`; }).join('');
+    return `<div class="sys-block" id="b-${s.id}"><div class="sb-head"><h4>System ${i + 1} · ${esc(s.name)}</h4><span class="amt">${s.features.length} features</span></div>
+      ${flows}${featureView(s)}</div>`;
+  }).join('');
+}
+// ---- hover previews, click pins: diagram box ↔ feature row ↔ system card ↔ milestone chip ----
+const refsOfFeat = (f) => new Set(f.steps.includes('*') ? flowsOf(f.sys).flatMap((fl) => [...fl.steps, ...fl.branches.map((b) => b.to)].map((st) => `${fl.id}:${st}`)) : f.steps);
+const fromStep = (ref) => [new Set([ref]), new Set(FEATS.filter((f) => f.steps.includes(ref)).map((f) => f.id))];
+const fromFeat = (id) => [refsOfFeat(byId[id]), new Set([id])];
+const fromSys = (sid) => { const s = DATA.systems.find((x) => x.id === sid);
+  return [new Set(flowsOf(s).flatMap((fl) => [...fl.steps, ...fl.branches.map((b) => b.to)].map((st) => `${fl.id}:${st}`))), new Set(s.features.map((f) => f.id))]; };
+function highlight(refs, feats) {
+  document.querySelectorAll('tr[data-feat]').forEach((t) => t.classList.toggle('hl', feats.has(t.dataset.feat)));
+  document.querySelectorAll('.chip[data-f]').forEach((c) => c.classList.toggle('hl', feats.has(c.dataset.f)));
+  document.querySelectorAll('.sys').forEach((c) => c.classList.toggle('hl', [...feats].some((id) => byId[id].sys.id === c.dataset.sys)));
+  document.querySelectorAll('.flow').forEach((d) => { const map = JSON.parse(d.dataset.map);
+    d.querySelectorAll('g.node').forEach((g) => g.classList.toggle('hl', refs.has(map[(g.id.match(/flowchart-(n\d+)-/) || [])[1]]))); });
+}
+const clearHl = () => document.querySelectorAll('.hl, .cur').forEach((x) => x.classList.remove('hl', 'cur'));
+function hitAt(t) {
+  const node = t.closest('.flow g.node');
+  if (node) { const ref = JSON.parse(node.closest('.flow').dataset.map)[(node.id.match(/flowchart-(n\d+)-/) || [])[1]];
+    return ref ? { hit: fromStep(ref), label: `Step “${stepName(ref)}”`, ref } : null; }
+  const id = t.closest('tr[data-feat]')?.dataset.feat || t.closest('.chip[data-f]')?.dataset.f;
+  if (id) return { hit: fromFeat(id), label: `${id} ${byId[id].name}` };
+  const sid = t.closest('.sys')?.dataset.sys;
+  return sid ? { hit: fromSys(sid), label: DATA.systems.find((x) => x.id === sid).name } : null;
+}
+let pin = null;
+// only what is on screen: skip parts inside a collapsed system or a hidden section
+const onScreen = (x) => !x.closest('.hide, details:not([open])') && x.getClientRects().length > 0;
+const litParts = () => [...document.querySelectorAll('.flow g.node.hl, tr[data-feat].hl')].filter(onScreen);
+function showPin() { const n = litParts(); const [r, f] = pin.hit; $('#pinLabel').textContent = pin.label;
+  $('#pinCount').textContent = `${r.size} step${r.size === 1 ? '' : 's'} · ${f.size} feature${f.size === 1 ? '' : 's'} · ${pin.i + 1}/${n.length}`; $('#pinbar').classList.remove('hide');
+  $('#pinFeat').classList.toggle('hide', !pin.ref); if (pin.ref) $('#pinFeat').href = `estimate-feature-mockup.html#step=${encodeURIComponent(pin.ref)}`; }
+function jump(d) { const n = litParts(); if (!n.length) return; pin.i = (pin.i + d + n.length) % n.length;
+  n.forEach((x) => x.classList.remove('cur')); n[pin.i].classList.add('cur'); n[pin.i].scrollIntoView({ block: 'center', behavior: 'smooth' }); showPin(); }
+function unpin() { pin = null; clearHl(); $('#pinbar').classList.add('hide'); }
+document.addEventListener('mouseover', (e) => { if (pin) return; const h = hitAt(e.target); if (h) highlight(...h.hit); else clearHl(); });
+document.addEventListener('click', (e) => {
+  if (e.target.closest('#pinbar, #theme, .pages')) return;
+  const h = hitAt(e.target); if (!h) return;
+  if (pin && pin.label === h.label) { unpin(); return; }
+  pin = { ...h, i: -1 }; clearHl(); highlight(...h.hit); showPin();
+  if (e.target.closest('.sys')) { $(`#b-${e.target.closest('.sys').dataset.sys}`).scrollIntoView({ block: 'start', behavior: 'smooth' }); }
+});
+document.addEventListener('keydown', (e) => { if (!pin) return; if (e.key === 'Escape') unpin(); else if (e.key === 'j') jump(1); else if (e.key === 'k') jump(-1); });
+$('#pinNext').onclick = () => jump(1); $('#pinPrev').onclick = () => jump(-1); $('#pinClear').onclick = unpin;
+
+// ---- page identity ----
+// ---- render + theme + diagrams ----
+renderSummary(); renderSystems(); renderBreakdown(); renderRoadmap(); renderMethod();
+const dark = () => document.documentElement.dataset.theme === 'dark' || (!document.documentElement.dataset.theme && matchMedia('(prefers-color-scheme: dark)').matches);
+const src = [...document.querySelectorAll('pre.mermaid')].map((p) => p.textContent);
+let mermaid;
+async function draw() {
+  try {
+    mermaid ??= (await import('https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs')).default;
+    const t = (v) => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+    mermaid.initialize({ startOnLoad: false, theme: 'base', flowchart: { curve: 'basis', padding: 10 }, themeVariables: { fontFamily: 'system-ui,sans-serif', fontSize: '12px',
+      background: t('--paper'), primaryColor: t('--sheet'), primaryTextColor: t('--ink'), primaryBorderColor: t('--meter'), lineColor: t('--ink-dim'), edgeLabelBackground: t('--paper'), textColor: t('--ink') } });
+    const pres = [...document.querySelectorAll('pre.mermaid')];
+    pres.forEach((p, i) => { p.removeAttribute('data-processed'); p.textContent = src[i]; });
+    await mermaid.run({ nodes: pres });
+    if (pin) highlight(...pin.hit);
+    pinFromHash();
+  } catch { /* diagrams need a connection in this mockup */ }
+}
+$('#theme').onclick = () => { document.documentElement.dataset.theme = dark() ? 'light' : 'dark'; $('#theme').textContent = dark() ? 'Light' : 'Dark'; draw(); };
+$('#theme').textContent = dark() ? 'Light' : 'Dark';
+function pinFromHash() {
+  const ref = decodeURIComponent(location.hash.match(/^#step=(.+)$/)?.[1] ?? '');
+  if (!ref || pin?.ref === ref) return;
+  pin = { hit: fromStep(ref), label: `Step “${stepName(ref)}”`, ref, i: -1 }; clearHl(); highlight(...pin.hit); showPin();
+  document.querySelector('.flow g.node.hl')?.closest('.sys-block')?.scrollIntoView({ block: 'start' });
+}
+draw();
+</script>
+</body>
+</html>

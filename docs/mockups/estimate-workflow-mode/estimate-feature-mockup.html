@@ -1,0 +1,1098 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sin Kowa — estimate (component-based)</title>
+<style>
+:root {
+  color-scheme:light;
+  --paper:#e8ecef; --sheet:#fbfcfd; --ink:#141c24; --ink-dim:#5d6c78;
+  --rule:#d3dbe1; --grid:#edf1f4; --meter:#44586a; --mark:#b4232f; --mark-soft:#b4232f14;
+  --ok:#2f6b4a; --ok-soft:#2f6b4a14; --hi:#fbf1cf; --hi-line:#c8960c;
+  --t-s:#dfe6ec; --t-s-ink:#4a5a68; --t-m:#c3d2df; --t-m-ink:#2b3d4c; --t-l:#7d96ab; --t-l-ink:#fff; --t-xl:#2f4a60; --t-xl-ink:#fff;
+  --serif:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,"Liberation Serif",serif;
+  --sans:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+}
+@media (prefers-color-scheme:dark) { :root:not([data-theme="light"]) {
+  color-scheme:dark; --paper:#11171c; --sheet:#1a2229; --ink:#e6ecf1; --ink-dim:#93a3b0;
+  --rule:#2c3740; --grid:#222c34; --meter:#8fa8bb; --mark:#e26c60; --mark-soft:#e26c6021;
+  --ok:#7cc39a; --ok-soft:#7cc39a1c; --hi:#3b3519; --hi-line:#d9a92a;
+  --t-s:#263039; --t-s-ink:#9fb0bd; --t-m:#3a4a57; --t-m-ink:#d3dfe8; --t-l:#7d96ab; --t-l-ink:#0f161b; --t-xl:#bacdda; --t-xl-ink:#0f161b; } }
+:root[data-theme="dark"] {
+  color-scheme:dark; --paper:#11171c; --sheet:#1a2229; --ink:#e6ecf1; --ink-dim:#93a3b0;
+  --rule:#2c3740; --grid:#222c34; --meter:#8fa8bb; --mark:#e26c60; --mark-soft:#e26c6021;
+  --ok:#7cc39a; --ok-soft:#7cc39a1c; --hi:#3b3519; --hi-line:#d9a92a;
+  --t-s:#263039; --t-s-ink:#9fb0bd; --t-m:#3a4a57; --t-m-ink:#d3dfe8; --t-l:#7d96ab; --t-l-ink:#0f161b; --t-xl:#bacdda; --t-xl-ink:#0f161b; }
+* { box-sizing:border-box; }
+body { margin:0; padding:2rem 1.5rem 6rem; background:var(--paper); color:var(--ink); font-family:var(--sans); font-size:.9rem; line-height:1.5; }
+.page { max-width:78rem; margin:0 auto; }
+:focus-visible { outline:2px solid var(--ink); outline-offset:2px; }
+button, input, textarea { font:inherit; color:var(--ink); }
+.hide { display:none !important; }
+.mock { background:var(--mark); color:#fff; font-size:.72rem; font-weight:600; letter-spacing:.04em; padding:.2rem .6rem; display:inline-block; border-radius:.2rem; margin-bottom:.8rem; }
+.head { display:flex; justify-content:space-between; gap:1rem; align-items:flex-start; }
+h1 { font-family:var(--serif); font-size:2.1rem; font-weight:600; letter-spacing:-.015em; margin:0; }
+.sub { margin:.15rem 0 .9rem; color:var(--ink-dim); font-size:.82rem; }
+.lead { margin:0 0 1.2rem; max-width:70ch; color:var(--ink-dim); }
+.btn { font-size:.78rem; font-weight:600; padding:.3rem .7rem; color:var(--ink-dim); background:var(--sheet); border:1px solid var(--rule); border-radius:.2rem; cursor:pointer; }
+.btn:hover { color:var(--ink); border-color:var(--ink-dim); }
+.btn.primary { background:var(--ink); color:var(--sheet); border-color:var(--ink); }
+.btn.next { border-color:var(--mark); color:var(--mark); }
+.btn:disabled { opacity:.55; cursor:default; }
+.internal { font-size:.7rem; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:var(--mark); border:1px solid var(--mark); padding:0 .4rem; border-radius:.2rem; margin-left:.4rem; vertical-align:middle; }
+
+/* strip */
+.strip { display:grid; grid-template-columns:repeat(auto-fit,minmax(9rem,1fr)); background:var(--sheet); border:1px solid var(--rule); margin-bottom:1rem; }
+.strip div { padding:.6rem .9rem; border-left:1px solid var(--rule); }
+.strip div:first-child { border-left:0; }
+.strip b { display:block; font-family:var(--serif); font-size:1.4rem; font-variant-numeric:tabular-nums; }
+.strip span { font-size:.74rem; color:var(--ink-dim); }
+.strip .warn b { color:var(--mark); }
+
+/* spine: one dot per feature on its weighted score */
+.spine-wrap { background:var(--sheet); border:1px solid var(--rule); padding:.9rem 1rem .7rem; margin-bottom:1rem; }
+.spine, .zones { display:grid; grid-template-columns:repeat(21,1fr); }
+.spine { align-items:end; min-height:2.6rem; }
+.spine .col { display:flex; flex-direction:column-reverse; align-items:center; gap:2px; border-left:1px solid var(--grid); }
+.dot { width:11px; height:11px; padding:0; border:1px solid var(--ink); border-radius:50%; background:var(--sheet); cursor:pointer; }
+.dot:hover, .dot.hl { background:var(--hi-line); border-color:var(--hi-line); }
+.dot.changed { border-color:var(--mark); background:var(--mark); }
+.dot.flag { box-shadow:0 0 0 2px var(--sheet), 0 0 0 3px var(--hi-line); }
+.zones { border-top:1px solid var(--rule); margin-top:.35rem; padding-top:.3rem; font-size:.72rem; color:var(--ink-dim); }
+.zones span { border-left:1px solid var(--rule); padding-left:.35rem; } .zones span:first-child { border-left:0; }
+.zones b { color:var(--ink); }
+.spine-note { margin:.45rem 0 0; font-size:.75rem; color:var(--ink-dim); }
+
+/* nav + filters */
+nav.sys { position:sticky; top:0; z-index:5; display:flex; gap:.4rem; flex-wrap:wrap; align-items:center; padding:.6rem 0; background:var(--paper); border-bottom:1px solid var(--rule); margin-bottom:1rem; }
+nav.sys a { font-size:.8rem; text-decoration:none; color:var(--ink-dim); padding:.25rem .6rem; border:1px solid var(--rule); border-radius:1rem; background:var(--sheet); }
+nav.sys a:hover { color:var(--ink); }
+nav.sys a .n { font-variant-numeric:tabular-nums; margin-left:.35rem; font-weight:600; color:var(--ink); }
+nav.sys .filters { margin-left:auto; display:flex; gap:.25rem; }
+nav.sys .filters button { font-size:.74rem; padding:.2rem .6rem; border:1px solid var(--rule); border-radius:1rem; background:var(--sheet); color:var(--ink-dim); cursor:pointer; }
+nav.sys .filters button[aria-pressed="true"] { background:var(--ink); color:var(--sheet); border-color:var(--ink); }
+
+/* system */
+section.system { background:var(--sheet); border:1px solid var(--rule); padding:1.2rem 1.4rem 1.2rem; margin-bottom:1.6rem; scroll-margin-top:3.5rem; }
+.sys-head { display:flex; justify-content:space-between; gap:1rem; align-items:flex-end; border-bottom:1px solid var(--rule); padding-bottom:.8rem; margin-bottom:.8rem; }
+.eyebrow { font-size:.7rem; letter-spacing:.08em; text-transform:uppercase; color:var(--ink-dim); font-weight:600; }
+h2 { font-family:var(--serif); font-size:1.5rem; font-weight:600; margin:.05rem 0 0; }
+.subtotal { text-align:right; font-variant-numeric:tabular-nums; }
+.subtotal b { font-family:var(--serif); font-size:1.35rem; display:block; }
+.subtotal span { font-size:.74rem; color:var(--ink-dim); }
+.subtotal .was { color:var(--mark); }
+details.wf { margin:0 0 .6rem; }
+details.wf summary { cursor:pointer; font-size:.74rem; letter-spacing:.07em; text-transform:uppercase; color:var(--ink-dim); font-weight:700; }
+.flow { border:1px solid var(--grid); background:var(--paper); padding:.6rem; overflow-x:auto; margin-top:.4rem; }
+.flow-name { font-size:.72rem; color:var(--ink-dim); margin:.5rem 0 0; }
+.flow g.node.hl rect, .flow g.node.hl polygon { stroke:var(--hi-line) !important; stroke-width:3px !important; }
+
+/* feature card */
+.feat { display:grid; grid-template-columns:17rem 1fr; gap:1.4rem; padding:1rem 0; border-top:1px solid var(--rule); scroll-margin-top:4rem; }
+.feat.hl { background:linear-gradient(90deg,var(--hi),transparent 60%); }
+.feat.flash { animation:flash 1.4s ease-out; }
+@keyframes flash { 0%,40% { box-shadow:inset 3px 0 0 var(--hi-line); } 100% { box-shadow:inset 3px 0 0 transparent; } }
+.rail h3 { font-family:var(--serif); font-size:1.05rem; font-weight:600; margin:0 0 .15rem; }
+.rail .id { font-size:.72rem; color:var(--ink-dim); font-variant-numeric:tabular-nums; }
+.rail .does { margin:.2rem 0 .4rem; font-size:.78rem; color:var(--ink-dim); }
+.chip { display:inline-block; font-size:.7rem; padding:0 .4rem; margin:0 .2rem .2rem 0; border:1px solid var(--rule); border-radius:.8rem; background:var(--paper); white-space:nowrap; }
+.verdict { display:flex; align-items:center; gap:.5rem; flex-wrap:wrap; margin:.5rem 0 .2rem; font-variant-numeric:tabular-nums; }
+.verdict .total { font-size:.8rem; color:var(--ink-dim); } .verdict .total b { font-size:1.15rem; color:var(--ink); }
+.tier { font-size:.75rem; font-weight:700; padding:.08rem .45rem; border:1px solid var(--rule); border-radius:.2rem; }
+.tier.t-S { background:var(--t-s); color:var(--t-s-ink); } .tier.t-M { background:var(--t-m); color:var(--t-m-ink); }
+.tier.t-L { background:var(--t-l); color:var(--t-l-ink); border-color:var(--t-l); } .tier.t-XL { background:var(--t-xl); color:var(--t-xl-ink); border-color:var(--t-xl); }
+.price { font-size:.8rem; font-variant-numeric:tabular-nums; } .price b { font-size:.95rem; }
+.moved { font-size:.72rem; color:var(--mark); font-weight:600; }
+.flagchip { font-size:.7rem; font-weight:700; color:var(--hi-line); border:1px solid var(--hi-line); border-radius:.8rem; padding:0 .45rem; }
+
+.factors { display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:.8rem 1rem; }
+.factor .flabel { font-size:.72rem; font-weight:700; color:var(--ink-dim); display:flex; justify-content:space-between; }
+.factor .flabel i { font-style:normal; font-weight:500; }
+.pick { display:flex; gap:3px; margin:.3rem 0 .3rem; }
+.pick button { flex:1; min-width:0; font-size:.78rem; font-weight:600; padding:.22rem 0; border:1px solid var(--rule); border-radius:.2rem; background:var(--sheet); color:var(--ink-dim); cursor:pointer; font-variant-numeric:tabular-nums; }
+.pick button:hover { color:var(--ink); border-color:var(--ink-dim); }
+.pick button.on { background:var(--meter); border-color:var(--meter); color:var(--sheet); }
+.pick button.orig { box-shadow:inset 0 -2px 0 var(--ink-dim); }
+.factor.changed .pick button.on { background:var(--mark); border-color:var(--mark); color:#fff; }
+.anchor { margin:0; font-size:.74rem; line-height:1.35; color:var(--ink-dim); }
+.why { margin:.2rem 0 0; font-size:.74rem; line-height:1.35; color:var(--ink); }
+.why::before { content:'Evidence: '; color:var(--ink-dim); }
+.factor.changed .why { text-decoration:line-through; opacity:.55; }
+.note { display:block; margin-top:.7rem; font-size:.72rem; font-weight:700; color:var(--ink-dim); }
+.note textarea { display:block; width:100%; max-width:70ch; margin-top:.25rem; padding:.35rem .5rem; min-height:2.2rem; field-sizing:content;
+  font-family:var(--serif); font-size:.86rem; font-weight:400; border:1px solid var(--rule); border-radius:.2rem; background:var(--sheet); resize:vertical; }
+
+details.guide { margin:1.6rem 0; background:var(--sheet); border:1px solid var(--rule); padding:.8rem 1rem; }
+details.guide summary { cursor:pointer; font-weight:600; }
+.guide-table { border-collapse:collapse; width:100%; margin-top:.7rem; font-size:.76rem; }
+.guide-table th, .guide-table td { border:1px solid var(--rule); padding:.35rem .45rem; text-align:left; vertical-align:top; }
+.guide-table th { color:var(--ink-dim); } .guide-table td.dim { font-weight:600; white-space:nowrap; }
+
+/* bottom bar + dialog */
+.bar { position:fixed; left:0; right:0; bottom:0; background:var(--sheet); border-top:1px solid var(--rule); z-index:10; }
+.bar .in { max-width:84rem; margin:0 auto; padding:.7rem 1.5rem; display:flex; gap:1rem; align-items:center; justify-content:space-between; flex-wrap:wrap; }
+.bar .stat { font-size:.8rem; color:var(--ink-dim); font-variant-numeric:tabular-nums; } .bar .stat b { color:var(--ink); }
+.saved { font-size:.72rem; color:var(--ink-dim); }
+dialog { max-width:64rem; width:calc(100% - 3rem); border:1px solid var(--rule); background:var(--sheet); color:var(--ink); padding:1rem 1.2rem; box-shadow:0 18px 60px #0006; border-radius:.4rem; }
+dialog::backdrop { background:rgb(10 14 18 / .45); backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px); }
+dialog .sum { max-height:62vh; overflow:auto; }
+.sum h4 { font-family:var(--serif); font-size:1.05rem; margin:1rem 0 .3rem; }
+.sum table { width:100%; border-collapse:collapse; font-size:.82rem; font-variant-numeric:tabular-nums; }
+.sum th { text-align:left; font-size:.7rem; text-transform:uppercase; letter-spacing:.05em; color:var(--ink-dim); padding:.3rem .4rem; border-bottom:1px solid var(--rule); }
+.sum td { padding:.3rem .4rem; border-bottom:1px solid var(--grid); vertical-align:top; }
+.sum .up { color:var(--mark); font-weight:600; } .sum .down { color:var(--ok); font-weight:600; }
+.quiet { color:var(--ink-dim); font-size:.82rem; }
+#feedback { display:block; width:100%; min-height:5rem; margin-top:.5rem; padding:.5rem; font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:.7rem; border:1px solid var(--rule); background:var(--paper); color:var(--ink-dim); }
+.dlg-foot { display:flex; justify-content:flex-end; align-items:center; gap:.5rem; margin-top:.8rem; border-top:1px solid var(--rule); padding-top:.8rem; }
+#copied { font-size:.78rem; color:var(--ok); }
+@media (max-width:980px) { .factors { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+@media (max-width:760px) { body { padding:1.2rem 1rem 8rem; } .feat { grid-template-columns:1fr; gap:.8rem; } nav.sys .filters { margin-left:0; } }
+.reason { margin-top:.3rem; }
+.reason .was { margin:0 0 .2rem; font-size:.72rem; color:var(--mark); font-weight:600; }
+.reason textarea { display:block; width:100%; min-height:3.2rem; field-sizing:content; resize:vertical; font-size:.8rem; line-height:1.4;
+  padding:.35rem .45rem; border:1px solid var(--mark); border-radius:.2rem; background:var(--sheet); }
+.reason:not(.missing) textarea { border-color:var(--rule); }
+.warnbox { background:var(--mark-soft); color:var(--mark); padding:.5rem .7rem; font-size:.84rem; margin:.2rem 0 .6rem; }
+.pinbar { position:fixed; right:1.2rem; bottom:4.6rem; z-index:11; display:flex; gap:.4rem; align-items:center; background:var(--sheet);
+  border:1px solid var(--hi-line); box-shadow:0 4px 18px #0002; padding:.45rem .6rem; border-radius:.3rem; max-width:calc(100% - 2.4rem); }
+.pin-txt { display:flex; flex-direction:column; min-width:0; margin-right:.3rem; }
+.pin-txt b { font-size:.8rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:22rem; }
+.pin-txt small { font-size:.72rem; color:var(--ink-dim); }
+.feat.cur { box-shadow:inset 3px 0 0 var(--hi-line); }
+.flow g.node.cur rect, .flow g.node.cur polygon { stroke-width:5px !important; }
+.flow g.node, .rail h3, .dot { cursor:pointer; }
+.page { max-width:84rem; }
+.feat { grid-template-columns:1fr; gap:.8rem; padding:1.2rem 0 1.3rem; }
+.rail { display:flex; justify-content:space-between; gap:1.5rem; align-items:flex-start; }
+.rail .who { max-width:44rem; }
+.score-box { flex:none; min-width:15rem; text-align:right; }
+.score-box .verdict { justify-content:flex-end; margin-top:0; }
+.factors { grid-template-columns:repeat(5,minmax(0,1fr)); gap:0; border:1px solid var(--grid); border-radius:.3rem; background:var(--paper); }
+.factor { padding:.7rem .9rem .8rem; border-left:1px solid var(--rule); }
+.factor:first-child { border-left:0; }
+.factor .flabel { font-size:.76rem; }
+.pick { gap:5px; margin:.45rem 0 .45rem; }
+.pick button { padding:.34rem 0; font-size:.84rem; }
+.anchor { font-size:.76rem; line-height:1.4; }
+@media (max-width:980px) { .factors { grid-template-columns:repeat(2,minmax(0,1fr)); } .factor:nth-child(odd) { border-left:0; } .factor { border-top:1px solid var(--rule); } .rail { flex-direction:column; } .score-box { text-align:left; } .score-box .verdict { justify-content:flex-start; } }
+.bar .actions { display:flex; gap:.5rem; align-items:center; margin-left:auto; }
+
+/* capability map + links */
+section.map .quiet { margin:.1rem 0 .6rem; }
+.view { display:inline-flex; border:1px solid var(--rule); border-radius:.25rem; overflow:visible; background:var(--sheet); }
+.view button { border:0; border-left:1px solid var(--rule); background:transparent; color:var(--ink-dim); font-size:.78rem; font-weight:600; padding:.3rem .75rem; cursor:pointer; }
+.view button:first-child { border-left:0; }
+.view button:hover { color:var(--ink); }
+.view button[aria-pressed="true"] { background:var(--ink); color:var(--sheet); }
+details.capsys { border-top:1px solid var(--rule); padding-top:.6rem; margin-top:.6rem; }
+details.capsys summary { cursor:pointer; font-size:.82rem; font-weight:700; }
+table.caps { width:100%; border-collapse:collapse; font-size:.82rem; margin:.5rem 0 .3rem; }
+table.caps th { text-align:left; font-size:.7rem; text-transform:uppercase; letter-spacing:.05em; color:var(--ink-dim); padding:.3rem .45rem; border-bottom:1px solid var(--rule); }
+table.caps td { padding:.4rem .45rem; border-bottom:1px solid var(--grid); vertical-align:top; }
+table.caps td:first-child { width:30%; } table.caps td:nth-child(2) { width:28%; }
+table.caps tr[data-cap] { cursor:pointer; }
+table.caps tr.hl td { background:var(--hi); }
+table.caps tr.cur td { box-shadow:inset 0 2px 0 var(--hi-line), inset 0 -2px 0 var(--hi-line); }
+table.caps tr.gap td { background:var(--mark-soft); }
+table.caps tr.flash td { animation:flash 1.4s ease-out; }
+.dim { color:var(--ink-dim); }
+.chip.eng { cursor:pointer; border-color:var(--meter); }
+.chip.hl { background:var(--hi); border-color:var(--hi-line); }
+.gapnote { color:var(--mark); font-weight:700; font-size:.78rem; }
+.ask { display:flex; flex-wrap:wrap; gap:.3rem .5rem; align-items:center; font-size:.78rem; }
+.ask textarea { flex:1 1 100%; field-sizing:content; min-height:1.9rem; font-size:.8rem; padding:.25rem .4rem; border:1px solid var(--rule); border-radius:.2rem; background:var(--sheet); }
+/* Builds: the link from this feature to the client's capabilities, tinted per system */
+:root { --s1:#2f6fa3; --s2:#b5651d; --s3:#2f7d5b; --s4:#7b4fa8; }
+@media (prefers-color-scheme:dark) { :root:not([data-theme="light"]) { --s1:#6fa8d6; --s2:#e09a5a; --s3:#6cc39a; --s4:#b190dc; } }
+:root[data-theme="dark"] { --s1:#6fa8d6; --s2:#e09a5a; --s3:#6cc39a; --s4:#b190dc; }
+.builds { margin-top:.55rem; padding:.5rem .65rem .55rem; border:1px solid var(--rule); border-left:3px solid var(--meter); border-radius:.3rem; background:var(--paper); }
+.builds.none { border-color:var(--hi-line); border-left-color:var(--hi-line); border-style:dashed; border-left-style:solid; background:var(--hi); }
+.bhead { font-size:.7rem; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:var(--ink-dim); margin-bottom:.4rem; }
+.bhead b { color:var(--ink); }
+.builds.none .bhead { color:var(--ink); margin-bottom:.35rem; }
+.bhead .hint { text-transform:none; letter-spacing:0; font-weight:500; color:var(--ink-dim); margin-left:.25rem; }
+.btags { display:flex; flex-wrap:wrap; gap:.35rem; align-items:center; }
+.cap { display:inline-flex; align-items:stretch; font-size:.78rem; border:1px solid var(--rule); border-left:3px solid var(--sc); border-radius:.3rem; background:var(--sheet); cursor:pointer; overflow:hidden; }
+.cap > * { display:flex; align-items:center; padding:.18rem .45rem; }
+.cap .cid { font-weight:700; font-size:.72rem; color:var(--sc); background:color-mix(in srgb, var(--sc) 12%, transparent); font-variant-numeric:tabular-nums; }
+.cap .cname { font-weight:600; color:var(--ink); }
+.cap .csys { font-size:.68rem; font-weight:600; color:var(--sc); padding-left:0; }
+.cap button { all:unset; display:flex; align-items:center; cursor:pointer; color:var(--ink-dim); padding:0 .5rem; border-left:1px solid var(--grid); }
+.cap button:hover { color:var(--mark); background:var(--mark-soft); }
+.cap.added { box-shadow:0 0 0 1px var(--ok); }
+.cap.added .cname::after { content:'new'; margin-left:.4rem; font-size:.62rem; font-weight:700; text-transform:uppercase; color:var(--ok); }
+.cap.removed { opacity:.5; cursor:default; } .cap.removed .cname { text-decoration:line-through; }
+.cap.hl { background:var(--hi); border-color:var(--hi-line); border-left-color:var(--sc); }
+.builds select { font:inherit; font-size:.76rem; font-weight:600; color:var(--ink-dim); background:transparent; border:1px dashed var(--ink-dim); border-radius:.3rem; padding:.2rem .45rem; cursor:pointer; max-width:15rem; }
+.builds select:hover { color:var(--ink); border-color:var(--ink); }
+.note textarea { max-width:none; min-height:4.6rem; line-height:1.45; }
+.feat.unasked .rail h3::after { content:' · not asked for'; font-family:var(--sans); font-size:.72rem; font-weight:600; color:var(--ink-dim); }
+.warnbox.soft { background:var(--hi); color:var(--ink); }
+/* nav: row 1 = system toggle + filters, row 2 = jump links; hints on hover */
+nav.sys { flex-direction:column; align-items:stretch; gap:.45rem; }
+nav.sys .navrow { display:flex; flex-wrap:wrap; gap:.4rem; align-items:center; }
+nav.sys .filters { padding-left:1.5rem; }
+nav.sys .navlbl { font-size:.68rem; font-weight:700; letter-spacing:.07em; text-transform:uppercase; color:var(--ink-dim); margin:0 .2rem 0 0; cursor:help; border-bottom:1px dotted var(--ink-dim); }
+nav.sys .cnt { font-variant-numeric:tabular-nums; opacity:.7; margin-left:.15rem; }
+.seg button { font-size:.8rem; padding:.32rem .9rem; }
+[data-tip] { position:relative; }
+[data-tip]:hover::after, [data-tip]:focus-visible::after { content:attr(data-tip); position:absolute; left:0; top:calc(100% + .45rem); z-index:20; width:max-content; max-width:18rem;
+  white-space:normal; text-transform:none; letter-spacing:0; font-size:.74rem; font-weight:500; line-height:1.4; color:var(--sheet); background:var(--ink); padding:.4rem .55rem; border-radius:.25rem; box-shadow:0 4px 14px #0003; pointer-events:none; }
+nav.sys .filters [data-tip]:hover::after { left:auto; right:0; }
+/* Built by: one row per component under the feature it builds */
+.feat .builds { margin:.2rem 0 .1rem; }
+.crows { display:flex; flex-direction:column; gap:.3rem; margin:.1rem 0 .45rem; }
+.crow { display:grid; grid-template-columns:9.5rem minmax(12rem,1fr) auto auto auto; align-items:center; gap:.7rem; padding:.4rem .6rem; border:1px solid var(--grid); border-radius:.3rem; background:var(--sheet); font-size:.9rem; cursor:pointer; }
+.crow .ccont { font-size:.76rem; font-weight:600; color:var(--ink-dim); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.crow .cname { font-weight:600; }
+.crow .calso { font-size:.82rem; color:var(--ink-dim); display:flex; flex-wrap:wrap; gap:.25rem; align-items:center; }
+.crow .chrs { font-variant-numeric:tabular-nums; font-weight:700; }
+.crow button { all:unset; cursor:pointer; color:var(--ink-dim); padding:0 .3rem; }
+.crow button:hover { color:var(--mark); }
+.crow.hl { background:var(--hi); border-color:var(--hi-line); }
+.crow.added { box-shadow:0 0 0 1px var(--ok); } .crow.added .cname::after { content:' new'; font-size:.7rem; color:var(--ok); text-transform:uppercase; }
+.crow.removed { opacity:.5; cursor:default; } .crow.removed .cname { text-decoration:line-through; }
+.cmini { font-size:.74rem; font-weight:700; color:var(--sc); border:1px solid var(--rule); border-left:3px solid var(--sc); border-radius:.25rem; padding:0 .35rem; background:var(--paper); cursor:pointer; }
+.cmini.hl { background:var(--hi); }
+.bhead .arch { margin-left:.6rem; text-transform:none; letter-spacing:0; font-weight:600; }
+.archlink { color:var(--ink); font-weight:600; text-transform:none; letter-spacing:0; text-decoration:underline; text-underline-offset:2px; }
+.archlink:hover { color:var(--mark); }
+@media (max-width:760px) { .crow { grid-template-columns:1fr auto; } .crow .ccont, .crow .calso { grid-column:1 / -1; } }
+
+:root { --c1:#44586a; --c2:#7d96ab; }
+@media (prefers-color-scheme:dark) { :root:not([data-theme="light"]) { --c1:#bacdda; --c2:#8fa8bb; } }
+:root[data-theme="dark"] { --c1:#bacdda; --c2:#8fa8bb; }
+section.card { background:var(--sheet); border:1px solid var(--rule); padding:1.3rem 1.4rem; margin-bottom:1.4rem; scroll-margin-top:3.5rem; }
+section.card h2 { margin-bottom:.2rem; }
+.sec-lead { margin:0 0 1rem; color:var(--ink-dim); max-width:72ch; font-size:.84rem; }
+section.card h3 { font-size:.74rem; letter-spacing:.07em; text-transform:uppercase; color:var(--ink-dim); margin:1.2rem 0 .5rem; font-weight:700; }
+section.card .internal { all:unset; display:revert; }
+.num { font-variant-numeric:tabular-nums; }
+.head-ctl { display:flex; gap:.5rem; align-items:center; }
+.view.pages a { display:inline-block; text-decoration:none; color:var(--ink-dim); background:var(--sheet); font-size:.78rem; font-weight:600; padding:.3rem .75rem; border-left:1px solid var(--rule); }
+.view.pages a:first-child { border-left:0; }
+.view.pages a[aria-current="page"] { background:var(--ink); color:var(--sheet); }
+.bar { display:none; }
+body { padding-bottom:3rem; }
+.pinbar { bottom:1.2rem; }
+/* summary */
+.headline { display:grid; grid-template-columns:1.4fr 1fr 1fr 1fr; border:1px solid var(--rule); }
+.headline > div { padding:.9rem 1.1rem; border-left:1px solid var(--rule); }
+.headline > div:first-child { border-left:0; background:var(--paper); }
+.headline b { display:block; font-family:var(--serif); font-size:1.5rem; font-variant-numeric:tabular-nums; line-height:1.2; }
+.headline .big b { font-size:2rem; }
+.headline span { font-size:.74rem; color:var(--ink-dim); }
+.buildup { margin-top:1.2rem; }
+.bu-row { display:grid; grid-template-columns:16rem 1fr 7rem; gap:.8rem; align-items:center; padding:.25rem 0; font-size:.84rem; }
+.bu-row .lbl small { display:block; color:var(--ink-dim); font-size:.72rem; }
+.bu-bar { height:1.1rem; position:relative; background:var(--grid); border-radius:.15rem; }
+.bu-bar i { position:absolute; top:0; bottom:0; border-radius:.15rem; background:var(--c2); }
+.bu-row.total { border-top:1px solid var(--rule); margin-top:.3rem; padding-top:.5rem; font-weight:700; }
+.bu-row.total .bu-bar i { background:var(--c1); }
+.bu-row .amt { text-align:right; font-variant-numeric:tabular-nums; }
+.bu-row.range .bu-bar i { background:repeating-linear-gradient(90deg,var(--hi-line) 0 6px,transparent 6px 9px); opacity:.8; }
+
+/* roadmap */
+.ms { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:.9rem; }
+.m { border:1px solid var(--rule); border-radius:.3rem; padding:.9rem 1rem; }
+.m h4 { margin:.1rem 0 .3rem; font-family:var(--serif); font-size:1.05rem; }
+.m .demo { font-size:.8rem; color:var(--ink-dim); margin:0 0 .6rem; }
+.m .amt { font-variant-numeric:tabular-nums; font-size:.84rem; margin-bottom:.5rem; } .m .amt b { font-family:var(--serif); font-size:1.15rem; }
+.m .chip { cursor:pointer; }
+
+/* register + method */
+.twocol { display:grid; grid-template-columns:1fr 1fr; gap:1.4rem; }
+.twocol ul { margin:.2rem 0; padding-left:1.1rem; } .twocol li { margin:.25rem 0; font-size:.84rem; }
+table.kv { width:100%; border-collapse:collapse; font-size:.82rem; }
+table.kv td, table.kv th { padding:.35rem .5rem; border-bottom:1px solid var(--grid); text-align:left; }
+table.kv th { font-size:.7rem; text-transform:uppercase; letter-spacing:.05em; color:var(--ink-dim); font-weight:600; border-bottom-color:var(--rule); }
+table.kv td.r, table.kv th.r { text-align:right; font-variant-numeric:tabular-nums; }
+table.kv tr.sum td { font-weight:700; border-top:1px solid var(--rule); }
+
+
+.factor.ro .ro-n { font-family:var(--serif); font-size:1.6rem; font-weight:600; line-height:1.1; margin:.25rem 0 .3rem; font-variant-numeric:tabular-nums; }
+.factor.ro .ro-n span { font-size:.8rem; color:var(--ink-dim); margin-left:.1rem; }
+.factor.ro .ro-n.hot { color:var(--mark); }
+body:not(.side-effort-on) .side-effort, body.side-effort-on .side-score { display:none !important; }
+nav.sys .navrow:first-child { gap:.6rem; }
+.effort { text-align:right; } .effort b { display:block; font-family:var(--serif); font-size:1.5rem; font-variant-numeric:tabular-nums; } .effort span { font-size:.74rem; color:var(--ink-dim); }
+table.caps th.c, table.caps td.c { text-align:center; } table.caps td.r, table.caps th.r { text-align:right; font-variant-numeric:tabular-nums; white-space:nowrap; }
+.flag { font-size:.75rem; color:var(--hi-line); font-weight:700; }
+details.tasks { margin-top:.7rem; border:1px solid var(--grid); border-radius:.3rem; background:var(--paper); }
+details.tasks summary { cursor:pointer; padding:.45rem .7rem; font-size:.76rem; font-weight:700; letter-spacing:.04em; text-transform:uppercase; color:var(--ink-dim); }
+details.tasks table { width:100%; border-collapse:collapse; font-size:.8rem; }
+details.tasks th { text-align:left; font-size:.68rem; text-transform:uppercase; letter-spacing:.05em; color:var(--ink-dim); padding:.3rem .7rem; border-top:1px solid var(--rule); }
+details.tasks td { padding:.35rem .7rem; border-top:1px solid var(--grid); vertical-align:top; }
+details.tasks .r { text-align:right; font-variant-numeric:tabular-nums; white-space:nowrap; }
+details.tasks td .dim { font-size:.72rem; }
+.conf { font-size:.7rem; font-weight:700; } .conf.c-LOW { color:var(--mark); } .conf.c-MED { color:var(--hi-line); } .conf.c-HIGH { color:var(--ok); }
+/* long-reading comfort: bigger type, wider leading, shorter lines, calmer contrast */
+body { font-size:1rem; line-height:1.65; }
+.page { max-width:76rem; }
+h1 { font-size:2.35rem; line-height:1.15; }
+h2, section.card h2, section.system h2 { font-size:1.65rem; line-height:1.25; }
+.sub { font-size:.9rem; }
+.lead, .sec-lead, p.quiet { font-size:.98rem; line-height:1.7; max-width:68ch; }
+.does, .fdoes, .demo, .anchor, .why, .meta, .spine-note, .bhead .hint { font-size:.9rem; line-height:1.6; }
+section.card, section.system { padding:1.9rem 2.1rem; margin-bottom:2.2rem; }
+.eyebrow, section.card h3, th, .bhead, .flabel { font-size:.76rem !important; letter-spacing:.06em; }
+table.bd, table.caps, table.kv, details.tasks table, .sum table { font-size:.92rem; line-height:1.55; }
+table.bd td, table.caps td, table.kv td, details.tasks td { padding-top:.55rem; padding-bottom:.55rem; }
+.chip { font-size:.78rem; padding:.05rem .5rem; }
+.twocol li { font-size:.96rem; line-height:1.65; margin:.4rem 0; }
+.headline span { font-size:.84rem; }
+.m .demo { font-size:.92rem; }
+.feat { padding-top:1.6rem; padding-bottom:1.7rem; }
+.rail h3 { font-size:1.25rem; margin-bottom:.25rem; }
+.rail .does { font-size:.92rem; line-height:1.6; } .rail .id { font-size:.8rem; }
+.cap { font-size:.84rem; }
+@media (prefers-color-scheme:dark) { :root:not([data-theme="light"]) { --ink:#dbe2e8; --ink-dim:#a3b2be; } }
+:root[data-theme="dark"] { --ink:#dbe2e8; --ink-dim:#a3b2be; }
+.sys .meta, .sys .eyebrow { font-size:.82rem !important; line-height:1.5; }
+body.client .headline { grid-template-columns:1.4fr 1fr; }
+/* every page: tables, strips, nav chips, hints and small notes */
+table td { font-size:.92rem; line-height:1.55; }
+.strip span, .legend, .pin-hint, small, nav.sys a, nav.toc a, p.map, .hint, .gone-note, .gapnote, .saved, .pin-txt small, .zones, label { font-size:.85rem; line-height:1.5; }
+.pick button, .seg button, .view button, .btn { font-size:.84rem; }
+textarea, input, select { font-size:.92rem; }
+.flow-name { font-size:.84rem; } .cap .csys { font-size:.76rem; } .cap .cid { font-size:.78rem; } .flagchip { font-size:.78rem; }
+
+/* how to read: the System → Feature → Block chain at the top of every page */
+.howto { margin:0 0 1.4rem; padding:.85rem 1rem .8rem; border:1px solid var(--rule); border-radius:.35rem; background:var(--sheet); max-width:60rem; }
+.howto-t { display:block; font-size:.74rem; font-weight:700; letter-spacing:.07em; text-transform:uppercase; color:var(--ink-dim); margin-bottom:.55rem; }
+.howto-chain { display:flex; flex-wrap:wrap; align-items:stretch; gap:.45rem; }
+.howto-chain > span { flex:1 1 12rem; display:flex; flex-direction:column; gap:.1rem; padding:.5rem .7rem; border:1px solid var(--grid); border-radius:.3rem; background:var(--paper); font-size:.9rem; line-height:1.4; }
+.howto-chain > span b { font-family:var(--serif); font-size:1.05rem; }
+.howto-chain small { font-size:.8rem; color:var(--ink-dim); }
+.howto-chain > i { align-self:center; font-style:normal; color:var(--ink-dim); }
+.howto-rule { margin:.6rem 0 0; font-size:.9rem; color:var(--ink-dim); max-width:68ch; }
+.howto-rule b { color:var(--ink); }
+.howto-page { display:block; margin-top:.25rem; color:var(--ink); }
+@media (max-width:640px) { .howto-chain > i { display:none; } }
+
+/* native dropdowns follow the theme: dark popups in dark mode, readable option text */
+:root { color-scheme:light; }
+@media (prefers-color-scheme:dark) { :root:not([data-theme="light"]) { color-scheme:dark; } }
+:root[data-theme="dark"] { color-scheme:dark; }
+select option, select optgroup { background:var(--sheet); color:var(--ink); }
+</style>
+</head>
+<body>
+<div class="page">
+  <span class="mock">MOCKUP — Sin Kowa component-based estimate: the signed-off score review, read-only, with tasks and hours</span>
+  <div class="head">
+    <div>
+      <h1>Sin Kowa — estimate <span class="internal">internal</span></h1>
+      <p class="sub">Component-based view · 19 features in 4 systems, built by 22 components; systems · scores signed off in the score review · prices in USD</p>
+    </div>
+    <div class="head-ctl"><nav class="view pages" aria-label="Estimate view"><a href="estimate-mockup.html">Workflow-based</a><a href="estimate-feature-mockup.html" aria-current="page">Component-based</a></nav>
+    <button class="btn" id="theme" type="button">Dark</button></div>
+  </div>
+  <p class="lead">The engineer's view of the estimate: the signed-off score review, read-only, with the price on top. <b>Scoring</b> shows each feature's scores and price; <b>Effort</b> shows the components behind it, with their hours and tasks. The client sees the Workflow-based page.</p>
+  <section class="card" id="summary"><h2>Summary</h2><p class="sec-lead">The price for this scope, from the features below.</p>
+    <div class="headline" id="headline"></div><div class="buildup" id="buildup"></div></section>
+  <div class="howto"><b class="howto-t">How to read this page</b>
+    <div class="howto-chain"><span><b>System</b>a part of the business<small>e.g. Warehouse Mgmt System</small></span><i>→</i><span><b>Feature</b>something the client asked for<small>e.g. F04 Order intake &amp; quotation entry</small></span><i>→</i><span><b>Component</b>a piece engineers build<small>e.g. Catalogue and item identity</small></span></div>
+    <p class="howto-rule">A feature is built by one or more components, and one component can serve several features. <span class="howto-page"><b>Scoring</b> shows each feature's scores and price; <b>Effort</b> the components behind it, with tasks and hours. The client sees the Workflow-based page, which shows features only.</span><span class="howto-page">Containers and components are the ones in the architecture document: <a class="archlink" href="architecture.html#panel-containers" target="_blank" rel="noopener">C2 containers ↗</a> · <a class="archlink" href="architecture.html#panel-components-api" target="_blank" rel="noopener">C3 Backend API components ↗</a> · <a class="archlink" href="architecture.html#6-core-components" target="_blank" rel="noopener">§6 Core components ↗</a></span></p></div>
+
+  <div class="strip" id="strip"></div>
+  <div class="spine-wrap">
+    <div class="spine" id="spine"></div>
+    <div class="zones">
+      <span style="grid-column:1/8">S <b>&lt;11.5</b></span><span style="grid-column:8/14">M <b>11.5–17.4</b></span>
+      <span style="grid-column:14/19">L <b>17.5–22.4</b></span><span style="grid-column:19/22">XL <b>22.5+</b></span>
+    </div>
+    <p class="spine-note">Each dot is one feature on its weighted score (5–25). Hover to see it, click to pin it and jump to its card. Red = you changed it; ringed = flagged for a deep estimate.</p>
+  </div>
+
+  <section class="system map" id="map">
+    <div class="sys-head"><div><div class="eyebrow">From the PO's scope review · read only</div><h2>Systems &amp; workflows</h2></div>
+      <div class="subtotal" id="cover"></div></div>
+    <p class="quiet">Open a system to see its workflows, the features on each step, and the components that build them. Hover any box, feature or component to see its links; click to pin.</p>
+    <div id="systems"></div>
+  </section>
+
+  <nav class="sys" id="nav"></nav>
+  <div id="groups"></div>
+  <div id="unasked"></div>
+
+  <section class="card" id="roadmap"><h2>Milestones</h2><p class="sec-lead">Each milestone lists the client's features it finishes. Its range is its share of the build applied to the project range.</p><div class="ms" id="ms"></div></section>
+  <section class="card" id="register"><h2>Assumptions &amp; exclusions</h2><p class="sec-lead">Shared word for word with the proposal.</p>
+    <div class="twocol"><div><h3>Assumptions</h3><ul id="assume"></ul></div><div><h3>Exclusions</h3><ul id="exclude"></ul></div></div></section>
+  <section class="card" id="method"><h2>Method</h2><p class="sec-lead">Estimator v2: five weighted scores per feature price it on continuous bands; the project roll-up adds the work feature scoring never captures.</p>
+    <div class="twocol"><div><h3>Project context factors</h3><table class="kv" id="ctx"></table></div><div><h3>Work outside the features</h3><table class="kv" id="ovh"></table></div></div>
+    <div class="twocol"><div><h3>Contingency</h3><table class="kv" id="cont"></table></div><div><h3>Range</h3><table class="kv" id="rng"></table></div></div>
+    <h3>Cross-check: the engineering work behind the price</h3><p class="sec-lead">If the implied rate sits far from what the team costs, the scores or the task list need another look.</p><table class="kv" id="xcheck" style="max-width:40rem"></table></section>
+  <details class="guide"><summary>Scoring guide — what each 1–5 means</summary><div id="guide"></div></details>
+</div>
+
+<div class="bar"><div class="in">
+  <span class="stat" id="stat"></span>
+  <span class="saved" id="saved">Your edits are saved in this browser as you go.</span>
+  <div class="actions">
+    <button class="btn" id="reset" type="button">Start over</button>
+    <button class="btn next" id="nextc" type="button" title="Jump to the next gap, changed or flagged item (n)">Next to check ↓</button>
+    <button class="btn primary" id="preview" type="button">Review &amp; send →</button>
+  </div>
+</div></div>
+
+<div class="pinbar hide" id="pinbar" role="status">
+  <span>📌</span><div class="pin-txt"><b id="pinLabel"></b><small id="pinCount"></small></div>
+  <button class="btn" id="pinPrev" type="button" title="Previous (k)">↑</button>
+  <button class="btn" id="pinNext" type="button" title="Next (j)">↓ Next</button>
+  <button class="btn" id="pinClear" type="button" title="Esc">Clear</button>
+</div>
+<dialog id="dlg"><p><b>Your changes, before you send them</b></p><div class="sum" id="sum"></div>
+  <div id="sendable">
+    <p class="quiet" style="margin:.8rem 0 0">Feedback block — paste this into the chat. The agent asks why for every score you moved.</p>
+    <textarea id="feedback" readonly></textarea>
+  </div>
+  <div class="dlg-foot"><span id="copied"></span><form method="dialog"><button class="btn">Keep editing</button></form>
+    <button class="btn" id="goGap" type="button">Take me to the next gap</button>
+    <button class="btn primary" id="copy" type="button">Copy feedback</button></div></dialog>
+
+<script type="module">
+const DATA = {
+  project: 'Sin Kowa', mapLabel: 'IMDA roadmap pillar',
+  systems: [
+    { id: 'wms', name: 'Warehouse Mgmt System (WMS)', src: 'prd', map: 'Warehouse Automation/Transformation (coordination layer)',
+      purpose: 'The coordination layer. It moves an order through five stages and is the single screen a warehouse worker needs.',
+      main: { id: 'wms', name: 'Order pipeline', src: 'prd',
+        steps: ['Order In', 'Pack', 'Pack Review', 'Storing', 'Shipped'],
+        branches: [{ from: 'Pack', to: 'Short-pack exception', label: "can't fulfil" }, { from: 'Short-pack exception', to: 'Ops + Invoicing alert' }] },
+      subs: [],
+      features: [
+        { id: 'F01', name: 'Order pipeline & stage engine', src: 'prd', steps: ['wms:Order In', 'wms:Pack', 'wms:Pack Review', 'wms:Storing', 'wms:Shipped'], does: "Moves an order through Order In → Pack → Pack Review → Storing → Shipped, with task views scoped to each worker's role" },
+        { id: 'F02', name: 'Exception / short-pack alert workflow', src: 'prd', steps: ['wms:Short-pack exception', 'wms:Ops + Invoicing alert'], does: "Flags a can't-fulfil item the moment it's discovered, in time to purchase or cancel, and auto-flags the order for a quote/invoice adjustment" },
+        { id: 'F03', name: 'Unified role-based UI shell & authentication', src: 'prd', steps: ['*'], does: 'One login for the whole platform; a warehouse worker sees only Pack/Audit tasks, office staff see Orders/Invoicing/Inventory' } ] },
+    { id: 'ord', name: 'Orders/Invoicing', src: 'prd', map: 'Finance/Documentation',
+      purpose: "Covers quotation through to a paid invoice, and closes the paper-DO gap that currently delays Sin Kowa's cash collection by weeks.",
+      main: { id: 'ord', name: 'Order to cash', src: 'us', missing: true,
+        steps: ['Order received', 'Quote', 'Order confirmed', 'Proof of delivery', 'Invoice', 'Paid'],
+        branches: [{ from: 'Paid', to: 'Dispute / credit adjustment', label: 'client disputes' }] },
+      subs: [{ id: 'custom', name: 'Custom order', src: 'prd', share: 'roughly 20% of orders, sourced rather than stocked',
+        startsAt: 'ord:Order received', rejoins: { system: 'wms', step: null, text: 'join WMS pipeline' },
+        steps: ['Intake: flag as custom', 'Source & quote cost-plus', 'Vendor PO', 'Receiving & inspection', 'Earmark to order'],
+        branches: [{ from: 'Vendor PO', to: 'Vendor late / unsourceable' }, { from: 'Vendor late / unsourceable', to: 'Cancel or substitute, notify client' }] }],
+      features: [
+        { id: 'F04', name: 'Order intake & quotation entry', src: 'prd', steps: ['ord:Order received', 'ord:Quote', 'custom:Intake: flag as custom', 'custom:Source & quote cost-plus'], does: 'Captures orders from email/phone/fax; prices routine items from a catalog and custom items on a cost-plus-markup rule' },
+        { id: 'F05', name: 'AI-assisted intake pre-fill', src: 'prd', steps: ['ord:Order received'], does: 'Drafts a structured order from the incoming email/fax text for staff to review and confirm' },
+        { id: 'F06', name: 'Digital proof-of-delivery capture', src: 'prd', steps: ['ord:Proof of delivery'], does: 'E-signature or photo of the DO captured on a phone at the dock handoff, which becomes the invoice trigger' },
+        { id: 'F07', name: 'Invoice generation & billing workflow', src: 'prd', steps: ['ord:Invoice', 'ord:Paid'], does: 'Auto-generates the invoice off packed-and-audited quantities plus the digital DO, with billing checks and payment status' },
+        { id: 'F08', name: 'Custom order & vendor procurement sub-flow', src: 'prd', steps: ['custom:Vendor PO', 'custom:Receiving & inspection', 'custom:Vendor late / unsourceable', 'custom:Cancel or substitute, notify client'], does: "Flags when a vendor's expected delivery leaves too little buffer before the ship's ETA" },
+        { id: 'F09', name: 'Ad hoc / local purchase logging', src: 'prd', steps: [], does: 'A two-tap entry for an emergency off-the-shelf buy, so it still hits inventory and margin correctly' },
+        { id: 'F10', name: 'Post-shipment adjustment & dispute/credit-memo log', src: 'prd', steps: ['ord:Dispute / credit adjustment'], does: 'Records any billing dispute, its root cause and the credit adjustment' },
+        { id: 'F11', name: 'InvoiceNow / Peppol-ready invoice data model', src: 'prd', steps: ['ord:Invoice'], does: 'Structures line items, GST fields and buyer/seller identifiers so a future InvoiceNow connection is a bolt-on' } ] },
+    { id: 'inv', name: 'Inventory', src: 'prd', map: 'Inventory/Fulfilment',
+      purpose: 'Tracks routine and special-order stock, and closes the gap where multiple orders quietly deplete an item before there is time to reorder.',
+      main: { id: 'inv', name: 'Stock cycle', src: 'us', missing: true, steps: ['Stock received', 'On hand', 'Earmarked to order', 'Low-stock alert', 'Reorder'], branches: [] },
+      subs: [],
+      features: [
+        { id: 'F12', name: 'Core inventory tracking', src: 'prd', steps: ['inv:Stock received', 'inv:On hand'], does: 'On-hand quantities and item master data for routine and special-order SKUs' },
+        { id: 'F13', name: 'Available-to-promise / earmarking engine', src: 'prd', steps: ['inv:Earmarked to order', 'custom:Earmark to order'], does: 'On-hand minus committed quantity, reserved per order, so contention is visible before it becomes a shortfall' },
+        { id: 'F14', name: 'Configurable reorder threshold & low-stock alerts', src: 'prd', steps: ['inv:Low-stock alert', 'inv:Reorder'], does: 'Per-SKU minimum threshold that accounts for earmarked (not just on-hand) quantity' },
+        { id: 'F15', name: 'Vendor & purchase-order price-history tracking', src: 'prd', steps: ['inv:Reorder'], does: 'Records PO history and fluctuating repeat-item vendor costs' } ] },
+    { id: 'aud', name: 'Audit/Pack Validation', src: 'prd', map: 'Inventory/Fulfilment (traceability)',
+      purpose: "The single highest-value piece: the proof that stops a client disputing a charge after the ship has sailed. Reuses the manufacturer barcodes already on products and adds one label per pallet/carton.",
+      main: { id: 'aud', name: 'Proof of pack', src: 'us', missing: true, steps: ['Print pallet ID', 'Scan items', 'Check against order', 'Lock the record', 'Hand over'], branches: [] },
+      subs: [],
+      features: [
+        { id: 'F16', name: 'Pallet/container ID generation & label printing', src: 'prd', steps: ['aud:Print pallet ID'], does: 'Prints a system-generated pallet/carton ID at the pack stage that ties scanned items to one order' },
+        { id: 'F17', name: 'Mobile barcode scan-to-verify app', src: 'prd', steps: ['aud:Scan items', 'aud:Check against order'], does: 'Phone-camera scanning of existing product barcodes against the pallet ID and order' },
+        { id: 'F18', name: 'Immutable audit / proof-of-pack record', src: 'prd', steps: ['aud:Lock the record'], does: 'Timestamped, worker-tagged log of exactly what was packed, not editable after the fact' },
+        { id: 'F19', name: 'Offline scan queue & sync', src: 'prd', steps: ['aud:Scan items'], does: 'Queues scans locally and syncs once connectivity returns, for WiFi/cellular dead spots' } ] } ] };
+
+// engineering features: today's Sin Kowa estimate (dist/estimate.html), scored by the agent
+const ENG = [{"id": "catalogue", "name": "Catalogue and item identity", "container": "Backend API", "part": "Catalogue and Item Identity", "milestone": "M1 - Walking skeleton", "does": "The list of goods and the codes they are known by, which is unsettled until the client confirms how they identify items today.", "scores": [3, 3, 3, 4, 3], "cite": {"tech": "one item resolving from many physical codes plus catalogue codes", "size": "items, identifiers, store categories and the bonded flag", "deps": "imports the industry marine stores catalogue", "unc": "whether the client uses industry catalogue codes today is unanswered", "risk": "wrong identity resolution mis-picks goods"}}, {"id": "vessel", "name": "Vessel and port call records", "container": "Backend API", "part": "Vessel and Port Call", "milestone": "M1 - Walking skeleton", "does": "Records for each ship and each port visit.", "scores": [1, 2, 2, 2, 2], "cite": {"tech": "straightforward records for ships and port calls", "size": "two related record types with forms and lists", "deps": "referenced by orders only", "unc": "fields follow the researched procurement cycle", "risk": "reference data, easily corrected"}}, {"id": "quotation", "name": "Enquiry and quotation", "container": "Backend API", "part": "Enquiry and Quotation", "milestone": "M1 - Walking skeleton", "does": "Capturing an enquiry from a ship and the priced offer sent back, with pricing still done by hand.", "scores": [2, 3, 2, 3, 3], "cite": {"tech": "four states on one aggregate, pricing entered by hand", "size": "enquiry capture, versioned offers and the screens for both", "deps": "hands a confirmed quotation to order intake", "unc": "response-time measurement is inferred, not stated", "risk": "a wrong quotation reference misprices an order"}}, {"id": "orders", "name": "Sales order intake", "container": "Backend API", "part": "Sales Orders", "milestone": "M1 - Walking skeleton", "does": "Entering a vessel order and its lines, where how many lines an order really has is still disputed.", "scores": [3, 4, 3, 4, 3], "cite": {"tech": "requisition lines with brand, specification, urgency and substitution", "size": "order header, lines, amendment, cancellation and entry screens", "deps": "reads vessels and port calls, drives reservations", "unc": "order line count is contested and partial fulfilment is undecided", "risk": "a wrong order ships wrong goods to a sailing vessel"}}, {"id": "ledger", "name": "Stock ledger", "container": "Backend API", "part": "Stock Ledger", "milestone": "M1 - Walking skeleton", "does": "The permanent record of every stock movement, which must never lose or double-count a unit.", "scores": [4, 3, 2, 3, 5], "cite": {"tech": "append-only signed-quantity ledger with a rebuildable projection", "size": "ledger, reason codes, projection and compensating corrections", "deps": "sole writer of stock change for every other module", "unc": "the movement lifecycle is a working assumption pending client answer", "risk": "corrections are append-only and the record cannot be rewritten"}}, {"id": "earmark", "name": "Stock position and earmarking", "container": "Backend API", "part": "Stock Position and Earmarking", "milestone": "M1 - Walking skeleton", "does": "Holding stock against a confirmed order so two people cannot promise the same goods.", "scores": [4, 3, 2, 3, 4], "cite": {"tech": "row locking so two coordinators cannot commit the same stock", "size": "projection, reservations and shortfall detection", "deps": "reads the ledger, drives the pack queue", "unc": "what happens on a shortfall is an open question", "risk": "a race here double-promises stock and hides shrinkage"}}, {"id": "officeshell", "name": "Office web application shell", "container": "Office Web App", "part": "Office Web App", "milestone": "M1 - Walking skeleton", "does": "The shared frame for the office screens.", "scores": [2, 2, 2, 1, 2], "cite": {"tech": "off-the-shelf component library, lightly restyled", "size": "routing, layout and shared frame only", "deps": "calls the one internal interface", "unc": "no custom design system, settled at interview", "risk": "presentation only, no data at stake"}}, {"id": "packqueue", "name": "Pack queue and board", "container": "Backend API", "part": "Pack Queue", "milestone": "M2 - Warehouse floor", "does": "The list telling the floor which orders to pack, with the board stage names still to be agreed.", "scores": [2, 2, 2, 3, 2], "cite": {"tech": "queue position computed from the port call rather than stored", "size": "one ranked list plus a stage board", "deps": "reads orders and port calls", "unc": "board stage names are unanswered", "risk": "a wrong order can be re-queued"}}, {"id": "scan", "name": "Scan validation", "container": "Backend API", "part": "Scan Validation", "milestone": "M2 - Warehouse floor", "does": "Checking each packed item against the order by scanning it, and whether this must work without a network is undecided.", "scores": [4, 3, 3, 4, 4], "cite": {"tech": "one idempotent command keyed on a client scan id", "size": "resolution, validation, container recording and pick movements", "deps": "reaches catalogue, containers and the ledger", "unc": "whether it must work with no network is undecided", "risk": "the only path where an outage stops physical work"}}, {"id": "labels", "name": "Containers and label printing", "container": "Backend API", "part": "Containers and Labels", "milestone": "M2 - Warehouse floor", "does": "Pallet and box identity plus printing labels for goods that arrive with no code on them.", "scores": [3, 3, 3, 4, 3], "cite": {"tech": "self-referencing pallet and box hierarchy plus printer language composition", "size": "hierarchy, identifier generation and the print path", "deps": "one external print broker", "unc": "which goods arrive already coded is unanswered", "risk": "unlabelled boxes break return traceability"}}, {"id": "handheld", "name": "Handheld PWA and packing screen", "container": "Handheld PWA", "part": "Handheld PWA", "milestone": "M2 - Warehouse floor", "does": "The warehouse screen itself, which has to work for staff who have never used it before.", "scores": [3, 4, 2, 4, 3], "cite": {"tech": "installable offline-capable shell with device enrolment", "size": "shell, packing screen and observed usability sessions", "deps": "calls scan validation and the pack queue only", "unc": "device class unchosen and the first-attempt target unproven", "risk": "floor staff cannot work if it confuses them"}}, {"id": "access", "name": "Identity, access and device enrolment", "container": "Backend API", "part": "Identity and Access", "milestone": "M2 - Warehouse floor", "does": "Logins for office staff and shared device sessions on the floor that still name who did what.", "scores": [4, 3, 2, 3, 4], "cite": {"tech": "device-bound sessions with per-worker attribution, security-sensitive design", "size": "accounts, grants, enrolment and session handling", "deps": "consulted by every state-changing endpoint", "unc": "whether access control is wanted at all is unanswered", "risk": "authentication and authorisation for the whole platform"}}, {"id": "dispatch", "name": "Dispatch and delivery coordination", "container": "Backend API", "part": "Dispatch and Delivery Coordination", "milestone": "M3 - Money", "does": "Instructing what goes to which ship and how it travels.", "scores": [2, 2, 2, 3, 3], "cite": {"tech": "delivery mode derived from berth or anchorage then confirmed", "size": "instruction record plus coordination fields", "deps": "reads port calls, writes goods issue", "unc": "port agent coordination is researched, not client-stated", "risk": "a wrong instruction sends goods to the wrong berth"}}, {"id": "proof", "name": "Proof of delivery capture", "container": "Backend API", "part": "Proof of Delivery and Evidence", "milestone": "M3 - Money", "does": "Recording the signed paper that comes back from the ship weeks later.", "scores": [2, 3, 2, 2, 4], "cite": {"tech": "separate signed date and document received date", "size": "note, proof, variance records and capture screens", "deps": "feeds the invoicing gate", "unc": "the document flow is confirmed in the source material", "risk": "this record is what releases money"}}, {"id": "evidencestore", "name": "Evidence store and document pipeline", "container": "Evidence Object Store", "part": "Evidence Object Store", "milestone": "M3 - Money", "does": "Storing signed documents and certificates so they cannot be altered or deleted afterwards.", "scores": [3, 3, 3, 3, 5], "cite": {"tech": "content sniffing, re-encoding, scanning and short-lived signed access", "size": "bucket configuration plus the upload pipeline", "deps": "one managed object storage service", "unc": "compliance document workflows are out of scope for now", "risk": "write-once evidence under legal hold, deletion is not available"}}, {"id": "gate", "name": "Invoice gate and override", "container": "Backend API", "part": "Invoice Gate", "milestone": "M3 - Money", "does": "The block that stops an invoice being raised before proof of delivery exists.", "scores": [3, 3, 2, 3, 5], "cite": {"tech": "a database constraint plus a reason-coded second-approver override", "size": "predicate, constraint, override and its tests", "deps": "sits between proof of delivery and invoicing", "unc": "behaviour when a document never returns is unanswered", "risk": "the primary financial control of the platform"}}, {"id": "invoicing", "name": "Invoicing, three-way match and reminders", "container": "Backend API", "part": "Invoicing and Receivables", "milestone": "M3 - Money", "does": "Producing the invoice, checking it against what was ordered and delivered, and chasing payment.", "scores": [4, 4, 3, 3, 4], "cite": {"tech": "three-way match across order, goods issue and signed note", "size": "match, generation, printable output, receivables and reminders", "deps": "reads the gate, writes documents, sends mail", "unc": "payment terms and reminder cadence are unanswered", "risk": "money leaving and arriving"}}, {"id": "restock", "name": "Distributor restocking and goods receipt", "container": "Backend API", "part": "Replenishment and Goods Receipt", "milestone": "M4 - Operations", "does": "Ordering from suppliers and checking goods in when they arrive.", "scores": [2, 3, 2, 3, 3], "cite": {"tech": "receipt capture with condition, expiry and variance photographs", "size": "purchase orders, receipts and their screens", "deps": "appends receipt movements to the ledger", "unc": "the purchase order stages are an unconfirmed placeholder", "risk": "a wrong receipt overstates available stock"}}, {"id": "returns", "name": "Returns and discrepancy reporting", "container": "Backend API", "part": "Returns", "milestone": "M4 - Operations", "does": "Logging goods coming back, where handling of damaged or partial returns is still open.", "scores": [2, 2, 2, 4, 3], "cite": {"tech": "disposition routing with only restock writing back", "size": "return log against four levels plus a difference report", "deps": "writes to the ledger for restocked goods", "unc": "damaged and partial return handling is unanswered", "risk": "wrong disposition corrupts the stock position"}}, {"id": "notify", "name": "Notifications", "container": "Backend API", "part": "Notifications", "milestone": "M4 - Operations", "does": "Alerts for low stock and order changes, in the app and by email.", "scores": [2, 2, 3, 3, 2], "cite": {"tech": "subscriber over domain events rather than direct calls", "size": "in-app centre plus an outbound mail path", "deps": "one external mail service on the client domain", "unc": "which events notify whom is unanswered", "risk": "a missed alert delays work but loses no data"}}, {"id": "reporting", "name": "Reporting, KPIs and audit trail", "container": "Backend API", "part": "Reporting, KPI and Audit", "milestone": "M4 - Operations", "does": "Dashboards for management plus the trail of who changed what.", "scores": [3, 4, 2, 3, 4], "cite": {"tech": "append-only trail through an insert-only database role", "size": "audit capture, five measures and the dashboards", "deps": "reads across every other module", "unc": "what management actually wants reported is unanswered", "risk": "the trail is the evidence in a dispute"}}];
+// proposed links: engineering feature → business capabilities it builds (F05 AI pre-fill has none: a gap)
+const IMPLEMENTS = {"orders": ["F01", "F04"], "packqueue": ["F01", "F02"], "notify": ["F01", "F02", "F08", "F14"], "access": ["F03"], "officeshell": ["F03"], "handheld": ["F03", "F17", "F19"], "quotation": ["F04", "F08"], "catalogue": ["F04", "F12"], "vessel": ["F04"], "proof": ["F06"], "evidencestore": ["F06", "F18"], "dispatch": ["F06"], "invoicing": ["F07", "F10", "F11"], "gate": ["F07"], "restock": ["F08", "F09", "F14", "F15"], "earmark": ["F08", "F13"], "returns": ["F10"], "ledger": ["F12", "F13"], "reporting": ["F15", "F18"], "labels": ["F16"], "scan": ["F17", "F18"]};
+// signed-off state for the final estimate: the agent added the feature the score review asked for (F05)
+ENG.push({"id": "aiprefill", "name": "AI intake pre-fill", "container": "Backend API", "part": "AI Intake", "milestone": "M4 - Operations", "does": "Reads incoming emails and faxes and drafts the order for staff to confirm. Added after the score review asked for it.", "scores": [4, 3, 2, 4, 2], "cite": {"tech": "free-text email and fax parsed into a structured order", "size": "extraction, a review screen and an inbox hookup", "deps": "one model API plus the shared inbox", "unc": "no sample emails or fax scans provided yet", "risk": "staff confirm every draft, so a wrong pre-fill is caught"}});
+IMPLEMENTS.aiprefill = ['F05'];
+// tasks per engineering feature, from today's estimate: [name, optimistic, most likely, pessimistic h, confidence, assumptions]
+const TASKS = {"schema": [["schema plan", 8, 16, 32, "MED", "entity set from ARCHITECTURE.md section 8 is stable"], ["schema core", 22, 43, 86, "MED", "single warehouse, so location is a seeded column not a dimension"], ["schema partition", 8, 16, 32, "MED", "month partitioning on the four append-only tables"]], "deploy": [["deploy iac", 16, 32, 65, "HIGH", "Terraform against one cloud account, three environments"], ["deploy ci", 11, 22, 43, "HIGH", "expand-contract migrations, rolling deploys"]], "catalogue": [["cat scaffold", 4, 8, 16, "LOW", ""], ["cat identity", 14, 27, 54, "LOW", "one item resolves from many physical codes; catalogue code plus barcodes"], ["cat tests", 5, 11, 22, "LOW", ""]], "vessel": [["vessel impl", 10, 20, 41, "HIGH", "port agent stored as a party, distinct from owner"], ["vessel tests", 4, 7, 14, "HIGH", ""]], "quotation": [["quote impl", 14, 27, 54, "MED", "pricing entered by hand, never computed"], ["quote ui", 14, 27, 54, "MED", "off-the-shelf component library, no design system"], ["quote tests", 5, 9, 18, "MED", ""]], "orders": [["orders impl", 17, 34, 68, "LOW", "orders run to hundreds of lines, not thousands"], ["orders ui", 17, 34, 68, "LOW", "line entry by bulk paste plus search, no rich grid"], ["orders tests", 5, 11, 22, "LOW", ""]], "ledger": [["ledger plan", 8, 16, 32, "MED", "reserve on confirm, pick on validate, deduct at dispatch"], ["ledger impl", 20, 41, 81, "MED", "append-only with compensating corrections, never edits"], ["ledger tests", 8, 16, 32, "MED", ""]], "earmark": [["earmark impl", 20, 41, 81, "MED", "row lock on the position row inside the reservation transaction"], ["earmark race", 11, 22, 43, "MED", "concurrency tests, not example tests"]], "officeshell": [["office scaffold", 8, 16, 32, "HIGH", "off-the-shelf component library, restyled lightly, no design system"], ["office tests", 5, 9, 18, "HIGH", ""]], "packqueue": [["packq impl", 14, 27, 54, "MED", "queue position computed from the port call, board stages are config rows"], ["packq tests", 5, 9, 18, "MED", ""]], "scan": [["scan plan", 6, 12, 24, "LOW", "one idempotent command is the floor's entire write surface"], ["scan impl", 20, 41, 81, "LOW", "idempotency keyed on a client scan id"], ["scan tests", 8, 16, 32, "LOW", "replay and idempotency tests"], ["scan outcomes: wrong item, over-quantity, duplicate", 12, 20, 36, "LOW", "outcome set matched, wrong_item, over_quantity per the scan event design"], ["manual line confirmation for goods with no scannable code", 10, 18, 32, "LOW", "separate explicit path rather than silently passing; which goods this covers is Q-014"], ["short-ship a line so an order can close incomplete", 8, 14, 24, "LOW", "partial despatch permitted per ASM-020"], ["worker PIN prompt at each scan commit", 6, 10, 18, "LOW", "PIN mechanism itself lives in identity and access; this is the per-commit prompt on the scan flow"], ["per-device rate limit on scan endpoints", 4, 8, 14, "LOW", "a cloned handheld must not out-validate a human"], ["append-only scan event table, month-partitioned", 4, 8, 14, "LOW", ""]], "labels": [["cont impl", 14, 27, 54, "LOW", "self-referencing handling unit hierarchy, identifiers generated at packing"], ["cont print", 17, 34, 68, "LOW", "barcode composed in process with an MIT library, broker is transport only"], ["cont tests", 5, 9, 18, "LOW", ""]], "handheld": [["hh scaffold", 10, 20, 41, "LOW", "installable PWA on the same origin, device enrolment at install"], ["hh packscreen", 20, 41, 81, "LOW", "one screen, one action, large targets, no menus or filters"], ["hh usability", 16, 32, 65, "LOW", "observed sessions with real floor staff plus rework, to prove first-attempt success"]], "access": [["access impl", 20, 41, 81, "MED", "five capability grants, device-bound floor sessions, per-worker PIN"], ["access tests", 5, 11, 22, "MED", ""]], "dispatch": [["disp impl", 14, 27, 54, "MED", "delivery mode derived from berth or anchorage, then confirmed"], ["disp tests", 5, 9, 18, "MED", ""]], "proof": [["proof impl", 17, 34, 68, "HIGH", "signed date and document received date are separate fields"], ["proof ui", 10, 20, 41, "HIGH", ""]], "evidencestore": [["ev config", 11, 22, 43, "MED", "object lock, versioning, lifecycle policy with legal hold"], ["ev pipeline", 20, 41, 81, "MED", "content sniffing, re-encode, antivirus scan, short-lived signed URLs"]], "gate": [["gate plan", 6, 12, 24, "MED", "gate and its override designed together with segregation of duties"], ["gate db", 8, 16, 32, "MED", "not-null foreign key plus a trigger, enforced in the database"], ["gate impl", 14, 27, 54, "MED", "override needs a second approver, a typed reason and its own audit event"], ["gate tests", 8, 16, 32, "MED", ""]], "invoicing": [["inv match", 20, 41, 81, "MED", "order, goods issue and signed note must agree on line identity and quantity"], ["inv tests", 6, 13, 25, "MED", ""], ["printable invoice document, rendered in process", 10, 16, 28, "MED", "no third-party document service, so commercial terms never leave the boundary"], ["sequence-backed document numbers and company profile on documents", 6, 10, 18, "MED", "numbers are never foreign-key targets"], ["match exception resolution with an attributed human decision", 10, 18, 32, "MED", "any variance halts generation; someone named must resolve it"], ["outstanding tracking and payment status", 10, 16, 28, "MED", "no payment terms in phase one; outstanding means not yet paid"], ["reminder cadence job, defaulting to 14, 30 and 60 days", 8, 12, 22, "MED", "cadence configurable; mechanism is email via notifications"], ["void and credit records; nothing financial is hard-deleted", 8, 12, 22, "MED", "cancellation is a status transition, not a delete"], ["CSV and PDF export with spreadsheet formula escaping", 6, 10, 18, "MED", "stands in for an accounting integration in phase one"], ["invoice list, detail and release screens", 12, 20, 36, "MED", "off-the-shelf components, no design system"]], "restock": [["restock impl", 17, 34, 68, "MED", "receipt captures description, quantity, condition and expiry with variance photos"], ["restock ui", 14, 27, 54, "MED", ""], ["restock tests", 5, 9, 18, "MED", ""]], "returns": [["ret impl", 14, 27, 54, "LOW", "disposition of restock, scrap or credit; only restock writes back to the ledger"], ["ret tests", 5, 9, 18, "LOW", ""]], "notify": [["notify impl", 14, 27, 54, "MED", "event subscriber model, in-app centre plus email"], ["notify email", 10, 20, 41, "MED", "client domain with sender authentication configured before go-live"]], "reporting": [["rep audit", 14, 27, 54, "MED", "append-only table written through an insert-only database role"], ["rep kpi", 17, 34, 68, "MED", "the five supplier KPIs derive from timestamps already recorded"], ["rep ui", 14, 27, 54, "MED", "fixed dashboards, no report builder"]], "migration": [["mig plan", 6, 12, 24, "LOW", "dated cutover with a parallel run over one order cycle"], ["mig import", 27, 54, 108, "LOW", "client supplies cleansed CSV extracts; per-row rejection with a reject report"], ["mig runbook", 4, 8, 16, "LOW", ""], ["field mapping per entity: catalogue, vessels, open orders", 12, 20, 36, "LOW", "eight store categories with IMPA or ISSA codes where held"], ["opening stock count loaded as ledger movements", 8, 14, 24, "LOW", "physical count taken on cutover day"], ["dry-run mode with reconciliation report", 10, 16, 28, "LOW", "client owns data cleansing; the dry run is what shows them what to fix"], ["cutover rehearsal on staging", 8, 14, 24, "LOW", "staging is production-shaped with anonymised data"], ["parallel run beside paper for one order cycle, daily reconciliation", 16, 28, 48, "LOW", "7 to 14 days matching normal lead time; mostly human reconciliation time"], ["cutover-day execution and rollback plan", 8, 12, 20, "LOW", "runs under a separate credential revoked afterwards"]], "aiprefill": [["extraction schema and prompt", 10, 16, 30, "LOW", "sample emails and fax scans arrive before build"], ["review-and-confirm screen", 8, 12, 20, "MED", "staff confirm every draft order"], ["inbox and fax-to-text hookup", 6, 10, 18, "MED", "one shared mailbox; fax arrives as PDF"]]};
+// milestones in the client's words
+const MS_TEXT = {"M1 - Walking skeleton": "Log in, keep the item catalogue, take orders and quotes, and see stock in one place.", "M2 - Warehouse floor": "Packing on phones: the pack queue, scan-to-verify against the order, and pallet labels.", "M3 - Money": "Proof of delivery on every shipment, invoices that only go out once delivery is proven, and payment tracking.", "M4 - Operations": "Restocking, returns, alerts, reporting and the audit trail, AI order pre-fill, and the move off today's tools."};
+// features: the five scores from the sent workbook (Sin_Kowa_Ballpark_Cost_Estimate.xlsx, tab 1)
+const CAP_SCORES = { F01: [3, 4, 3, 3, 3], F02: [2, 2, 3, 3, 3], F03: [2, 3, 2, 2, 2], F04: [2, 3, 2, 3, 2], F05: [4, 3, 2, 4, 2],
+  F06: [2, 3, 2, 3, 3], F07: [3, 4, 3, 2, 4], F08: [3, 4, 3, 3, 3], F09: [1, 2, 2, 1, 2], F10: [2, 3, 2, 2, 3], F11: [3, 2, 2, 3, 3],
+  F12: [2, 4, 2, 2, 2], F13: [3, 3, 3, 3, 3], F14: [2, 3, 3, 2, 2], F15: [2, 3, 2, 2, 2], F16: [2, 2, 2, 2, 2], F17: [3, 4, 3, 2, 3],
+  F18: [2, 2, 2, 1, 3], F19: [3, 2, 2, 3, 2] };
+{ // price sections: the shared roll-up, block-scoped so its helpers do not collide with this page's
+// ---- project roll-up (scripts/lib/pricing.mjs + project-price.mjs), shared by the Workflow and Build pages ----
+// Priced from the features scored in the score review: the business piece is
+// what gets scored. The components under them are structure: each feature lands
+// in the milestone of its main component, and the components' tasks and hours
+// are a cross-check on the price.
+const RK = ['tech', 'size', 'deps', 'unc', 'risk'];
+const LEVELS = { codebaseMaturity: [1, 'Greenfield'], stackFamiliarity: [2, 'Adjacent, some learning'], specQuality: [3, 'Outline or slide deck'],
+  compliance: [2, 'Handles PII'], clientDecisions: [3, 'Committee sign-off'] };
+const ASSUME = ['Sin Kowa nominates a single approver per system for consolidated feedback.',
+  'The 24-hour pack-trigger rule, rush-order handling and item-allocation priority are finalised in a discovery phase at kickoff; scope assumes standard-path behaviour only.',
+  'No existing system is migrated; the previously purchased, unused inventory system is retired, not integrated against.',
+  'Ship-side order intake stays email/phone/fax; no change to those channels is in scope.',
+  'InvoiceNow scope is a Peppol-ready data model only; a live Access Point connection is a separately priced follow-on.',
+  'Client confirms warehouse WiFi or cellular coverage is adequate for phone-based scanning.'];
+const EXCLUDE = ['Hosting, infrastructure and third-party subscription fees (billed to Sin Kowa directly).',
+  'A live InvoiceNow/Peppol Access Point subscription and its transaction fees.', 'Dedicated handheld barcode scanner hardware (phone-based scanning assumed).',
+  'Last-mile delivery/logistics visibility and all AMR/autonomous-vehicle systems.', 'Load testing, penetration testing and formal security audit.',
+  'Post-launch support and maintenance, quoted separately.'];
+const RW = { tech: 0.2, size: 0.1, deps: 0.2, unc: 0.3, risk: 0.2 };
+const RBANDS = [{ tier: 'S', start: 5, end: 11.5, lo: 500, hi: 1500 }, { tier: 'M', start: 11.5, end: 17.5, lo: 1500, hi: 4000 },
+  { tier: 'L', start: 17.5, end: 22.5, lo: 4000, hi: 10000 }, { tier: 'XL', start: 22.5, end: 25, lo: 10000, hi: 25000 }];
+const CTX = { codebaseMaturity: [1.0, 1.1, 1.2, 1.45], stackFamiliarity: [1.0, 1.15, 1.35, 1.35], specQuality: [0.95, 1.0, 1.2, 1.45], compliance: [1.0, 1.15, 1.4, 1.4], clientDecisions: [1.0, 1.1, 1.25, 1.4] };
+const CTX_LABEL = { codebaseMaturity: 'Codebase maturity', stackFamiliarity: 'Stack & domain familiarity', specQuality: 'Specification quality', compliance: 'Compliance & data sensitivity', clientDecisions: 'Client decision structure' };
+const OVH = { 'Shared foundation & scaffolding': 0.12, 'Discovery & specification': 0.06, 'UX / UI design': 0.08, 'QA & user acceptance testing': 0.08,
+  'DevOps, environments & release': 0.05, 'Documentation & handover': 0.03, 'Project management & client comms': 0.10 };
+function featPrice(a) {
+  const s = Object.fromEntries(RK.map((k, i) => [k, a[i]])); const score = RK.reduce((n, k) => n + s[k] * RW[k], 0) * 5;
+  const b = RBANDS.reduce((x, c) => (score >= c.start ? c : x), RBANDS[0]);
+  const point = b.lo + (Math.min(score, b.end) - b.start) / (b.end - b.start) * (b.hi - b.lo);
+  const spread = 0.15 + Math.max(0, s.unc - 1) * 0.07 + Math.max(0, s.risk - 1) * 0.03;
+  const flag = score >= 22.5 ? 'Deep estimate required' : spread >= 0.4 || point >= 6000 ? 'Deep estimate recommended' : '';
+  return { ...s, score, tier: b.tier, point, spread, low: point * (1 - spread), high: point * (1 + spread), flag };
+}
+const $ = (s, el = document) => el.querySelector(s);
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const money = (n) => `$${Math.round(n).toLocaleString('en-US')}`;
+const ceilTo = (n, st) => Math.ceil(n / st) * st;
+const CAP_LIST = DATA.systems.flatMap((s) => s.features.map((c) => ({ ...c, sysName: s.name })));
+const PRICED = CAP_LIST.map((c) => ({ ...c, p: featPrice(CAP_SCORES[c.id]) }));
+const sub = PRICED.reduce((n, f) => n + f.p.point, 0);
+const mult = Math.min(2.5, 1 + Object.entries(LEVELS).reduce((n, [k, [lv]]) => n + (CTX[k][lv - 1] - 1), 0));
+const base = sub * mult;
+const integ = Math.min(0.25, 0.02 * PRICED.length);
+const ovhPct = Object.values(OVH).reduce((a, b) => a + b, 0) + integ;
+const ovh = base * ovhPct;
+const avg = (k) => PRICED.reduce((n, f) => n + f.p[k], 0) / PRICED.length;
+const contRate = 0.05 + 0.02 * avg('unc') + 0.02 * avg('risk');
+const cont = (base + ovh) * contRate;
+const p50 = base + ovh + cont;
+const sigma = Math.sqrt(PRICED.reduce((n, f) => n + (f.p.point * f.p.spread) ** 2, 0)) * p50 / sub;
+const P = { p20: p50 - 0.84 * sigma, p80: p50 + 0.84 * sigma, p95: p50 + 1.645 * sigma };
+const present = { low: ceilTo(p50, 500), high: ceilTo(P.p95, 500), single: ceilTo(P.p80, 500) };
+// milestones: a client feature lands with its main builder, the engineering
+// feature most specific to it (fewest other capabilities; earliest milestone on
+// a tie), so shared work like Notifications does not drag everything to the end
+const MS_ORDER = [...new Set(ENG.map((f) => f.milestone))].sort();
+const buildersOf_ = (capId) => ENG.filter((f) => IMPLEMENTS[f.id]?.includes(capId));
+const mainBuilder = (capId) => buildersOf_(capId).sort((a, b) => IMPLEMENTS[a.id].length - IMPLEMENTS[b.id].length || a.milestone.localeCompare(b.milestone))[0];
+const capMilestone = (capId) => mainBuilder(capId)?.milestone;
+// cross-check: the engineering hours behind the price
+const pertH = ([, o, m, pp]) => (o + 4 * m + pp) / 6;
+const ENG_HOURS = ENG.reduce((n, f) => n + Math.round((TASKS[f.id] || []).reduce((h, x) => h + pertH(x), 0)), 0); // per-feature rounded, as the cards show
+const TASK_COUNT = ENG.reduce((n, f) => n + (TASKS[f.id] || []).length, 0);
+
+function renderSummary() {
+  $('#headline').innerHTML = `<div class="big"><span>Range to present</span><b>${money(present.low)} – ${money(present.high)}</b><span>expected cost to worst realistic case</span></div>
+    <div><span>If one fixed number is unavoidable</span><b>${money(present.single)}</b><span>confident figure (80% chance at or under)</span></div>
+    <div class="internal"><span>Expected cost</span><b>${money(p50)}</b><span>half the time lower, half higher</span></div>
+    <div class="internal"><span>Implied accuracy</span><b>±${Math.round(sigma / p50 * 100)}%</b><span>under 30%: a ballpark you can quote</span></div>`;
+  const max = present.high;
+  const row = (lbl, note, from, to, amt, cls = '') => `<div class="bu-row ${cls}"><div class="lbl">${lbl}<small>${note}</small></div>
+    <div class="bu-bar"><i style="left:${from / max * 100}%;width:${Math.max(0.4, (to - from) / max * 100)}%"></i></div><div class="amt">${amt}</div></div>`;
+  $('#buildup').innerHTML = `<h3>How the price builds up</h3>
+    ${row('Feature build', `${PRICED.length} scored features`, 0, sub, money(sub))}
+    ${row(`× ${mult.toFixed(2)} project context`, 'spec quality, decisions, compliance, familiarity', sub, base, `+${money(base - sub)}`)}
+    ${row(`+ ${Math.round(ovhPct * 100)}% work outside features`, 'foundation, discovery, UX, QA, DevOps, docs, PM, integration', base, base + ovh, `+${money(ovh)}`)}
+    ${row(`+ ${(contRate * 100).toFixed(1)}% contingency`, 'known unknowns inside the agreed scope', base + ovh, p50, `+${money(cont)}`)}
+    ${row('= Expected cost', '', 0, p50, money(p50), 'total')}
+    ${row('Range to present', 'expected cost → worst realistic case, rounded up to $500', present.low, present.high, `${money(present.low)}–${money(present.high)}`, 'range')}`;
+}
+function renderRoadmap() {
+  $('#ms').innerHTML = MS_ORDER.map((ms) => {
+    const caps = CAP_LIST.filter((c) => capMilestone(c.id) === ms);
+    const fs = ENG.filter((f) => f.milestone === ms); const sh = PRICED.filter((c) => capMilestone(c.id) === ms).reduce((n, c) => n + c.p.point, 0) / sub;
+    return `<div class="m"><div class="dim num">${caps.length} feature${caps.length === 1 ? '' : 's'} finished<span class="internal"> · ${fs.length} components</span></div>
+      <h4>${esc(ms.replace(/^M(\d) - /, '$1. '))}</h4><p class="demo">${esc(MS_TEXT[ms] || '')}</p>
+      <div class="amt internal"><b>${money(present.low * sh)}–${money(present.high * sh)}</b> · ${(sh * 100).toFixed(0)}% of the build</div>
+      <div>${caps.map((c) => `<span class="chip" data-f="${c.id}" title="${esc(c.sysName)}">${esc(c.name)}</span>`).join('')}</div></div>`; }).join('');
+  $('#assume').innerHTML = ASSUME.map((a) => `<li>${esc(a)}</li>`).join('');
+  $('#exclude').innerHTML = EXCLUDE.map((a) => `<li>${esc(a)}</li>`).join('');
+}
+function renderMethod() {
+  $('#ctx').innerHTML = `<tr><th>Factor</th><th>Level</th><th class="r">Multiplier</th></tr>${Object.entries(LEVELS).map(([k, [lv, txt]]) =>
+    `<tr><td>${CTX_LABEL[k]}</td><td>${lv} · ${esc(txt)}</td><td class="r">${CTX[k][lv - 1].toFixed(2)}</td></tr>`).join('')}
+    <tr class="sum"><td colspan="2">Composite (1 + sum of deviations, cap 2.5)</td><td class="r">${mult.toFixed(2)}</td></tr>`;
+  $('#ovh').innerHTML = `<tr><th>Cost line</th><th class="r">% of base</th><th class="r">Amount</th></tr>${Object.entries(OVH).map(([k, v]) =>
+    `<tr><td>${k}</td><td class="r">${Math.round(v * 100)}%</td><td class="r">${money(base * v)}</td></tr>`).join('')}
+    <tr><td>Cross-feature integration (2% × ${PRICED.length}, cap 25%)</td><td class="r">${Math.round(integ * 100)}%</td><td class="r">${money(base * integ)}</td></tr>
+    <tr class="sum"><td>Total</td><td class="r">${Math.round(ovhPct * 100)}%</td><td class="r">${money(ovh)}</td></tr>`;
+  $('#cont').innerHTML = `<tr><td>Average uncertainty across features</td><td class="r">${avg('unc').toFixed(2)}</td></tr><tr><td>Average risk across features</td><td class="r">${avg('risk').toFixed(2)}</td></tr>
+    <tr><td>Rate: 5% + 2% × uncertainty + 2% × risk</td><td class="r">${(contRate * 100).toFixed(1)}%</td></tr>
+    <tr class="sum"><td>On build + outside work (${money(base + ovh)})</td><td class="r">${money(cont)}</td></tr>`;
+  $('#rng').innerHTML = `<tr><td>Optimistic (20% chance at or under)</td><td class="r">${money(P.p20)}</td></tr><tr><td>Expected cost</td><td class="r">${money(p50)}</td></tr>
+    <tr><td>Confident (80%)</td><td class="r">${money(P.p80)}</td></tr><tr><td>Worst realistic case (95%)</td><td class="r">${money(P.p95)}</td></tr>
+    <tr class="sum"><td>Presented: expected → worst, rounded up to $500</td><td class="r">${money(present.low)}–${money(present.high)}</td></tr>`;
+  $('#xcheck').innerHTML = `<tr><td>Components</td><td class="r">${ENG.length}</td></tr><tr><td>Tasks</td><td class="r">${TASK_COUNT}</td></tr>
+    <tr><td>Expected effort, (O + 4M + P) / 6 summed</td><td class="r">${Math.round(ENG_HOURS).toLocaleString('en-US')}h</td></tr>
+    <tr class="sum"><td>Implied rate at the expected cost (${money(p50)} ÷ hours)</td><td class="r">${money(p50 / ENG_HOURS)}/h</td></tr>`;
+}
+renderSummary(); renderRoadmap(); renderMethod();
+}
+
+// FINAL: the Component-based page of the estimate, the same layout read-only after sign-off, plus tasks and hours
+const FINAL = true;
+const K = ['tech', 'size', 'deps', 'unc', 'risk'];
+const LABEL = { tech: 'Tech', size: 'Size', deps: 'Deps', unc: 'Uncertainty', risk: 'Risk' };
+const ANCHOR = {
+  tech: ['Standard CRUD, well-documented library usage, established patterns', 'Minor customisation of standard patterns, simple state management', 'Custom business logic, moderate algorithmic complexity, multiple states', 'Non-trivial algorithms, real-time systems, complex data transforms', 'Novel architecture, distributed systems, R&D territory'],
+  size: ['Single UI element or micro-function, one screen, no persistence', 'Small self-contained feature, simple form or display component', 'Medium feature with multiple components and backend logic', 'Large feature spanning frontend, backend, database and tests', 'Epic-scale feature with sub-features — split it before scoring'],
+  deps: ['Fully standalone, no external services or shared state', 'One internal dependency, e.g. an auth check', 'Two or three internal services, or one third-party API', 'Multiple third-party APIs, or tightly coupled internal systems', 'Deep cross-system dependencies, legacy integrations, shared infra changes'],
+  unc: ['Fully defined spec, written acceptance criteria, precedent exists', 'Minor ambiguities, resolvable with one clarifying question', 'Some open questions, design decisions to be made during the build', 'Significant unknowns, exploratory work needed, spec likely to change', 'Highly experimental, no clear solution path'],
+  risk: ['Fully reversible, no user data, isolated module', 'Low stakes, easy rollback, minimal user impact', 'Moderate impact if broken, requires testing, affects multiple users', 'Payments, auth, data migrations or PII — high business impact', 'Core infrastructure, compliance requirements, irreversible operations'] };
+
+// ---- v2 pricing, transcribed from scripts/lib/pricing.mjs ----
+const WEIGHTS = { tech: 0.2, size: 0.1, deps: 0.2, unc: 0.3, risk: 0.2 };
+const BANDS = [{ tier: 'S', start: 5, end: 11.5, lo: 500, hi: 1500 }, { tier: 'M', start: 11.5, end: 17.5, lo: 1500, hi: 4000 },
+  { tier: 'L', start: 17.5, end: 22.5, lo: 4000, hi: 10000 }, { tier: 'XL', start: 22.5, end: 25, lo: 10000, hi: 25000 }];
+const weighted = (s) => K.reduce((n, k) => n + s[k] * WEIGHTS[k], 0) * 5;
+const bandFor = (x) => BANDS.reduce((b, c) => (x >= c.start ? c : b), BANDS[0]);
+function price(s) {
+  const score = weighted(s); const b = bandFor(score);
+  const point = b.lo + (Math.min(score, b.end) - b.start) / (b.end - b.start) * (b.hi - b.lo);
+  const spread = 0.15 + Math.max(0, s.unc - 1) * 0.07 + Math.max(0, s.risk - 1) * 0.03;
+  const flag = score >= 22.5 && s.size === 5 ? 'Split into smaller features' : score >= 22.5 ? 'Deep estimate required'
+    : spread >= 0.4 || point >= 6000 ? 'Deep estimate recommended' : '';
+  return { score, tier: b.tier, point, low: point * (1 - spread), high: point * (1 + spread), spread, flag };
+}
+const money = (n) => `$${Math.round(n).toLocaleString('en-US')}`;
+
+// ---- two layers: features (scored, priced) and components (what builds them, linked N-to-N) ----
+const $ = (s, el = document) => el.querySelector(s);
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const CAPS = DATA.systems.flatMap((s) => s.features.map((c) => ({ ...c, sys: s })));
+const capById = Object.fromEntries(CAPS.map((c) => [c.id, c]));
+const COMPS = ENG;
+const compById = Object.fromEntries(COMPS.map((b) => [b.id, b]));
+const sysNo = (capId) => DATA.systems.indexOf(capById[capId].sys) + 1;
+const sid = (s) => `s-${s.id}`;
+const orig = (id) => Object.fromEntries(K.map((k, i) => [k, CAP_SCORES[id][i]]));
+const cur = Object.fromEntries(CAPS.map((c) => [c.id, orig(c.id)]));
+const links = Object.fromEntries(COMPS.map((b) => [b.id, [...(IMPLEMENTS[b.id] || [])]]));
+const notes = {}; const reasons = {}; const asks = {}; // asks[capId] = note when the engineer asks the agent to add a component
+let pin = null; // pinned highlight, see the hover/pin section
+const STORE = `score-review:${DATA.project}:v4`;
+if (!FINAL) try { const v = JSON.parse(localStorage.getItem(STORE) || '{}');
+  for (const [o, src] of [[notes, v.notes], [reasons, v.reasons], [asks, v.asks]]) Object.assign(o, src || {});
+  for (const [id, sc] of Object.entries(v.scores || {})) if (cur[id]) Object.assign(cur[id], sc);
+  for (const [id, l] of Object.entries(v.links || {})) if (links[id]) links[id] = l.filter((c) => capById[c]); } catch { /* start fresh */ }
+function save() {
+  if (FINAL) return;
+  try { localStorage.setItem(STORE, JSON.stringify({ scores: cur, notes, reasons, links, asks }));
+    $('#saved').textContent = `Saved in this browser at ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`; }
+  catch { $('#saved').textContent = 'This browser cannot save; copy the feedback before closing.'; }
+}
+const changedKeys = (id) => K.filter((k) => cur[id][k] !== orig(id)[k]);
+const sameSet = (a, b) => a.length === b.length && a.every((x) => b.includes(x));
+const buildersOf = (capId) => COMPS.filter((b) => links[b.id].includes(capId)).map((b) => b.id);
+const origBuilders = (capId) => COMPS.filter((b) => (IMPLEMENTS[b.id] || []).includes(capId)).map((b) => b.id);
+const isChanged = (id) => changedKeys(id).length > 0 || !sameSet(buildersOf(id), origBuilders(id));
+// "unlinked" has two sides: a feature no component builds (blocks sending:
+// nobody would build it) and a component that builds no feature (shown, so it gets a look)
+const notBuilt = (capId) => !buildersOf(capId).length && asks[capId] === undefined;
+const notAsked = (bid) => !links[bid].length;
+const notBuiltCount = () => CAPS.filter((c) => notBuilt(c.id)).length;
+const unlinkedCount = () => notBuiltCount() + COMPS.filter((b) => notAsked(b.id)).length;
+// a feature lands in the milestone of its main component: the one most specific to it
+// (fewest other features; earliest milestone on a tie), as the roll-up does
+const mainComp = (capId) => buildersOf(capId).map((id) => compById[id]).sort((a, b) => links[a.id].length - links[b.id].length || a.milestone.localeCompare(b.milestone))[0];
+
+// ---- systems & workflows: one panel per system, diagrams + feature table; one open at a time ----
+function flowCode(fl) {
+  const ids = new Map(); const id = (n) => { if (!ids.has(n)) ids.set(n, `n${ids.size}`); return ids.get(n); };
+  const L = ['flowchart LR'];
+  fl.steps.forEach((st, i) => { if (i) L.push(`  ${id(fl.steps[i - 1])} --> ${id(st)}`); });
+  fl.branches.forEach((b) => L.push(`  ${id(b.from)} -.-> ${id(b.to)}`));
+  const map = {}; for (const [n, i] of ids) { L.push(`  ${i}["${n.replace(/"/g, "'")}"]`); map[i] = `${fl.id}:${n}`; }
+  return { code: L.join('\n'), map };
+}
+const flowsOf = (s) => [s.main, ...s.subs].filter(Boolean);
+const stepsOfSys = (s) => flowsOf(s).flatMap((fl) => [...fl.steps, ...fl.branches.map((b) => b.to)].map((st) => `${fl.id}:${st}`));
+const capRefs = (c) => new Set(c.steps.includes('*') ? stepsOfSys(c.sys) : c.steps);
+const stepName = (r) => r.slice(r.indexOf(':') + 1);
+function diagrams(s) {
+  return flowsOf(s).map((fl) => { const m = flowCode(fl);
+    return `<p class="flow-name">${fl === s.main ? 'Main' : 'Sub'} · ${esc(fl.name)}</p><div class="flow" data-map="${esc(JSON.stringify(m.map))}"><pre class="mermaid">${esc(m.code)}</pre></div>`; }).join('');
+}
+function capRow(c) {
+  const steps = c.steps.includes('*') ? '<span class="chip">every step</span>' : c.steps.map((r) => `<span class="chip">${esc(stepName(r))}</span>`).join('') || '<span class="chip">off-step</span>';
+  return `<tr data-cap="${c.id}"><td><span class="dim">${c.id}</span> <b>${esc(c.name)}</b></td><td>${steps}</td><td class="built" data-built="${c.id}"></td></tr>`;
+}
+function renderMap() {
+  $('#systems').innerHTML = DATA.systems.map((s, i) => `<details class="capsys" data-sys="${s.id}"><summary>System ${i + 1} · ${esc(s.name)} <span class="dim" data-syscover="${s.id}"></span></summary>
+    ${diagrams(s)}<table class="caps"><tr><th>Feature</th><th>Workflow steps</th><th>Built by (components)</th></tr>${s.features.map((c) => capRow({ ...c, sys: s })).join('')}</table></details>`).join('');
+}
+function paintCap(c) {
+  const by = buildersOf(c.id);
+  $(`tr[data-cap="${c.id}"]`).classList.toggle('gap', notBuilt(c.id));
+  $(`[data-built="${c.id}"]`).innerHTML = by.length ? by.map((id) => `<span class="chip eng" data-comp-chip="${id}">${esc(compById[id].name)}</span>`).join('')
+    : asks[c.id] !== undefined ? '<span class="dim">asked the agent to add a component</span>' : '<span class="gapnote">⚠ Not built yet: see its card</span>';
+}
+
+// ---- feature cards, one section per system ----
+function factorHtml(c, k) {
+  if (FINAL) { const n = cur[c.id][k];
+    return `<div class="factor ro"><div class="flabel">${LABEL[k]}<i>${WEIGHTS[k] * 100}%</i></div><div class="ro-n${n === 5 ? ' hot' : ''}">${n}<span>/5</span></div><p class="anchor">${esc(ANCHOR[k][n - 1])}</p></div>`; }
+  const pick = [1, 2, 3, 4, 5].map((n) => `<button type="button" data-f="${c.id}" data-k="${k}" data-n="${n}" title="${n} — ${esc(ANCHOR[k][n - 1])}">${n}</button>`).join('');
+  // the read-back contract: one hidden select per score, value 1–5, title = rubric anchor
+  const sel = `<select class="hide" data-id="${c.id}" data-key="${k}">${[1, 2, 3, 4, 5].map((n) => `<option value="${n}" title="${esc(ANCHOR[k][n - 1])}">${n}</option>`).join('')}</select>`;
+  return `<div class="factor" data-fk="${c.id}:${k}"><div class="flabel">${LABEL[k]}<i>${WEIGHTS[k] * 100}%</i></div>${sel}
+    <div class="pick">${pick}</div><p class="anchor"></p><div class="reason hide"><p class="was"></p><textarea data-reason="${c.id}:${k}" rows="2" placeholder="Why this score? e.g. no sample emails yet"></textarea></div></div>`;
+}
+function capHtml(c) {
+  const who = `<div class="who"><div class="id">${c.id} · System ${sysNo(c.id)} · ${esc(c.sys.name.split(' (')[0])}<span data-ms="${c.id}"></span></div><h3>${esc(c.name)}</h3><p class="does">${esc(c.does)}</p></div>`;
+  const effort = FINAL ? `<div class="side-effort effort"><b data-hrs="${c.id}"></b><span>expected effort of its components</span></div>` : '';
+  const box = `<div class="score-box"><div class="side-score"><div class="verdict"><span class="total">Σ <b data-total="${c.id}"></b></span><span class="tier" data-tier="${c.id}"></span><span class="moved" data-moved="${c.id}"></span></div>
+      <div class="price" data-price="${c.id}"></div><div data-flag="${c.id}"></div></div>${effort}</div>`;
+  const note = FINAL ? '' : `<label class="note">Note in plain words (optional)<textarea data-note="${c.id}" rows="3" placeholder="e.g. scan rules need sample barcodes before we can price it tighter"></textarea></label>`;
+  return `<article class="feat" id="c-${c.id}" data-feat="${c.id}"><div class="rail">${who}${box}</div>
+    <div class="builds" data-builtby="${c.id}"></div>
+    <div class="side-score"><div class="factors">${K.map((k) => factorHtml(c, k)).join('')}</div>${note}</div></article>`;
+}
+// ---- components: tasks and hours (Component-based page only) ----
+const pert = ([, o, m, pp]) => (o + 4 * m + pp) / 6;
+const hoursOf = (id) => Math.round((typeof TASKS === 'undefined' ? [] : TASKS[id] || []).reduce((n, x) => n + pert(x), 0));
+function tasksHtml(b) {
+  const ts = TASKS[b.id] || [];
+  return `<details class="tasks side-effort"><summary>${esc(b.name)} · ${ts.length} tasks · ${hoursOf(b.id)}h expected</summary><table><tr><th>Task</th><th class="r">O / M / P h</th><th class="r">Expected</th><th>Confidence</th></tr>${ts.map((x) =>
+    `<tr><td>${esc(x[0])}${x[5] ? `<div class="dim">${esc(x[5])}</div>` : ''}</td><td class="r">${x[1]} / ${x[2]} / ${x[3]}</td><td class="r"><b>${Math.round(pert(x))}h</b></td><td><span class="conf c-${x[4]}">${x[4]}</span></td></tr>`).join('')}</table></details>`;
+}
+// the architecture document holds the C4 views; this page links there instead of redrawing them
+// (C3 is the Backend API's components; every other container is one item here, shown in C2)
+const ARCH = 'architecture.html';
+const archLink = (containers) => { const c3 = containers.includes('Backend API'); const c2 = containers.some((c) => c !== 'Backend API');
+  return [c3 && `<a class="archlink" href="${ARCH}#panel-components-api" target="_blank" rel="noopener">C3 components ↗</a>`,
+    c2 && `<a class="archlink" href="${ARCH}#panel-containers" target="_blank" rel="noopener">C2 containers ↗</a>`].filter(Boolean).join(' · '); };
+// one row per component: its container, its name, and the other features it builds
+function compRow(bid, capId, cls = '') {
+  const b = compById[bid]; const others = links[bid].filter((c) => c !== capId);
+  const also = others.length ? `also builds ${others.map((c) => `<span class="cmini" style="--sc:var(--s${sysNo(c)})" data-cap-chip="${c}" title="${esc(capById[c].name)}">${c}</span>`).join('')}` : '<span class="dim">only this feature</span>';
+  const x = !FINAL && !cls.includes('removed') ? `<button type="button" data-unlink="${bid}:${capId}" title="This component does not build it">×</button>` : '';
+  return `<div class="crow${cls}" data-comp-chip="${bid}"><span class="ccont">${esc(b.container)}</span><b class="cname">${esc(b.name)}</b><span class="calso">${also}</span>${FINAL ? `<span class="chrs">${hoursOf(bid)}h</span>` : ''}${x}</div>`;
+}
+// the "Built by" panel on a feature card: rows (× unlinks), a picker to add one, or the gap
+function paintBuilt(capId) {
+  const by = buildersOf(capId); const was = origBuilders(capId); const box = $(`[data-builtby="${capId}"]`);
+  const conts = [...new Set(by.map((b) => compById[b].container))]; const ms = mainComp(capId)?.milestone;
+  $(`[data-ms="${capId}"]`).textContent = ms ? ` · ${ms}` : '';
+  box.classList.toggle('none', !by.length);
+  const head = by.length ? `Built by <b>${by.length}</b> component${by.length > 1 ? 's' : ''} in <b>${conts.length}</b> container${conts.length > 1 ? 's' : ''}` : 'Not built yet';
+  if (FINAL) { const h = by.reduce((n, b) => n + hoursOf(b), 0); $(`[data-hrs="${capId}"]`).textContent = `${h.toLocaleString('en-US')}h`;
+    box.innerHTML = `<div class="bhead">${head}<span class="arch">${archLink(conts)}</span></div><div class="crows">${by.map((b) => compRow(b, capId)).join('')}</div>${by.map((b) => tasksHtml(compById[b])).join('')}`; return; }
+  const rows = by.map((b) => compRow(b, capId, was.includes(b) ? '' : ' added')).join('') + was.filter((b) => !by.includes(b)).map((b) => compRow(b, capId, ' removed')).join('');
+  const conts2 = [...new Set(COMPS.map((b) => b.container))];
+  const pick = `<select data-link="${capId}" aria-label="Link a component"><option value="">+ Link a component</option>${conts2.map((g) => `<optgroup label="${esc(g)}">${COMPS.filter((b) => b.container === g && !by.includes(b.id)).map((b) =>
+    `<option value="${b.id}">${esc(b.name)}${notAsked(b.id) ? ' · builds nothing yet' : ''}</option>`).join('')}</optgroup>`).join('')}</select>`;
+  const gap = by.length ? '' : asks[capId] !== undefined
+    ? `<div class="ask"><b>Asked the agent to add a component</b> <button type="button" class="btn" data-unask="${capId}">undo</button><textarea data-ask="${capId}" rows="1" placeholder="What should it cover? e.g. parse emails/faxes into a draft order">${esc(asks[capId])}</textarea></div>`
+    : `<div class="ask"><span class="gapnote">⚠ No component builds this, so nobody would build it.</span> <button type="button" class="btn" data-ask-btn="${capId}">Ask the agent to add one</button> <span class="dim">or link one</span></div>`;
+  box.innerHTML = `<div class="bhead">${head}${conts.length ? `<span class="arch">${archLink(conts)}</span>` : ''}</div>${gap}<div class="crows">${rows}</div>${pick}`;
+}
+// components that build no feature: listed once below the cards, so they get a look
+function paintUnasked() {
+  const un = COMPS.filter((b) => notAsked(b.id));
+  $('#unasked').innerHTML = un.length ? `<section class="system" id="unasked-sec"><div class="sys-head"><div><div class="eyebrow">Unlinked · ${un.length}</div><h2>Components that build no feature</h2></div></div>
+    <p class="quiet">If the roll-up already covers one (foundation, DevOps) or an assumption excludes it, it should go; otherwise link it from a feature card above.</p>
+    <div class="crows">${un.map((b) => `<div class="crow" data-comp-chip="${b.id}"><span class="ccont">${esc(b.container)}</span><b class="cname">${esc(b.name)}</b><span class="calso dim">${esc(b.does)}</span></div>`).join('')}</div></section>` : '';
+}
+function render() {
+  renderMap();
+  $('#groups').innerHTML = DATA.systems.map((s, i) => `<section class="system" id="${sid(s)}" data-sec="${s.id}"><div class="sys-head"><div><div class="eyebrow">System ${i + 1} · ${s.features.length} features</div><h2>${esc(s.name)}</h2></div>
+      <div class="subtotal" data-sub="${s.id}"></div></div>${s.features.map((c) => capHtml({ ...c, sys: s })).join('')}</section>`).join('');
+  $('#guide').innerHTML = `<table class="guide-table"><tr><th></th>${[1, 2, 3, 4, 5].map((n) => `<th>${n}</th>`).join('')}</tr>${K.map((k) =>
+    `<tr><td class="dim">${LABEL[k]} ${WEIGHTS[k] * 100}%</td>${ANCHOR[k].map((a) => `<td>${esc(a)}</td>`).join('')}</tr>`).join('')}</table>`;
+  if (!FINAL) CAPS.forEach((c) => { $(`[data-note="${c.id}"]`).value = notes[c.id] || ''; });
+}
+function paint(id) {
+  const s = cur[id]; const p = price(s); const o = price(orig(id));
+  $(`[data-total="${id}"]`).textContent = p.score.toFixed(1);
+  const t = $(`[data-tier="${id}"]`); t.textContent = p.tier; t.className = `tier t-${p.tier}`;
+  $(`[data-moved="${id}"]`).textContent = p.tier !== o.tier ? `was ${o.tier}` : '';
+  $(`[data-price="${id}"]`).innerHTML = `<b>${money(p.point)}</b> <span class="quiet">(${money(p.low)}–${money(p.high)})</span>${Math.round(p.point) !== Math.round(o.point) ? ` <span class="moved">was ${money(o.point)}</span>` : ''}`;
+  $(`[data-flag="${id}"]`).innerHTML = p.flag ? `<span class="flagchip">⚑ ${p.flag}</span>` : '';
+  if (!FINAL) K.forEach((k) => {
+    const box = $(`[data-fk="${id}:${k}"]`); const was = orig(id)[k];
+    box.classList.toggle('changed', s[k] !== was);
+    box.querySelectorAll('.pick button').forEach((b) => { b.classList.toggle('on', +b.dataset.n === s[k]); b.classList.toggle('orig', +b.dataset.n === was && s[k] !== was); });
+    $('select', box).value = String(s[k]);
+    $('.anchor', box).textContent = ANCHOR[k][s[k] - 1];
+    const r = $('.reason', box); r.classList.toggle('hide', s[k] === was);
+    $('.was', r).textContent = `Agent proposed ${was}. Your evidence for ${s[k]}:`;
+    const inp = $('textarea', r); if (document.activeElement !== inp) inp.value = reasons[`${id}:${k}`] || '';
+    r.classList.toggle('missing', s[k] !== was && !(reasons[`${id}:${k}`] || '').trim());
+  });
+  paintBuilt(id);
+}
+function strip(sum) {
+  const { now, tiers, flags, covered, gaps } = sum; const unasked = COMPS.filter((b) => notAsked(b.id)).length;
+  const scoring = `<div><b>${CAPS.length}</b><span>features scored</span></div>
+    <div class="${gaps ? 'warn' : ''}"><b>${covered} / ${CAPS.length}</b><span>built by a component</span></div>
+    <div><b>${tiers.S} · ${tiers.M} · ${tiers.L} · ${tiers.XL}</b><span>S · M · L · XL</span></div>
+    <div><b>${money(now)}</b><span>feature build subtotal (before context, overheads, contingency)</span></div>
+    <div class="${flags ? 'warn' : ''}"><b>${flags}</b><span>need a closer look (deep estimate recommended)</span></div>`;
+  // hours once per component: a shared component is listed under several features but built once
+  if (FINAL) { const H = COMPS.reduce((n, b) => n + hoursOf(b.id), 0); const T = COMPS.reduce((n, b) => n + (TASKS[b.id] || []).length, 0);
+    return `${scoring}<div><b>${COMPS.length}</b><span>components</span></div><div><b>${T}</b><span>tasks</span></div><div><b>${H.toLocaleString('en-US')}h</b><span>expected effort, each component counted once</span></div>`; }
+  return `${scoring}<div class="${unasked ? 'warn' : ''}"><b>${COMPS.length}${unasked ? ` · ${unasked}` : ''}</b><span>components${unasked ? ' · build no feature' : ''}</span></div>
+    <div class="${gaps ? 'warn' : ''}"><b>${gaps}</b><span>features not built yet (blocks sending)</span></div>`;
+}
+function navHtml(count) {
+  const openName = openSys && DATA.systems.find((s) => s.id === openSys).name.split(' (')[0];
+  const toggle = `<div class="view seg" role="group" aria-label="Cards"><button type="button" data-cards="all" aria-pressed="${!sysFilter}" data-tip="Every feature card">All</button><button type="button" data-cards="wf" aria-pressed="${sysFilter}" data-tip="Only the feature cards of the system open in Systems &amp; workflows above. Open another system there to switch.">Workflows${sysFilter ? ` · ${esc(openName)}` : ''}</button></div>`;
+  const sides = FINAL ? `<div class="view seg" role="group" aria-label="Card view"><button type="button" data-side="score" aria-pressed="${side === 'score'}" data-tip="Each feature's scores, tier and price, as signed off in the score review">Scoring</button><button type="button" data-side="effort" aria-pressed="${side === 'effort'}" data-tip="The components behind each feature, with their tasks and hours">Effort</button></div>` : '';
+  const jumps = DATA.systems.map((s) => { const n = s.features.filter((c) => capVisible({ ...c, sys: s })).length; const c = s.features.filter((x) => isChanged(x.id)).length;
+    return n ? `<a href="#${sid(s)}" data-tip="Jump to the ${esc(s.name)} cards (${n} shown)">${esc(s.name.split(' (')[0])} <span class="cnt">${n}</span>${c ? `<span class="n">${c} edited</span>` : ''}</a>` : ''; }).join('');
+  const FILTERS = [...(FINAL ? [] : [['edits', 'my edits', 'Cards where you moved a score or a component link']]),
+    ['closer', 'needs a closer look', 'The pricing rule recommends a deep estimate: the range is ±40% or wider, or the price is $6,000 or more'],
+    ['unlinked', 'unlinked', 'Not built yet: a feature no component builds (blocks sending). Also lists components that build no feature.']];
+  return `<div class="navrow">${toggle}${sides}</div>`
+    + `<div class="navrow"><span class="navlbl" data-tip="Each system is a section of feature cards below">Jump to</span>${jumps}`
+    + `<span class="filters"><span class="navlbl" data-tip="Narrow the cards; click again to clear. Combines with All | Workflows.">Show</span>${FILTERS.map(([f, label, tip]) =>
+      `<button type="button" data-filter="${f}" aria-pressed="${filter === f}" data-tip="${tip}">${label} <span class="cnt">${count[f]}</span></button>`).join('')}</span></div>`;
+}
+function totals() {
+  let now = 0; let was = 0; let flags = 0; let changed = 0; const tiers = { S: 0, M: 0, L: 0, XL: 0 };
+  DATA.systems.forEach((s) => {
+    let sn = 0; let sw = 0;
+    s.features.forEach((c) => { const p = price(cur[c.id]); sn += p.point; sw += price(orig(c.id)).point; tiers[p.tier] += 1; if (p.flag) flags += 1; if (isChanged(c.id)) changed += 1; });
+    now += sn; was += sw;
+    $(`[data-sec="${s.id}"]`).classList.toggle('hide', !s.features.some((c) => capVisible({ ...c, sys: s })));
+    const hrs = FINAL ? new Set(s.features.flatMap((c) => buildersOf(c.id))) : null;
+    $(`[data-sub="${s.id}"]`).innerHTML = `<div class="side-score"><b>${money(sn)}</b><span>feature build subtotal</span>${Math.round(sn) !== Math.round(sw) ? `<span class="was"> · was ${money(sw)}</span>` : ''}</div>`
+      + (FINAL ? `<div class="side-effort"><b>${[...hrs].reduce((n, b) => n + hoursOf(b), 0).toLocaleString('en-US')}h</b><span>${hrs.size} components, each counted once</span></div>` : '');
+  });
+  CAPS.forEach(paintCap);
+  const covered = CAPS.filter((c) => buildersOf(c.id).length).length; const gaps = notBuiltCount();
+  DATA.systems.forEach((s) => { const n = s.features.filter((c) => notBuilt(c.id)).length; $(`[data-syscover="${s.id}"]`).innerHTML = n ? `<span class="gapnote">· ⚠ ${n} not built</span>` : `· ${s.features.length} features, all built`; });
+  $('#cover').innerHTML = `<b class="${gaps ? 'gapnote' : ''}">${covered} / ${CAPS.length}</b><span>features built by a component</span>`;
+  $('#strip').innerHTML = strip({ now, tiers, flags, covered, gaps });
+  $('#stat').innerHTML = `<b>${changed}</b> edited · <b class="${gaps ? 'gapnote' : ''}">${gaps}</b> not built yet · subtotal <b>${money(now)}</b>${Math.round(now) !== Math.round(was) ? ` (was ${money(was)})` : ''}`;
+  $('#preview').title = gaps ? `${gaps} feature${gaps === 1 ? '' : 's'} not built yet: you can review, but not send` : '';
+  const count = { edits: CAPS.filter((c) => isChanged(c.id)).length, closer: CAPS.filter((c) => price(cur[c.id]).flag).length, unlinked: unlinkedCount() };
+  $('#nav').innerHTML = navHtml(count);
+  spine();
+  if (pin) highlight(...pin.hit);
+}
+function spine() {
+  const cols = Array.from({ length: 21 }, () => []);
+  CAPS.forEach((c) => { const p = price(cur[c.id]); cols[Math.min(20, Math.round(p.score) - 5)].push({ c, p }); });
+  $('#spine').innerHTML = cols.map((col) => `<div class="col">${col.map(({ c, p }) =>
+    `<button class="dot${isChanged(c.id) ? ' changed' : ''}${p.flag ? ' flag' : ''}" data-go="${c.id}" title="${c.id} ${esc(c.name)} · ${p.score.toFixed(1)} ${p.tier}"></button>`).join('')}</div>`).join('');
+}
+let filter = 'all';
+let side = 'score'; // FINAL only: Scoring | Effort
+let sysFilter = false; let openSys = null; // system open in Systems & workflows + the All | Workflows toggle
+const PASS = { all: () => true, edits: (c) => isChanged(c.id), closer: (c) => !!price(cur[c.id]).flag, unlinked: (c) => notBuilt(c.id) };
+const capVisible = (c) => PASS[filter](c) && (!sysFilter || c.sys.id === openSys);
+function applyFilter() {
+  CAPS.forEach((c) => $(`#c-${c.id}`).classList.toggle('hide', !capVisible(c)));
+  $('#unasked').classList.toggle('hide', !['all', 'unlinked'].includes(filter));
+}
+function openSystem(s) {
+  openSys = s;
+  if (!s) sysFilter = false; // nothing picked: Workflows has nothing to follow
+  document.querySelectorAll('details.capsys').forEach((d) => { d.open = d.dataset.sys === s; });
+}
+const refresh = (id) => { if (id) paint(id); totals(); applyFilter(); };
+const relink = () => { CAPS.forEach((c) => paintBuilt(c.id)); paintUnasked(); refresh(); save(); };
+
+// ---- feedback: the --read contract (feature scores + component links) ----
+const reasonsFor = (id) => Object.fromEntries(changedKeys(id).map((k) => [k, (reasons[`${id}:${k}`] || '').trim()]).filter(([, v]) => v));
+window.__feedback = () => ({
+  features: CAPS.map((c) => ({ id: c.id, scores: { ...cur[c.id] }, scoreNote: notes[c.id] || '', ...(changedKeys(c.id).length ? { reasons: reasonsFor(c.id) } : {}) })),
+  components: COMPS.map((b) => ({ id: b.id, implements: [...links[b.id]] })),
+  addComponent: CAPS.filter((c) => asks[c.id] !== undefined && !buildersOf(c.id).length).map((c) => ({ feature: c.id, note: asks[c.id].trim() })) });
+const missingReasons = () => CAPS.flatMap((c) => changedKeys(c.id).filter((k) => !(reasons[`${c.id}:${k}`] || '').trim()).map((k) => `${c.id} ${LABEL[k]}`));
+function linkSummary() {
+  const rows = CAPS.filter((c) => !sameSet(buildersOf(c.id), origBuilders(c.id))).map((c) => { const was = origBuilders(c.id); const now = buildersOf(c.id);
+    return `<tr><td><b>${c.id} ${esc(c.name)}</b></td><td>${now.filter((b) => !was.includes(b)).map((b) => `<span class="down">+ ${esc(compById[b].name)}</span>`).join('<br>')}${was.filter((b) => !now.includes(b)).map((b) => `<span class="up">− ${esc(compById[b].name)}</span>`).join('<br>')}</td></tr>`; }).join('');
+  const asked = CAPS.filter((c) => asks[c.id] !== undefined && !buildersOf(c.id).length).map((c) => `<tr><td><b>${c.id}</b> ${esc(c.name)}</td><td>Ask the agent to add a component${asks[c.id].trim() ? `: “${esc(asks[c.id].trim())}”` : ''}</td></tr>`).join('');
+  return (rows ? `<h4>Components you linked or unlinked</h4><table><tr><th>Feature</th><th>Components</th></tr>${rows}</table>` : '')
+    + (asked ? `<h4>Not built yet — you asked the agent to add a component</h4><table><tr><th>Feature</th><th>Request</th></tr>${asked}</table>` : '');
+}
+function summaryHtml() {
+  const rows = (s) => s.features.filter((c) => changedKeys(c.id).length || notes[c.id]).map((c) => {
+    const p = price(cur[c.id]); const o = price(orig(c.id)); const d = p.point - o.point;
+    return `<tr><td><b>${c.id} ${esc(c.name)}</b></td><td>${changedKeys(c.id).map((k) => { const why = (reasons[`${c.id}:${k}`] || '').trim();
+        return `${LABEL[k]} ${orig(c.id)[k]}→${cur[c.id][k]}<div class="${why ? 'quiet' : 'up'}">${why ? `“${esc(why)}”` : 'no reason yet'}</div>`; }).join('') || '—'}</td>
+      <td>${o.tier}${p.tier !== o.tier ? ` → <b>${p.tier}</b>` : ''}</td><td>${money(o.point)} → ${money(p.point)} <span class="${d > 0 ? 'up' : 'down'}">${d ? `${d > 0 ? '+' : '−'}${money(Math.abs(d))}` : ''}</span></td>
+      <td>${notes[c.id] ? `“${esc(notes[c.id])}”` : ''}</td></tr>`; }).join('');
+  const parts = DATA.systems.map((s) => { const r = rows(s); return r ? `<h4>${esc(s.name)}</h4><table><tr><th>Feature</th><th>Scores moved</th><th>Tier</th><th>Point price</th><th>Note</th></tr>${r}</table>` : ''; }).join('');
+  const gaps = notBuiltCount(); const miss = missingReasons(); const unasked = COMPS.filter((b) => notAsked(b.id));
+  const block = gaps ? `<div class="warnbox"><b>${gaps} feature${gaps > 1 ? 's' : ''} not built yet — you can't send until each is built by a component, or you ask the agent to add one.</b> ${CAPS.filter((c) => notBuilt(c.id)).map((c) => `${c.id} ${esc(c.name)}`).join(' · ')}</div>` : '';
+  const info = unasked.length ? `<p class="quiet">Components that build no feature (check they should stay): ${unasked.map((b) => esc(b.name)).join(' · ')}</p>` : '';
+  const warn = miss.length ? `<div class="warnbox soft">${miss.length} changed score${miss.length > 1 ? 's have' : ' has'} no reason (${esc(miss.join(', '))}). You can still send; the agent will ask in chat.</div>` : '';
+  const body = parts + linkSummary();
+  return block + warn + info + (body || '<p class="quiet">No changes: you accepted every proposed score and component link. The feedback block still records that.</p>');
+}
+
+// ---- wiring ----
+render(); CAPS.forEach((c) => paint(c.id)); paintUnasked(); totals(); applyFilter();
+document.addEventListener('click', (e) => {
+  const b = e.target.closest('.pick button');
+  if (b) { const { f, k } = b.dataset; cur[f][k] = +b.dataset.n; refresh(f); save(); return; }
+  const un = e.target.closest('[data-unlink]')?.dataset.unlink;
+  if (un) { const [bid, c] = un.split(':'); links[bid] = links[bid].filter((x) => x !== c); relink(); return; }
+  const ask = e.target.closest('[data-ask-btn]')?.dataset.askBtn;
+  if (ask) { asks[ask] = ''; relink(); $(`[data-ask="${ask}"]`)?.focus(); return; }
+  const unask = e.target.closest('[data-unask]')?.dataset.unask;
+  if (unask) { delete asks[unask]; relink(); return; }
+  const go = e.target.closest('[data-go]');
+  if (go && $(`#c-${go.dataset.go}`).classList.contains('hide')) { filter = 'all'; sysFilter = false; refresh(); }
+  const fl = e.target.closest('[data-filter]');
+  if (fl) { filter = filter === fl.dataset.filter ? 'all' : fl.dataset.filter; refresh();
+    if (filter === 'unlinked') { lastC = null; nextItem(true); } }
+  const sd = e.target.closest('[data-side]')?.dataset.side;
+  if (sd) { side = sd; document.body.classList.toggle('side-effort-on', side === 'effort'); totals(); }
+  const cards = e.target.closest('[data-cards]')?.dataset.cards;
+  if (cards) {
+    sysFilter = cards === 'wf';
+    if (!sysFilter) openSystem(null); // All: every card, every system collapsed
+    if (sysFilter && !openSys) openSystem((DATA.systems.find((s) => s.features.some((c) => notBuilt(c.id))) || DATA.systems[0]).id);
+    refresh(); if (sysFilter) $('#map').scrollIntoView({ block: 'start', behavior: 'smooth' });
+  }
+});
+// one system open at a time; with Workflows on, the open system picks the cards
+$('#systems').addEventListener('toggle', (e) => {
+  const d = e.target; if (!d.matches?.('details.capsys') || drawing) return;
+  if (d.open) openSystem(d.dataset.sys);
+  else if (openSys === d.dataset.sys) openSystem(null);
+  refresh();
+}, true);
+document.addEventListener('change', (e) => {
+  const capId = e.target.dataset.link;
+  if (capId && e.target.value) { links[e.target.value] = [...links[e.target.value], capId]; relink(); }
+});
+document.addEventListener('input', (e) => {
+  const n = e.target.dataset.note; if (n) { notes[n] = e.target.value; save(); }
+  const a = e.target.dataset.ask; if (a) { asks[a] = e.target.value; save(); }
+  const r = e.target.dataset.reason;
+  if (r) { reasons[r] = e.target.value; e.target.closest('.reason').classList.toggle('missing', !e.target.value.trim()); save(); }
+});
+// ---- hover previews, click pins: diagram box ↔ feature ↔ component, everywhere they show ----
+// A step lights its features and the components that build them; a component
+// lights every feature it builds and their steps, in every system.
+const compsOf = (caps) => new Set([...caps].flatMap(buildersOf));
+const refsOf = (caps) => new Set([...caps].flatMap((c) => [...capRefs(capById[c])]));
+function fromStep(ref) { const caps = new Set(CAPS.filter((c) => capRefs(c).has(ref)).map((c) => c.id)); return [new Set([ref]), caps, compsOf(caps)]; }
+function fromCap(id) { const caps = new Set([id]); return [refsOf(caps), caps, compsOf(caps)]; }
+function fromComp(id) { const caps = new Set(links[id]); return [refsOf(caps), caps, new Set([id])]; }
+function highlight(refs, caps, comps) {
+  document.querySelectorAll('.feat').forEach((c) => c.classList.toggle('hl', caps.has(c.dataset.feat)));
+  document.querySelectorAll('.dot').forEach((d) => d.classList.toggle('hl', caps.has(d.dataset.go)));
+  document.querySelectorAll('tr[data-cap]').forEach((t) => t.classList.toggle('hl', caps.has(t.dataset.cap)));
+  document.querySelectorAll('[data-cap-chip]').forEach((t) => t.classList.toggle('hl', caps.has(t.dataset.capChip)));
+  document.querySelectorAll('[data-comp-chip]').forEach((t) => t.classList.toggle('hl', comps.has(t.dataset.compChip)));
+  document.querySelectorAll('.flow').forEach((d) => { const map = JSON.parse(d.dataset.map);
+    d.querySelectorAll('g.node').forEach((g) => g.classList.toggle('hl', refs.has(map[(g.id.match(/flowchart-(n\d+)-/) || [])[1]]))); });
+}
+const clearHl = () => document.querySelectorAll('.hl, .cur').forEach((x) => x.classList.remove('hl', 'cur'));
+function hitAt(t) {
+  if (t.closest('button:not(.dot), input, textarea, select, .factors, nav, .bar, dialog, details.tasks, a')) return null;
+  const node = t.closest('.flow g.node');
+  if (node) { const ref = JSON.parse(node.closest('.flow').dataset.map)[(node.id.match(/flowchart-(n\d+)-/) || [])[1]];
+    return ref ? { hit: fromStep(ref), label: `Step “${stepName(ref)}”` } : null; }
+  const cap = t.closest('[data-cap-chip]')?.dataset.capChip;
+  if (cap) return { hit: fromCap(cap), label: `${cap} ${capById[cap].name}` };
+  const comp = t.closest('[data-comp-chip]')?.dataset.compChip;
+  if (comp) return { hit: fromComp(comp), label: compById[comp].name };
+  const id = t.closest('tr[data-cap]')?.dataset.cap || t.closest('.rail')?.closest('[data-feat]')?.dataset.feat || t.closest('.dot')?.dataset.go;
+  return id ? { hit: fromCap(id), label: `${id} ${capById[id].name}` } : null;
+}
+// only what is on screen: skip parts inside a collapsed system or a hidden section
+const onScreen = (x) => !x.closest('.hide, details:not([open])') && x.getClientRects().length > 0;
+const litParts = () => [...document.querySelectorAll('.flow g.node.hl, tr[data-cap].hl, .feat.hl')].filter(onScreen);
+function showPin() {
+  const n = litParts(); const [refs, caps, comps] = pin.hit; const pl = (x, w) => `${x} ${w}${x === 1 ? '' : 's'}`;
+  $('#pinLabel').textContent = pin.label;
+  $('#pinCount').textContent = `${pl(refs.size, 'step')} · ${pl(caps.size, 'feature')} · ${pl(comps.size, 'component')} · ${pin.i + 1}/${n.length}`;
+  $('#pinbar').classList.remove('hide');
+}
+function jump(d) {
+  const n = litParts(); if (!n.length) return;
+  pin.i = (pin.i + d + n.length) % n.length;
+  n.forEach((x) => x.classList.remove('cur')); n[pin.i].classList.add('cur');
+  n[pin.i].scrollIntoView({ block: 'center', behavior: 'smooth' }); showPin();
+}
+function unpin() { pin = null; clearHl(); $('#pinbar').classList.add('hide'); }
+document.addEventListener('mouseover', (e) => { if (pin) return; const h2 = hitAt(e.target); if (h2) highlight(...h2.hit); else clearHl(); });
+document.addEventListener('click', (e) => {
+  if (e.target.closest('#pinbar')) return;
+  const h2 = hitAt(e.target); if (!h2) return;
+  if (pin && pin.label === h2.label) { unpin(); return; }
+  pin = { ...h2, i: -1 }; clearHl(); highlight(...h2.hit); showPin();
+  const dot = e.target.closest('.dot'); // a spine dot pins and goes straight to its card
+  if (dot) { pin.i = litParts().indexOf($(`#c-${dot.dataset.go}`)) - 1; jump(1); }
+});
+document.addEventListener('keydown', (e) => {
+  if (!pin || e.target.closest('input, textarea, select')) return;
+  if (e.key === 'Escape') unpin(); else if (e.key === 'j') jump(1); else if (e.key === 'k') jump(-1);
+});
+$('#pinNext').onclick = () => jump(1); $('#pinPrev').onclick = () => jump(-1); $('#pinClear').onclick = unpin;
+// next gap, changed or flagged card, in page order after the last one visited
+let lastC = null;
+function nextItem(onlyGaps) {
+  const gaps = CAPS.filter((c) => notBuilt(c.id)).map((c) => $(`#c-${c.id}`));
+  const rest = onlyGaps ? [] : CAPS.filter((c) => isChanged(c.id) || price(cur[c.id]).flag).map((c) => $(`#c-${c.id}`));
+  const items = [...gaps, ...rest].filter((el) => !el.closest('.hide')).sort((a, b) => (a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING ? -1 : 1));
+  if (!items.length) return;
+  const el = (lastC?.isConnected && items.find((x) => lastC.compareDocumentPosition(x) & Node.DOCUMENT_POSITION_FOLLOWING)) || items[0]; lastC = el;
+  el.scrollIntoView({ block: 'center', behavior: 'smooth' }); el.classList.remove('flash'); void el.offsetWidth; el.classList.add('flash');
+}
+$('#nextc').onclick = () => nextItem(false);
+document.addEventListener('keydown', (e) => { if (e.key === 'n' && !e.target.closest('input, textarea, select') && !pin) nextItem(false); });
+$('#preview').onclick = () => {
+  const gaps = notBuiltCount();
+  $('#sum').innerHTML = summaryHtml(); $('#feedback').value = JSON.stringify(window.__feedback()); $('#copied').textContent = '';
+  $('#sendable').classList.toggle('hide', !!gaps); $('#copy').disabled = !!gaps; $('#goGap').classList.toggle('hide', !gaps);
+  $('#dlg').showModal();
+};
+$('#goGap').onclick = () => { $('#dlg').close(); filter = 'all'; refresh(); lastC = null; nextItem(true); };
+$('#copy').onclick = async () => { try { await navigator.clipboard.writeText($('#feedback').value); $('#copied').textContent = 'Copied — paste it into the chat'; }
+  catch { $('#feedback').select(); $('#copied').textContent = 'Press Ctrl+C to copy'; } };
+let armed = false;
+$('#reset').onclick = () => { if (!armed) { armed = true; $('#reset').textContent = 'Click again to reset everything'; setTimeout(() => { armed = false; $('#reset').textContent = 'Start over'; }, 4000); return; }
+  try { localStorage.removeItem(STORE); } catch { /* nothing saved */ } location.reload(); };
+
+// ---- theme + diagrams (mockup loads mermaid from a CDN; the real page inlines the skill's bundle) ----
+const dark = () => document.documentElement.dataset.theme === 'dark' || (!document.documentElement.dataset.theme && matchMedia('(prefers-color-scheme: dark)').matches);
+const src = [...document.querySelectorAll('pre.mermaid')].map((p) => p.textContent);
+let mermaid; let drawing = false;
+// Mermaid cannot measure boxes inside a closed <details>, so every system opens
+// for the draw and the open one is restored afterwards; the toggle events that
+// causes are ignored while `drawing` is set.
+async function draw() {
+  drawing = true; const all = [...document.querySelectorAll('details.capsys')];
+  try {
+    mermaid ??= (await import('https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs')).default;
+    const t = (v) => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+    mermaid.initialize({ startOnLoad: false, theme: 'base', flowchart: { curve: 'basis', padding: 10 }, themeVariables: { fontFamily: 'system-ui,sans-serif', fontSize: '12px',
+      background: t('--paper'), primaryColor: t('--sheet'), primaryTextColor: t('--ink'), primaryBorderColor: t('--meter'), lineColor: t('--ink-dim'), edgeLabelBackground: t('--paper'), textColor: t('--ink') } });
+    all.forEach((d) => { d.open = true; });
+    const pres = [...document.querySelectorAll('#systems pre.mermaid')];
+    pres.forEach((p, i) => { p.removeAttribute('data-processed'); p.textContent = src[i]; });
+    await mermaid.run({ nodes: pres });
+    if (pin) highlight(...pin.hit); // redraw makes new boxes; re-light a pinned selection
+  } catch { /* diagrams need a connection in this mockup */ } finally {
+    all.forEach((d) => { d.open = d.dataset.sys === openSys; });
+    setTimeout(() => { drawing = false; }, 100);
+  }
+}
+$('#theme').onclick = () => { document.documentElement.dataset.theme = dark() ? 'light' : 'dark'; $('#theme').textContent = dark() ? 'Light' : 'Dark'; draw(); };
+$('#theme').textContent = dark() ? 'Light' : 'Dark';
+// a step link from the Workflow-based page (#step=<ref>) opens its system and pins it
+function pinFromHash() {
+  const ref = decodeURIComponent(location.hash.match(/^#step=(.+)$/)?.[1] ?? '');
+  if (!ref || pin?.ref === ref) return;
+  const sys = DATA.systems.find((s) => stepsOfSys(s).includes(ref)); if (!sys) return;
+  openSystem(sys.id); refresh();
+  pin = { hit: fromStep(ref), label: `Step “${stepName(ref)}”`, ref, i: -1 }; clearHl(); highlight(...pin.hit); showPin();
+  $(`details.capsys[data-sys="${sys.id}"]`).scrollIntoView({ block: 'start' });
+}
+if (FINAL) addEventListener('hashchange', pinFromHash);
+draw().then(() => { if (FINAL) setTimeout(pinFromHash, 150); });
+</script>
+</body>
+</html>
