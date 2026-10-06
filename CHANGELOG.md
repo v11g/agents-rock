@@ -48,7 +48,7 @@ as a real `git diff` where a repository supplies one and as a list of changed
 section numbers where it does not, and the question is asked once, before the
 first write. A file the skill has never written is never overwritten at all,
 and an accepted ADR is never rewritten regardless, because a changed decision
-is a new record with `supersedes`. (`solution-architect` 3.0.0)
+is a new record with `supersedes`. (`solution-architect` 3.0.1)
 
 Reasoning runs are linked and saved. Every item gets an id, evidence and
 assumptions name the claims they back, and each run is written under
@@ -66,11 +66,11 @@ the seven-tab workbook and the proposal all quote the same presented range and a
 single number; hours stay as planning detail and never reach the client. No
 estimate produces a duration, a team or delivery scenarios any more, and an
 unscored estimate says it is not priced instead of showing $0.
-(`solution-architect` 3.0.0)
+(`solution-architect` 3.0.1)
 
 The proposal takes its figures from the estimate's price block. It has nine
 sections — the Team section and the duration column are gone — and it refuses
-an estimate that is not priced. (`solution-architect` 3.0.0)
+an estimate that is not priced. (`solution-architect` 3.0.1)
 
 The score review page is designed for the job it does. Each feature is a band —
 its name, total and tier on the left, the five factor scores across the right —
@@ -149,11 +149,11 @@ switches to. (`solution-architect` 2.0.0)
 
 ### BREAKING CHANGES
 
-Estimates written before 3.0.0 no longer price. `estimation-inputs.json` drops
+Estimates written before 3.0.1 no longer price. `estimation-inputs.json` drops
 scenarios for the five context factors, and `estimation.json` carries a
 `computed.price` block and a top-level `computed.roadmap` in place of
 `computed.scenarios`. Re-run the estimate on an older lead; the proposal refuses
-an `estimation.json` without a price. (`solution-architect` 3.0.0)
+an `estimation.json` without a price. (`solution-architect` 3.0.1)
 
 An install or uninstall run without a terminal now requires an explicit scope.
 `npx @v11g/agents-rock -p lmk -a claude` errors naming `--global` and
