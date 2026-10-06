@@ -69,6 +69,9 @@ export async function openPage(fileUrl) {
   const send = sender(ws, onEvent);
   await send('Runtime.enable');
   const evaluate = evaluator(send);
-  await waitFor(() => evaluate('document.readyState === "complete"'), 'a loaded document');
+  // A fresh tab can report a complete about:blank before it navigates to the
+  // file; on a slow runner the checks then read an empty page.
+  await waitFor(() => evaluate('location.href !== "about:blank" && document.readyState === "complete"'),
+    'a loaded document');
   return { eval: evaluate, errors, send, close() { ws.close(); chrome.kill(); } };
 }
