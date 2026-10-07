@@ -25,6 +25,14 @@ PDF.
 5. Human review of proposal.md before anything is rendered for or sent to
    a client.
 
+## Mode
+
+Read `estimation.json` first. `inputs.scopeMode` is `"workflow"` → follow
+`references/workflow.md` instead of the flow below: the proposal is built
+from the BA package and the estimate as a Systems & Workflows page, you
+write only its sentences (`proposal-inputs.json`), and there is no
+proposal.md and no derive step. Anything else → the classic flow below.
+
 ## Flow
 
 1. **Prereq gate**: ARCHITECTURE.md and estimation.json both exist, or stop.

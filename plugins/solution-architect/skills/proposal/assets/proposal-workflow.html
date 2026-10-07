@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title><!-- slot:TITLE --></title>
+<style>
+<!-- slot:FONTS -->
+:root {
+  --ink: #1a1d21; --muted: #5c6470; --line: #d9dde3;
+  --accent: #0f5c5a; --bg: #ffffff; --wash: #f6f7f9;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0; background: var(--bg); color: var(--ink);
+  font: 16px/1.65 "IBM Plex Sans", system-ui, sans-serif;
+}
+nav {
+  position: fixed; top: 0; left: 0; bottom: 0; width: 230px;
+  padding: 2.5rem 1.5rem; border-right: 1px solid var(--line);
+  background: var(--wash); overflow-y: auto;
+}
+nav a {
+  display: block; color: var(--muted); text-decoration: none;
+  font-size: .85rem; padding: .3rem 0;
+}
+nav a:hover { color: var(--accent); }
+main { max-width: 52rem; margin: 0 auto; padding: 3rem 2rem 5rem; }
+@media (min-width: 980px) { main { margin-left: 270px; } }
+@media (max-width: 979px) { nav { display: none; } }
+.tools { display: flex; gap: .5rem; justify-content: flex-end; margin-bottom: 1rem; }
+.tools button {
+  font: inherit; font-size: .85rem; color: var(--ink); background: var(--wash);
+  border: 1px solid var(--line); border-radius: .3rem; padding: .35rem .8rem; cursor: pointer;
+}
+.tools button:hover { border-color: var(--accent); color: var(--accent); }
+h1 { font-size: 1.9rem; line-height: 1.25; letter-spacing: -.01em; margin: 0 0 .4rem; }
+.byline { color: var(--muted); margin: 0 0 1.6rem; }
+h2 {
+  font-size: 1.25rem; margin-top: 2.6rem; padding-top: 1.2rem;
+  border-top: 1px solid var(--line); color: var(--accent);
+}
+h2 .sysno { color: var(--muted); font-weight: 500; }
+h3 {
+  font-size: .85rem; text-transform: uppercase; letter-spacing: .07em;
+  color: var(--muted); font-weight: 600; margin: 1.6rem 0 .3rem;
+}
+p { max-width: 68ch; }
+table { border-collapse: collapse; width: 100%; margin: 1rem 0; }
+th, td { text-align: left; padding: .5rem .75rem; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font-size: .8rem; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); }
+td:first-child { font-weight: 600; width: 34%; }
+.flow-name { font-size: .85rem; font-weight: 600; color: var(--muted); margin: 1.2rem 0 .3rem; }
+.diagram-shell { margin: 0 0 1rem; padding: 1rem; background: var(--wash); border-radius: 8px; overflow-x: auto; }
+.mermaid-canvas { white-space: pre; font-size: .8rem; color: var(--muted); }
+.mermaid-canvas svg { max-width: 100%; height: auto; }
+.price { display: flex; flex-wrap: wrap; gap: 1rem; margin: .8rem 0 1rem; }
+.price > div { flex: 1 1 14rem; background: var(--wash); border: 1px solid var(--line); border-radius: .3rem; padding: .8rem 1rem; }
+.price span { display: block; font-size: .8rem; color: var(--muted); }
+.price b { display: block; font-size: 1.5rem; font-weight: 600; margin: .15rem 0; font-variant-numeric: tabular-nums; }
+@media print {
+  nav, .tools { display: none; }
+  main { margin: 0 auto; padding: 0; max-width: none; }
+  section.system { break-before: page; }
+  h2, h3, .flow-name { break-after: avoid; }
+  table, .diagram-shell, .price { break-inside: avoid; }
+  @page { size: A4; margin: 22mm 18mm; }
+}
+</style>
+</head>
+<body>
+<nav aria-label="Sections">
+<!-- slot:NAV -->
+</nav>
+<main>
+<div class="tools"><button id="pdf" type="button">Download PDF</button><button id="docx" type="button">Download DOCX</button></div>
+<!-- slot:CONTENT -->
+</main>
+<script type="application/json" id="proposal-data"><!-- slot:DATA --></script>
+<script>
+<!-- slot:MERMAID_BUNDLE -->
+</script>
+<script type="module">
+// A module, so the inlined writer's names stay out of the page's global scope.
+<!-- slot:DOCX -->
+const PROPOSAL = JSON.parse(document.getElementById('proposal-data').textContent);
+// Plain SVG text labels: a canvas refuses to export a drawing with HTML labels.
+// No error picture: a diagram that fails stays empty and shows its steps instead.
+mermaid.initialize({ startOnLoad: false, theme: 'neutral', htmlLabels: false, flowchart: { htmlLabels: false }, fontFamily: '"IBM Plex Sans", sans-serif', suppressErrorRendering: true });
+const drawn = mermaid.run({ querySelector: '.mermaid-canvas' }).catch(() => null).then(() => {
+  const flows = PROPOSAL.systems.flatMap((s) => s.flows);
+  document.querySelectorAll('.mermaid-canvas').forEach((c, i) => { if (!c.querySelector('svg')) c.textContent = flows[i].steps; });
+});
+
+async function svgPng(svg) {
+  const { width, height } = svg.getBoundingClientRect();
+  const copy = svg.cloneNode(true);
+  copy.setAttribute('width', width);
+  copy.setAttribute('height', height);
+  const img = new Image();
+  img.src = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(new XMLSerializer().serializeToString(copy))}`;
+  await img.decode();
+  const canvas = document.createElement('canvas');
+  canvas.width = Math.ceil(width * 2);
+  canvas.height = Math.ceil(height * 2);
+  const ctx = canvas.getContext('2d');
+  ctx.fillStyle = '#fff';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+  const blob = await new Promise((ok) => canvas.toBlob(ok, 'image/png'));
+  return { bytes: new Uint8Array(await blob.arrayBuffer()), width: Math.round(width), height: Math.round(height) };
+}
+
+// One entry per workflow in page order; a diagram that did not draw is null
+// and the DOCX writes its steps instead.
+async function diagramImages() {
+  await drawn;
+  const canvases = [...document.querySelectorAll('.mermaid-canvas')];
+  return Promise.all(canvases.map((c) => {
+    const svg = c.querySelector('svg');
+    return svg ? svgPng(svg).catch(() => null) : null;
+  }));
+}
+
+const docxBytes = async () => buildDocx(PROPOSAL, await diagramImages());
+window.__buildDocx = async () => {
+  const bytes = await docxBytes();
+  let s = '';
+  for (let i = 0; i < bytes.length; i += 0x8000) s += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
+  return btoa(s);
+};
+document.getElementById('pdf').onclick = () => window.print();
+document.getElementById('docx').onclick = async () => {
+  const blob = new Blob([await docxBytes()], { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = PROPOSAL.file;
+  a.click();
+  URL.revokeObjectURL(a.href);
+};
+</script>
+</body>
+</html>

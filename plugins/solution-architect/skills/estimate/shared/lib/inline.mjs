@@ -3,8 +3,16 @@
 // review page needs any of it — score-html.mjs extracts WEIGHTS, BANDS,
 // weightedScore, bandFor and tierFor so the page can re-tier an edited row —
 // so the extraction is by name, never the whole module.
+import { readFileSync } from 'node:fs';
+
 export function inlineModule(src) {
   return src.replaceAll(/^export /gm, '');
+}
+
+// A page script that builds a zip (the xlsx export, the proposal's docx) gets
+// the shared writer inlined ahead of it, so the writer exists once.
+export function withZip(src) {
+  return `${inlineModule(readFileSync(new URL('./zip.mjs', import.meta.url), 'utf8'))}\n${src}`;
 }
 
 export function stripInternal(html) {

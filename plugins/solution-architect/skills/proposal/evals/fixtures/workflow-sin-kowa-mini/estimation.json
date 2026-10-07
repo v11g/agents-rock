@@ -1,0 +1,773 @@
+{
+  "inputs": {
+    "scopeMode": "workflow",
+    "requirements": "requirements.json",
+    "project": "sin-kowa-mini",
+    "currency": "USD",
+    "deliveryMode": "agentic",
+    "depth": "STANDARD",
+    "agentContext": {
+      "agent": "claude-code",
+      "model": "claude-opus-5-5"
+    },
+    "contextLevels": {
+      "codebaseMaturity": 1,
+      "stackFamiliarity": 1,
+      "specQuality": 3,
+      "compliance": 2,
+      "clientDecisions": 3
+    },
+    "contextProvenance": {
+      "codebaseMaturity": {
+        "level": 1,
+        "anchor": "Greenfield",
+        "cite": "ARCHITECTURE.md mode: greenfield",
+        "source": "derived"
+      },
+      "stackFamiliarity": {
+        "level": 1,
+        "anchor": "Core stack, done before",
+        "cite": "not assessed — adjust in the exported workbook",
+        "source": "derived"
+      },
+      "specQuality": {
+        "level": 3,
+        "anchor": "Outline or slide deck",
+        "cite": "BA readiness 62",
+        "source": "derived"
+      },
+      "compliance": {
+        "level": 2,
+        "anchor": "Handles PII",
+        "cite": "customer names on invoices",
+        "source": "derived"
+      },
+      "clientDecisions": {
+        "level": 3,
+        "anchor": "Committee sign-off",
+        "cite": "two directors approve",
+        "source": "derived"
+      }
+    },
+    "features": [
+      {
+        "id": "FEAT-001",
+        "scoreNote": "Five stages with task views per role; the heart of the warehouse app",
+        "scoreProvenance": "proposed",
+        "scores": {
+          "tech": {
+            "n": 3,
+            "anchor": "Custom business logic, moderate algorithm complexity, multiple states",
+            "cite": "five stages, role-scoped views"
+          },
+          "size": {
+            "n": 3,
+            "anchor": "Medium feature with multiple components and backend logic",
+            "cite": "engine + screens"
+          },
+          "deps": {
+            "n": 2,
+            "anchor": "One internal dependency (e.g. auth check)",
+            "cite": "reads roles"
+          },
+          "unc": {
+            "n": 3,
+            "anchor": "Some open questions, design decisions to be made during build",
+            "cite": "24h trigger rule open"
+          },
+          "risk": {
+            "n": 3,
+            "anchor": "Moderate impact if broken, requires testing, affects multiple users",
+            "cite": "every order passes through"
+          }
+        }
+      },
+      {
+        "id": "FEAT-002",
+        "scoreNote": "Flags a can't-fulfil item in time to act",
+        "scoreProvenance": "proposed",
+        "scores": {
+          "tech": {
+            "n": 3,
+            "anchor": "Custom business logic, moderate algorithm complexity, multiple states",
+            "cite": "exception branch"
+          },
+          "size": {
+            "n": 3,
+            "anchor": "Medium feature with multiple components and backend logic",
+            "cite": "alert + screen"
+          },
+          "deps": {
+            "n": 2,
+            "anchor": "One internal dependency (e.g. auth check)",
+            "cite": "stage engine event"
+          },
+          "unc": {
+            "n": 3,
+            "anchor": "Some open questions, design decisions to be made during build",
+            "cite": "who is alerted is open"
+          },
+          "risk": {
+            "n": 3,
+            "anchor": "Moderate impact if broken, requires testing, affects multiple users",
+            "cite": "missed alert delays invoicing"
+          }
+        }
+      },
+      {
+        "id": "FEAT-003",
+        "scoreNote": "Orders and quotes from email, phone and fax",
+        "scoreProvenance": "proposed",
+        "scores": {
+          "tech": {
+            "n": 3,
+            "anchor": "Custom business logic, moderate algorithm complexity, multiple states",
+            "cite": "catalog + cost-plus pricing"
+          },
+          "size": {
+            "n": 3,
+            "anchor": "Medium feature with multiple components and backend logic",
+            "cite": "intake + quote screens"
+          },
+          "deps": {
+            "n": 2,
+            "anchor": "One internal dependency (e.g. auth check)",
+            "cite": "item master"
+          },
+          "unc": {
+            "n": 3,
+            "anchor": "Some open questions, design decisions to be made during build",
+            "cite": "markup rule unconfirmed"
+          },
+          "risk": {
+            "n": 3,
+            "anchor": "Moderate impact if broken, requires testing, affects multiple users",
+            "cite": "wrong quote loses margin"
+          }
+        }
+      },
+      {
+        "id": "FEAT-004",
+        "scoreNote": "Drafts an order from an email for staff to confirm",
+        "scoreProvenance": "proposed",
+        "scores": {
+          "tech": {
+            "n": 3,
+            "anchor": "Custom business logic, moderate algorithm complexity, multiple states",
+            "cite": "LLM extraction + review"
+          },
+          "size": {
+            "n": 3,
+            "anchor": "Medium feature with multiple components and backend logic",
+            "cite": "job + review screen"
+          },
+          "deps": {
+            "n": 2,
+            "anchor": "One internal dependency (e.g. auth check)",
+            "cite": "mailbox"
+          },
+          "unc": {
+            "n": 3,
+            "anchor": "Some open questions, design decisions to be made during build",
+            "cite": "no sample emails yet"
+          },
+          "risk": {
+            "n": 3,
+            "anchor": "Moderate impact if broken, requires testing, affects multiple users",
+            "cite": "staff confirm every draft"
+          }
+        }
+      },
+      {
+        "id": "FEAT-005",
+        "scoreNote": "Invoice from packed quantities plus proof of delivery",
+        "scoreProvenance": "proposed",
+        "scores": {
+          "tech": {
+            "n": 3,
+            "anchor": "Custom business logic, moderate algorithm complexity, multiple states",
+            "cite": "three-way match"
+          },
+          "size": {
+            "n": 3,
+            "anchor": "Medium feature with multiple components and backend logic",
+            "cite": "match + documents + screens"
+          },
+          "deps": {
+            "n": 2,
+            "anchor": "One internal dependency (e.g. auth check)",
+            "cite": "reads packed quantities"
+          },
+          "unc": {
+            "n": 3,
+            "anchor": "Some open questions, design decisions to be made during build",
+            "cite": "credit note flow open"
+          },
+          "risk": {
+            "n": 3,
+            "anchor": "Moderate impact if broken, requires testing, affects multiple users",
+            "cite": "money"
+          }
+        }
+      }
+    ],
+    "components": [
+      {
+        "id": "api",
+        "name": "Core API"
+      },
+      {
+        "id": "api.stage",
+        "name": "Stage Engine",
+        "parent": "api",
+        "milestone": "M1 - Walking skeleton",
+        "builds": [
+          {
+            "feature": "FEAT-001",
+            "why": "moves Orders through the five stages"
+          },
+          {
+            "feature": "FEAT-002",
+            "why": "raises the Short-Pack alert on a can't-fulfil line"
+          }
+        ],
+        "tasks": [
+          {
+            "id": "stage-engine",
+            "name": "Stage transitions with audit",
+            "shape": "small_implementation",
+            "scope": {
+              "affectedFiles": 8,
+              "complexity": "medium"
+            },
+            "seedMinutes": {
+              "o": 90,
+              "m": 180,
+              "p": 360
+            },
+            "assumptions": [],
+            "provenance": "proposed"
+          },
+          {
+            "id": "stage-tests",
+            "name": "Transition tests",
+            "shape": "test_creation",
+            "scope": {
+              "affectedFiles": 3,
+              "complexity": "low"
+            },
+            "seedMinutes": {
+              "o": 30,
+              "m": 60,
+              "p": 120
+            },
+            "assumptions": [],
+            "provenance": "proposed"
+          }
+        ]
+      },
+      {
+        "id": "api.orders",
+        "name": "Orders and Quoting",
+        "parent": "api",
+        "milestone": "M1 - Walking skeleton",
+        "builds": [
+          {
+            "feature": "FEAT-003",
+            "why": "owns Order, Quotation and the cost-plus pricing rule"
+          }
+        ],
+        "tasks": [
+          {
+            "id": "orders-impl",
+            "name": "Order and quotation aggregate",
+            "shape": "small_implementation",
+            "scope": {
+              "affectedFiles": 10,
+              "complexity": "medium"
+            },
+            "seedMinutes": {
+              "o": 120,
+              "m": 240,
+              "p": 480
+            },
+            "assumptions": [],
+            "provenance": "proposed"
+          }
+        ]
+      },
+      {
+        "id": "api.billing",
+        "name": "Billing",
+        "parent": "api",
+        "milestone": "M2 - Money",
+        "builds": [
+          {
+            "feature": "FEAT-005",
+            "why": "invoice qty = accepted packed qty; issued invoices never edited"
+          }
+        ],
+        "tasks": [
+          {
+            "id": "billing-match",
+            "name": "Three-way match",
+            "shape": "small_implementation",
+            "scope": {
+              "affectedFiles": 6,
+              "complexity": "medium"
+            },
+            "seedMinutes": {
+              "o": 60,
+              "m": 120,
+              "p": 240
+            },
+            "assumptions": [],
+            "provenance": "proposed"
+          },
+          {
+            "id": "billing-docs",
+            "name": "Printable invoice",
+            "shape": "small_implementation",
+            "scope": {
+              "affectedFiles": 4,
+              "complexity": "low"
+            },
+            "seedMinutes": {
+              "o": 40,
+              "m": 80,
+              "p": 160
+            },
+            "assumptions": [],
+            "provenance": "proposed"
+          }
+        ]
+      },
+      {
+        "id": "office",
+        "name": "Office Web App",
+        "milestone": "M1 - Walking skeleton",
+        "builds": [
+          {
+            "feature": "FEAT-001",
+            "why": "stage board and task views"
+          },
+          {
+            "feature": "FEAT-003",
+            "why": "order intake and quote screens"
+          },
+          {
+            "feature": "FEAT-005",
+            "why": "invoice list, detail and release screens"
+          }
+        ],
+        "tasks": [
+          {
+            "id": "office-screens",
+            "name": "Orders, quotes and invoicing screens",
+            "shape": "ui_implementation",
+            "scope": {
+              "affectedFiles": 14,
+              "complexity": "medium"
+            },
+            "seedMinutes": {
+              "o": 180,
+              "m": 360,
+              "p": 720
+            },
+            "assumptions": [],
+            "provenance": "proposed"
+          }
+        ]
+      },
+      {
+        "id": "worker",
+        "name": "Background Worker"
+      },
+      {
+        "id": "worker.notify",
+        "name": "Notifier",
+        "parent": "worker",
+        "milestone": "M2 - Money",
+        "builds": [
+          {
+            "feature": "FEAT-002",
+            "why": "delivers the Short-Pack alert to ops and invoicing staff"
+          }
+        ],
+        "tasks": [
+          {
+            "id": "notify-impl",
+            "name": "Alert delivery",
+            "shape": "api_integration",
+            "scope": {
+              "affectedFiles": 3,
+              "complexity": "low"
+            },
+            "seedMinutes": {
+              "o": 30,
+              "m": 60,
+              "p": 120
+            },
+            "assumptions": [],
+            "provenance": "proposed"
+          }
+        ]
+      },
+      {
+        "id": "worker.drafter",
+        "name": "Order Drafter",
+        "parent": "worker",
+        "milestone": "M3 - Operations",
+        "builds": [
+          {
+            "feature": "FEAT-004",
+            "why": "turns message text into an Order Draft"
+          }
+        ],
+        "tasks": [
+          {
+            "id": "drafter-impl",
+            "name": "Email to draft extraction",
+            "shape": "api_integration",
+            "scope": {
+              "affectedFiles": 5,
+              "complexity": "medium"
+            },
+            "seedMinutes": {
+              "o": 90,
+              "m": 180,
+              "p": 360
+            },
+            "assumptions": [],
+            "provenance": "proposed"
+          }
+        ]
+      },
+      {
+        "id": "ops",
+        "name": "Operations Database",
+        "notEstimated": "one schema per module; no store-specific work in this scope"
+      }
+    ],
+    "risks": [],
+    "assumptions": [
+      {
+        "text": "InvoiceNow is a data model only, with no live connection",
+        "impactIfWrong": "a live Access Point link is a separate feature",
+        "source": "ASM-005"
+      },
+      {
+        "text": "Label printers accept ZPL over the LAN",
+        "impactIfWrong": "printer bridge work added",
+        "source": "new"
+      }
+    ],
+    "exclusions": [
+      "Hosting and third-party subscription fees"
+    ],
+    "measurementsPath": "measurements.jsonl"
+  },
+  "computed": {
+    "features": {
+      "FEAT-001": {
+        "name": "Order pipeline & stage engine",
+        "system": "Warehouse operations",
+        "provenance": "stated",
+        "milestone": "M1 - Walking skeleton",
+        "builtBy": [
+          "api.stage",
+          "office"
+        ],
+        "scoreTotal": 14,
+        "tier": "M",
+        "point": 2541.67,
+        "spread": 0.35,
+        "priceLow": 1652.08,
+        "priceHigh": 3431.25,
+        "flag": ""
+      },
+      "FEAT-002": {
+        "name": "Short-pack alert",
+        "system": "Warehouse operations",
+        "provenance": "stated",
+        "milestone": "M2 - Money",
+        "builtBy": [
+          "api.stage",
+          "worker.notify"
+        ],
+        "scoreTotal": 14,
+        "tier": "M",
+        "point": 2541.67,
+        "spread": 0.35,
+        "priceLow": 1652.08,
+        "priceHigh": 3431.25,
+        "flag": ""
+      },
+      "FEAT-003": {
+        "name": "Order intake & quotation",
+        "system": "Orders & invoicing",
+        "provenance": "stated",
+        "milestone": "M1 - Walking skeleton",
+        "builtBy": [
+          "api.orders",
+          "office"
+        ],
+        "scoreTotal": 14,
+        "tier": "M",
+        "point": 2541.67,
+        "spread": 0.35,
+        "priceLow": 1652.08,
+        "priceHigh": 3431.25,
+        "flag": ""
+      },
+      "FEAT-004": {
+        "name": "Invoice from packed quantities",
+        "system": "Orders & invoicing",
+        "provenance": "proposed",
+        "milestone": "M3 - Operations",
+        "builtBy": [
+          "worker.drafter"
+        ],
+        "scoreTotal": 14,
+        "tier": "M",
+        "point": 2541.67,
+        "spread": 0.35,
+        "priceLow": 1652.08,
+        "priceHigh": 3431.25,
+        "flag": ""
+      },
+      "FEAT-005": {
+        "name": "One login, role-based screens",
+        "system": "Orders & invoicing",
+        "provenance": "stated",
+        "milestone": "M2 - Money",
+        "builtBy": [
+          "api.billing",
+          "office"
+        ],
+        "scoreTotal": 14,
+        "tier": "M",
+        "point": 2541.67,
+        "spread": 0.35,
+        "priceLow": 1652.08,
+        "priceHigh": 3431.25,
+        "flag": ""
+      }
+    },
+    "components": {
+      "api": {
+        "name": "Core API",
+        "container": null,
+        "milestone": null,
+        "builds": [],
+        "hours": 0,
+        "low": 0,
+        "high": 0,
+        "tasks": {}
+      },
+      "api.billing": {
+        "name": "Billing",
+        "container": "api",
+        "milestone": "M2 - Money",
+        "builds": [
+          "FEAT-005"
+        ],
+        "hours": 3.61,
+        "low": 1.67,
+        "high": 6.67,
+        "tasks": {
+          "billing-docs": {
+            "e": 1.44,
+            "low": 0.67,
+            "high": 2.67,
+            "sigma": 0.33,
+            "confidence": "UNCALIBRATED",
+            "calibrated": false,
+            "matchLevel": 0
+          },
+          "billing-match": {
+            "e": 2.17,
+            "low": 1,
+            "high": 4,
+            "sigma": 0.5,
+            "confidence": "UNCALIBRATED",
+            "calibrated": false,
+            "matchLevel": 0
+          }
+        }
+      },
+      "api.orders": {
+        "name": "Orders and Quoting",
+        "container": "api",
+        "milestone": "M1 - Walking skeleton",
+        "builds": [
+          "FEAT-003"
+        ],
+        "hours": 4.33,
+        "low": 2,
+        "high": 8,
+        "tasks": {
+          "orders-impl": {
+            "e": 4.33,
+            "low": 2,
+            "high": 8,
+            "sigma": 1,
+            "confidence": "UNCALIBRATED",
+            "calibrated": false,
+            "matchLevel": 0
+          }
+        }
+      },
+      "api.stage": {
+        "name": "Stage Engine",
+        "container": "api",
+        "milestone": "M1 - Walking skeleton",
+        "builds": [
+          "FEAT-001",
+          "FEAT-002"
+        ],
+        "hours": 4.33,
+        "low": 2,
+        "high": 8,
+        "tasks": {
+          "stage-engine": {
+            "e": 3.25,
+            "low": 1.5,
+            "high": 6,
+            "sigma": 0.75,
+            "confidence": "UNCALIBRATED",
+            "calibrated": false,
+            "matchLevel": 0
+          },
+          "stage-tests": {
+            "e": 1.08,
+            "low": 0.5,
+            "high": 2,
+            "sigma": 0.25,
+            "confidence": "UNCALIBRATED",
+            "calibrated": false,
+            "matchLevel": 0
+          }
+        }
+      },
+      "office": {
+        "name": "Office Web App",
+        "container": null,
+        "milestone": "M1 - Walking skeleton",
+        "builds": [
+          "FEAT-001",
+          "FEAT-003",
+          "FEAT-005"
+        ],
+        "hours": 6.5,
+        "low": 3,
+        "high": 12,
+        "tasks": {
+          "office-screens": {
+            "e": 6.5,
+            "low": 3,
+            "high": 12,
+            "sigma": 1.5,
+            "confidence": "UNCALIBRATED",
+            "calibrated": false,
+            "matchLevel": 0
+          }
+        }
+      },
+      "ops": {
+        "name": "Operations Database",
+        "container": null,
+        "milestone": null,
+        "builds": [],
+        "hours": 0,
+        "low": 0,
+        "high": 0,
+        "tasks": {}
+      },
+      "worker": {
+        "name": "Background Worker",
+        "container": null,
+        "milestone": null,
+        "builds": [],
+        "hours": 0,
+        "low": 0,
+        "high": 0,
+        "tasks": {}
+      },
+      "worker.drafter": {
+        "name": "Order Drafter",
+        "container": "worker",
+        "milestone": "M3 - Operations",
+        "builds": [
+          "FEAT-004"
+        ],
+        "hours": 3.25,
+        "low": 1.5,
+        "high": 6,
+        "tasks": {
+          "drafter-impl": {
+            "e": 3.25,
+            "low": 1.5,
+            "high": 6,
+            "sigma": 0.75,
+            "confidence": "UNCALIBRATED",
+            "calibrated": false,
+            "matchLevel": 0
+          }
+        }
+      },
+      "worker.notify": {
+        "name": "Notifier",
+        "container": "worker",
+        "milestone": "M2 - Money",
+        "builds": [
+          "FEAT-002"
+        ],
+        "hours": 1.08,
+        "low": 0.5,
+        "high": 2,
+        "tasks": {
+          "notify-impl": {
+            "e": 1.08,
+            "low": 0.5,
+            "high": 2,
+            "sigma": 0.25,
+            "confidence": "UNCALIBRATED",
+            "calibrated": false,
+            "matchLevel": 0
+          }
+        }
+      }
+    },
+    "price": {
+      "featurePoints": 12708.33,
+      "contextMultiplier": 1.6,
+      "adjustedBase": 20333.33,
+      "overheads": {
+        "lines": {
+          "foundation": 0.12,
+          "discovery": 0.06,
+          "ux": 0.08,
+          "qa": 0.08,
+          "devops": 0.05,
+          "docs": 0.03,
+          "pm": 0.1,
+          "integration": 0.1
+        },
+        "totalPct": 0.62,
+        "amount": 12606.67
+      },
+      "contingencyRate": 0.17,
+      "contingencyAmount": 5599.8,
+      "p50": 38539.8,
+      "sigma": 6032.43,
+      "p20": 33472.56,
+      "p80": 43607.04,
+      "p95": 48463.15,
+      "presentLow": 39000,
+      "presentHigh": 48500,
+      "singleNumber": 44000,
+      "impliedAccuracy": 0.16
+    }
+  }
+}

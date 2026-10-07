@@ -22,6 +22,17 @@ way the client will.
 
 Return findings as a list; no rewrites.
 
+## Workflow mode
+
+Run after `render.mjs` first writes `dist/proposal.html`, before human
+review. Dispatch one general-purpose subagent with **only**:
+`dist/proposal.html`, estimation.json, and the client tech level. Same
+charter, read against the page text, except item 2, which becomes: does
+the Scope section say what we build, and the Cost section what it costs?
+Findings are fixed in `proposal-inputs.json` (the only text you wrote);
+a finding about a system, feature, assumption or exclusion goes back to
+the BA package or the estimate, never into the proposal.
+
 ## Loop bound
 
 Fix findings → re-run `validate.mjs` → one findings-only re-review, then

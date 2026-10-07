@@ -37,3 +37,10 @@ test('the unpriced fixture really is unpriced, so the proposal refuses it', () =
   assert.deepEqual(computeEstimation(stored.inputs).computed, stored.computed);
   assert.throws(() => deriveFigures(stored), /not priced/);
 });
+
+test('the workflow fixture lead validates as the proposal will load it', async () => {
+  const { loadLead } = await import('../lib/workflow-lead.mjs');
+  const lead = loadLead(new URL('fixtures/workflow-sin-kowa-mini/estimation.json', evalsDir).pathname);
+  assert.deepEqual(lead.findings, []);
+  assert.equal(lead.est.inputs.scopeMode, 'workflow');
+});

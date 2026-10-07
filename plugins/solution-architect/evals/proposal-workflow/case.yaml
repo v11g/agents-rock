@@ -1,0 +1,6 @@
+# Run with --scaffold --allow-tools Write: Write is a gated tool, and the
+# agent must write proposal-inputs.json for inputs-written to pass.
+schema_version: "1.1"
+name: proposal-workflow
+context:
+  scaffold_script: fixture.sh

@@ -8,6 +8,7 @@ import { loadPair } from './lib/requirements.mjs';
 import { pairFindings } from './lib/pair-findings.mjs';
 import { workflowHtml, componentsHtml } from './lib/page-html.mjs';
 import { loadGuide } from '../../shared/lib/scoring.mjs';
+import { withZip } from '../../shared/lib/inline.mjs';
 
 const asset = (rel) => readFileSync(new URL(rel, import.meta.url), 'utf8');
 
@@ -30,7 +31,7 @@ if (findings.length) { console.error(findings.join('\n')); process.exit(1); }
 const est = JSON.parse(readFileSync(args.json, 'utf8'));
 const assets = {
   template: asset('../assets/estimate-components.html'), guide: loadGuide(),
-  mathSrc: asset('../../shared/lib/pricing.mjs'), xlsxSrc: asset('../../shared/assets/xlsx-export.js'),
+  mathSrc: asset('../../shared/lib/pricing.mjs'), xlsxSrc: withZip(asset('../../shared/assets/xlsx-export.js')),
   xlsxTemplate: readFileSync(new URL('../assets/estimator-system.xlsx', import.meta.url)).toString('base64'),
 };
 mkdirSync(args.out, { recursive: true });

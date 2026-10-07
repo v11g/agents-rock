@@ -36,3 +36,16 @@ the proposal stays valid. Your firm profile is asked once and cached
 
 interview → derive.mjs → proposal.md → validate.mjs → fresh-eyes review →
 human review → render.mjs → serve.mjs
+
+## Workflow mode
+
+When the estimate is in workflow mode (`scopeMode: "workflow"`), the skill
+builds a Systems & Workflows page instead: scope, each system with its
+workflow diagrams and features, milestones, assumptions & exclusions and the
+price, all from the BA package and the estimate. The agent writes only the
+sentences (`proposal-inputs.json`); there is no proposal.md. The page has
+Download PDF and Download DOCX buttons. Prices are USD. See
+`references/workflow.md`.
+
+interview → proposal-inputs.json → validate.mjs → render.mjs → fresh-eyes
+review → serve.mjs → human review on the page

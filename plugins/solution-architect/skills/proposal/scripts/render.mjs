@@ -5,6 +5,8 @@ import { buildFontFaces } from '../../analyze-requirements/scripts/lib/fonts.mjs
 import { renderMarkdown, escapeHtml } from '../../analyze-requirements/scripts/lib/md-render.mjs';
 import { parseFrontmatter } from '../../analyze-requirements/scripts/lib/frontmatter.mjs';
 import { checkProposal } from './lib/checks.mjs';
+import { isWorkflow } from './lib/workflow-lead.mjs';
+import { renderWorkflow } from './lib/workflow-cli.mjs';
 
 function parseArgs(argv) {
   const args = {};
@@ -18,8 +20,10 @@ const archFontsDir = new URL('../../analyze-requirements/assets/fonts/', import.
 const templatePath = new URL('../assets/proposal-template.html', import.meta.url).pathname;
 
 const args = parseArgs(process.argv.slice(2));
-const md = readFileSync(args.md, 'utf8');
 const estimation = JSON.parse(readFileSync(args.estimation, 'utf8'));
+// A workflow-mode estimate gets the Systems & Workflows page (spec 4); no proposal.md.
+if (isWorkflow(estimation)) process.exit(renderWorkflow(args));
+const md = readFileSync(args.md, 'utf8');
 
 // Validation blocks rendering — same hard rule as the estimate skill,
 // enforced in code with no skip flag.

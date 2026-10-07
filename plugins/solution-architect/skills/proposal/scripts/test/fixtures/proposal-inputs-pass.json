@@ -1,0 +1,17 @@
+{
+  "client": "Sin Kowa",
+  "title": "Sin Kowa Digital Transformation",
+  "firm": "Code Engine Studio",
+  "date": "2026-10-07",
+  "techLevel": "non-tech",
+  "jargonAllow": [],
+  "scopeIntro": "This proposal covers two systems for Phase 1: warehouse operations, and orders and invoicing. Each is described below by its workflows and the features that serve them.",
+  "systems": {
+    "SYS-002": "It closes the paper delivery-order gap that delays cash collection by weeks."
+  },
+  "milestones": {
+    "M1 - Walking skeleton": { "name": "Digitise core records", "demonstrates": "Orders move through each stage on screen instead of on paper." },
+    "M2 - Money": { "name": "Connect the workflow", "demonstrates": "Short-packs are flagged as they happen, and each person sees only their own work." },
+    "M3 - Operations": { "name": "Invoice from the floor", "demonstrates": "Invoices are raised from what was actually packed." }
+  }
+}

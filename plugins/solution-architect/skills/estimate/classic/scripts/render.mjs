@@ -4,7 +4,7 @@ import { embed } from '../../../analyze-requirements/scripts/lib/embed.mjs';
 import { buildFontFaces } from '../../../analyze-requirements/scripts/lib/fonts.mjs';
 import { escapeHtml } from '../../../analyze-requirements/scripts/lib/md-inline.mjs';
 import { checkDeliverables } from './lib/checks.mjs';
-import { stripInternal } from '../../shared/lib/inline.mjs';
+import { stripInternal, withZip } from '../../shared/lib/inline.mjs';
 import { redactForClient } from './lib/redact.mjs';
 import { loadGuide, guideTableHtml } from '../../shared/lib/scoring.mjs';
 
@@ -65,7 +65,7 @@ const html = embed({
     // page's one extra slot is the rubric, which lives in
     // references/scoring-guide.md: the page shows the same sentences the
     // interviewer read, so a score means one thing.
-    ...(isAgentic ? {} : { GUIDE: guideTableHtml(loadGuide()), XLSX: readFileSync(xlsxExportPath, 'utf8') }),
+    ...(isAgentic ? {} : { GUIDE: guideTableHtml(loadGuide()), XLSX: withZip(readFileSync(xlsxExportPath, 'utf8')) }),
   },
 });
 
