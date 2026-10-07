@@ -1,0 +1,5 @@
+{
+  "verdict": "REJECT",
+  "why": "The warehouse's §6 Responsibility already lists holding the prediction log with day partitioning and 2-year retention, so F1 only uses that existing behaviour; the proposal names no new rule, field or constraint the feature would add to the component.",
+  "quoted": "Holds ... the prediction log ...; owns partitioning by day and the 2-year retention policy."
+}

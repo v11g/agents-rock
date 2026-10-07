@@ -1,0 +1,41 @@
+{
+  "perFinding": [
+    {
+      "feature": "F1",
+      "action": "add",
+      "component": "Training Data Warehouse",
+      "why": "The prediction log table the Prediction Logger streams every checkout decision into is a new store table that needs the day partitioning and 2-year retention rule the warehouse owns (Q5).",
+      "grade": "badAdd"
+    },
+    {
+      "feature": "F3",
+      "action": "add",
+      "component": "Training Data Warehouse",
+      "why": "The labels table the Label Joiner writes nightly is a new store table that needs the day partitioning and 2-year retention rule the warehouse owns (Q5).",
+      "grade": "badAdd"
+    },
+    {
+      "feature": "F3",
+      "action": "add",
+      "component": "Model Health UI",
+      "why": "Adds the realized precision/recall per model version view that shows ML engineers the accuracy the Label Joiner computes from chargeback outcomes; no other feature builds it.",
+      "grade": "goodAdd"
+    }
+  ],
+  "totals": {
+    "goodAdd": 1,
+    "badAdd": 2,
+    "goodDrop": 0,
+    "badDrop": 0,
+    "stillMissing": 1
+  },
+  "stillMissingDetail": {
+    "F4": ["Model Health UI"]
+  },
+  "keyDisputes": [],
+  "patterns": [
+    "Reviewer repeats the X-set mistake the key already rejects: it links Training Data Warehouse to every feature that writes a table (F1 prediction log, F3 labels) by reciting the warehouse's own 'partitioning and 2-year retention' responsibility. ARCHITECTURE.md §6 already lists the prediction log and labels as tables the warehouse holds, so neither feature adds store-specific work; the tables belong to Prediction Logger and Label Joiner.",
+    "Reviewer caught one of the two real gaps in set A (Model Health UI in F3, with the exact key reasoning) but missed the symmetric gap in F4, where the drift-chart view is likewise surfaced by no feature. It declared F4 clean despite the F3 finding's own argument applying there.",
+    "No drops proposed; set A had nothing to drop, so the reviewer's zero-drop record is correct rather than conservative."
+  ]
+}

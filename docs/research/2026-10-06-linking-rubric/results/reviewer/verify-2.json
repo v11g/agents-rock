@@ -1,0 +1,5 @@
+{
+  "verdict": "REJECT",
+  "why": "The §6 Responsibility already lists the precision/recall view the proposer says F3 needs, and F3 only asks that accuracy be measured (the Label Joiner computes it), not shown in a UI; no new rule, field or view inside Model Health UI is required.",
+  "quoted": "realized precision/recall per model version"
+}

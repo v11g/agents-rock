@@ -1,0 +1,108 @@
+{
+  "key": {
+    "F1": ["Chat UI", "Conversation Service", "Orchestrator", "Retriever", "Prompt Registry", "Vector Index"],
+    "F2": ["Chat UI", "Orchestrator", "Tool Gateway", "Ticket Tool Adapter", "Prompt Registry"],
+    "F3": ["Source Connector", "Document Parser & Chunker", "Embedding Indexer", "Vector Index", "Document Blob Store"],
+    "F4": ["Feedback Widget", "Conversation Service", "Eval Dashboard", "Eval Runner"],
+    "F5": ["Source Connector", "Embedding Indexer", "Vector Index", "Retriever"],
+    "F6": ["Eval Runner"]
+  },
+  "keyReasons": {
+    "F1": {
+      "Chat UI": "Renders the streamed answer and the inline cited passages.",
+      "Conversation Service": "Creates the session and stores the Q/A turn the answer belongs to.",
+      "Orchestrator": "Runs the turn loop and calls Claude with retrieved context.",
+      "Retriever": "Hybrid search returning top-k chunks as citable documents.",
+      "Prompt Registry": "Versioned system prompt that demands citation-backed answers.",
+      "Vector Index": "HNSW index on chunk vectors is store-specific work that only serving needs (added after reading the sets, see keyChanges)."
+    },
+    "F2": {
+      "Chat UI": "Confirmation step before the side-effecting tool runs.",
+      "Orchestrator": "Executes the returned create_it_ticket call through the Tool Gateway.",
+      "Tool Gateway": "Schema, input validation, allow-list and confirmation requirement for create_it_ticket.",
+      "Ticket Tool Adapter": "Maps the call to a ServiceNow incident and returns the number.",
+      "Prompt Registry": "Tool list is versioned here; the new tool must be added ahead of the cache breakpoint."
+    },
+    "F3": {
+      "Source Connector": "Scheduled pull of added/changed/deleted files, one ingest message per file.",
+      "Document Parser & Chunker": "Parses and chunks each new or changed file.",
+      "Embedding Indexer": "Upserts chunks and deletes chunks of removed files.",
+      "Vector Index": "Tombstone handling for deleted files is store-specific.",
+      "Document Blob Store": "New bucket plus 30-day lifecycle rule on parsed intermediates is store-specific."
+    },
+    "F4": {
+      "Feedback Widget": "Captures the thumbs-down and reason, posts to the API.",
+      "Conversation Service": "Stores feedback against the message and exposes flagged conversations to reviewers, a new read beyond owner-only.",
+      "Eval Dashboard": "Review queue UI with the promote action.",
+      "Eval Runner": "Owns the golden question set a promoted item is added to."
+    },
+    "F5": {
+      "Source Connector": "Pulls each file's ACLs with the file.",
+      "Embedding Indexer": "Writes ACLs onto the chunks it upserts.",
+      "Vector Index": "ACL array column plus GIN index is store-specific.",
+      "Retriever": "Filters results by the caller's ACLs before reranking."
+    },
+    "F6": {
+      "Eval Runner": "Weekly schedule, Slack report and threshold alert all sit on the runner that already scores and alerts."
+    }
+  },
+  "keyChanges": [
+    "F1: added Vector Index. Both sets linked the HNSW index to F1; on reflection the HNSW index exists for serving-side search speed, not for ingestion, so it is store-specific work that F1 owns. F3 keeps its own Vector Index link for tombstone handling."
+  ],
+  "X": {
+    "F1": {
+      "missing": [],
+      "wrong": [
+        "Guardrail Filter — injection screening and grounding check are cross-cutting quality controls the feature passes through, not work the feature requires or changes.",
+        "Document Parser & Chunker — page-referenced chunking is ingestion work; X already links it under F3, so this double-counts.",
+        "Eval Runner — golden questions for the feature are eval coverage, not a component that must be built for the client feature to work."
+      ]
+    },
+    "F2": {
+      "missing": [],
+      "wrong": [
+        "Guardrail Filter — input screening already runs on every turn; F2 does not change it.",
+        "Eval Runner — same eval-coverage reasoning as F1; not a build dependency of the ticket feature."
+      ]
+    },
+    "F3": {
+      "missing": [
+        "Document Blob Store — new bucket for raw files and parsed text with the 30-day lifecycle rule is store-specific work the sync needs."
+      ],
+      "wrong": []
+    },
+    "F4": { "missing": [], "wrong": [] },
+    "F5": { "missing": [], "wrong": [] },
+    "F6": { "missing": [], "wrong": [] }
+  },
+  "Y": {
+    "F1": { "missing": [], "wrong": [] },
+    "F2": { "missing": [], "wrong": [] },
+    "F3": {
+      "missing": [],
+      "wrong": [
+        "Source Manager — F3 is the unattended sync ('without anyone pressing a button'); connecting a library and showing last-sync status is admin setup that is not part of this feature. Borderline: no listed feature covers library connection, so this is defensible, but it does not belong under F3."
+      ]
+    },
+    "F4": { "missing": [], "wrong": [] },
+    "F5": {
+      "missing": [],
+      "wrong": [
+        "Guardrail Filter — the grounding check verifies answer support, not document permissions; the why stretches §6 Responsibility to make it fit an ACL feature."
+      ]
+    },
+    "F6": { "missing": [], "wrong": [] }
+  },
+  "totals": {
+    "X": { "missing": 1, "wrong": 5 },
+    "Y": { "missing": 0, "wrong": 2 }
+  },
+  "patterns": [
+    "X links Eval Runner to user-facing features (F1, F2) as 'golden questions cover this' — eval coverage is treated as a build dependency when it is not.",
+    "X links Guardrail Filter to features that merely pass through it (F1, F2); Y does the same once on F5 with a stretched why about ACL-filtered grounding.",
+    "X pulls ingestion-side components (Document Parser & Chunker) under the serving feature F1, double-counting work it already linked in F3.",
+    "X misses store-specific Blob Store work (new bucket + lifecycle rule) in F3 while correctly linking Vector Index tombstones — inconsistent application of the store-link convention.",
+    "Y links an admin UI (Source Manager) to an unattended-sync feature that explicitly excludes manual triggering; borderline since no listed feature covers library connection.",
+    "Both sets correctly put the HNSW index under F1 and the ACL column/GIN index under F5, which moved the judge's key on F1."
+  ]
+}

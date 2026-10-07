@@ -1,0 +1,32 @@
+{
+  "perFinding": [
+    {
+      "feature": "F1",
+      "action": "drop",
+      "component": "Routing Rules",
+      "why": "The why only says telemetry is routed to the ingestion stream; F1 adds no new route, destination or error action, so the readings pass through unchanged (Q8 names routing as used-not-changed).",
+      "grade": "goodDrop"
+    },
+    {
+      "feature": "F1",
+      "action": "drop",
+      "component": "Telemetry Normalizer",
+      "why": "The why only says readings are validated, deduped and ordered; F1 adds no schema version, dedupe or ordering rule, so the normalizer is used, not changed (Q8 names normalizers explicitly).",
+      "grade": "goodDrop"
+    }
+  ],
+  "totals": { "goodAdd": 0, "badAdd": 0, "goodDrop": 2, "badDrop": 0, "stillMissing": 0 },
+  "keyDisputes": [],
+  "uncaughtOverLinks": [
+    { "feature": "F1", "component": "Sensor Sampler" },
+    { "feature": "F2", "component": "Console API" },
+    { "feature": "F2", "component": "Console Web App" },
+    { "feature": "F6", "component": "Time-series Store" }
+  ],
+  "patterns": [
+    "Every finding is correct (2/2 goodDrop, zero bad findings), but the reviewer caught only 2 of the linker's 6 over-links; recall on over-linking is 33%.",
+    "Both catches are components the Q8 heuristic names by type (routing, normalizer). The four misses are used-not-changed in other guises: upstream producer (F1 Sensor Sampler), display-only of data another component already wrote (F2 Console API, Console Web App), and erasure that existing 90-day retention already provides (F6 Time-series Store).",
+    "F2 and F6 were declared clean despite carrying over-links, so the reviewer's 'clean' list cannot be trusted as a no-change signal.",
+    "The linker set had no missing components, so there was nothing to add; the reviewer correctly proposed no adds."
+  ]
+}

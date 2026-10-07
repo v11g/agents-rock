@@ -1,0 +1,24 @@
+{
+  "perFinding": [
+    {
+      "feature": "F6",
+      "action": "add",
+      "component": "Spec Gate & SDK Generator",
+      "why": "Version pinning introduces the CI rule that a breaking OpenAPI diff fails the build unless a new version date is declared, and makes each generated SDK pin to a version date so a key pinned to an old version has a matching SDK.",
+      "grade": "badAdd"
+    }
+  ],
+  "totals": {
+    "goodAdd": 0,
+    "badAdd": 1,
+    "goodDrop": 0,
+    "badDrop": 0,
+    "stillMissing": 0
+  },
+  "keyDisputes": [],
+  "patterns": [
+    "The linker set already matched the key exactly on all six features, so the only possible wins were zero findings or correct no-ops; the reviewer flagged F1-F5 clean (correct) and made one addition.",
+    "The single finding repeats the pattern the key already rejected for linker Y: treating CI tooling (Spec Gate & SDK Generator) as feature work. F6 functions at runtime (Contract Layer reads Parcelo-Version, Console sets the pin, Authenticator forwards it, docs publish sunset dates) without any change to the build gate; the gate and SDK pinning are pre-existing release-pipeline behaviour the feature passes through, not work it needs.",
+    "The reviewer's 'why' asserts that F6 'introduces the CI rule', but section 6 already describes the Spec Gate as failing breaking diffs without a new version date and publishing SDKs pinned to a version - the rule exists; the feature does not create it. The finding projects the feature's intent onto a component that already does the thing."
+  ]
+}

@@ -10,8 +10,8 @@ const script = (p) => new URL(p, import.meta.url).pathname;
 test('compute → derive → validate → render runs clean end to end', () => {
   const dir = mkdtempSync(join(tmpdir(), 'proposal-e2e-'));
   const json = join(dir, 'estimation.json');
-  execFileSync('node', [script('../../../estimate/scripts/compute.mjs'),
-    '--inputs', script('../../../estimate/scripts/test/fixtures/booking-inputs.json'), '--out', json]);
+  execFileSync('node', [script('../../../estimate/classic/scripts/compute.mjs'),
+    '--inputs', script('../../../estimate/classic/scripts/test/fixtures/booking-inputs.json'), '--out', json]);
   execFileSync('node', [script('../derive.mjs'),
     '--estimation', json, '--out', join(dir, 'proposal-figures.json')]);
   execFileSync('node', [script('../validate.mjs'),

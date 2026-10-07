@@ -1,0 +1,79 @@
+{
+  "schemaVersion": "1.0",
+  "lead": "sin-kowa-mini",
+  "status": "ANALYZED",
+  "depth": "STANDARD",
+  "updated": "2026-10-06",
+  "mode": "greenfield",
+  "scopeMode": "workflow",
+  "mapLabel": "IMDA roadmap pillar",
+  "context": {
+    "problem": "Clients dispute charges after the ship sails and there is no record of what was packed.",
+    "goals": [
+      { "id": "G-001", "goal": "Stop billing disputes after sailing", "metric": "disputes per month down 50% in 6 months", "source": "PO brief" }
+    ],
+    "successMetrics": ["disputes per month down 50% within 6 months of go-live"]
+  },
+  "actors": [
+    { "id": "ACT-001", "name": "Packer", "type": "human", "goal": "pack an order without paper lists", "painPoints": ["packs from a printed list"] },
+    { "id": "ACT-002", "name": "Office staff", "type": "human", "goal": "invoice the moment goods are delivered", "painPoints": ["waits weeks for the paper delivery order"] }
+  ],
+  "workflows": [
+    { "id": "WF-001", "name": "Order to invoice today", "state": "as-is", "trigger": "ship sends an order by email or phone", "steps": ["office staff key the order in", "warehouse packs from a paper list", "paper delivery order signed at the dock", "invoice raised when the paper returns"], "exceptions": ["client disputes a charge after sailing"] },
+    { "id": "WF-002", "name": "Order pipeline", "state": "to-be", "label": "confirmed", "source": "PO brief, System 1", "trigger": "order confirmed by office staff", "steps": ["Order In", "Pack", "Pack Review", "Shipped"], "branches": [{ "from": "Pack", "to": "Short-pack alert", "label": "can't fulfil" }, { "from": "Pack Review", "to": "Pack", "label": "mismatch" }], "replaces": ["WF-001"], "exceptions": [] },
+    { "id": "WF-003", "name": "Order to cash", "state": "to-be", "label": "recommended", "source": "drafted from PO brief, System 2", "trigger": "order received by email or phone", "steps": ["Order received", "Quote", "Invoice", "Paid"], "branches": [], "replaces": ["WF-001"], "exceptions": [] },
+    { "id": "WF-004", "name": "Custom order", "state": "to-be", "label": "confirmed", "source": "PO brief, System 2 sub-flow", "trigger": "order holds an item that is sourced, not stocked", "steps": ["Flag as custom", "Vendor PO", "Receive into stock"], "branches": [], "sub": { "startsAt": "WF-003:Order received", "rejoins": "WF-002", "share": "about 20% of orders" }, "exceptions": [] }
+  ],
+  "systems": [
+    { "id": "SYS-001", "name": "Warehouse operations", "purpose": "Moves an order from intake to the dock; the one screen a warehouse worker needs.", "map": "Warehouse Automation", "label": "confirmed", "source": "PO brief, System 1", "workflows": ["WF-002"], "features": ["FEAT-001", "FEAT-002"] },
+    { "id": "SYS-002", "name": "Orders & invoicing", "purpose": "Quotation through to a paid invoice.", "map": "Finance/Documentation", "label": "confirmed", "source": "PO brief, System 2", "workflows": ["WF-003", "WF-004"], "features": ["FEAT-003", "FEAT-004", "FEAT-005"] }
+  ],
+  "features": [
+    { "id": "FEAT-001", "name": "Order pipeline & stage engine", "does": "Moves an order through each stage, with task views per role", "label": "confirmed", "source": "PO brief, System 1", "steps": ["WF-002:Order In", "WF-002:Pack", "WF-002:Pack Review", "WF-002:Shipped"], "requirements": ["FR-001"] },
+    { "id": "FEAT-002", "name": "Short-pack alert", "does": "Flags an item that cannot be packed, in time to buy or cancel", "label": "confirmed", "source": "PO brief, System 1", "steps": ["WF-002:Short-pack alert"], "requirements": ["FR-002"] },
+    { "id": "FEAT-003", "name": "Order intake & quotation", "does": "Captures email and phone orders and prices them", "label": "confirmed", "source": "PO brief, System 2", "steps": ["WF-003:Order received", "WF-003:Quote", "WF-004:Flag as custom"], "requirements": ["FR-003"] },
+    { "id": "FEAT-004", "name": "Invoice from packed quantities", "does": "Raises the invoice from what was packed and shipped", "label": "recommended", "source": "drafted from PO brief, System 2", "steps": ["WF-002:Shipped", "WF-003:Invoice", "WF-003:Paid"], "requirements": ["FR-004"] },
+    { "id": "FEAT-005", "name": "One login, role-based screens", "does": "One login; packers see packing tasks, office staff see orders and invoices", "label": "confirmed", "source": "PO brief, System 1", "steps": ["*"], "requirements": ["FR-005"] }
+  ],
+  "requirements": [
+    { "id": "FR-001", "text": "The system must move each order through the stages Order In, Pack, Pack Review and Shipped.", "label": "confirmed", "source": "PO brief, System 1", "traces": { "goal": "G-001", "workflow": "WF-002", "rules": [] }, "scope": "in", "acceptance": [] },
+    { "id": "FR-002", "text": "The system must let a packer flag an item that cannot be packed and alert office staff.", "label": "confirmed", "source": "PO brief, System 1", "traces": { "goal": "G-001", "workflow": "WF-002", "rules": [] }, "scope": "in", "acceptance": [] },
+    { "id": "FR-003", "text": "Office staff must be able to enter an order received by email or phone and produce a quotation.", "label": "confirmed", "source": "PO brief, System 2", "traces": { "goal": "G-001", "workflow": "WF-003", "rules": [] }, "scope": "in", "acceptance": [] },
+    { "id": "FR-004", "text": "The system must raise the invoice from packed-and-audited quantities.", "label": "assumed", "source": "PO brief, System 2", "traces": { "goal": "G-001", "workflow": "WF-003", "rules": ["BR-001"] }, "scope": "in", "acceptance": ["SC-001"] },
+    { "id": "FR-005", "text": "The system must provide one login, with packers limited to packing tasks.", "label": "confirmed", "source": "PO brief, System 1", "traces": { "goal": "G-001", "workflow": "WF-002", "rules": [] }, "scope": "in", "acceptance": [] },
+    { "id": "FR-006", "text": "The system must print a pallet label at the Pack stage.", "label": "assumed", "source": "PO brief, System 4", "traces": { "goal": "G-001", "workflow": "WF-002", "rules": [] }, "scope": "future", "acceptance": [] }
+  ],
+  "businessRules": [
+    { "id": "BR-001", "rule": "Invoice quantity equals packed-and-audited quantity.", "source": "PO brief, System 2", "examples": ["ordered 10, packed 10 -> invoice 10", "ordered 10, packed 8 -> invoice 8"] }
+  ],
+  "scenarios": [
+    { "id": "SC-001", "requirement": "FR-004", "type": "happy", "given": "an order of 10 items with 8 packed", "when": "the invoice is raised", "then": "it bills 8 items" }
+  ],
+  "nfrs": [
+    { "id": "NFR-001", "area": "availability", "text": "Scans made without connectivity must be kept and synced within 5 minutes of reconnecting.", "label": "assumed" }
+  ],
+  "integrations": [
+    { "id": "INT-001", "system": "InvoiceNow network", "direction": "write", "label": "recommended" }
+  ],
+  "data": [
+    { "id": "DAT-001", "entity": "Order", "sensitivity": "commercial", "volume": "about 300 per month", "label": "assumed" }
+  ],
+  "constraints": [
+    { "id": "CON-001", "text": "Vessels are offline at sea; delivery orders are signed on paper at the dock today.", "source": "PO brief" }
+  ],
+  "assumptions": [
+    { "id": "ASM-001", "text": "Packers carry a phone with a camera on the warehouse floor.", "impact": "medium", "status": "unconfirmed" }
+  ],
+  "openQuestions": [
+    { "id": "Q-001", "question": "Is order to cash the right shape: quote before the order is confirmed?", "priority": "P1", "reason": "the workflow was drafted, not described by the client", "affects": ["WF-003"], "status": "open", "answer": null, "architectureBlocker": false },
+    { "id": "Q-002", "question": "Should the invoice be raised at shipping, or when the delivery order is signed?", "priority": "P2", "reason": "decides the invoice trigger", "affects": ["FEAT-004", "INT-001"], "status": "open", "answer": null, "architectureBlocker": false }
+  ],
+  "conflicts": [],
+  "scope": { "out": ["last-mile delivery tracking"], "future": ["pallet labels"], "unconfirmed": [] },
+  "ai": null,
+  "readiness": {
+    "overall": 63,
+    "areas": { "businessContext": 80, "workflows": 70, "rules": 60, "integrations": 50, "data": 60, "nfrs": 60 },
+    "blockers": []
+  }
+}

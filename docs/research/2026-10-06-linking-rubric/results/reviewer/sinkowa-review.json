@@ -1,0 +1,11 @@
+{
+  "findings": [
+    {
+      "feature": "F05",
+      "action": "drop",
+      "component": "File Store",
+      "why": "Keeping fax attachments is an ordinary file write by Mailbox Intake (C4: worker -> files 'stores fax attachments'); no new bucket, prefix, lock or retention rule is named for them, so rubric Q5 gives the work to the module, not the store."
+    }
+  ],
+  "clean": ["F04", "F07", "F11", "F15", "F18"]
+}

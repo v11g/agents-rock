@@ -1,0 +1,17 @@
+{
+  "findings": [
+    {
+      "feature": "F1",
+      "action": "drop",
+      "component": "Routing Rules",
+      "why": "The why only says telemetry is routed to the ingestion stream; F1 adds no new route, destination or error action, so the readings pass through unchanged (Q8 names routing as used-not-changed)."
+    },
+    {
+      "feature": "F1",
+      "action": "drop",
+      "component": "Telemetry Normalizer",
+      "why": "The why only says readings are validated, deduped and ordered; F1 adds no schema version, dedupe or ordering rule, so the normalizer is used, not changed (Q8 names normalizers explicitly)."
+    }
+  ],
+  "clean": ["F2", "F3", "F4", "F5", "F6"]
+}

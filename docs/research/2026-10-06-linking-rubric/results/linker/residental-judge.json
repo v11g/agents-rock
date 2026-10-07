@@ -1,0 +1,80 @@
+{
+  "key": {
+    "maintenance": ["Resident Mobile App", "Admin Portal", "Request Service", "Notification Dispatcher", "Object Storage"],
+    "booking-engine": ["Resident Mobile App", "Admin Portal", "Booking Engine", "PostgreSQL Database", "Notification Dispatcher", "Payment Module"],
+    "visitors": ["Resident Mobile App", "Admin Portal", "Visitors and Packages", "Notification Dispatcher"],
+    "payments": ["Resident Mobile App", "Payment Module"],
+    "announcements": ["Admin Portal", "Resident Mobile App", "Announcements", "Notification Dispatcher", "Object Storage"],
+    "laundry": ["Resident Mobile App", "Admin Portal", "Service Orders", "Notification Dispatcher", "Payment Module"]
+  },
+  "key_reasons": {
+    "maintenance": {
+      "Resident Mobile App": "submit with category/urgency/photos and track status/history (FR-007, FR-010)",
+      "Admin Portal": "staff review, assign, schedule, comment, complete; manage categories (FR-008, FR-011, FR-052)",
+      "Request Service": "owns request record, lifecycle and append-only history (FR-009, FR-059)",
+      "Notification Dispatcher": "every status change notifies the resident via outbox push (WF-002, ADR-0004)",
+      "Object Storage": "request photos stored privately via presigned URLs (FR-007, FR-056)"
+    },
+    "booking-engine": {
+      "Resident Mobile App": "calendar, slot pick, rules acknowledgement, cancel (FR-022, FR-028, FR-068)",
+      "Admin Portal": "resource configuration and booking management/approvals (FR-029, FR-053, FR-054)",
+      "Booking Engine": "slots, rules, approval flow, cancellation windows (BR-002..BR-005)",
+      "PostgreSQL Database": "double booking prevented by a DB range-exclusion constraint - an invariant §6 places at the DB layer, not ordinary table work",
+      "Notification Dispatcher": "confirmation / approval-outcome push (flow-amenity-booking)",
+      "Payment Module": "fee or deposit collected as part of confirming the booking (FR-070, flow-amenity-booking bookings->payments)"
+    },
+    "visitors": {
+      "Resident Mobile App": "pre-register one-time/recurring visitor (FR-013, FR-014)",
+      "Admin Portal": "reception expected list, approve/reject, confirm arrival/departure (FR-015)",
+      "Visitors and Packages": "owns pre-registration, passes, arrival confirmation",
+      "Notification Dispatcher": "approved / arrived / denied notifications (FR-016)"
+    },
+    "payments": {
+      "Resident Mobile App": "client-side tokenization SDK, amount review, history, receipts (FR-048, ADR-0003: card data goes device->gateway)",
+      "Payment Module": "intents, webhooks, Pending/Paid/Failed/Refunded lifecycle, receipts (FR-049)"
+    },
+    "announcements": {
+      "Admin Portal": "create, target, schedule, publish (FR-043, FR-044)",
+      "Resident Mobile App": "read, reopen, search announcements (FR-045, FR-058)",
+      "Announcements": "targeting, scheduling, attachments, history",
+      "Notification Dispatcher": "push to targeted residents (WF-008)",
+      "Object Storage": "announcement attachments (§6 Object Storage responsibility)"
+    },
+    "laundry": {
+      "Resident Mobile App": "raise order, price review, track status (FR-030, FR-031)",
+      "Admin Portal": "staff act on and progress orders manually; laundry catalogue (FR-066, FR-055)",
+      "Service Orders": "laundry orders against configurable catalogue and lifecycle",
+      "Notification Dispatcher": "order status updates reach the resident (core loop: resident receives status updates)",
+      "Payment Module": "order paid where online payment applies (FR-030, ServiceOrder->Payment in §8)"
+    }
+  },
+  "key_changes": "Added Payment Module to booking-engine and laundry after both sets linked it: FR-070 and FR-030 make payment part of confirming those orders, and §8 links Booking and ServiceOrder to Payment, so the payable-subject wiring is real work in the Payment Module, not only in the separate payments feature.",
+  "X": {
+    "maintenance": { "missing": [], "wrong": ["Admin and Reporting", "PostgreSQL Database"] },
+    "booking-engine": { "missing": [], "wrong": ["Admin and Reporting"] },
+    "visitors": { "missing": [], "wrong": ["Admin and Reporting", "PostgreSQL Database"] },
+    "payments": { "missing": [], "wrong": ["Admin Portal", "PostgreSQL Database"] },
+    "announcements": { "missing": [], "wrong": ["PostgreSQL Database"] },
+    "laundry": { "missing": [], "wrong": ["Admin and Reporting", "PostgreSQL Database"] }
+  },
+  "X_wrong_reasons": {
+    "Admin and Reporting": "dashboard tiles and report counts (FR-050, FR-061) are a separate admin-reporting feature; the client feature works without them, so linking claims reporting work inside each feature",
+    "PostgreSQL Database": "the DB is a managed instance / system of record; ordinary tables and migrations belong to the owning backend component (C4: <component> -> db 'persists ...'). Only booking-engine earns a DB link, for the range-exclusion invariant",
+    "Admin Portal (payments)": "no in-scope FR asks for an admin transaction view or staff-triggered refunds; §6 Admin Portal responsibility lists no payment screens - the why is invented scope"
+  },
+  "Y": {
+    "maintenance": { "missing": [], "wrong": [] },
+    "booking-engine": { "missing": [], "wrong": [] },
+    "visitors": { "missing": [], "wrong": [] },
+    "payments": { "missing": [], "wrong": [] },
+    "announcements": { "missing": [], "wrong": [] },
+    "laundry": { "missing": [], "wrong": [] }
+  },
+  "totals": { "X": { "missing": 0, "wrong": 10 }, "Y": { "missing": 0, "wrong": 0 } },
+  "patterns": [
+    "X links PostgreSQL Database to every feature for 'tables must be added', treating routine schema work owned by each backend component as DB-component work (5 wrong); Y links the DB only where a DB-layer invariant (range exclusion) is the work.",
+    "X links Admin and Reporting wherever a dashboard tile or report count mentions the feature, claiming reporting work the feature does not need to function (4 wrong).",
+    "X invents scope from a plausible need not in requirements (Admin Portal refunds/transaction view for payments).",
+    "Neither set missed a needed link; both correctly pulled Payment Module into booking and laundry, which corrected the judge's key."
+  ]
+}

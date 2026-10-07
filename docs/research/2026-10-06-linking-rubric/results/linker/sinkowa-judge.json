@@ -1,0 +1,47 @@
+{
+  "key": {
+    "F04": ["Office Web App", "Orders and Quoting"],
+    "F05": ["Mailbox Intake", "Order Drafter", "Orders and Quoting", "Office Web App", "File Store"],
+    "F07": ["Billing", "Pack Audit Ledger", "Accounting Sync", "Office Web App", "Scheduled Checks"],
+    "F11": ["Billing", "Accounting Sync", "Office Web App"],
+    "F15": ["Inventory and Reservations", "Scheduled Checks", "Office Web App"],
+    "F18": ["Warehouse Mobile App", "Scan Capture", "Pack Audit Ledger", "Offline Scan Queue"]
+  },
+  "key_reasons": {
+    "F04": {"Office Web App": "order entry and quote screens", "Orders and Quoting": "owns Order, Quotation and BR-001 pricing"},
+    "F05": {"Mailbox Intake": "reads Gmail order mail and fax attachments", "Order Drafter": "turns text into an Order Draft via Bedrock", "Orders and Quoting": "owns Order Draft confirmation (BR-011)", "Office Web App": "draft review/correct/confirm screen", "File Store": "worker stores fax attachments there (C4 worker -> files)"},
+    "F07": {"Billing": "invoice from accepted Pack Records + PoD, payment status", "Pack Audit Ledger": "must expose accepted quantities (C4 billing -> packAudit)", "Accounting Sync": "pushes invoices, pulls payment status", "Office Web App": "invoicing and billing queue screens", "Scheduled Checks": "QuickBooks token refresh keeps push/pull alive"},
+    "F11": {"Billing": "owns Disputes and Credit Memos", "Accounting Sync": "pushes credit memos to QuickBooks", "Office Web App": "dispute log screens"},
+    "F15": {"Inventory and Reservations": "owns Reorder Threshold alerts on ATP (BR-004)", "Scheduled Checks": "low-stock digest", "Office Web App": "threshold setting and alert view"},
+    "F18": {"Warehouse Mobile App": "hosts pack-task scan screen", "Scan Capture": "camera scan checked against Pack Unit and Order", "Pack Audit Ledger": "appends Pack Records", "Offline Scan Queue": "only path from scanner to the API in the C4 model (scanner -> offlineQueue -> api)"}
+  },
+  "key_changes": [
+    "F05 + File Store: added after both sets linked it; C4 has worker -> files 'stores fax attachments'.",
+    "F07 + Scheduled Checks: added after both sets linked it for QuickBooks token refresh, which the push/pull depends on.",
+    "F18 + Offline Scan Queue: added after Y linked it; the C4 model routes every scan through the queue, so scan-to-verify cannot reach the ledger without it.",
+    "Operations Database treated as neutral (neither required nor wrong): tables are owned by the modules per §6 'one schema per module'."
+  ],
+  "X": {
+    "F04": {"missing": [], "wrong": []},
+    "F05": {"missing": [], "wrong": []},
+    "F07": {"missing": [], "wrong": []},
+    "F11": {"missing": [], "wrong": []},
+    "F15": {"missing": [], "wrong": []},
+    "F18": {"missing": ["Offline Scan Queue"], "wrong": []}
+  },
+  "Y": {
+    "F04": {"missing": [], "wrong": []},
+    "F05": {"missing": [], "wrong": []},
+    "F07": {"missing": [], "wrong": []},
+    "F11": {"missing": [], "wrong": []},
+    "F15": {"missing": [], "wrong": []},
+    "F18": {"missing": [], "wrong": []}
+  },
+  "totals": {"X": {"missing": 1, "wrong": 0}, "Y": {"missing": 0, "wrong": 0}},
+  "patterns": [
+    "X links Operations Database to every feature: not wrong, but it tells the reader nothing because §6 gives each module its own schema.",
+    "X's F07 reasons pull in work from another feature: the 60-day zero-rating check and the ZERO_RATING_CASE table belong to GST zero-rating, not invoice generation. The links still stand; the reasons claim extra scope.",
+    "X leaves out the mobile path a scan travels on (the Offline Scan Queue for F18), because it treated offline as a separate feature even though every scan passes through that queue.",
+    "Y makes no scoring mistakes. Its reasons follow §6 closely and stay inside each feature."
+  ]
+}

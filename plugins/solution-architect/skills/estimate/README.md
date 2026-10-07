@@ -3,6 +3,15 @@
 Produce an honest, validated project estimate, then serve it on localhost as an
 interactive page.
 
+## Two flows
+
+`SKILL.md` routes on `requirements.json#scopeMode`: `classic/` is the
+interview-driven flow (today's behaviour), `workflow-based/` prices the
+business-analyst features and links them to components. Shared pricing
+lives in `shared/lib/`. Commands below are the classic ones; prefix
+`workflow-based/` for workflow mode (`compute.mjs`, `validate.mjs`,
+`score-review.mjs`).
+
 ## What it produces
 
 **`estimation.md`** — scope split into `stated` vs `proposed` items, a task-level
@@ -41,9 +50,9 @@ and states plainly that it is not priced, and a proposal cannot quote it.
 ## Run it
 
 ```
-node scripts/compute.mjs --inputs estimation-inputs.json --out estimation.json
-node scripts/validate.mjs --md estimation.md --json estimation.json
-node scripts/render.mjs --json estimation.json --md estimation.md --out .
+node classic/scripts/compute.mjs --inputs estimation-inputs.json --out estimation.json
+node classic/scripts/validate.mjs --md estimation.md --json estimation.json
+node classic/scripts/render.mjs --json estimation.json --md estimation.md --out .
 ```
 
 `validate.mjs` must exit 0 before `render.mjs` will produce a page — an

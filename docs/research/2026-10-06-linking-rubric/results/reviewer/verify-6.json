@@ -1,0 +1,5 @@
+{
+  "verdict": "REJECT",
+  "why": "F2 asks for a scorecard report, not tests; the component already runs tests on every model and freshness on every declared source, and the dispatch database is already an existing source (Batch Connector Jobs, §9), so no new rule or field is required.",
+  "quoted": "tests on every model and freshness thresholds on every declared source"
+}

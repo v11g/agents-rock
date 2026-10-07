@@ -1,0 +1,116 @@
+{
+  "key": {
+    "F1": [
+      "Prediction Service",
+      "Decision Policy Engine",
+      "Online Feature Store",
+      "Stream Feature Processor",
+      "Prediction Logger",
+      "Model Rollout Controller"
+    ],
+    "F2": [
+      "Case Review UI",
+      "Label Joiner",
+      "Prediction Service",
+      "Prediction Logger"
+    ],
+    "F3": [
+      "Label Joiner",
+      "Model Health UI"
+    ],
+    "F4": [
+      "Drift Monitor",
+      "Model Registry",
+      "Model Health UI"
+    ],
+    "F5": [
+      "Pipeline Trigger",
+      "Training Pipeline",
+      "Data Validation Step",
+      "Model Validation Gate",
+      "Model Registry",
+      "Offline Feature Store"
+    ],
+    "F6": [
+      "Model Rollout Controller",
+      "Model Health UI",
+      "Model Registry",
+      "Prediction Logger"
+    ]
+  },
+  "keyReasons": {
+    "F1": {
+      "Prediction Service": "Receives the transaction, fetches features, runs the active model, returns within 100 ms.",
+      "Decision Policy Engine": "Maps score to allow / review / block with per-merchant thresholds and hard rules.",
+      "Online Feature Store": "Sub-5 ms feature reads are what make the 100 ms budget possible.",
+      "Stream Feature Processor": "Computes the velocity / decline-rate aggregates the model scores on; BIN lookup integration.",
+      "Prediction Logger": "Every scored request is logged with model version asynchronously; the only writer of the prediction log that F3/F4/F6 consume.",
+      "Model Rollout Controller": "Loads the approved production model from the registry so the service has an active model (basic load; shadow/canary split is F6)."
+    },
+    "F2": {
+      "Case Review UI": "The analyst screen: score, top contributing features, history, verdict.",
+      "Label Joiner": "Matches analyst verdicts to logged predictions and writes the labels table.",
+      "Prediction Service": "Must compute per-feature contributions for the case view; no §6 component produces explanations today.",
+      "Prediction Logger": "Must persist the contributions alongside score/decision so the case view can read them later."
+    },
+    "F3": {
+      "Label Joiner": "Pulls the daily SFTP chargeback feed, matches by transaction id, writes labels, computes realized precision/recall per model version.",
+      "Model Health UI": "Realized precision/recall per model version is only surfaced here; no other feature builds that view."
+    },
+    "F4": {
+      "Drift Monitor": "Hourly PSI/KS comparison against training baseline; PagerDuty/Slack paging.",
+      "Model Registry": "Must hold the production model's training-time feature distributions that are the drift baseline.",
+      "Model Health UI": "Drift charts per model version are only surfaced here; no other feature builds that view."
+    },
+    "F5": {
+      "Pipeline Trigger": "Weekly schedule start.",
+      "Training Pipeline": "Orchestrates extract → validate → prepare → train → evaluate; MLflow tracking.",
+      "Data Validation Step": "A step of the orchestrated pipeline; schema/skew checks on the weekly extract.",
+      "Model Validation Gate": "Champion/challenger comparison on holdout and per-merchant slices; staging registration rule.",
+      "Model Registry": "Versions the challenger with lineage and holds it at staging.",
+      "Offline Feature Store": "Point-in-time-correct training set from feature history and fresh labels."
+    },
+    "F6": {
+      "Model Rollout Controller": "Traffic split for shadow, hot-swap on promote.",
+      "Model Health UI": "Shadow-vs-production comparison and promote / rollback buttons.",
+      "Model Registry": "Stage transition staging → production / archived with approver.",
+      "Prediction Logger": "Must write the shadow model's score with its own model version per request so the dashboard can compare."
+    }
+  },
+  "keyChanges": [
+    "F1 +Model Rollout Controller: both sets argued the active model must be loaded from the registry by its owning component; a basic load is needed for F1 even without shadow/canary. Accepted.",
+    "F2 +Prediction Service, +Prediction Logger: Y pointed out that 'top contributing features' (in the UI Responsibility and the feature text) are produced by no §6 component; the service must compute them and the logger must persist them. Accepted.",
+    "F4 +Model Registry: both sets argued the training-time feature distributions exist in the registry only as the drift baseline; the registry must be extended to hold them for F4 to work. Accepted.",
+    "F6 +Prediction Logger: both sets argued shadow scoring adds a second score per request under a different model version, which the F1 logger does not write. Accepted."
+  ],
+  "grayAreas": [
+    "Training Pipeline in F4 (computing the training-time distributions) — neither set linked it; fits its existing 'records artifacts' responsibility, not counted either way.",
+    "Pipeline Trigger in F4 (drift-triggered retraining) — not a listed client feature; would be counted wrong if linked. Neither set did."
+  ],
+  "X": {
+    "F1": { "missing": [], "wrong": ["Training Data Warehouse"] },
+    "F2": { "missing": ["Prediction Service", "Prediction Logger"], "wrong": [] },
+    "F3": { "missing": [], "wrong": ["Training Data Warehouse"] },
+    "F4": { "missing": [], "wrong": [] },
+    "F5": { "missing": [], "wrong": [] },
+    "F6": { "missing": [], "wrong": [] }
+  },
+  "Y": {
+    "F1": { "missing": [], "wrong": [] },
+    "F2": { "missing": [], "wrong": [] },
+    "F3": { "missing": ["Model Health UI"], "wrong": [] },
+    "F4": { "missing": ["Model Health UI"], "wrong": [] },
+    "F5": { "missing": [], "wrong": [] },
+    "F6": { "missing": [], "wrong": [] }
+  },
+  "totals": {
+    "X": { "missing": 2, "wrong": 2 },
+    "Y": { "missing": 2, "wrong": 0 }
+  },
+  "patterns": [
+    "X links Training Data Warehouse to every feature that creates a table (F1 prediction log, F3 labels) by reciting 'partitioning and 2-year retention'; neither feature requires store-specific work — the tables belong to Prediction Logger and Label Joiner. The store exception was applied mechanically as a justification, not because the feature demanded it.",
+    "X misses the hidden component work behind a UI responsibility: F2's 'top contributing features' needs Prediction Service to compute explanations and Prediction Logger to persist them; X linked only the UI and the label writer. Y caught it.",
+    "Y leaves Model Health UI unlinked in F3 and F4, so the realized precision/recall view and the drift-chart view are priced under no feature (only F6's shadow view is). Y reads the feature text literally ('measured', 'paged') and drops the surfacing work.",
+    "Both sets are identical and clean on F5 and F6, and both argued convincingly for Model Rollout Controller in F1, Model Registry in F4 and Prediction Logger in F6 — these moved the key."
+  ]
+}

@@ -1,0 +1,33 @@
+{
+  "keyAdjustments": [
+    "F18: removed 'Warehouse Mobile App'. It is a container with components (Scan Capture, Offline Scan Queue, Proof of Delivery Capture); the pack-task scan screen is Scan Capture, which the key already links.",
+    "F05: removed 'File Store'. Keeping fax attachments in the existing bucket is ordinary use of shared storage (no new store, no Object Lock or retention work: §6 locks only evidence prefixes). Mailbox Intake owns that write.",
+    "F05: added 'Operations Database' (convinced by the work). §8 gives ORDER_DRAFT its own '90 days after decision' retention, unlike the 5-year order tables. That retention is database-specific work under the agreed rule. The old key treated the database as neutral.",
+    "Kept F07 'Pack Audit Ledger'. §6 'one schema per module' means Billing cannot read PACK_RECORD tables directly. Pack Audit Ledger must expose accepted packed quantity per order line, and the existing Stage Engine read (accepted records for stage moves) has a different shape. So the feature does work in Pack Audit Ledger, not just uses it.",
+    "Kept F07 'Scheduled Checks'. QuickBooks token refresh is a named §6 responsibility, and F07 brings in the QuickBooks push/pull that depends on it. The feature builds it; this is not shared plumbing it merely uses.",
+    "Kept 'Office Web App' wherever it was linked. It is a container with no components, and each feature adds its own screens rather than changing the app shell."
+  ],
+  "key": {
+    "F04": ["Office Web App", "Orders and Quoting"],
+    "F05": ["Mailbox Intake", "Order Drafter", "Orders and Quoting", "Office Web App", "Operations Database"],
+    "F07": ["Billing", "Pack Audit Ledger", "Accounting Sync", "Office Web App", "Scheduled Checks"],
+    "F11": ["Billing", "Accounting Sync", "Office Web App"],
+    "F15": ["Inventory and Reservations", "Scheduled Checks", "Office Web App"],
+    "F18": ["Scan Capture", "Pack Audit Ledger", "Offline Scan Queue"]
+  },
+  "C": {
+    "F04": { "missing": [], "wrong": [] },
+    "F05": { "missing": [], "wrong": [{ "component": "File Store", "reason": "Ordinary use of the existing object store. No new store, no retention or locking work for fax attachments." }] },
+    "F07": { "missing": [{ "component": "Pack Audit Ledger", "reason": "Billing needs accepted packed quantity per line (BR-002). With one schema per module, Pack Audit Ledger must expose that read. C's Billing why depends on it but does not link it." }], "wrong": [] },
+    "F11": { "missing": [], "wrong": [] },
+    "F15": { "missing": [], "wrong": [] },
+    "F18": { "missing": [], "wrong": [] }
+  },
+  "totals": { "missing": 1, "wrong": 1 },
+  "patterns": [
+    "C already follows the new conventions. It links components and not their containers (no Warehouse Mobile App on F18), and it links the database only once, for a real retention rule (Order Draft 90 days). That link corrected the key.",
+    "C's one miss is work hidden behind a dependency. On F07 it treats Pack Audit Ledger as something Billing only reads. Under one schema per module, the accepted-quantity read is new work inside Pack Audit Ledger.",
+    "C's one wrong link is shared storage merely used. File Store on F05 copies the C4 edge 'worker -> files', but storing fax attachments needs no storage-specific work.",
+    "C's whys match each component's §6 Responsibility and stay inside their feature. No whys borrow scope from other features."
+  ]
+}

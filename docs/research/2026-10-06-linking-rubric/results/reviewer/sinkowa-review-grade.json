@@ -1,0 +1,22 @@
+{
+  "perFinding": [
+    {
+      "feature": "F05",
+      "action": "drop",
+      "component": "File Store",
+      "why": "Keeping fax attachments is an ordinary file write by Mailbox Intake (C4: worker -> files 'stores fax attachments'); no new bucket, prefix, lock or retention rule is named for them, so rubric Q5 gives the work to the module, not the store.",
+      "grade": "goodDrop"
+    }
+  ],
+  "totals": { "goodAdd": 0, "badAdd": 0, "goodDrop": 1, "badDrop": 0, "stillMissing": 1 },
+  "stillMissing": [
+    { "feature": "F07", "component": "Pack Audit Ledger" }
+  ],
+  "keyDisputes": [],
+  "patterns": [
+    "The reviewer found the one wrong link (F05 File Store) with the same reasoning the key uses: shared storage merely used, no store-specific retention or locking work.",
+    "The reviewer missed the one gap. It marked F07 clean, but the key requires Pack Audit Ledger there: under one schema per module, exposing accepted packed quantity per order line to Billing (BR-002) is new work inside Pack Audit Ledger. C's Billing why depends on that read without linking it.",
+    "The reviewer's blind spot is work hidden behind a dependency. It checks each existing link against the component's responsibility (drop-side) but does not trace a why's inputs back to the component that must produce them (add-side).",
+    "No false positives: the reviewer did not drop Scheduled Checks on F07, Operations Database on F05, or Office Web App anywhere, all of which the key deliberately keeps."
+  ]
+}

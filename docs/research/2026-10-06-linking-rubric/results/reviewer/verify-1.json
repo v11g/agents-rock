@@ -1,0 +1,5 @@
+{
+  "verdict": "REJECT",
+  "why": "The §6 Responsibility already lists the labels table among the warehouse's holdings and already owns the day-partitioning and 2-year retention rule, so F3 only uses this component; no new rule, field or constraint is required.",
+  "quoted": "Holds ... labels and feature history; owns partitioning by day and the 2-year retention policy."
+}

@@ -1,0 +1,96 @@
+{
+  "key": {
+    "F1": ["Stream Processor", "Gold Marts", "Semantic Model", "Dashboards"],
+    "F2": ["Silver Transforms", "Gold Marts", "Semantic Model", "Dashboards"],
+    "F3": ["Schema Registry", "Bronze Loader", "Silver Transforms", "Gold Marts", "Semantic Model", "Dashboards"],
+    "F4": ["Stream Processor", "Gold Marts", "Semantic Model", "Dashboards", "Metric Alerts"],
+    "F5": ["Serving SQL Endpoint", "Privacy Erasure Job", "DAG Scheduler"],
+    "F6": ["Backfill Runner"]
+  },
+  "keyReasons": {
+    "F1": {
+      "Stream Processor": "computes the 5-minute windowed avg tip per mile per neighbourhood from the trip+fare join",
+      "Gold Marts": "owns the tips-per-mile-by-neighbourhood aggregate (§6) that the Semantic Model reads; stream writes silver, so gold is the handoff",
+      "Semantic Model": "avg tip per mile measure + neighbourhood relationship",
+      "Dashboards": "live neighbourhood map visual on the ops report"
+    },
+    "F2": {
+      "Silver Transforms": "conformed driver table from dispatch CDC joined to trips",
+      "Gold Marts": "driver scorecard model (trips, revenue, rating per driver per day)",
+      "Semantic Model": "per-driver measures incl. rating over the scorecard table",
+      "Dashboards": "driver scorecard report"
+    },
+    "F3": {
+      "Schema Registry": "new Avro schema for trip-cancelled",
+      "Bronze Loader": "land a brand-new event type into its bronze table",
+      "Silver Transforms": "conformed trip table must carry cancelled status / cancellation rows",
+      "Gold Marts": "cancellation rate by neighbourhood aggregate",
+      "Semantic Model": "cancellation rate measure",
+      "Dashboards": "new visual"
+    },
+    "F4": {
+      "Stream Processor": "new 15-minute ride count per zone window (currently 5-minute averages)",
+      "Gold Marts": "gold table over the new window so the Semantic Model (over gold) can read it",
+      "Semantic Model": "ride count per zone measure",
+      "Dashboards": "Metric Alerts evaluates rules on dashboard visuals (§6), so the visual must exist",
+      "Metric Alerts": ">150 in 15 min rule, Teams delivery"
+    },
+    "F5": {
+      "Serving SQL Endpoint": "hosts the deletion-request table the officer writes to (new store-specific table)",
+      "Privacy Erasure Job": "delete from bronze, propagate silver/gold, purge history, set status",
+      "DAG Scheduler": "new DAG to run the erasure job; Orchestrator owns scheduling"
+    },
+    "F6": {
+      "Backfill Runner": "finance-triggered parameterised DAG deletes partitions and reloads silver and gold; silver/gold rerun unchanged (§10)"
+    }
+  },
+  "keyChanges": [
+    "F1: added Gold Marts. Both sets argued it and §6 agrees: Gold Marts' Responsibility names the tips-per-mile-by-neighbourhood aggregate and the Semantic Model is defined over gold tables, so the stream's silver window needs a gold model to reach Power BI.",
+    "F4: added Gold Marts for the same reason; applied consistently with F1 (Semantic Model reads gold, Stream Processor writes silver)."
+  ],
+  "borderlineRule": "Items listed under `borderline` are defensible but not required; they count as neither missing nor wrong.",
+  "X": {
+    "F1": { "missing": [], "wrong": [], "borderline": [] },
+    "F2": { "missing": [], "wrong": ["Bronze Loader"], "borderline": ["Batch Connector Jobs", "DAG Scheduler"] },
+    "F3": { "missing": [], "wrong": [], "borderline": ["Event Ingest Hub", "Stream Processor", "Data Quality Tests"] },
+    "F4": { "missing": [], "wrong": [], "borderline": [] },
+    "F5": { "missing": [], "wrong": [], "borderline": [] },
+    "F6": { "missing": [], "wrong": ["Gold Marts", "Dashboards"], "borderline": ["Silver Transforms"] }
+  },
+  "Y": {
+    "F1": { "missing": [], "wrong": ["Event Ingest Hub", "Pipeline Monitoring"], "borderline": ["Data Quality Tests"] },
+    "F2": { "missing": [], "wrong": ["Bronze Loader", "Pipeline Monitoring"], "borderline": ["Batch Connector Jobs", "DAG Scheduler", "Data Quality Tests"] },
+    "F3": { "missing": [], "wrong": ["Dead-Letter Handler"], "borderline": ["Event Ingest Hub", "Data Quality Tests"] },
+    "F4": { "missing": [], "wrong": ["Pipeline Monitoring"], "borderline": [] },
+    "F5": { "missing": [], "wrong": [], "borderline": [] },
+    "F6": { "missing": [], "wrong": ["Gold Marts"], "borderline": ["Silver Transforms"] }
+  },
+  "wrongReasons": {
+    "X": {
+      "F2 Bronze Loader": "why restates its existing append behaviour; dispatch CDC already lands in bronze, no change named",
+      "F6 Gold Marts": "daily revenue model simply reruns under the backfill (§10: silver and gold rebuilt from bronze); no model change",
+      "F6 Dashboards": "revenue report reads the rebuilt gold via Direct Lake; nothing on the report changes"
+    },
+    "Y": {
+      "F1 Event Ingest Hub": "trip and fare hubs already exist and already partition by taxi id; feature uses them, does not change them",
+      "F1 Pipeline Monitoring": "shared platform service; feature asks for no new SLA or alert on the pipeline",
+      "F2 Bronze Loader": "same as X: existing append, no change",
+      "F2 Pipeline Monitoring": "shared service used not changed; failure alerting already exists for nightly runs",
+      "F3 Dead-Letter Handler": "generic per-source quarantine already covers a new event type; nothing to build",
+      "F4 Pipeline Monitoring": "feature's alert is the KPI alert (Metric Alerts); pipeline lag alerting is speculative scope",
+      "F6 Gold Marts": "reruns unchanged under backfill"
+    }
+  },
+  "totals": {
+    "X": { "missing": 0, "wrong": 3 },
+    "Y": { "missing": 0, "wrong": 7 }
+  },
+  "patterns": [
+    "Y links Pipeline Monitoring on F1, F2 and F4 for SLA/lag alerting the feature never asked for; a shared platform service that is used, not changed.",
+    "Both sets link components that merely rerun or pass data through unchanged: Bronze Loader on F2 (both), Gold Marts on F6 (both), Dashboards on F6 (X only).",
+    "Y links the existing ingest edge and generic error path as if a new feature altered them: Event Ingest Hub on F1, Dead-Letter Handler on F3.",
+    "Y's whys tend to paraphrase the §6 Responsibility instead of naming the change (F2 Bronze Loader, F6 Silver Transforms); X's whys more often name the delta (F3 accepted_values test breaks, F6 corrected fare must win dedup).",
+    "Both over-link the nightly dispatch path on F2 (Batch Connector Jobs, DAG Scheduler) where the copy job and DAG already exist; judged borderline, not counted, but it inflates F2 for both.",
+    "Neither set missed a required component; the gap between them is entirely over-linking, mostly Y's."
+  ]
+}

@@ -1,0 +1,5 @@
+{
+  "verdict": "REJECT",
+  "why": "Pipeline Monitoring already collects freshness and alerts on SLA breach, so a 5-minute freshness alert is at most a threshold value on existing behaviour; and F1 asks only for a map refreshed every 5 minutes, not for a freshness alert, so this is operational scope nobody asked for.",
+  "quoted": "run durations and freshness; alerts the on-call engineer on failure or SLA breach"
+}

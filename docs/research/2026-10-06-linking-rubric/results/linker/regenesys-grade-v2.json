@@ -1,0 +1,32 @@
+{
+  "keyAdjustments": [
+    "annotate: dropped PostgreSQL Database. The Annotation table, its check constraints and index are an ordinary table owned by Annotations; no constraint enforces a business rule (BR-002 is an absence of a constraint) and idempotency is Annotations' ON CONFLICT logic.",
+    "register: dropped PostgreSQL Database. Registering inserts a row into the ReviewQueueEntry table owned by Review Queue; the 'row points at a video in storage' check is Review Queue's invariant (§6), and the table's database-specific constraint (BR-003) is already linked under queue-assign.",
+    "thread: kept PostgreSQL Database. The unique constraint on Reply.annotation_id enforces the one-reply rule (FR-012; §6 Replies and Status invariant).",
+    "queue-assign: kept PostgreSQL Database. One editor per row is enforced by database constraint (BR-003; §6 Review Queue invariant).",
+    "annotate: kept Video Player and Scrubber after checking ADR-0002. The anchor is the presented frame's mediaTime captured via requestVideoFrameCallback plus the per-file offset the player applies; that is player work, not mere use. The work offered no argument against it.",
+    "No container or shared-piece links in the key needed changing: Review Web App, Review API and Principal Middleware were not in it, and every remaining link is the most specific component. Prior optional allowances (Principal Middleware on annotate/thread, Media Bucket on register, Video Catalogue on panel) are withdrawn under the shared-pieces and specificity rules; none appear in the work, so no effect."
+  ],
+  "key": {
+    "annotate": ["Annotation Overlay", "Video Player and Scrubber", "Annotations"],
+    "panel": ["Feedback Panel", "Video Player and Scrubber", "Annotations"],
+    "thread": ["Feedback Panel", "Replies and Status", "PostgreSQL Database"],
+    "queue-assign": ["Review Queue Screen", "Review Queue", "Editors", "PostgreSQL Database"],
+    "register": ["Review Queue Screen", "Review Queue"],
+    "integ-data": ["Client Metadata Adapter", "Editors", "Review Queue"]
+  },
+  "C": {
+    "annotate": { "missing": ["Video Player and Scrubber"], "wrong": [] },
+    "panel": { "missing": [], "wrong": [] },
+    "thread": { "missing": [], "wrong": [] },
+    "queue-assign": { "missing": [], "wrong": [] },
+    "register": { "missing": [], "wrong": [] },
+    "integ-data": { "missing": [], "wrong": [] }
+  },
+  "totals": { "missing": 1, "wrong": 0 },
+  "patterns": [
+    "Database discipline matches the new convention exactly: C links PostgreSQL only where a constraint enforces a business rule (one reply per annotation; BR-003 one editor per row) and leaves ordinary tables to their owning module on annotate and register.",
+    "No container or shared-plumbing links: every link is the most specific component, and each why matches that component's §6 Responsibility.",
+    "Single gap is a cross-component dependency on the capture side: C links the player for seeking back (panel) but not for capturing the presented frame's mediaTime when an annotation is created (ADR-0002), treating capture as the overlay's job alone."
+  ]
+}

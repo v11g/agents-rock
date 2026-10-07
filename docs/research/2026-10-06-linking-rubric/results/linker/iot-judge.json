@@ -1,0 +1,99 @@
+{
+  "key": {
+    "F1": ["Alert Evaluator", "Notification Sender"],
+    "F2": ["Installer Mobile App", "Device Identity Module", "Provisioning Template & Hook", "Device Registry & Groups"],
+    "F3": ["Console Web App", "Console API", "Device Registry & Groups", "Fridge Shadow Schema", "Shadow Sync Client", "Sensor Sampler", "Alert Evaluator"],
+    "F4": ["Console Web App", "Console API", "Rollout Orchestrator", "Device Registry & Groups", "OTA Update Agent"],
+    "F5": ["Offline Buffer", "Telemetry Normalizer", "Time-series Store", "Console Web App", "Console API"],
+    "F6": ["Console Web App", "Console API", "Device Registry & Groups", "Provisioning Template & Hook", "Device Health Monitor"]
+  },
+  "keyReasons": {
+    "F1": {
+      "Alert Evaluator": "Owns the excursion rule (threshold held for N minutes) and opens the alert.",
+      "Notification Sender": "SMS to the store manager with per-store routing via Twilio."
+    },
+    "F2": {
+      "Installer Mobile App": "QR scan, Wi-Fi push, provisioning claim, bind gateway to fridge.",
+      "Device Identity Module": "Claim-to-permanent-cert exchange so the new gateway gets an identity.",
+      "Provisioning Template & Hook": "Allow-list check, ERP lookup of store and asset tag, assigns thing name, group and policy.",
+      "Device Registry & Groups": "Thing attributes for store and fridge id/asset tag plus store-group membership must exist to be assigned."
+    },
+    "F3": {
+      "Console Web App": "New config-edit screen for a group; not among the listed views.",
+      "Console API": "Writes desired config shadow for every thing in the target group.",
+      "Device Registry & Groups": "Region and fridge-type grouping beyond the current store groups.",
+      "Fridge Shadow Schema": "The config named shadow carries interval and thresholds.",
+      "Shadow Sync Client": "Delta subscription and full desired fetch on reconnect covers offline gateways.",
+      "Sensor Sampler": "Applies the new interval and local threshold rules.",
+      "Alert Evaluator": "Added after reading X/Y: cloud excursion rule must read the updated per-fridge thresholds."
+    },
+    "F4": {
+      "Console Web App": "Create release, watch canary, promote in deployments view.",
+      "Console API": "Job create/status/promote over IoT Jobs.",
+      "Rollout Orchestrator": "Rollout rate, 2% abort threshold, per-device execution status.",
+      "Device Registry & Groups": "5% canary group and fleet group to target.",
+      "OTA Update Agent": "Download, verify, A/B flash, rollback, report job status."
+    },
+    "F5": {
+      "Offline Buffer": "Disk FIFO sized for the outage, ordered replay.",
+      "Telemetry Normalizer": "Dedupe by sequence and order late replayed readings.",
+      "Time-series Store": "Store-specific: 90-day retention and per-store partitioning.",
+      "Console Web App": "90-day history chart on fridge detail.",
+      "Console API": "Range query over the time-series store under store RBAC."
+    },
+    "F6": {
+      "Console Web App": "Retire action.",
+      "Console API": "Retire endpoint over registry.",
+      "Device Registry & Groups": "Deactivate thing/cert, detach policy, remove from groups.",
+      "Provisioning Template & Hook": "Only cloud-side Private CA integrator (§9): revoke cert; allow-list must also reject the retired serial so it cannot re-provision.",
+      "Device Health Monitor": "Must not mark the retired gateway offline (spurious offline alert) or audit its cert."
+    }
+  },
+  "keyChanges": [
+    "F3: added Alert Evaluator. Both sets argued the cloud excursion rule (F1) evaluates per-fridge thresholds, so a threshold change that only reached the gateway would leave alerts firing on stale values. Convinced."
+  ],
+  "X": {
+    "F1": { "missing": [], "wrong": ["Sensor Sampler", "Routing Rules", "Telemetry Normalizer"] },
+    "F2": { "missing": [], "wrong": [] },
+    "F3": { "missing": [], "wrong": [] },
+    "F4": { "missing": [], "wrong": [] },
+    "F5": { "missing": [], "wrong": ["Sensor Sampler", "Routing Rules"] },
+    "F6": { "missing": [], "wrong": ["Device Identity Module", "Time-series Store"] }
+  },
+  "Y": {
+    "F1": { "missing": [], "wrong": ["Sensor Sampler", "Routing Rules", "Telemetry Normalizer"] },
+    "F2": { "missing": [], "wrong": ["Console API", "Console Web App"] },
+    "F3": { "missing": [], "wrong": [] },
+    "F4": { "missing": [], "wrong": [] },
+    "F5": { "missing": [], "wrong": [] },
+    "F6": { "missing": [], "wrong": ["Time-series Store"] }
+  },
+  "wrongReasons": {
+    "X": {
+      "F1/Sensor Sampler": "Already samples temperature at the configured interval; the feature uses it, changes nothing.",
+      "F1/Routing Rules": "Shared plumbing that already routes telemetry to the ingestion stream; unchanged.",
+      "F1/Telemetry Normalizer": "Shared plumbing that already dedupes and orders; unchanged.",
+      "F5/Sensor Sampler": "Produces readings regardless of link state; no change for history.",
+      "F5/Routing Rules": "Replayed telemetry is ordinary telemetry on the existing route; unchanged.",
+      "F6/Device Identity Module": "Never-reconnect must be enforced cloud-side (deactivated cert, detached policy, CRL); on-device cooperation of a retired unit cannot be relied on and its responsibility is key holding/exchange/rotation.",
+      "F6/Time-series Store": "Existing 90-day retention already erases readings after the retention period; no per-device store rule is needed."
+    },
+    "Y": {
+      "F1/Sensor Sampler": "Same as X: used, not changed.",
+      "F1/Routing Rules": "Same as X: shared plumbing, unchanged.",
+      "F1/Telemetry Normalizer": "Same as X: shared plumbing, unchanged.",
+      "F2/Console API": "Store and asset tag are assigned to registry attributes by the Provisioning Hook (ERP lookup there); the BFF only reads the registry as it already does.",
+      "F2/Console Web App": "Fleet search is an existing view; showing one more fridge is use, not change.",
+      "F6/Time-series Store": "Same as X: existing retention covers it."
+    }
+  },
+  "totals": { "X": { "missing": 0, "wrong": 7 }, "Y": { "missing": 0, "wrong": 6 } },
+  "patterns": [
+    "Both X and Y link shared telemetry plumbing (Routing Rules, Telemetry Normalizer) on F1 because the feature's data flows through it, not because the feature changes it.",
+    "Both X and Y link Sensor Sampler as an upstream 'produces the data' dependency (F1; X also on F5) where the feature only uses existing sampling.",
+    "Both X and Y link Time-series Store on F6 for erasure that the existing 90-day retention already provides.",
+    "Y links Console API and Console Web App on F2 for merely displaying data the Provisioning Hook already wrote to the registry.",
+    "X links the on-device Device Identity Module on F6 for revocation handling that must be enforced cloud-side, not on a retired gateway.",
+    "Neither set missed a required component; all errors are over-linking of used-but-unchanged components."
+  ]
+}

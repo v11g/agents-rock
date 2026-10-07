@@ -1,0 +1,19 @@
+{
+  "features": [
+    { "id": "FEAT-001", "scores": { "tech": 3, "size": 3, "deps": 2, "unc": 3, "risk": 3 }, "scoreNote": "" },
+    { "id": "FEAT-002", "scores": { "tech": 3, "size": 3, "deps": 2, "unc": 3, "risk": 4 }, "scoreNote": "", "reasons": { "risk": "a missed alert blocks invoicing for days" } },
+    { "id": "FEAT-003", "scores": { "tech": 3, "size": 3, "deps": 2, "unc": 3, "risk": 3 }, "scoreNote": "" },
+    { "id": "FEAT-004", "scores": { "tech": 3, "size": 3, "deps": 2, "unc": 3, "risk": 3 }, "scoreNote": "" },
+    { "id": "FEAT-005", "scores": { "tech": 3, "size": 3, "deps": 2, "unc": 3, "risk": 3 }, "scoreNote": "" }
+  ],
+  "components": [
+    { "id": "api.stage", "implements": ["FEAT-001", "FEAT-002"] },
+    { "id": "api.orders", "implements": ["FEAT-003", "FEAT-004"] },
+    { "id": "api.billing", "implements": ["FEAT-005"] },
+    { "id": "office", "implements": ["FEAT-001", "FEAT-003", "FEAT-005"] },
+    { "id": "worker.notify", "implements": ["FEAT-002"] },
+    { "id": "worker.drafter", "implements": [] },
+    { "id": "ops", "implements": [] }
+  ],
+  "addComponent": [ { "feature": "FEAT-004", "note": "a review screen for the draft is missing" } ]
+}

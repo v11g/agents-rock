@@ -1,0 +1,23 @@
+{
+  "findings": [
+    {
+      "feature": "F1",
+      "action": "add",
+      "component": "Training Data Warehouse",
+      "why": "The prediction log table the Prediction Logger streams every checkout decision into is a new store table that needs the day partitioning and 2-year retention rule the warehouse owns (Q5)."
+    },
+    {
+      "feature": "F3",
+      "action": "add",
+      "component": "Training Data Warehouse",
+      "why": "The labels table the Label Joiner writes nightly is a new store table that needs the day partitioning and 2-year retention rule the warehouse owns (Q5)."
+    },
+    {
+      "feature": "F3",
+      "action": "add",
+      "component": "Model Health UI",
+      "why": "Adds the realized precision/recall per model version view that shows ML engineers the accuracy the Label Joiner computes from chargeback outcomes; no other feature builds it."
+    }
+  ],
+  "clean": ["F2", "F4", "F5", "F6"]
+}

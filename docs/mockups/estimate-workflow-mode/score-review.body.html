@@ -384,7 +384,7 @@ document.addEventListener('click', (e) => {
 // one system open at a time; with Workflows on, the open system picks the cards
 $('#systems').addEventListener('toggle', (e) => {
   const d = e.target; if (!d.matches?.('details.capsys') || drawing) return;
-  if (d.open) openSystem(d.dataset.sys);
+  if (d.open) { openSystem(d.dataset.sys); sysFilter = true; } // opening a system shows its cards
   else if (openSys === d.dataset.sys) openSystem(null);
   refresh();
 }, true);

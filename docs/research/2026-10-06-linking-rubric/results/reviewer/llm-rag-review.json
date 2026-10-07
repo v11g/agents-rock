@@ -1,0 +1,17 @@
+{
+  "findings": [
+    {
+      "feature": "F2",
+      "action": "add",
+      "component": "Guardrail Filter",
+      "why": "Once the agent can open tickets, the filter needs a new rule: screen create_it_ticket arguments (and the retrieved-document content that produced them) for injected instructions before a side-effecting call is allowed, and exempt tool-call turns with no retrieved chunks from the grounding check so ticket drafts are not flagged as ungrounded."
+    },
+    {
+      "feature": "F5",
+      "action": "drop",
+      "component": "Guardrail Filter",
+      "why": "The grounding check runs unchanged over whatever chunks the Retriever returns; the ACL filtering that makes F5 work lives in the Retriever and Vector Index, so this why describes use, not a change."
+    }
+  ],
+  "clean": ["F1", "F3", "F4", "F6"]
+}

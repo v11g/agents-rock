@@ -1,0 +1,5 @@
+{
+  "verdict": "REJECT",
+  "why": "F2 asks only to draft, confirm, submit and return a ticket number; injection-screening tool arguments and exempting tool turns from grounding is defensive scope nobody asked for, and tool input validation already belongs to the Tool Gateway (\"validates tool inputs, enforces the per-tool allow-list and confirmation requirement\").",
+  "quoted": "Screens user input for prompt injection and denied topics ... runs a grounding check"
+}

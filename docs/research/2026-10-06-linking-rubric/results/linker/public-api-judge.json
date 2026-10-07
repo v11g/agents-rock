@@ -1,0 +1,106 @@
+{
+  "key": {
+    "F1": ["Rates Module"],
+    "F2": ["Labels Module", "Idempotency Middleware", "Idempotency Cache"],
+    "F3": ["Carrier Tracking Poller", "Tracking Module", "Event Outbox", "Webhook Dispatcher", "Webhook Endpoint Console"],
+    "F4": ["Rate Limiter & Access Logger", "Labels Module", "Usage Aggregator", "Usage Ledger", "Account & Key Console"],
+    "F5": ["Account & Key Console", "Key Authenticator", "Key Lifecycle Worker"],
+    "F6": ["API Contract Layer", "Key Authenticator", "Account & Key Console", "API Reference & Changelog"]
+  },
+  "keyReasons": {
+    "F1": {
+      "Rates Module": "Owns the parallel fan-out to enabled carriers, normalisation and 10-min quote cache."
+    },
+    "F2": {
+      "Labels Module": "Purchases the label, stores the PDF to S3 (ordinary file write stays here).",
+      "Idempotency Middleware": "Replays the stored response and rejects reuse with different parameters - the 'exactly one label' rule.",
+      "Idempotency Cache": "Store-specific: a new Redis keyspace with 24h TTL keyed by (org, idempotency key)."
+    },
+    "F3": {
+      "Carrier Tracking Poller": "Detects the carrier's delivered status on the 15-min poll.",
+      "Tracking Module": "Applies the status change to Shipment state and raises the delivered transition.",
+      "Event Outbox": "Writes shipment.delivered in the same transaction as the state change.",
+      "Webhook Dispatcher": "Signs, POSTs, retries with backoff for 3 days.",
+      "Webhook Endpoint Console": "Only place the developer registers the endpoint, subscribes to the event type and gets the signing secret; no separate feature covers it."
+    },
+    "F4": {
+      "Rate Limiter & Access Logger": "Source of billable rate-request counts (cost points on the usage queue).",
+      "Labels Module": "Records the billable label.created usage fact (added after reading the sets - see keyChanges).",
+      "Usage Aggregator": "Rolls facts into hourly rows and pushes Stripe meter events.",
+      "Usage Ledger": "Store-specific: monthly partitions, 13-month retention, unique (key, hour, metric) constraint.",
+      "Account & Key Console": "Running-usage view in the portal and the Stripe customer/payment integration (section 9)."
+    },
+    "F5": {
+      "Account & Key Console": "Create with read-only scope, rotate with grace, revoke, show once.",
+      "Key Authenticator": "Its Responsibility lists org/mode/plan only - must gain scope resolution and rejection of out-of-scope calls, plus accept old key during grace.",
+      "Key Lifecycle Worker": "Expires the rotated key after the grace window."
+    },
+    "F6": {
+      "API Contract Layer": "Reads Parcelo-Version, defaults to the key's pin, transforms, adds Deprecation/Sunset headers.",
+      "Key Authenticator": "Must resolve and forward the key's pinned version; not in its current Responsibility.",
+      "Account & Key Console": "Developer sets the pin per key; pinning is not in its current Responsibility.",
+      "API Reference & Changelog": "Publishes the changelog and deprecation dates."
+    }
+  },
+  "keyChanges": [
+    "F4: added Labels Module. Both sets linked it and its section-6 Responsibility explicitly includes 'records the billable label.created usage fact', which exists only to feed F4; I had wrongly treated it as covered by F2."
+  ],
+  "X": {
+    "F1": { "missing": [], "wrong": [] },
+    "F2": { "missing": [], "wrong": [] },
+    "F3": { "missing": [], "wrong": [] },
+    "F4": { "missing": [], "wrong": [] },
+    "F5": { "missing": [], "wrong": [] },
+    "F6": { "missing": [], "wrong": [] }
+  },
+  "Y": {
+    "F1": {
+      "missing": [],
+      "wrong": [
+        "API Contract Layer - shared plumbing; adding a route does not change the validator/transform registry/error envelope, it only uses them",
+        "Rate Limiter & Access Logger - per-route cost-point weight is a billing (F4) concern and plan config, not work F1 needs to function",
+        "Spec Gate & SDK Generator - CI; the feature passes through the gate, it does not change it"
+      ]
+    },
+    "F2": {
+      "missing": [
+        "Idempotency Cache - store-specific work by the convention (new Redis keyspace with 24h retention)"
+      ],
+      "wrong": [
+        "API Contract Layer - shared plumbing used, not changed",
+        "Spec Gate & SDK Generator - CI used, not changed"
+      ]
+    },
+    "F3": {
+      "missing": [],
+      "wrong": [
+        "API Reference & Changelog - documenting the payload is not work the webhook needs to function; docs component is used, not changed"
+      ]
+    },
+    "F4": { "missing": [], "wrong": [] },
+    "F5": {
+      "missing": [],
+      "wrong": [
+        "Labels Module - scope rejection belongs with the Key Authenticator, which already rejects invalid keys at the edge; a second check in the module claims work the gateway design does not need (defensible as defence-in-depth, counted wrong under the most-specific-owner rule)"
+      ]
+    },
+    "F6": {
+      "missing": [],
+      "wrong": [
+        "Spec Gate & SDK Generator - CI guard; versions are pinnable at runtime without it, and the feature does not change the gate"
+      ]
+    }
+  },
+  "totals": {
+    "X": { "missing": 0, "wrong": 0 },
+    "Y": { "missing": 1, "wrong": 8 }
+  },
+  "patterns": [
+    "Y links shared plumbing (API Contract Layer) and CI (Spec Gate & SDK Generator) on every feature that adds or versions an endpoint (F1, F2, F6) - these are used, not changed; this alone accounts for 5 of Y's 8 wrong links.",
+    "Y missed the one store-specific component the convention calls out (Idempotency Cache in F2) while correctly linking the other (Usage Ledger in F4) - inconsistent application of the store rule.",
+    "Y links documentation as feature work (API Reference & Changelog in F3) when the feature works without it.",
+    "Y adds a defence-in-depth check in Labels Module for F5 after already assigning scope resolution to Key Authenticator - double-counting one rule across two components.",
+    "Y pulls a billing concern (Rate Limiter cost-point weight) into F1 where it belongs to F4.",
+    "X made no missing or wrong links; its whys closely paraphrase section-6 Responsibilities, which is accurate but adds little feature-specific reasoning beyond the F5/F6 Key Authenticator changes."
+  ]
+}

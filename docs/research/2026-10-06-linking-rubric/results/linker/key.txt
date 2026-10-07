@@ -1,0 +1,8 @@
+regenesys: X=B(rubric) Y=A(none)
+sinkowa: X=A(none) Y=B(rubric)
+residental: X=A(none) Y=B(rubric)
+ml-heavy: X=B(addon) Y=A(core)
+public-api: X=A(core) Y=B(addon)
+llm-rag: X=B(addon) Y=A(core)
+iot: X=B(addon) Y=A(core)
+data-pipeline: X=A(core) Y=B(addon)

@@ -1,0 +1,23 @@
+{
+  "findings": [
+    {
+      "feature": "F1",
+      "action": "add",
+      "component": "Pipeline Monitoring",
+      "why": "A new freshness SLA rule on the 5-minute windowed averages so the on-call engineer is alerted when the live map goes stale; the feature promises a 5-minute refresh and nothing else tells anyone when it stops."
+    },
+    {
+      "feature": "F2",
+      "action": "add",
+      "component": "Data Quality Tests",
+      "why": "Declare the dispatch database as a new source with a freshness threshold and add not_null/unique tests on the new driver scorecard model, otherwise a stalled nightly CDC produces an empty scorecard silently."
+    },
+    {
+      "feature": "F6",
+      "action": "drop",
+      "component": "Dashboards",
+      "why": "The why says the report hosts the restated figures finance views; the daily revenue report reads the rebuilt gold table unchanged, so the feature uses the dashboard rather than changing it."
+    }
+  ],
+  "clean": ["F3", "F4", "F5"]
+}

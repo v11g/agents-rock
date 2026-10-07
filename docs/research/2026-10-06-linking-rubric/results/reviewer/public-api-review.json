@@ -1,0 +1,11 @@
+{
+  "findings": [
+    {
+      "feature": "F6",
+      "action": "add",
+      "component": "Spec Gate & SDK Generator",
+      "why": "Version pinning introduces the CI rule that a breaking OpenAPI diff fails the build unless a new version date is declared, and makes each generated SDK pin to a version date so a key pinned to an old version has a matching SDK."
+    }
+  ],
+  "clean": ["F1", "F2", "F3", "F4", "F5"]
+}

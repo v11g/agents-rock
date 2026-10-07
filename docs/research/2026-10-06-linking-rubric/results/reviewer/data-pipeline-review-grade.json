@@ -1,0 +1,49 @@
+{
+  "perFinding": [
+    {
+      "feature": "F1",
+      "action": "add",
+      "component": "Pipeline Monitoring",
+      "why": "A new freshness SLA rule on the 5-minute windowed averages so the on-call engineer is alerted when the live map goes stale; the feature promises a 5-minute refresh and nothing else tells anyone when it stops.",
+      "grade": "badAdd",
+      "note": "Not in key[F1]; key's wrongReasons already rejects Pipeline Monitoring on F1 as a shared service used, not changed — feature asks for no SLA or alert on the pipeline."
+    },
+    {
+      "feature": "F2",
+      "action": "add",
+      "component": "Data Quality Tests",
+      "why": "Declare the dispatch database as a new source with a freshness threshold and add not_null/unique tests on the new driver scorecard model, otherwise a stalled nightly CDC produces an empty scorecard silently.",
+      "grade": "badAdd",
+      "note": "Not in key[F2]; key lists it as borderline (defensible, not required) for set Y."
+    },
+    {
+      "feature": "F6",
+      "action": "drop",
+      "component": "Dashboards",
+      "why": "The why says the report hosts the restated figures finance views; the daily revenue report reads the rebuilt gold table unchanged, so the feature uses the dashboard rather than changing it.",
+      "grade": "goodDrop",
+      "note": "Dashboards not in key[F6]; matches key's wrongReasons for X on F6 Dashboards."
+    }
+  ],
+  "totals": {
+    "goodAdd": 0,
+    "badAdd": 2,
+    "goodDrop": 1,
+    "badDrop": 0,
+    "stillMissing": 0
+  },
+  "stillMissingDetail": {},
+  "missedWrongLinks": [
+    "F2 Bronze Loader — key marks wrong (existing append, dispatch CDC already lands in bronze); reviewer left it.",
+    "F6 Gold Marts — key marks wrong (daily revenue model reruns unchanged under backfill per §10); reviewer left it."
+  ],
+  "keyDisputes": [
+    "F2 Data Quality Tests: the reviewer names a concrete delta (declare dispatch as a new dbt source + tests on the new scorecard model, both in Data Quality Tests' stated Responsibility), which is stronger than the key's borderline reasoning — but graded badAdd against the key as instructed."
+  ],
+  "patterns": [
+    "Linker set A had no missing components, so every reviewer add could only be badAdd; the reviewer added anyway, both times for operational scope (monitoring, quality tests) the feature never requested — the same speculative-ops habit the key flagged for set Y's Pipeline Monitoring.",
+    "Reviewer caught 1 of 3 wrong links the key identifies in this set (F6 Dashboards) and missed the other two (F2 Bronze Loader, F6 Gold Marts), both the same 'reruns or passes data through unchanged' class as the one it did catch — the rule was applied inconsistently.",
+    "Reviewer declared F3 clean despite three borderline links (Event Ingest Hub, Stream Processor, Data Quality Tests); not penalised by the rubric, but it shows the reviewer is not probing whether a component is used vs changed.",
+    "Net effect: set A started at 3 wrong / 0 missing (F2 Bronze Loader, F6 Gold Marts, F6 Dashboards). The review removes one wrong link and adds one wrong link (F1 Pipeline Monitoring) plus one borderline (F2 Data Quality Tests), so it ends at 3 wrong / 0 missing — no net improvement."
+  ]
+}

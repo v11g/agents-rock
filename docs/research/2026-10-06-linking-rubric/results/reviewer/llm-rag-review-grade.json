@@ -1,0 +1,41 @@
+{
+  "perFinding": [
+    {
+      "feature": "F2",
+      "action": "add",
+      "component": "Guardrail Filter",
+      "why": "Once the agent can open tickets, the filter needs a new rule: screen create_it_ticket arguments (and the retrieved-document content that produced them) for injected instructions before a side-effecting call is allowed, and exempt tool-call turns with no retrieved chunks from the grounding check so ticket drafts are not flagged as ungrounded.",
+      "grade": "badAdd",
+      "note": "Not in key[F2]. Key reasoning (X.F2.wrong) already rejects this: input screening runs on every turn unchanged. Tool-argument validation is the Tool Gateway's responsibility per §6, and the grounding-check exemption is a speculative design concern the architecture does not raise; F2 works without any Guardrail Filter change."
+    },
+    {
+      "feature": "F5",
+      "action": "drop",
+      "component": "Guardrail Filter",
+      "why": "The grounding check runs unchanged over whatever chunks the Retriever returns; the ACL filtering that makes F5 work lives in the Retriever and Vector Index, so this why describes use, not a change.",
+      "grade": "goodDrop",
+      "note": "Not in key[F5]; matches the key's own Y.F5.wrong reasoning exactly."
+    }
+  ],
+  "totals": {
+    "goodAdd": 0,
+    "badAdd": 1,
+    "goodDrop": 1,
+    "badDrop": 0,
+    "stillMissing": 0
+  },
+  "stillMissingDetail": {},
+  "missedDrops": [
+    {
+      "feature": "F3",
+      "component": "Source Manager",
+      "note": "In the linker set, not in key[F3]; reviewer listed F3 as clean. Key calls it borderline (admin setup, not the unattended sync)."
+    }
+  ],
+  "keyDisputes": [],
+  "patterns": [
+    "Reviewer correctly applies the use-vs-change test on F5 (drops Guardrail Filter) but then violates it on F2, inventing a Guardrail change (tool-arg injection screening, grounding exemption) that the architecture assigns to the Tool Gateway or does not require.",
+    "Reviewer missed the only other defect in the linker set: Source Manager under F3, an admin UI linked to an explicitly unattended sync. It declared F3 clean.",
+    "Net effect: one correct fix, one new error, one miss. The linker set ends with the same number of wrong links it started with (2), just a different pair."
+  ]
+}

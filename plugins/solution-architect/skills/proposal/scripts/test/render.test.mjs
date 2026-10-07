@@ -7,8 +7,8 @@ import { join } from 'node:path';
 
 const tpl = () => readFileSync(new URL('../../assets/proposal-template.html', import.meta.url), 'utf8');
 const cli = new URL('../render.mjs', import.meta.url).pathname;
-const computeCli = new URL('../../../estimate/scripts/compute.mjs', import.meta.url).pathname;
-const inputs = new URL('../../../estimate/scripts/test/fixtures/booking-inputs.json', import.meta.url).pathname;
+const computeCli = new URL('../../../estimate/classic/scripts/compute.mjs', import.meta.url).pathname;
+const inputs = new URL('../../../estimate/classic/scripts/test/fixtures/booking-inputs.json', import.meta.url).pathname;
 const passMd = new URL('./fixtures/proposal-pass.md', import.meta.url).pathname;
 const failMd = new URL('./fixtures/proposal-fail.md', import.meta.url).pathname;
 

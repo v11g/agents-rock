@@ -1,0 +1,5 @@
+{
+  "verdict": "REJECT",
+  "why": "Both things the proposer names are already the component's listed responsibility, and F6 (pin a version per key, announce sunset in headers and changelog) asks for neither CI gating nor SDK generation, so F6 only uses this component.",
+  "quoted": "Fails the build when the OpenAPI diff against the released spec is breaking"
+}

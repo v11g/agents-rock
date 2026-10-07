@@ -1,0 +1,76 @@
+{
+  "key": {
+    "annotate": ["Annotation Overlay", "Video Player and Scrubber", "Annotations", "PostgreSQL Database"],
+    "panel": ["Feedback Panel", "Video Player and Scrubber", "Annotations"],
+    "thread": ["Feedback Panel", "Replies and Status", "PostgreSQL Database"],
+    "queue-assign": ["Review Queue Screen", "Review Queue", "Editors", "PostgreSQL Database"],
+    "register": ["Review Queue Screen", "Review Queue", "PostgreSQL Database"],
+    "integ-data": ["Client Metadata Adapter", "Editors", "Review Queue"]
+  },
+  "key_reasons": {
+    "annotate": {
+      "Annotation Overlay": "captures the point and its comment",
+      "Video Player and Scrubber": "supplies the presented frame's media time the point is anchored on (ADR-0002)",
+      "Annotations": "one-shot idempotent create, success only after commit",
+      "PostgreSQL Database": "Annotation table, constraints and index must exist for the durable save"
+    },
+    "panel": {
+      "Feedback Panel": "chronological list, same-pixel marker badges, same-frame grouping, 5 s polling",
+      "Video Player and Scrubber": "seek-and-pause on a frame or loop a range on click",
+      "Annotations": "list endpoint, oldest first"
+    },
+    "thread": {
+      "Feedback Panel": "reply control and Open/Resolved toggle",
+      "Replies and Status": "one reply (unique constraint, 409) and status transition with declared role",
+      "PostgreSQL Database": "Reply table with unique annotation_id, status/resolved_at/resolved_role columns"
+    },
+    "queue-assign": {
+      "Review Queue Screen": "per-row editor picker and independent status control",
+      "Review Queue": "assign exactly one editor, set row status, never derived",
+      "Editors": "pool of named editors for the picker",
+      "PostgreSQL Database": "ReviewQueueEntry status check and editor FK, Editor table (BR-003 by constraint)"
+    },
+    "register": {
+      "Review Queue Screen": "register form",
+      "Review Queue": "registers a video already in storage, enforces row-points-at-existing-video",
+      "PostgreSQL Database": "new ReviewQueueEntry row with unique video_id FK"
+    },
+    "integ-data": {
+      "Client Metadata Adapter": "second implementation reading the client data store, local fallback",
+      "Editors": "hand-seeded pool replaced by a read from the client store",
+      "Review Queue": "rows and registration switch to sourcing client name/editor/location through the adapter (C4: queue -> metadataAdapter)"
+    }
+  },
+  "key_changes": [
+    "Initially placed Client Metadata Adapter under register (C4 shows queue -> metadataAdapter pre-fill, local impl is the base case). Both sets instead put the queue-to-adapter wiring under integ-data via Review Queue, which is a defensible FR-033 placement and avoids double-counting; moved Review Queue into integ-data and dropped the adapter from register.",
+    "Accepted as optional (neither required nor wrong): Principal Middleware on annotate/thread, Media Bucket on register, Video Catalogue on panel, Review Web App only when it claims no work owned by a child component."
+  ],
+  "X": {
+    "annotate": { "missing": ["PostgreSQL Database"], "wrong": [] },
+    "panel": { "missing": [], "wrong": [] },
+    "thread": { "missing": ["PostgreSQL Database"], "wrong": [] },
+    "queue-assign": { "missing": ["PostgreSQL Database"], "wrong": [] },
+    "register": { "missing": ["PostgreSQL Database"], "wrong": [] },
+    "integ-data": { "missing": [], "wrong": ["Review Queue Screen"] }
+  },
+  "Y": {
+    "annotate": { "missing": [], "wrong": ["Review Web App"] },
+    "panel": { "missing": [], "wrong": [] },
+    "thread": { "missing": [], "wrong": [] },
+    "queue-assign": { "missing": [], "wrong": [] },
+    "register": { "missing": [], "wrong": [] },
+    "integ-data": { "missing": [], "wrong": [] }
+  },
+  "wrong_reasons": {
+    "X.integ-data.Review Queue Screen": "§6 Client Metadata Adapter invariant: the queue and register form never depend on the client side; the adapter swaps implementations behind one interface, so the screen is unchanged",
+    "Y.annotate.Review Web App": "container, not a component; its why claims sending the create, which C4 assigns to Annotation Overlay -> Annotations, so the same work is claimed twice"
+  },
+  "totals": { "X": { "missing": 4, "wrong": 1 }, "Y": { "missing": 0, "wrong": 1 } },
+  "patterns": [
+    "X never links PostgreSQL Database, so the table, constraint and migration work behind durable save, one-reply, one-editor and register goes unseen (4 misses).",
+    "X lets a UI component ride along on a backend-only integration change (Review Queue Screen on integ-data) despite the adapter's one-interface invariant.",
+    "Y links a container alongside its own child component and claims the child's work (Review Web App on annotate).",
+    "Y's why for Video Player and Scrubber on panel credits it with drawing count badges, which §6 gives to Feedback Panel; the link stands on its seek/loop reason, so not counted.",
+    "Y links Principal Middleware on annotate and thread but not on the other API-backed features; correct per §6 but inconsistent, so not counted."
+  ]
+}

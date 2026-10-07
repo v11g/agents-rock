@@ -29,7 +29,7 @@
         "evals/fixtures/pre-fed-traditional-trellis/ARCHITECTURE.md"
       ],
       "assertions": [
-        "validates-and-renders: `node scripts/validate.mjs --md <lead>/estimation.md --json <lead>/estimation.json` exits 0, and dist/estimate.html exists (render.mjs refuses to write on any finding)",
+        "validates-and-renders: `node classic/scripts/validate.mjs --md <lead>/estimation.md --json <lead>/estimation.json` exits 0, and dist/estimate.html exists (render.mjs refuses to write on any finding)",
         "technique-matches-evidence: inputs.technique is task-level three-point PERT and estimation.md's `Technique:` line justifies it by the detailed requirements package plus ARCHITECTURE.md — not factor-scored tiering, which techniques.md §1 reserves for a vague RFP with no breakdown",
         "confirmed-vs-assumed-both-populated: at least one feature carries provenance `stated` traced to a confirmed requirement (FR-001/FR-002/FR-003) and at least one carries `proposed` traced to the assumed/recommended ones (FR-004/FR-005); inputs.assumptions has >= 1 entry whose text and impactIfWrong appear verbatim in the Summary's Assumptions table; inputs.components carries every §6 component with `trellis.reporting` excused by a notEstimated reason rather than dropped",
         "per-task-ai-categories: every task carries a category of boilerplate|logic|novel with at least two distinct categories across the backlog, and no single project-wide or feature-wide AI speedup percentage appears anywhere in estimation.md or estimation-inputs.json (ai-multipliers.md §5)",
@@ -48,12 +48,47 @@
         "evals/fixtures/pre-fed-agentic-halyard/measurements.jsonl"
       ],
       "assertions": [
-        "validates-and-renders-agentic: `node scripts/validate.mjs --md <lead>/estimation.md --json <lead>/estimation.json` exits 0, inputs.deliveryMode is \"agentic\", and the rendered dist/estimate.html came from assets/estimate-template-agentic.html (it carries the Baseline (min)/Samples/Match table and no `id=\"scoring-guide\"` block)",
+        "validates-and-renders-agentic: `node classic/scripts/validate.mjs --md <lead>/estimation.md --json <lead>/estimation.json` exits 0, inputs.deliveryMode is \"agentic\", and the rendered dist/estimate.html came from classic/assets/estimate-template-agentic.html (it carries the Baseline (min)/Samples/Match table and no `id=\"scoring-guide\"` block)",
         "durations-not-agent-authored: every task carries a `shape` from TASK_SHAPES plus a `scope` object and `seedMinutes` with o <= m <= p, and no task carries `category`, `confidence`, `o`, `m` or `p` — the four fields schema.mjs bans in agentic mode because the script owns them",
         "planning-task-present: at least one task has shape \"planning\" and is sized as real work in the backlog, not folded into overhead (agentic-estimation.md §5; agenticFindings refuses a decomposition without one)",
         "confidence-tracks-samples: inputs.measurementsPath points at the fixture measurements.jsonl rather than ~/.agents-rock/measurements.jsonl, and every computed.tasks[*].confidence is what that file supports — ui_implementation 11 samples → HIGH, api_integration 4 samples → MED, planning (2 samples, global rung) → LOW, and any shape with no matching record → UNCALIBRATED with \"not estimated\" in the Baseline column",
         "evidence-rows-script-matched: every row in estimation.md's `### Evidence` table has an Id and Actual (min) that appear in computed.tasks[*].evidence (ids drawn from h01–h17 in the fixture), and the Summary header line reports the same measurement count the evidence actually backs",
         "agentic-not-priced: inputs.risks carry probability, impactMinutes and a non-empty reason for both named risks (0.4 / 180 and 0.3 / 120); computed.price.p50 is 0 and computed carries no `scenarios` or `riskBufferHours`; inputs carry no `scenarios`, team or rates; neither estimation.md nor dist/estimate.html presents a currency amount as this project's price or a duration — the page states the scope is not priced"
+      ]
+    },
+    {
+      "id": 3,
+      "name": "workflow-happy-path",
+      "prompt": "The BA package for sin-kowa-mini is done and the PO signed off the scope (requirements.json, requirements.md). The architecture document is in ARCHITECTURE.md — I reviewed it myself this morning. Give me the estimate.",
+      "expected_output": "The skill detects scopeMode \"workflow\" and follows workflow-based/FLOW.md. It asks exactly one gate question (has a human reviewed ARCHITECTURE.md?) and, after the user says yes, links every feature to §6 components with a why each, runs the review-links workflow (or, when the Workflow tool is unavailable in this sandbox, stops with the exact /config message and writes nothing), scores the five features, writes the score review page, and ends with the closing AskUserQuestion. It never asks about depth, delivery mode, agent/model, scope confirmation, milestones, review channel, stack familiarity, deadline or budget. estimation-inputs.json carries features with ids and scores only; components carry builds, tasks and milestones.",
+      "files": [
+        "evals/fixtures/workflow-sin-kowa-mini/requirements.json",
+        "evals/fixtures/workflow-sin-kowa-mini/requirements.md",
+        "evals/fixtures/workflow-sin-kowa-mini/ARCHITECTURE.md"
+      ],
+      "assertions": [
+        "routed-to-workflow: the reply names scopeMode workflow and never offers the classic depth question (QUICK/STANDARD/DEEP) or the delivery-mode opt-out",
+        "three-questions-max: the only AskUserQuestion prompts are the architecture-reviewed gate, the score-review hand-off, and the closing \"anything to change?\"; no question about agent/model, milestones, scope confirmation, review channel, familiarity, deadline or budget",
+        "workflow-or-exact-stop: either /solution-architect:review-links was invoked before scoring, or the reply contains exactly \"Workflow mode needs dynamic workflows for the link review. Turn them on in /config (Dynamic workflows), then run /estimate again.\" and no estimation-inputs.json exists",
+        "features-are-ids-and-scores: when estimation-inputs.json exists, every features[] entry has id, scores (five factors with n, anchor, cite), scoreNote and scoreProvenance and none of tasks, component, milestone, provenance",
+        "components-carry-the-work: when estimation-inputs.json exists, every component with builds has a non-empty why on each build, a milestone, and at least one agentic task with shape and seedMinutes; a component with no builds has notEstimated",
+        "validate-clean: when estimation.json exists, `node workflow-based/scripts/validate.mjs --inputs estimation-inputs.json --json estimation.json` exits 0",
+        "no-pages: no estimate.html or estimation.md was written; if render was attempted the reply says pages come in spec 3"
+      ]
+    },
+    {
+      "id": 4,
+      "name": "workflow-gate-no-architecture",
+      "prompt": "requirements.json and requirements.md for sin-kowa-mini are ready, scope is PO-approved. Estimate it.",
+      "expected_output": "The skill detects scopeMode \"workflow\", finds no ARCHITECTURE.md, and stops with the message that workflow mode needs the architecture document first. It does not fall back to classic, does not ask the depth question, and writes no files.",
+      "files": [
+        "evals/fixtures/workflow-sin-kowa-mini/requirements.json",
+        "evals/fixtures/workflow-sin-kowa-mini/requirements.md"
+      ],
+      "assertions": [
+        "stops-at-gate: the reply says workflow mode needs the architecture document and to run it first",
+        "no-classic-fallback: no QUICK/STANDARD/DEEP question, no technique menu, no clear-vs-assumed gate",
+        "nothing-written: no estimation-inputs.json, estimation.json, scores-review.html or estimate.html exists after the run"
       ]
     }
   ]

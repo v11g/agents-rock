@@ -5,8 +5,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { checkInputs } from '../../../estimate/scripts/lib/schema.mjs';
-import { computeEstimation } from '../../../estimate/scripts/lib/rollup.mjs';
+import { checkInputs } from '../../../estimate/classic/scripts/lib/schema.mjs';
+import { computeEstimation } from '../../../estimate/classic/scripts/lib/rollup.mjs';
 import { deriveFigures } from '../lib/figures.mjs';
 
 const evalsDir = new URL('../../evals/', import.meta.url);

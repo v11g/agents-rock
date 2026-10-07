@@ -1,0 +1,32 @@
+{
+  "keyAdjustments": [
+    "maintenance: removed Object Storage. The bucket and presigned-URL upload are shared plumbing (FR-056 is one cross-cutting upload capability); attaching photos uses it without changing it, the same way an ordinary table is not a database link.",
+    "announcements: removed Object Storage, same reason: attachments are stored through the shared upload path; nothing about the store itself changes.",
+    "booking-engine: kept PostgreSQL Database. The range-exclusion constraint enforces BR-002/FR-024 at the DB layer, which is database-specific work under the new convention.",
+    "Notification Dispatcher kept in maintenance, booking-engine, visitors, announcements and laundry: each feature adds new notification kinds (status change, booking outcome, visitor approved/arrived/denied, announcement push, laundry order status), which counts as changing the shared piece.",
+    "Most-specific-component check: no change needed. All backend links are already components, not the Backend API container; Resident Mobile App and Admin Portal are containers with no components, so linking them directly is correct.",
+    "No Auth and Accounts / Household Management links added: the household permission set is admin-configurable data (FR-005, BR-001), so no feature adds a new role or permission in code."
+  ],
+  "key": {
+    "maintenance": ["Resident Mobile App", "Admin Portal", "Request Service", "Notification Dispatcher"],
+    "booking-engine": ["Resident Mobile App", "Admin Portal", "Booking Engine", "PostgreSQL Database", "Notification Dispatcher", "Payment Module"],
+    "visitors": ["Resident Mobile App", "Admin Portal", "Visitors and Packages", "Notification Dispatcher"],
+    "payments": ["Resident Mobile App", "Payment Module"],
+    "announcements": ["Admin Portal", "Resident Mobile App", "Announcements", "Notification Dispatcher"],
+    "laundry": ["Resident Mobile App", "Admin Portal", "Service Orders", "Notification Dispatcher", "Payment Module"]
+  },
+  "C": {
+    "maintenance": { "missing": [], "wrong": ["Object Storage: why says photos are stored in the private bucket via presigned uploads, which is using shared upload plumbing, not changing the store"] },
+    "booking-engine": { "missing": [], "wrong": [] },
+    "visitors": { "missing": [], "wrong": [] },
+    "payments": { "missing": [], "wrong": [] },
+    "announcements": { "missing": [], "wrong": ["Object Storage: why says attachments are stored in the private bucket, which is use of shared plumbing, not a change to it"] },
+    "laundry": { "missing": ["Notification Dispatcher: laundry order status updates must reach the resident (FR-031, FR-046, WF-006), which adds new notification kinds"], "wrong": [] }
+  },
+  "totals": { "missing": 1, "wrong": 2 },
+  "patterns": [
+    "Over-links Object Storage whenever a feature stores files: both whys describe use of the shared upload path, not a change to the store.",
+    "Links Notification Dispatcher only when the requirement says 'notify' outright (FR-016, WF-002, WF-008); missed it in laundry, where status updates reaching the resident are implied by a lifecycle 'visible to the resident'.",
+    "Otherwise strong: the database is linked only for the range-exclusion constraint, every backend link is a specific component, Payment Module wiring is caught in booking and laundry, and no auth/permission over-linking."
+  ]
+}
