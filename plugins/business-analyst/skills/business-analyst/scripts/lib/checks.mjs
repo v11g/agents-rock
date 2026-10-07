@@ -1,4 +1,7 @@
 import { REGISTERS, STATUSES, AREAS, checkSchema } from './schema.mjs';
+import { modeOf, toBe, scopeIds } from './scope-rules.mjs';
+import { checkScope } from './scope-checks.mjs';
+import { checkScopeMd } from './scope-md.mjs';
 
 const LABELED = ['requirements', 'nfrs', 'integrations', 'data'];
 const SOURCED = ['requirements', 'businessRules', 'constraints'];
@@ -128,8 +131,9 @@ export function checkMd(pkg, md) {
     else if (!bodies[key].trim()) findings.push(`md: empty section "## ${part}"`);
   }
   const mdIds = new Set([...md.matchAll(ID_TOKEN)].map((m) => m[0]));
+  const named = new Set(modeOf(pkg) === 'workflow' ? toBe(pkg).map((w) => w.id) : []);
   for (const id of collectIds(pkg)) {
-    if (!mdIds.has(id)) findings.push(`md: id ${id} absent from requirements.md`);
+    if (!named.has(id) && !mdIds.has(id)) findings.push(`md: id ${id} absent from requirements.md`);
   }
   const fmStatus = md.match(/^status:\s*(\S+)/m)?.[1];
   if (fmStatus !== pkg.status) findings.push(`md frontmatter status ${fmStatus} != json status ${pkg.status}`);
@@ -153,7 +157,8 @@ export function checkMdOrphanIds(pkg, md, ids) {
 export function checkPackage({ pkg, md }) {
   const schemaFindings = checkSchema(pkg);
   if (schemaFindings.length) return schemaFindings;
-  const ids = collectIds(pkg);
+  const ids = new Set([...collectIds(pkg), ...scopeIds(pkg)]);
+  const scope = checkScope(pkg, ids);
   return [
     ...checkDuplicates(pkg),
     ...checkRefs(pkg, ids),
@@ -162,5 +167,7 @@ export function checkPackage({ pkg, md }) {
     ...checkReadiness(pkg),
     ...checkMd(pkg, md),
     ...checkMdOrphanIds(pkg, md, ids),
+    ...scope,
+    ...(scope.length ? [] : checkScopeMd(pkg, md)),
   ];
 }

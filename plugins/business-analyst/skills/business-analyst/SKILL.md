@@ -31,27 +31,35 @@ Turn incomplete client input into two artifacts in the lead directory:
 1. **Detect evidence**: input documents? an existing `requirements.json`
    (re-run — see Re-run)? greenfield or existing system? State findings;
    the user can override.
-2. **Depth**: ask QUICK / STANDARD / DEEP first
-   (`references/interview.md` §6).
+2. **Depth and scope mode**: depth is STANDARD unless the user names
+   QUICK or DEEP (`references/interview.md` §6); don't ask it. Scope mode:
+   recommend one from the input, then confirm it with the user in one
+   question through the host's question tool (§7).
 3. **Extract**: pull every known goal, actor, process, rule, constraint,
    integration, and assumption from ALL inputs before asking anything.
 4. **Gap analysis**: extracted knowledge vs the nine layers
    (`references/interview.md` §4) → prioritized P1/P2/P3 gap list.
 5. **Select frameworks**: from `references/frameworks.md` — justify each
    pick in one line; never apply all.
-6. **Interview**: per `references/interview.md` — grouped, adaptive,
-   contradiction-challenging, example-hungry. Solution involves AI or
-   agents → also work through `references/ai-extension.md`.
+6. **Interview**: per `references/interview.md` — one question at a
+   time, adaptive, contradiction-challenging, example-hungry. Solution
+   involves AI or agents → also work through `references/ai-extension.md`.
 7. **Write**: requirements.md + requirements.json per
-   `references/writing.md`.
+   `references/writing.md`. Workflow mode: then run
+   `node scripts/scope.mjs --json <dir>/requirements.json --md <dir>/requirements.md`
+   (no Node → `python3 scripts/scope.py`, same flags). It writes the To-be
+   scope section; never edit that section by hand.
 8. **Validate**: `node scripts/validate.mjs --json <dir>/requirements.json
    --md <dir>/requirements.md` — fix findings, re-run until clean. No Node
    in the environment (e.g. the claude.ai sandbox) → run
    `python3 scripts/validate.py` with the same flags; identical checks.
 9. **Fresh-eyes review**: dispatch a subagent per `references/review.md`;
-   apply findings, re-validate; one cycle max.
-10. **Human review**: show Part 5 (readiness report); the human confirms
-    the status. Only they can promote it to `READY_FOR_ARCHITECTURE`.
+   apply findings, re-validate; one cycle max. No subagent available
+   (e.g. claude.ai) → run the checklist yourself and say so in Part 5.
+10. **Human review**: workflow mode → first confirm the ⚠ drafts with the
+    user (`references/interview.md` §8), then re-run `scope` and validate.
+    Show Part 5 (readiness report); the human confirms the status. Only
+    they can promote it to `READY_FOR_ARCHITECTURE`.
 
 ## Re-run
 
@@ -59,6 +67,11 @@ Turn incomplete client input into two artifacts in the lead directory:
 the registers (answer open questions, confirm assumptions, add findings),
 keep every existing ID stable, recompute readiness, and advance the status.
 Never restart the interview; ask only what is still open.
+
+Switching scope mode is a re-run: `classic → workflow` keeps every ID and
+adds systems, features and to-be workflow steps; `workflow → classic`
+removes `systems`, `features` and `scopeMode`, then `scope` removes the
+section. Run `scope` after every JSON change in workflow mode.
 
 ## Handoff
 

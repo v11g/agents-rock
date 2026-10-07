@@ -7,7 +7,10 @@ Two artifacts, always together, in the lead directory:
 
 The canonical json shape is `scripts/test/fixtures/requirements-pass.json` —
 copy its structure exactly; the validator enforces it. `schemaVersion` is
-`"1.0"`; bump only on a breaking shape change.
+`"1.0"`; bump only on a breaking shape change. Workflow scope mode:
+`scripts/test/fixtures/requirements-workflow-pass.json` adds `scopeMode`,
+`mapLabel`, `systems`, `features`, and `label`/`source`/`steps`/`branches`
+(`replaces`, `sub` optional) on to-be workflows.
 
 ## ID conventions
 
@@ -19,7 +22,8 @@ copy its structure exactly; the validator enforces it. `schemaVersion` is
 | FR- | functional requirements | CON- | constraints (hard limits) |
 | BR- | business rules | ASM- | assumptions (unverified beliefs) |
 | SC- | scenarios | Q- | open questions |
-| | | CONFLICT- | contradictions |
+| SYS- | systems (workflow mode) | CONFLICT- | contradictions |
+| FEAT- | features (workflow mode) | | |
 
 Three digits, zero-padded (`FR-001`). IDs are stable: never renumber on
 re-run; retired items keep their id with a note rather than vanishing.
@@ -67,10 +71,16 @@ readiness: <overall number>
 - **Part 2 — Process & Domain**: as-is workflows (mermaid flowchart when a
   workflow has more than one actor), decision points, business-rules table
   with concrete examples, exceptions, to-be capabilities, glossary of
-  domain terms.
+  domain terms. Workflow mode: no to-be capabilities prose — the To-be
+  scope section written by `scripts/scope.mjs` replaces it (systems table,
+  then per system its workflows as mermaid and a feature table; no ids;
+  ⚠ on drafted items). Frontmatter gains `scopeMode: workflow`.
 - **Part 3 — Requirements**: scope (out / future / unconfirmed — in-scope
   is the FR table itself), actors and permissions, FR table (id, text,
-  label, scope), NFRs, data, integrations, dependencies.
+  label, scope; workflow mode adds a last `Feature` column — the feature
+  name(s) holding the FR, `—` when none; header starts
+  `| ID | Requirement |`, which the validator looks for), NFRs, data,
+  integrations, dependencies.
 - **Part 4 — Acceptance Scenarios**: per critical FR a given/when/then
   table; input → expected tables for rule-heavy requirements.
 - **Part 5 — Readiness Report**: readiness per area and overall, open

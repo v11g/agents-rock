@@ -3,6 +3,7 @@ plugins/**/.claude-plugin/*.*
 !.claude-plugin
 
 node_modules/
+__pycache__/
 dist/
 build/
 !plugins/solution-architect/skills/new-lead/scripts/test/fixtures/root/acme-crm/dist/

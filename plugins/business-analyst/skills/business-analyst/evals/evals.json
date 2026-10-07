@@ -5,7 +5,7 @@
       "id": 0,
       "name": "thin-warehouse-brief-gate-check",
       "prompt": "Dana at Havenridge Logistics has been emailing us for two weeks about replacing their stock-count spreadsheet and I finally got the whole thread exported — it's in havenridge-thread.md. Sales wants something to take to her board on the 24th. Can you run discovery on this and start the requirements package in leads/havenridge/? Fair warning, it's thin — I don't think she's told us half of what we need.",
-      "expected_output": "Extracts what the thread actually contains, then stops and asks: depth mode, and a grounded set of P1 questions quoting Dana's own lines. The supervisor-only-adjust statement (3 Sep) versus the anyone-on-the-floor statement (5 Sep) is recorded as an open contradiction, not silently reconciled. Sage 200 direction, the missing role set, budget, volumes and a real go-live date are asked for, never filled in. Any package written stays DRAFT/CLARIFICATION_REQUIRED.",
+      "expected_output": "Extracts what the thread actually contains, then states depth (STANDARD), confirms a recommended scope mode in one question, and asks grounded P1 questions, one per turn quoting Dana's own lines. The supervisor-only-adjust statement (3 Sep) versus the anyone-on-the-floor statement (5 Sep) is recorded as an open contradiction, not silently reconciled. Sage 200 direction, the missing role set, budget, volumes and a real go-live date are asked for, never filled in. Any package written stays DRAFT/CLARIFICATION_REQUIRED.",
       "files": [
         "plugins/business-analyst/skills/business-analyst/evals/fixtures/thin-warehouse-brief/havenridge-thread.md"
       ],

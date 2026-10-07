@@ -7,6 +7,9 @@ import math
 import re
 import sys
 
+from scope_checks import check_scope, mode_of, scope_ids, to_be
+from scope_render import check_scope_md
+
 STATUSES = ['DRAFT', 'CLARIFICATION_REQUIRED', 'ANALYZED', 'VALIDATED', 'READY_FOR_ARCHITECTURE']
 DEPTHS = ['QUICK', 'STANDARD', 'DEEP']
 MODES = ['greenfield', 'existing']
@@ -228,8 +231,9 @@ def check_md(pkg, md):
         elif not bodies[key].strip():
             findings.append(f'md: empty section "## {part}"')
     md_ids = {m.group(0) for m in ID_TOKEN.finditer(md)}
+    named = {w['id'] for w in to_be(pkg)} if mode_of(pkg) == 'workflow' else set()
     for rid in collect_ids(pkg):
-        if rid not in md_ids:
+        if rid not in named and rid not in md_ids:
             findings.append(f'md: id {rid} absent from requirements.md')
     fm_status = frontmatter(md, 'status')
     if fm_status != pkg.get('status'):
@@ -253,7 +257,8 @@ def check_package(pkg, md):
     schema_findings = check_schema(pkg)
     if schema_findings:
         return schema_findings
-    ids = set(collect_ids(pkg))
+    ids = set(collect_ids(pkg)) | set(scope_ids(pkg))
+    scope = check_scope(pkg, ids)
     return [
         *check_duplicates(pkg),
         *check_refs(pkg, ids),
@@ -262,6 +267,8 @@ def check_package(pkg, md):
         *check_readiness(pkg),
         *check_md(pkg, md),
         *check_md_orphan_ids(None, md, ids),
+        *scope,
+        *([] if scope else check_scope_md(pkg, md)),
     ]
 
 
