@@ -180,7 +180,7 @@ test('SKILL.md points the interview at the scoring guide and the review script',
 // the page embeds (Project Roll-up F11:F15, rows in CONTEXT_FACTORS order).
 // Read them from those bytes so the rubric cannot drift from the workbook.
 function rollupDefinitions() {
-  const html = readFileSync(new URL('../../assets/estimate-template.html', import.meta.url), 'utf8');
+  const html = readFileSync(new URL('../../../shared/assets/xlsx-export.js', import.meta.url), 'utf8');
   const files = readZip(Buffer.from(/const XLSX_TEMPLATE = '([^']+)'/.exec(html)[1], 'base64'));
   const strings = [...files.get('xl/sharedStrings.xml').toString('utf8').matchAll(/<si>([\s\S]*?)<\/si>/g)]
     .map((m) => [...m[1].matchAll(/<t[^>]*>([^<]*)<\/t>/g)].map((t) => t[1]).join('').replace(/&amp;/g, '&'));

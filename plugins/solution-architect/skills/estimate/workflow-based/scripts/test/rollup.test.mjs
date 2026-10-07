@@ -70,3 +70,11 @@ test('price equals the shared project roll-up over the same five features', () =
   assert.equal(computed.price.singleNumber, Math.round(want.singleNumber * 100) / 100);
   assert.equal(Object.keys(computed.features).length, 5);
 });
+
+test('each task carries its low and high hours beside the expected', () => {
+  const { inputs, req } = loadPair(fx);
+  const t = computeWorkflowEstimation(inputs, req, []).computed.components['api.billing'].tasks['billing-match'];
+  assert.equal(t.low, 1);   // seed o 60 min, uncalibrated
+  assert.equal(t.e, 2.17);  // PERT of 60/120/240 min
+  assert.equal(t.high, 4);  // seed p 240 min
+});

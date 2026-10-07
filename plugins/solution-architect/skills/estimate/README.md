@@ -8,9 +8,15 @@ interactive page.
 `SKILL.md` routes on `requirements.json#scopeMode`: `classic/` is the
 interview-driven flow (today's behaviour), `workflow-based/` prices the
 business-analyst features and links them to components. Shared pricing
-lives in `shared/lib/`. Commands below are the classic ones; prefix
-`workflow-based/` for workflow mode (`compute.mjs`, `validate.mjs`,
-`score-review.mjs`).
+lives in `shared/lib/`.
+Commands below are the classic ones; prefix `workflow-based/` for workflow
+mode (`compute.mjs`, `validate.mjs`, `score-review.mjs`, `render.mjs`), whose
+render writes two internal pages into the lead's `dist/`: `estimate.html`
+(Workflow-based) and `estimate-components.html` (Component-based, with the
+xlsx download). The xlsx export itself lives in `shared/assets/xlsx-export.js`.
+In workflow mode the workbook adds a SYSTEM / MODULE column (rows grouped by
+system) from `workflow-based/assets/estimator-system.xlsx`; rebuild it with
+`/usr/bin/python3 workflow-based/scripts/build-xlsx-template.py` (needs LibreOffice).
 
 ## What it produces
 

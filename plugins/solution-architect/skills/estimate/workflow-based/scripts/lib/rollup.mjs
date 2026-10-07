@@ -40,7 +40,7 @@ function componentRow(c, ctx) {
   let hours = 0; let low = 0; let high = 0;
   for (const task of c.tasks ?? []) {
     const a = agenticTask(task, ctx.agentic);
-    tasks[task.id] = { e: round2(a.e), sigma: round2(a.sigma), confidence: a.confidence, calibrated: a.calibrated, matchLevel: a.matchLevel };
+    tasks[task.id] = { e: round2(a.e), low: round2(a.lowH), high: round2(a.highH), sigma: round2(a.sigma), confidence: a.confidence, calibrated: a.calibrated, matchLevel: a.matchLevel };
     hours += a.e; low += a.lowH; high += a.highH;
   }
   return {

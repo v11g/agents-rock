@@ -48,6 +48,13 @@ function checkAssumptions(inputs, out) {
   });
 }
 
+// Commercial exclusions the BA never writes (hosting, support, security testing);
+// the page lists them after requirements.json scope.out (spec 3 E3).
+function checkExclusions(inputs, out) {
+  if (!('exclusions' in inputs)) return;
+  if (!(Array.isArray(inputs.exclusions) && inputs.exclusions.every(nonEmpty))) out.push('exclusions must be a list of non-empty strings');
+}
+
 export function checkWorkflowInputs(inputs, req) {
   const out = [];
   checkMode(inputs, req, out);
@@ -58,5 +65,6 @@ export function checkWorkflowInputs(inputs, req) {
   checkContext(inputs, out, { required: true });
   checkFamiliarity(inputs, out);
   checkAssumptions(inputs, out);
+  checkExclusions(inputs, out);
   return out;
 }

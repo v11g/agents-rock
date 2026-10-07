@@ -8,7 +8,7 @@ import { SCORE_FACTORS } from '../../../shared/lib/scoring.mjs';
 
 const flow = (w) => ({ id: w.id, name: w.name, steps: w.steps ?? [], branches: w.branches ?? [] });
 
-function systemData(s, req) {
+export function systemData(s, req) {
   const [main, ...subs] = (s.workflows ?? []).map((id) => flow(req.workflows[id]));
   const features = (s.features ?? []).map((id) => {
     const f = req.features[id];
@@ -19,6 +19,8 @@ function systemData(s, req) {
 
 // Saved browser state is keyed to this, so stale edits never outlive a rebuild.
 const fingerprint = (v) => createHash('sha256').update(JSON.stringify(v)).digest('hex').slice(0, 12);
+
+export const MATH_EXPORTS = ['WEIGHTS', 'BANDS', 'MODEL_PARAMS', 'weightedScore', 'bandFor', 'pointEstimate', 'spreadFor', 'featurePrice'];
 
 const isParent = (c, components) => components.some((x) => x.parent === c.id);
 
@@ -32,6 +34,8 @@ export function pageData({ inputs, req, guide }) {
     eng: comps.map((c) => ({
       id: c.id, name: c.name, container: c.parent ? nameOf[c.parent] : c.name, milestone: c.milestone ?? '', does: c.notEstimated ?? '',
     })),
+    arch: 'index.html',
+    c3: Object.fromEntries(inputs.components.filter((c) => isParent(c, inputs.components)).map((c) => [c.name, c.id])),
     implements: implementsMap, scores, anchor: guide, baseline: fingerprint([scores, implementsMap]),
   };
 }
@@ -42,7 +46,7 @@ export function toHtml({ inputs, req, guide, template, mathSrc }) {
     slots: {
       TITLE: inputs.project,
       DATA: JSON.stringify(pageData({ inputs, req, guide })).replaceAll('</script', '<\\/script'),
-      MATH: inlineModule(extractExports(mathSrc, ['WEIGHTS', 'BANDS', 'MODEL_PARAMS', 'weightedScore', 'bandFor', 'pointEstimate', 'spreadFor', 'featurePrice'])),
+      MATH: inlineModule(extractExports(mathSrc, MATH_EXPORTS)),
     },
   });
 }

@@ -42,6 +42,8 @@ const CASES = [
   ['W8 tasks on a container', (i) => { comp(i, 'api').tasks = [{ id: 'x' }]; }, 'component api: tasks need a builds entry'],
   ['W8 notEstimated with builds', (i) => { comp(i, 'api.billing').notEstimated = 'x'; }, 'component api.billing: notEstimated but builds features'],
   ['components missing', (i) => { delete i.components; }, 'components roster is required in workflow mode'],
+  ['W12 exclusions not a list', (i) => { i.exclusions = 'hosting'; }, 'exclusions must be a list of non-empty strings'],
+  ['W12 empty exclusion', (i) => { i.exclusions = ['']; }, 'exclusions must be a list of non-empty strings'],
 ];
 
 for (const [name, mutate, expected] of CASES) {

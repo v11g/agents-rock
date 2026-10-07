@@ -75,5 +75,6 @@
   "assumptions": [
     { "text": "InvoiceNow is a data model only, with no live connection", "impactIfWrong": "a live Access Point link is a separate feature", "source": "ASM-005" },
     { "text": "Label printers accept ZPL over the LAN", "impactIfWrong": "printer bridge work added", "source": "new" }
-  ]
+  ],
+  "exclusions": ["Hosting and third-party subscription fees"]
 }

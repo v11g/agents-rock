@@ -62,9 +62,9 @@ test('render refuses a deliverable that fails validation', () => {
   assert.throws(() => execFileSync('node', [cli, '--json', json, '--md', failMd, '--out', dir]));
 });
 
-test('template carries exactly the five slots and no external URLs', () => {
+test('template carries exactly the six slots and no external URLs', () => {
   const markers = [...tpl().matchAll(/<!-- slot:(\w+) -->/g)].map((m) => m[1]).sort();
-  assert.deepEqual([...new Set(markers)], ['DATA', 'FONTS', 'GUIDE', 'TITLE', 'VIEWER']);
+  assert.deepEqual([...new Set(markers)], ['DATA', 'FONTS', 'GUIDE', 'TITLE', 'VIEWER', 'XLSX']);
   // openxmlformats URIs are XML namespace identifiers the xlsx export writes
   // into generated sheets — never fetched, so the page stays self-contained.
   assert.doesNotMatch(tpl(), /https?:\/\/(?!www\.w3\.org|schemas\.openxmlformats\.org)/);

@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title><!-- slot:TITLE --> — score review</title>
+<title><!-- slot:TITLE --> — estimate (component-based)</title>
 <style>
 :root {
   color-scheme:light;
@@ -308,21 +308,93 @@ textarea, input, select { font-size:.92rem; }
 @media (prefers-color-scheme:dark) { :root:not([data-theme="light"]) { color-scheme:dark; } }
 :root[data-theme="dark"] { color-scheme:dark; }
 select option, select optgroup { background:var(--sheet); color:var(--ink); }
+
+:root { --c1:#44586a; --c2:#7d96ab; }
+@media (prefers-color-scheme:dark) { :root:not([data-theme="light"]) { --c1:#bacdda; --c2:#8fa8bb; } }
+:root[data-theme="dark"] { --c1:#bacdda; --c2:#8fa8bb; }
+section.card { background:var(--sheet); border:1px solid var(--rule); padding:1.3rem 1.4rem; margin-bottom:1.4rem; scroll-margin-top:3.5rem; }
+section.card h2 { margin-bottom:.2rem; }
+.sec-lead { margin:0 0 1rem; color:var(--ink-dim); max-width:72ch; font-size:.84rem; }
+section.card h3 { font-size:.74rem; letter-spacing:.07em; text-transform:uppercase; color:var(--ink-dim); margin:1.2rem 0 .5rem; font-weight:700; }
+section.card .internal { all:unset; display:revert; }
+.num { font-variant-numeric:tabular-nums; }
+.head-ctl { display:flex; gap:.5rem; align-items:center; }
+.view.pages a { display:inline-block; text-decoration:none; color:var(--ink-dim); background:var(--sheet); font-size:.78rem; font-weight:600; padding:.3rem .75rem; border-left:1px solid var(--rule); }
+.view.pages a:first-child { border-left:0; }
+.view.pages a[aria-current="page"] { background:var(--ink); color:var(--sheet); }
+.bar { display:none; }
+body { padding-bottom:3rem; }
+.pinbar { bottom:1.2rem; }
+/* summary */
+.headline { display:grid; grid-template-columns:1.4fr 1fr 1fr 1fr; border:1px solid var(--rule); }
+.headline > div { padding:.9rem 1.1rem; border-left:1px solid var(--rule); }
+.headline > div:first-child { border-left:0; background:var(--paper); }
+.headline b { display:block; font-family:var(--serif); font-size:1.5rem; font-variant-numeric:tabular-nums; line-height:1.2; }
+.headline .big b { font-size:2rem; }
+.headline span { font-size:.74rem; color:var(--ink-dim); }
+.buildup { margin-top:1.2rem; }
+.bu-row { display:grid; grid-template-columns:16rem 1fr 7rem; gap:.8rem; align-items:center; padding:.25rem 0; font-size:.84rem; }
+.bu-row .lbl small { display:block; color:var(--ink-dim); font-size:.72rem; }
+.bu-bar { height:1.1rem; position:relative; background:var(--grid); border-radius:.15rem; }
+.bu-bar i { position:absolute; top:0; bottom:0; border-radius:.15rem; background:var(--c2); }
+.bu-row.total { border-top:1px solid var(--rule); margin-top:.3rem; padding-top:.5rem; font-weight:700; }
+.bu-row.total .bu-bar i { background:var(--c1); }
+.bu-row .amt { text-align:right; font-variant-numeric:tabular-nums; }
+.bu-row.range .bu-bar i { background:repeating-linear-gradient(90deg,var(--hi-line) 0 6px,transparent 6px 9px); opacity:.8; }
+
+/* roadmap */
+.ms { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:.9rem; }
+.m { border:1px solid var(--rule); border-radius:.3rem; padding:.9rem 1rem; }
+.m h4 { margin:.1rem 0 .3rem; font-family:var(--serif); font-size:1.05rem; }
+.m .demo { font-size:.8rem; color:var(--ink-dim); margin:0 0 .6rem; }
+.m .amt { font-variant-numeric:tabular-nums; font-size:.84rem; margin-bottom:.5rem; } .m .amt b { font-family:var(--serif); font-size:1.15rem; }
+.m .chip { cursor:pointer; }
+
+/* register + method */
+.twocol { display:grid; grid-template-columns:1fr 1fr; gap:1.4rem; }
+.twocol ul { margin:.2rem 0; padding-left:1.1rem; } .twocol li { margin:.25rem 0; font-size:.84rem; }
+table.kv { width:100%; border-collapse:collapse; font-size:.82rem; }
+table.kv td, table.kv th { padding:.35rem .5rem; border-bottom:1px solid var(--grid); text-align:left; }
+table.kv th { font-size:.7rem; text-transform:uppercase; letter-spacing:.05em; color:var(--ink-dim); font-weight:600; border-bottom-color:var(--rule); }
+table.kv td.r, table.kv th.r { text-align:right; font-variant-numeric:tabular-nums; }
+table.kv tr.sum td { font-weight:700; border-top:1px solid var(--rule); }
+
+
+.factor.ro .ro-n { font-family:var(--serif); font-size:1.6rem; font-weight:600; line-height:1.1; margin:.25rem 0 .3rem; font-variant-numeric:tabular-nums; }
+.factor.ro .ro-n span { font-size:.8rem; color:var(--ink-dim); margin-left:.1rem; }
+.factor.ro .ro-n.hot { color:var(--mark); }
+body:not(.side-effort-on) .side-effort, body.side-effort-on .side-score { display:none !important; }
+nav.sys .navrow:first-child { gap:.6rem; }
+.effort { text-align:right; } .effort b { display:block; font-family:var(--serif); font-size:1.5rem; font-variant-numeric:tabular-nums; } .effort span { font-size:.74rem; color:var(--ink-dim); }
+table.caps th.c, table.caps td.c { text-align:center; } table.caps td.r, table.caps th.r { text-align:right; font-variant-numeric:tabular-nums; white-space:nowrap; }
+.flag { font-size:.75rem; color:var(--hi-line); font-weight:700; }
+details.tasks { margin-top:.7rem; border:1px solid var(--grid); border-radius:.3rem; background:var(--paper); }
+details.tasks summary { cursor:pointer; padding:.45rem .7rem; font-size:.76rem; font-weight:700; letter-spacing:.04em; text-transform:uppercase; color:var(--ink-dim); }
+details.tasks table { width:100%; border-collapse:collapse; font-size:.8rem; }
+details.tasks th { text-align:left; font-size:.68rem; text-transform:uppercase; letter-spacing:.05em; color:var(--ink-dim); padding:.3rem .7rem; border-top:1px solid var(--rule); }
+details.tasks td { padding:.35rem .7rem; border-top:1px solid var(--grid); vertical-align:top; }
+details.tasks .r { text-align:right; font-variant-numeric:tabular-nums; white-space:nowrap; }
+details.tasks td .dim { font-size:.72rem; }
+.conf { font-size:.7rem; font-weight:700; } .conf.c-LOW { color:var(--mark); } .conf.c-MED { color:var(--hi-line); } .conf.c-HIGH { color:var(--ok); }
 </style>
 </head>
 <body>
 <div class="page">
     <div class="head">
     <div>
-      <h1><!-- slot:TITLE --> — score review <span class="internal">internal</span></h1>
-      <p class="sub">After the PO's scope review · <span id="subcount"></span> · weights tech 20 · size 10 · deps 20 · uncertainty 30 · risk 20</p>
+      <h1><!-- slot:TITLE --> — estimate <span class="internal">internal</span></h1>
+      <p class="sub">Component-based view · <span id="subcount"></span> · scores signed off in the score review</p>
     </div>
-    <button class="btn" id="theme" type="button">Dark</button>
+    <div class="head-ctl"><nav class="view pages" aria-label="Estimate view"><a href="estimate.html">Workflow-based</a><a href="estimate-components.html" aria-current="page">Component-based</a></nav>
+    <button class="btn" id="theme" type="button">Dark</button></div>
   </div>
-  <p class="lead">You score <b>features</b>, the business pieces from the scope review: that is what gets priced. Under each feature are the <b>components</b> that build it, so you can see what the score has to cover. A component shared with other features is a hint to check the deps score. <b>Review &amp; send</b> unlocks when every feature is built by a component.</p>
+  <p class="lead">The engineer's view of the estimate: the signed-off score review, read-only, with the price on top. <b>Scoring</b> shows each feature's scores and price; <b>Effort</b> shows the components behind it, with their hours and tasks. The client receives the proposal.</p>
+  <section class="card" id="summary"><h2>Summary</h2><p class="sec-lead">The price for this scope, from the features below.</p>
+    <div class="headline" id="headline"></div><div class="buildup" id="buildup"></div>
+    <p><button class="btn" id="xlsx" type="button" title="every feature as the v2 estimator workbook">download xlsx</button> <span class="quiet">Adjust stack familiarity or any score in the workbook; it reprices itself.</span></p></section>
   <div class="howto"><b class="howto-t">How to read this page</b>
     <div class="howto-chain"><span><b>System</b>a part of the business<small>e.g. Warehouse Mgmt System</small></span><i>→</i><span><b>Feature</b>something the client asked for<small>e.g. F04 Order intake &amp; quotation entry</small></span><i>→</i><span><b>Component</b>a piece engineers build<small>e.g. Catalogue and item identity</small></span></div>
-    <p class="howto-rule">A feature is built by one or more components, and one component can serve several features. <span class="howto-page">You score the <b>features</b>; their scores set the price. The components under each feature show what will be built and carry no price of their own.</span></p></div>
+    <p class="howto-rule">A feature is built by one or more components, and one component can serve several features. <span class="howto-page"><b>Scoring</b> shows each feature&#39;s scores and price; <b>Effort</b> the components behind it, with tasks and hours. Containers and components are the ones in the architecture document: <a class="archlink" href="index.html#panel-containers" target="_blank" rel="noopener">C2 containers ↗</a></span></p></div>
 
   <div class="strip" id="strip"></div>
   <div class="spine-wrap">
@@ -345,6 +417,13 @@ select option, select optgroup { background:var(--sheet); color:var(--ink); }
   <div id="groups"></div>
   <div id="unasked"></div>
 
+  <section class="card" id="roadmap"><h2>Milestones</h2><p class="sec-lead">Each milestone lists the client's features it finishes. Its range is its share of the build applied to the project range.</p><div class="ms" id="ms"></div></section>
+  <section class="card" id="register"><h2>Assumptions &amp; exclusions</h2><p class="sec-lead">Shared word for word with the proposal.</p>
+    <div class="twocol"><div><h3>Assumptions</h3><ul id="assume"></ul></div><div><h3>Exclusions</h3><ul id="exclude"></ul></div></div></section>
+  <section class="card" id="method"><h2>Method</h2><p class="sec-lead">Estimator v2: five weighted scores per feature price it on continuous bands; the project roll-up adds the work feature scoring never captures.</p>
+    <div class="twocol"><div><h3>Project context factors</h3><table class="kv" id="ctx"></table></div><div><h3>Work outside the features</h3><table class="kv" id="ovh"></table></div></div>
+    <div class="twocol"><div><h3>Contingency</h3><table class="kv" id="cont"></table></div><div><h3>Range</h3><table class="kv" id="rng"></table></div></div>
+    <h3>Cross-check: the engineering work behind the price</h3><p class="sec-lead">If the implied rate sits far from what the team costs, the scores or the task list need another look.</p><table class="kv" id="xcheck" style="max-width:40rem"></table></section>
   <details class="guide"><summary>Scoring guide — what each 1–5 means</summary><div id="guide"></div></details>
 </div>
 
@@ -364,6 +443,9 @@ select option, select optgroup { background:var(--sheet); color:var(--ink); }
   <button class="btn" id="pinNext" type="button" title="Next (j)">↓ Next</button>
   <button class="btn" id="pinClear" type="button" title="Esc">Clear</button>
 </div>
+<dialog id="xlsx-remind" aria-labelledby="xlsx-remind-title" style="max-width:32rem"><p><b id="xlsx-remind-title">Review the Project Roll-up tab</b></p>
+  <p>The workbook's last tab, Project Roll-up, sets the project context levels, the work outside features (foundation, QA, DevOps, PM…) and contingency. These change the final cost. Review and update them before you use the workbook's price.</p>
+  <div class="dlg-foot"><form method="dialog"><button class="btn primary">Got it</button></form></div></dialog>
 <dialog id="dlg"><p><b>Your changes, before you send them</b></p><div class="sum" id="sum"></div>
   <div id="sendable">
     <p class="quiet" style="margin:.8rem 0 0">Feedback block — paste this into the chat. The agent asks why for every score you moved.</p>
@@ -376,9 +458,9 @@ select option, select optgroup { background:var(--sheet); color:var(--ink); }
 <script type="application/json" id="page-data"><!-- slot:DATA --></script>
 <script type="module">
 const PAGE = JSON.parse(document.getElementById('page-data').textContent);
-const DATA = PAGE.data; const ENG = PAGE.eng; const IMPLEMENTS = PAGE.implements; const CAP_SCORES = PAGE.scores; const TASKS = {};
+const DATA = PAGE.data; const ENG = PAGE.eng; const IMPLEMENTS = PAGE.implements; const CAP_SCORES = PAGE.scores; const TASKS = PAGE.tasks;
 // FINAL: the Component-based page of the estimate, the same layout read-only after sign-off, plus tasks and hours
-const FINAL = false;
+const FINAL = true;
 const K = ['tech', 'size', 'deps', 'unc', 'risk'];
 const LABEL = { tech: 'Tech', size: 'Size', deps: 'Deps', unc: 'Uncertainty', risk: 'Risk' };
 const ANCHOR = PAGE.anchor;
@@ -481,11 +563,11 @@ function capHtml(c) {
     <div class="side-score"><div class="factors">${K.map((k) => factorHtml(c, k)).join('')}</div>${note}</div></article>`;
 }
 // ---- components: tasks and hours (Component-based page only) ----
-const pert = ([, o, m, pp]) => (o + 4 * m + pp) / 6;
+const pert = (x) => x[2]; // expected hours from estimation.json (agentic baselines)
 const hoursOf = (id) => Math.round((typeof TASKS === 'undefined' ? [] : TASKS[id] || []).reduce((n, x) => n + pert(x), 0));
 function tasksHtml(b) {
   const ts = TASKS[b.id] || [];
-  return `<details class="tasks side-effort"><summary>${esc(b.name)} · ${ts.length} tasks · ${hoursOf(b.id)}h expected</summary><table><tr><th>Task</th><th class="r">O / M / P h</th><th class="r">Expected</th><th>Confidence</th></tr>${ts.map((x) =>
+  return `<details class="tasks side-effort"><summary>${esc(b.name)} · ${ts.length} tasks · ${hoursOf(b.id)}h expected</summary><table><tr><th>Task</th><th class="r">Low / Expected / High h</th><th class="r">Expected</th><th>Confidence</th></tr>${ts.map((x) =>
     `<tr><td>${esc(x[0])}${x[5] ? `<div class="dim">${esc(x[5])}</div>` : ''}</td><td class="r">${x[1]} / ${x[2]} / ${x[3]}</td><td class="r"><b>${Math.round(pert(x))}h</b></td><td><span class="conf c-${x[4]}">${x[4]}</span></td></tr>`).join('')}</table></details>`;
 }
 // the architecture document holds the C4 views; this page links there instead of redrawing them.
@@ -833,6 +915,80 @@ function pinFromHash() {
 }
 if (FINAL) addEventListener('hashchange', pinFromHash);
 draw().then(() => { if (FINAL) setTimeout(pinFromHash, 150); });
+// ---- price sections, shared by the Workflow-based and Component-based pages ----
+// Every amount arrives computed in PAGE (scripts/lib/page-view.mjs); this
+// formats and places them and prices nothing.
+const viewMoney = (n) => `${PAGE.currency === 'USD' ? '$' : `${PAGE.currency} `}${Math.round(n).toLocaleString('en-US')}`;
+const viewKv = (rows, sum) => rows.map(([a, b]) => `<tr><td>${a}</td><td class="r">${b}</td></tr>`).join('')
+  + `<tr class="sum"><td>${sum[0]}</td><td class="r">${sum[1]}</td></tr>`;
+function viewBuRow(r, max) {
+  return `<div class="bu-row ${r.cls ?? ''}"><div class="lbl">${r.lbl}<small>${r.note}</small></div>
+    <div class="bu-bar"><i style="left:${r.from / max * 100}%;width:${Math.max(0.4, (r.to - r.from) / max * 100)}%"></i></div><div class="amt">${r.amt}</div></div>`;
+}
+function viewHeadline(p) {
+  $('#headline').innerHTML = `<div class="big"><span>Range to present</span><b>${viewMoney(p.presentLow)} – ${viewMoney(p.presentHigh)}</b><span>expected cost to worst realistic case</span></div>
+    <div><span>If one fixed number is unavoidable</span><b>${viewMoney(p.singleNumber)}</b><span>confident figure (80% chance at or under)</span></div>
+    <div><span>Expected cost</span><b>${viewMoney(p.p50)}</b><span>half the time lower, half higher</span></div>
+    <div><span>Implied accuracy</span><b>±${Math.round(p.impliedAccuracy * 100)}%</b><span>under 30%: a ballpark you can quote</span></div>`;
+}
+function viewSummary(v) {
+  const p = v.price; const base = p.adjustedBase; const out = base + p.overheads.amount;
+  viewHeadline(p);
+  const rows = [
+    { lbl: 'Feature build', note: `${v.featureCount} scored features`, from: 0, to: p.featurePoints, amt: viewMoney(p.featurePoints) },
+    { lbl: `× ${p.contextMultiplier.toFixed(2)} project context`, note: 'spec quality, decisions, compliance, familiarity', from: p.featurePoints, to: base, amt: `+${viewMoney(base - p.featurePoints)}` },
+    { lbl: `+ ${Math.round(p.overheads.totalPct * 100)}% work outside features`, note: 'foundation, discovery, UX, QA, DevOps, docs, PM, integration', from: base, to: out, amt: `+${viewMoney(p.overheads.amount)}` },
+    { lbl: `+ ${(p.contingencyRate * 100).toFixed(1)}% contingency`, note: 'known unknowns inside the agreed scope', from: out, to: p.p50, amt: `+${viewMoney(p.contingencyAmount)}` },
+    { lbl: '= Expected cost', note: '', from: 0, to: p.p50, amt: viewMoney(p.p50), cls: 'total' },
+    { lbl: 'Range to present', note: 'expected cost → worst realistic case, rounded up to 500', from: p.presentLow, to: p.presentHigh, amt: `${viewMoney(p.presentLow)}–${viewMoney(p.presentHigh)}`, cls: 'range' },
+  ];
+  $('#buildup').innerHTML = `<h3>How the price builds up</h3>${rows.map((r) => viewBuRow(r, p.presentHigh || 1)).join('')}`;
+}
+function viewMs(m) {
+  const n = m.features.length;
+  return `<div class="m"><div class="dim num">${n} feature${n === 1 ? '' : 's'} finished<span class="internal"> · ${m.components} components</span></div>
+    <h4>${esc(m.title)}</h4>
+    <div class="amt internal"><b>${viewMoney(m.low)}–${viewMoney(m.high)}</b> · ${Math.round(m.share * 100)}% of the build</div>
+    <div>${m.features.map((f) => `<span class="chip" data-f="${esc(f.id)}" title="${esc(f.system ?? '')}">${esc(f.name)}</span>`).join('')}</div></div>`;
+}
+function viewRoadmap(page) {
+  $('#ms').innerHTML = page.milestones.map(viewMs).join('');
+  $('#assume').innerHTML = page.register.assumptions.map((a) => `<li>${esc(a)}</li>`).join('');
+  $('#exclude').innerHTML = page.register.exclusions.map((a) => `<li>${esc(a)}</li>`).join('');
+}
+function viewContext(v) {
+  $('#ctx').innerHTML = `<tr><th>Factor</th><th>Level</th><th class="r">Multiplier</th></tr>${v.context.map((c) =>
+    `<tr><td>${esc(c.label)}</td><td>${c.level} · ${esc(c.anchor)}</td><td class="r">${c.multiplier.toFixed(2)}</td></tr>`).join('')}
+    <tr class="sum"><td colspan="2">Composite (1 + sum of deviations, cap 2.5)</td><td class="r">${v.price.contextMultiplier.toFixed(2)}</td></tr>`;
+}
+function viewOverheads(v) {
+  const o = v.price.overheads;
+  $('#ovh').innerHTML = `<tr><th>Cost line</th><th class="r">% of base</th><th class="r">Amount</th></tr>${v.overheads.map((r) =>
+    `<tr><td>${esc(r.label)}</td><td class="r">${Math.round(r.pct * 100)}%</td><td class="r">${viewMoney(r.amount)}</td></tr>`).join('')}
+    <tr class="sum"><td>Total</td><td class="r">${Math.round(o.totalPct * 100)}%</td><td class="r">${viewMoney(o.amount)}</td></tr>`;
+}
+function viewMethod(v) {
+  const p = v.price; const e = v.effort;
+  viewContext(v); viewOverheads(v);
+  $('#cont').innerHTML = viewKv([['Average uncertainty across features', v.avgUnc.toFixed(2)], ['Average risk across features', v.avgRisk.toFixed(2)],
+    ['Rate: 5% + 2% × uncertainty + 2% × risk', `${(p.contingencyRate * 100).toFixed(1)}%`]], ['On build + outside work', viewMoney(p.contingencyAmount)]);
+  $('#rng').innerHTML = viewKv([['Optimistic (20% chance at or under)', viewMoney(p.p20)], ['Expected cost', viewMoney(p.p50)],
+    ['Confident (80%)', viewMoney(p.p80)], ['Worst realistic case (95%)', viewMoney(p.p95)]],
+  ['Presented: expected → worst, rounded up to 500', `${viewMoney(p.presentLow)}–${viewMoney(p.presentHigh)}`]);
+  $('#xcheck').innerHTML = viewKv([['Components', e.components], ['Tasks', e.tasks], ['Expected effort (agentic baselines)', `${Math.round(e.hours).toLocaleString('en-US')}h`]],
+    ['Implied rate at the expected cost', e.rate === null ? '—' : `${viewMoney(e.rate)}/h`]);
+}
+
+viewSummary(PAGE.view); viewRoadmap(PAGE); viewMethod(PAGE.view);
+const XLSX_SOURCE = {
+  rows: () => PAGE.xlsx.rows, container: (row) => row.container, levels: () => PAGE.xlsx.levels,
+  template: () => PAGE.xlsx.template, system: (row) => row.system, // the SYSTEM / MODULE workbook (estimator-system.xlsx)
+  register: () => PAGE.xlsx.register, // project name, assumptions, exclusions
+};
+{ // the shared workbook export, block-scoped so its helpers never collide with this page's
+<!-- slot:XLSX -->
+}
+$('#xlsx').onclick = () => { window.__downloadXlsx(); $('#xlsx-remind').showModal(); }; // the download runs on; the reminder shows meanwhile
 </script>
 </body>
 </html>

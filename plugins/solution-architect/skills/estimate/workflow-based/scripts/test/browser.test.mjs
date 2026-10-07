@@ -101,3 +101,12 @@ test('prices are the shared featurePrice, never NaN', { skip }, async () => {
     assert.equal(await page.eval(`document.querySelector('[data-sub="SYS-001"] .side-score b').textContent`), want);
   } finally { await page.close(); }
 });
+
+test('architecture links come from the roster', { skip }, async () => {
+  const page = await openPage(buildPage());
+  try {
+    await settle();
+    const hrefs = await page.eval(`JSON.stringify([...document.querySelectorAll('#c-FEAT-001 a.archlink')].map((a) => a.getAttribute('href')))`);
+    assert.deepEqual(JSON.parse(hrefs), ['index.html#panel-components-api', 'index.html#panel-containers']);
+  } finally { await page.close(); }
+});

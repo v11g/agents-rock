@@ -46,10 +46,3 @@ test('validate exits 0 on a clean pair and 1 when estimation.json is stale', () 
   assert.equal(stale.status, 1);
   assert.match(String(stale.stderr), /computed block differs from a fresh recompute/);
 });
-
-test('render refuses in workflow mode until spec 3', () => {
-  const dir = stage();
-  const r = spawnSync('node', [script('render'), '--json', join(dir, 'estimation.json'), '--out', dir]);
-  assert.equal(r.status, 2);
-  assert.match(String(r.stderr), /pages come in spec 3/);
-});

@@ -60,7 +60,7 @@
       "id": 3,
       "name": "workflow-happy-path",
       "prompt": "The BA package for sin-kowa-mini is done and the PO signed off the scope (requirements.json, requirements.md). The architecture document is in ARCHITECTURE.md — I reviewed it myself this morning. Give me the estimate.",
-      "expected_output": "The skill detects scopeMode \"workflow\" and follows workflow-based/FLOW.md. It asks exactly one gate question (has a human reviewed ARCHITECTURE.md?) and, after the user says yes, links every feature to §6 components with a why each, runs the review-links workflow (or, when the Workflow tool is unavailable in this sandbox, stops with the exact /config message and writes nothing), scores the five features, writes the score review page, and ends with the closing AskUserQuestion. It never asks about depth, delivery mode, agent/model, scope confirmation, milestones, review channel, stack familiarity, deadline or budget. estimation-inputs.json carries features with ids and scores only; components carry builds, tasks and milestones.",
+      "expected_output": "The skill detects scopeMode \"workflow\" and follows workflow-based/FLOW.md. It asks exactly one gate question (has a human reviewed ARCHITECTURE.md?) and, after the user says yes, links every feature to §6 components with a why each, runs the review-links workflow (or, when the Workflow tool is unavailable in this sandbox, stops with the exact /config message and writes nothing), scores the five features, writes the score review page, renders estimate.html and estimate-components.html into dist/, and ends with the closing AskUserQuestion naming both pages. It never asks about depth, delivery mode, agent/model, scope confirmation, milestones, review channel, stack familiarity, deadline or budget. estimation-inputs.json carries features with ids and scores only; components carry builds, tasks and milestones.",
       "files": [
         "evals/fixtures/workflow-sin-kowa-mini/requirements.json",
         "evals/fixtures/workflow-sin-kowa-mini/requirements.md",
@@ -73,7 +73,7 @@
         "features-are-ids-and-scores: when estimation-inputs.json exists, every features[] entry has id, scores (five factors with n, anchor, cite), scoreNote and scoreProvenance and none of tasks, component, milestone, provenance",
         "components-carry-the-work: when estimation-inputs.json exists, every component with builds has a non-empty why on each build, a milestone, and at least one agentic task with shape and seedMinutes; a component with no builds has notEstimated",
         "validate-clean: when estimation.json exists, `node workflow-based/scripts/validate.mjs --inputs estimation-inputs.json --json estimation.json` exits 0",
-        "no-pages: no estimate.html or estimation.md was written; if render was attempted the reply says pages come in spec 3"
+        "pages-written: when estimation.json exists, dist/estimate.html and dist/estimate-components.html exist, no estimation.md was written, and the closing question names both page URLs"
       ]
     },
     {
@@ -88,7 +88,7 @@
       "assertions": [
         "stops-at-gate: the reply says workflow mode needs the architecture document and to run it first",
         "no-classic-fallback: no QUICK/STANDARD/DEEP question, no technique menu, no clear-vs-assumed gate",
-        "nothing-written: no estimation-inputs.json, estimation.json, scores-review.html or estimate.html exists after the run"
+        "nothing-written: no estimation-inputs.json, estimation.json, dist/score-review.html, dist/estimate.html or dist/estimate-components.html exists after the run"
       ]
     }
   ]

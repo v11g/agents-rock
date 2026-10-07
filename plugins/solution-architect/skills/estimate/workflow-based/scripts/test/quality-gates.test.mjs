@@ -18,3 +18,8 @@ for (const { file, js } of templateScripts(base)) {
     assert.deepEqual(violations(js, TEMPLATE_LIMITS), []);
   });
 }
+
+const xlsxExport = new URL('../../../shared/assets/xlsx-export.js', import.meta.url).pathname;
+test('gates: shared/assets/xlsx-export.js', () => {
+  assert.deepEqual(violations(readFileSync(xlsxExport, 'utf8'), TEMPLATE_LIMITS), []);
+});

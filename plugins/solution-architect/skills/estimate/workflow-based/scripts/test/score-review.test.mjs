@@ -99,3 +99,10 @@ test('pageData baseline changes when a score or a link changes', () => {
   inputs.components.find((c) => c.id === 'office').builds.pop();
   assert.notEqual(pageData({ inputs, req, guide: loadGuide() }).baseline, moved);
 });
+
+test('page data names the architecture viewer and the containers with a C3 view', () => {
+  const { inputs, req } = loadPair(fx('inputs-pass.json'));
+  const d = pageData({ inputs, req, guide: loadGuide() });
+  assert.equal(d.arch, 'index.html');
+  assert.deepEqual(d.c3, { 'Core API': 'api', 'Background Worker': 'worker' });
+});

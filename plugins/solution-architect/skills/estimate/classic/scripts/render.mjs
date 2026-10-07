@@ -23,6 +23,7 @@ function parseArgs(argv) {
 
 const archFontsDir = new URL('../../../analyze-requirements/assets/fonts/', import.meta.url).pathname;
 const assetsDir = new URL('../assets/', import.meta.url).pathname;
+const xlsxExportPath = new URL('../../shared/assets/xlsx-export.js', import.meta.url).pathname;
 
 const args = parseArgs(process.argv.slice(2));
 const estimation = JSON.parse(readFileSync(args.json, 'utf8'));
@@ -64,7 +65,7 @@ const html = embed({
     // page's one extra slot is the rubric, which lives in
     // references/scoring-guide.md: the page shows the same sentences the
     // interviewer read, so a score means one thing.
-    ...(isAgentic ? {} : { GUIDE: guideTableHtml(loadGuide()) }),
+    ...(isAgentic ? {} : { GUIDE: guideTableHtml(loadGuide()), XLSX: readFileSync(xlsxExportPath, 'utf8') }),
   },
 });
 

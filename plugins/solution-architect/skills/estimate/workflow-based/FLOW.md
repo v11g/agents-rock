@@ -51,8 +51,9 @@ run the scripts from here.
    does (`../classic/references/interview.md` §4); `stackFamiliarity` is level 1
    with cite "not assessed — adjust in the exported workbook".
 6. **Score review (Q2).** `node scripts/score-review.mjs --write
-   estimation-inputs.json --out scores-review.html`, serve it with the
-   analyze-requirements `serve.mjs`, give the URL. When the engineer pastes
+   estimation-inputs.json --out <lead>/dist/score-review.html`, serve it with the
+   analyze-requirements `serve.mjs`, give the URL. It sits beside the
+   architecture viewer so its C2/C3 links open. When the engineer pastes
    the feedback block: save it, `node scripts/score-review.mjs --read
    feedback.json --inputs estimation-inputs.json`, apply `features`,
    `components`; for each `needsReason` entry ask once in chat why; for
@@ -62,15 +63,25 @@ run the scripts from here.
 7. **Tasks.** For every component that builds something: agentic tasks
    (`shape` from `../classic/references/task-shapes.md`, `scope`,
    `seedMinutes`), and a `milestone` ("M1 - <name>", ordered). Components
-   that build nothing get `notEstimated` with a reason.
+   that build nothing get `notEstimated` with a reason. Write
+   `exclusions` — the commercial items the price leaves out that the BA scope
+   does not name (hosting and subscriptions, post-launch support, security
+   testing, hardware), one sentence each.
 8. **Compute.** `node scripts/compute.mjs --inputs estimation-inputs.json --out estimation.json`
 9. **Validate.** `node scripts/validate.mjs --inputs estimation-inputs.json --json estimation.json` → exit 0.
-10. **Close (Q3).** AskUserQuestion: "Estimate ready: <presented range>.
+10. **Render + serve.** `node scripts/render.mjs --inputs estimation-inputs.json
+    --json estimation.json --out <lead>/dist` writes `estimate.html`
+    (Workflow-based) and `estimate-components.html` (Component-based, with
+    the xlsx download) beside the architecture viewer; it re-runs
+    validation and refuses on findings. Serve `<lead>/dist` with the
+    analyze-requirements `serve.mjs`.
+11. **Close (Q3).** AskUserQuestion: "Estimate ready: <presented range>.
     <n> features, <m> components, milestones <list>. Assumptions: <k> (<j>
-    from the BA package, <k−j> new). Anything to change?" Options: Done ·
+    from the BA package, <k−j> new). Pages: <url>/estimate.html ·
+    <url>/estimate-components.html. Anything to change?" Options: Done ·
     Change a score or a link · Add a component · Open the review page again.
-    A change → edit → steps 8–9 → ask again. Pages and estimation.md come
-    in spec 3; `scripts/render.mjs` says so.
+    A change → edit → steps 8–10 → ask again. Both pages are internal; the
+    client gets the proposal.
 
 ## Not asked, and why
 

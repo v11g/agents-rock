@@ -42,6 +42,10 @@ rep(/const WEIGHTS = \{[^\n]*\n(?:const BANDS = [^\n]*\n){1,2}[^\n]*\n?const wei
 rep('// ---- v2 pricing, transcribed from scripts/lib/pricing.mjs ----', '// ---- v2 pricing, inlined from shared/lib/pricing.mjs ----');
 rep(/function price\(s\) \{\n[\s\S]*?\n\}\n/, 'const price = (s) => featurePrice(s);\n');
 
+// ---- architecture links: from the roster, to the viewer beside the page (spec 3 E4) ----
+rep(/\/\/ the architecture document holds the C4 views[^\n]*\n\/\/ \(C3 is the Backend API[^\n]*\nconst ARCH = 'architecture\.html';\nconst archLink = [\s\S]*?\.join\(' · '\); \};\n/,
+  readFileSync(at('./template/arch-link.js'), 'utf8'));
+
 // ---- the 22-line function gate (quality-gates.test.mjs) ----
 // An apostrophe inside a template literal reads as a string quote to the gate.
 rep("data-tip=\"Each feature's scores", 'data-tip="Each feature&#39;s scores');
@@ -49,6 +53,7 @@ rep("you can't send until each", 'you can&#39;t send until each');
 rep(/document\.addEventListener\('click', \(e\) => \{\n  const b = e\.target\.closest\('\.pick button'\);[\s\S]*?\n  \}\n\}\);\n/,
   readFileSync(at('./template/click.js'), 'utf8'));
 rep("  const count = { edits: CAPS.filter((c) => isChanged(c.id)).length,", "  repaintNav();\n}\nfunction repaintNav() {\n  const count = { edits: CAPS.filter((c) => isChanged(c.id)).length,");
+rep('diagrams need a connection in this mockup', 'diagrams need a connection');
 
 const head = base.slice(0, base.indexOf('</style>')).replace('<title>Sin Kowa — score review</title>', '<title><!-- slot:TITLE --> — score review</title>');
 writeFileSync(OUT, `${head}${css}${readFileSync(`${M}reading.css`, 'utf8')}</style>\n</head>\n<body>\n${body}`);
