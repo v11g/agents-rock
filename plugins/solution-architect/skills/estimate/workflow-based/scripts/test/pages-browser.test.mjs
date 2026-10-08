@@ -162,3 +162,26 @@ test('a milestone chip whose feature is in no system hovers without errors', { s
     assert.deepEqual(page.errors, []);
   } finally { await page.close(); }
 });
+
+test('a system with no workflow gets its card and its features, no diagram, no errors', { skip }, async () => {
+  const noWorkflow = (dir) => {
+    const file = join(dir, 'requirements.json');
+    const req = JSON.parse(readFileSync(file, 'utf8'));
+    req.systems[1].features = req.systems[1].features.filter((f) => f !== 'FEAT-005');
+    req.systems.push({ id: 'SYS-003', name: 'Audit', purpose: 'Checks packs.', label: 'confirmed', source: 'PO brief', workflows: [], features: ['FEAT-005'] });
+    writeFileSync(file, JSON.stringify(req));
+    execFileSync('node', [fileURLToPath(new URL('../compute.mjs', import.meta.url)), '--inputs', join(dir, 'estimation-inputs.json'), '--out', join(dir, 'estimation.json')]);
+  };
+  const page = await openPage(pages(null, noWorkflow)('estimate.html'));
+  try {
+    await settle();
+    assert.deepEqual(page.errors, []);
+    assert.equal(await page.eval(`document.querySelectorAll('#syscards .sys').length`), 3);
+    assert.match(await text(page, '.sys[data-sys="SYS-003"] .meta'), /1 features · no workflow, features only/);
+    assert.equal(await page.eval(`document.querySelectorAll('#b-SYS-003 .flow').length`), 0);
+    assert.equal(await page.eval(`document.querySelectorAll('#b-SYS-003 tr[data-feat="FEAT-005"]').length`), 1);
+    await page.eval(`document.querySelector('.sys[data-sys="SYS-003"]').dispatchEvent(new MouseEvent('mouseover', { bubbles: true }))`);
+    await page.eval(`document.querySelector('.sys[data-sys="SYS-003"]').click()`);
+    assert.deepEqual(page.errors, []);
+  } finally { await page.close(); }
+});

@@ -43,6 +43,7 @@ rep('renderSummary(); renderSystems(); renderBreakdown(); renderRoadmap(); rende
 rep('diagrams need a connection in this mockup', 'diagrams need a connection');
 rep('if (id) return { hit: fromFeat(id)', 'if (id && byId[id]) return { hit: fromFeat(id)'); // a milestone feature in no system has no diagram steps
 rep('byId[id].sys.id === c.dataset.sys', 'byId[id]?.sys.id === c.dataset.sys');
+rep('${s.main.missing ?', "${!s.main ? 'no workflow, features only' : s.main.missing ?"); // a system with workflows: [] has no main workflow
 
 writeFileSync(OUT, html);
 console.log(OUT);

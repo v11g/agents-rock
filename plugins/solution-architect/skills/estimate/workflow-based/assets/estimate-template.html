@@ -334,7 +334,7 @@ const byId = Object.fromEntries(FEATS.map((f) => [f.id, f]));
 function renderSystems() {
   $('#syscards').innerHTML = DATA.systems.map((s, i) => {
     return `<button type="button" class="sys" data-sys="${s.id}"><div class="eyebrow">System ${i + 1}</div><h4>${esc(s.name)}</h4>
-      <div class="meta">${s.features.length} features · ${s.main.missing ? 'workflow suggested by us, confirmed by PO' : 'workflow from the PO\'s document'}${s.subs.length ? ` · ${s.subs.length} sub-workflow` : ''}</div></button>`;
+      <div class="meta">${s.features.length} features · ${!s.main ? 'no workflow, features only' : s.main.missing ? 'workflow suggested by us, confirmed by PO' : 'workflow from the PO\'s document'}${s.subs.length ? ` · ${s.subs.length} sub-workflow` : ''}</div></button>`;
   }).join('');
 }
 
