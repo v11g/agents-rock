@@ -10,7 +10,7 @@ function parseArgs(argv) {
 }
 
 const args = parseArgs(process.argv.slice(2));
-const md = readFileSync(args.md, 'utf8');
+const md = args.md ? readFileSync(args.md, 'utf8') : null;
 const pkg = JSON.parse(readFileSync(args.json, 'utf8'));
 const findings = checkPackage({ pkg, md });
 if (findings.length) {

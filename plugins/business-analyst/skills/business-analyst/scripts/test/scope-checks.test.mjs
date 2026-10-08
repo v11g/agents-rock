@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { checkPackage } from '../lib/checks.mjs';
-import { CASES, loadWorkflow } from './scope-cases.mjs';
+import { CASES, loadWorkflow, noFlows } from './scope-cases.mjs';
 
 test('the workflow pass pair has no findings', () => {
   const { pkg, md } = loadWorkflow();
@@ -24,3 +24,8 @@ for (const c of CASES) {
     assert.ok(findings.includes(c.finding), `expected "${c.finding}" in:\n${findings.join('\n')}`);
   });
 }
+
+test('a system with no workflow and features on no step are valid', () => {
+  const { pkg } = noFlows();
+  assert.deepEqual(checkPackage({ pkg, md: null }), []);
+});

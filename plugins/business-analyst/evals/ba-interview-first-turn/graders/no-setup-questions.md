@@ -9,6 +9,8 @@ client vs their own understanding).
 
 PASS if the reply asks neither. A statement of the depth ("Depth:
 STANDARD", "STANDARD, the default") is not a question. A question about
-scope mode (workflow vs classic) is allowed and does not count.
+scope mode (workflow vs classic) is allowed and does not count. A line
+inviting the user to correct the stated findings ("Correct me if any of
+this is wrong") is not a setup question.
 FAIL only if the reply asks the user to pick a depth, offers depth modes
 as choices, or asks where their answers come from.

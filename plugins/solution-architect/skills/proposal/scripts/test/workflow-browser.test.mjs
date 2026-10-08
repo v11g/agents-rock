@@ -7,6 +7,7 @@ import { pathToFileURL } from 'node:url';
 import { findChrome } from '../../../analyze-requirements/scripts/lib/chrome.mjs';
 import { openPage } from '../../../analyze-requirements/scripts/lib/cdp.mjs';
 import { readZip } from '../../../estimate/classic/scripts/test/zip.mjs';
+import { noFlowsAt } from '../../../estimate/workflow-based/scripts/test/stage.mjs';
 import { lead } from './workflow-stage.mjs';
 
 const skip = findChrome() ? false : 'no chrome on PATH';
@@ -22,8 +23,9 @@ const FAILING_STUB = 'globalThis.mermaid={cfg:{},initialize(c){this.cfg=c;},asyn
   + 'if(!this.cfg.suppressErrorRendering)el.innerHTML=\'<svg xmlns="http://www.w3.org/2000/svg" aria-roledescription="error" width="300" height="80"><text x="10" y="40">Syntax error</text></svg>\';return;}'
   + 'el.innerHTML=\'<svg xmlns="http://www.w3.org/2000/svg" width="300" height="80" viewBox="0 0 300 80"><rect x="5" y="5" width="120" height="40" fill="#eee"/></svg>\';});if(err)throw err;}};';
 
-function proposalUrl(stub = DRAWING_STUB) {
+function proposalUrl(stub = DRAWING_STUB, edit = null) {
   const l = lead();
+  if (edit) edit(l.dir);
   const bundle = join(l.dir, 'mermaid.js');
   writeFileSync(bundle, stub);
   execFileSync('node', [new URL('../render.mjs', import.meta.url).pathname, '--estimation', l.estimation, '--inputs', l.inputs,
@@ -79,5 +81,16 @@ test('a diagram that fails to draw shows its steps on the page and in the DOCX, 
     const files = readZip(Buffer.from(await page.eval('window.__buildDocx()'), 'base64'));
     assert.deepEqual([...files.keys()].filter((k) => k.startsWith('word/media/')), ['word/media/image1.png', 'word/media/image3.png']);
     assert.ok(files.get('word/document.xml').toString('utf8').includes(steps.replaceAll('&', '&amp;')));
+  } finally { await page.close(); }
+});
+
+test('a system with no workflow: one diagram fewer on the page and in the DOCX, no errors', { skip }, async () => {
+  const page = await openPage(proposalUrl(DRAWING_STUB, noFlowsAt));
+  try {
+    await settle();
+    assert.deepEqual(page.errors, []);
+    assert.equal(await page.eval('document.querySelectorAll(".mermaid-canvas svg").length'), 1);
+    const files = readZip(Buffer.from(await page.eval('window.__buildDocx()'), 'base64'));
+    assert.deepEqual([...files.keys()].filter((k) => k.startsWith('word/media/')), ['word/media/image1.png']);
   } finally { await page.close(); }
 });

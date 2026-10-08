@@ -1,5 +1,5 @@
 import { REGISTERS, STATUSES, AREAS, checkSchema } from './schema.mjs';
-import { modeOf, toBe, scopeIds } from './scope-rules.mjs';
+import { scopeIds } from './scope-rules.mjs';
 import { checkScope } from './scope-checks.mjs';
 import { checkScopeMd } from './scope-md.mjs';
 
@@ -107,7 +107,7 @@ export function checkReadiness(pkg) {
 
 const PARTS = ['Part 1', 'Part 2', 'Part 3', 'Part 4', 'Part 5'];
 const QUICK_PARTS = ['Part 1', 'Part 3', 'Part 5'];
-const ID_TOKEN = /\b(?:G|ACT|WF|FR|BR|SC|NFR|INT|DAT|CON|ASM|Q|CONFLICT)-\d{3}\b/g;
+export const ID_TOKEN = /\b(?:G|ACT|WF|FR|BR|SC|NFR|INT|DAT|CON|ASM|Q|CONFLICT|SYS|FEAT)-\d{3}\b/g;
 
 function sectionBodies(md) {
   const bodies = {};
@@ -131,9 +131,8 @@ export function checkMd(pkg, md) {
     else if (!bodies[key].trim()) findings.push(`md: empty section "## ${part}"`);
   }
   const mdIds = new Set([...md.matchAll(ID_TOKEN)].map((m) => m[0]));
-  const named = new Set(modeOf(pkg) === 'workflow' ? toBe(pkg).map((w) => w.id) : []);
-  for (const id of collectIds(pkg)) {
-    if (!named.has(id) && !mdIds.has(id)) findings.push(`md: id ${id} absent from requirements.md`);
+  for (const id of [...collectIds(pkg), ...scopeIds(pkg)]) {
+    if (!mdIds.has(id)) findings.push(`md: id ${id} absent from requirements.md`);
   }
   const fmStatus = md.match(/^status:\s*(\S+)/m)?.[1];
   if (fmStatus !== pkg.status) findings.push(`md frontmatter status ${fmStatus} != json status ${pkg.status}`);
@@ -159,15 +158,15 @@ export function checkPackage({ pkg, md }) {
   if (schemaFindings.length) return schemaFindings;
   const ids = new Set([...collectIds(pkg), ...scopeIds(pkg)]);
   const scope = checkScope(pkg, ids);
-  return [
+  const json = [
     ...checkDuplicates(pkg),
     ...checkRefs(pkg, ids),
     ...checkLabels(pkg),
     ...checkAmbiguity(pkg),
     ...checkReadiness(pkg),
-    ...checkMd(pkg, md),
-    ...checkMdOrphanIds(pkg, md, ids),
     ...scope,
-    ...(scope.length ? [] : checkScopeMd(pkg, md)),
   ];
+  // A broken scope cannot be rendered, so the md compare waits for it.
+  if (md == null) return json;
+  return [...json, ...checkMd(pkg, md), ...checkMdOrphanIds(pkg, md, ids), ...(scope.length ? [] : checkScopeMd(pkg, md))];
 }

@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { loadLead } from '../lib/workflow-lead.mjs';
 import { proposalView, flowCode } from '../lib/workflow-view.mjs';
 import { contentHtml, navHtml } from '../lib/workflow-html.mjs';
+import { noFlowsAt } from '../../../estimate/workflow-based/scripts/test/stage.mjs';
 import { lead, passInputs } from './workflow-stage.mjs';
 
 const { est, req } = loadLead(lead().estimation);
@@ -65,4 +66,13 @@ test('without a map label the scope table has one column', () => {
 test('the menu links every section in page order', () => {
   const links = [...navHtml(view()).matchAll(/href="#([\w-]+)"/g)].map((m) => m[1]);
   assert.deepEqual(links, ['scope', 'system-1', 'system-2', 'milestones', 'register', 'cost']);
+});
+
+test('a system the PO document draws no workflow for: no flows, features still listed', () => {
+  const l = lead();
+  noFlowsAt(l.dir);
+  const { est: e, req: r } = loadLead(l.estimation);
+  const v = proposalView({ est: e, req: r, inputs: passInputs() });
+  assert.deepEqual(v.systems[1].flows, []);
+  assert.deepEqual(v.systems[1].features.map((f) => f.name), ['Order intake & quotation', 'Invoice from packed quantities', 'One login, role-based screens']);
 });

@@ -19,12 +19,10 @@ export const CASES = [
   pkgCase('workflow without systems', 'scopeMode workflow needs systems and features', (p) => { delete p.systems; }),
   pkgCase('classic with systems', 'systems/features only in workflow mode', (p) => { p.scopeMode = 'classic'; }),
   pkgCase('bad feature id', 'features: bad id F-1', (p) => { p.features[0].id = 'F-1'; }),
-  pkgCase('system without workflow', 'SYS-002: needs a to-be workflow', (p) => { p.systems[1].workflows = []; }),
   pkgCase('system lists an as-is workflow', 'SYS-001: workflow WF-001 is not a to-be workflow', (p) => { p.systems[0].workflows.push('WF-001'); }),
   pkgCase('workflow in two systems', 'WF-002: belongs to SYS-001 and SYS-002', (p) => { p.systems[1].workflows.push('WF-002'); }),
   pkgCase('feature in no system', 'FEAT-002: listed by no system', (p) => { p.systems[0].features.pop(); }),
   pkgCase('unknown feature step', 'FEAT-002: unknown step WF-002:Short-pack', (p) => { p.features[1].steps = ['WF-002:Short-pack']; }),
-  pkgCase('feature without steps', 'FEAT-001: needs at least one step', (p) => { p.features[0].steps = []; }),
   pkgCase('branch from unknown step', 'WF-002: branch from unknown step Packing', (p) => { p.workflows[1].branches[0].from = 'Packing'; }),
   pkgCase('sub starts nowhere', 'WF-004: sub.startsAt unknown', (p) => { p.workflows[3].sub.startsAt = 'WF-003:Intake'; }),
   pkgCase('sub rejoins as-is', 'WF-004: sub.rejoins is not a to-be workflow', (p) => { p.workflows[3].sub.rejoins = 'WF-001'; }),
@@ -35,7 +33,7 @@ export const CASES = [
   pkgCase('tech word in name', 'FEAT-001: name uses a tech word (API)', (p) => { p.features[0].name = 'Order APIs'; }),
   pkgCase('system without source', 'SYS-001: missing source', (p) => { delete p.systems[0].source; }),
   pkgCase('illegal feature label', 'FEAT-001: illegal label "maybe"', (p) => { p.features[0].label = 'maybe'; }),
-  pkgCase('recommended without question', 'FEAT-004: recommended without a paired open question', (p) => { p.openQuestions[1].affects = ['INT-001']; }),
+  pkgCase('recommended without question', 'FEAT-004: recommended without a paired open question', (p) => { p.features[3].label = 'recommended'; p.openQuestions[0].affects = ['INT-001']; }),
   mdCase('frontmatter mode missing', 'md: scopeMode does not match json', (md) => md.replace('scopeMode: workflow\n', '')),
   mdCase('hand-edited scope', 'md: To-be scope is stale — run scope', (md) => md.replace('n3["Paid"]', 'n3["Settled"]')),
   { name: 'classic with scope section', finding: 'md: To-be scope only in workflow mode', edit: (c) => { toClassic(c.pkg); return c; } },
@@ -46,3 +44,15 @@ export const CASES = [
   mdCase('unbalanced scope markers', 'md: scope markers unbalanced', (md) => md.replace('<!-- scope:end -->', '')),
   mdCase('no Feature column', 'md: FR table has no Feature column', (md) => md.replace('| Label | Scope | Feature |', '| Label | Scope |')),
 ];
+
+// SYS-002 as an input that lists features but draws no workflow: the
+// system owns none and its features sit on no step.
+export function noFlows() {
+  const { pkg, md } = loadWorkflow();
+  const gone = new Set(['WF-003', 'WF-004']);
+  pkg.workflows = pkg.workflows.filter((w) => !gone.has(w.id));
+  pkg.systems[1].workflows = [];
+  for (const f of pkg.features.slice(2, 4)) f.steps = [];
+  for (const fr of pkg.requirements) if (gone.has(fr.traces?.workflow)) delete fr.traces.workflow;
+  return { pkg, md };
+}

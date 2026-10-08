@@ -9,8 +9,6 @@ readiness: 63
 
 # Requirements — Sin Kowa (mini)
 
-> **Product owner? Start here:** [To-be scope](#to-be-scope) shows the systems, workflows and features we propose to build. Items marked ⚠ are our draft; tell us in chat what to change.
-
 Source: PO brief, trimmed to two systems for tests.
 
 ## Part 1 — Discovery Brief
@@ -39,16 +37,16 @@ invoice raised when the paper returns.
 
 What we propose to build: 2 systems, each shown as its workflows and then the features that serve them.
 
-| System | Purpose | IMDA roadmap pillar |
-| --- | --- | --- |
-| Warehouse operations | Moves an order from intake to the dock; the one screen a warehouse worker needs. | Warehouse Automation |
-| Orders & invoicing | Quotation through to a paid invoice. | Finance/Documentation |
+| ID | System | Purpose | IMDA roadmap pillar |
+| --- | --- | --- | --- |
+| SYS-001 | Warehouse operations | Moves an order from intake to the dock; the one screen a warehouse worker needs. | Warehouse Automation |
+| SYS-002 | Orders & invoicing | Quotation through to a paid invoice. | Finance/Documentation |
 
-### Warehouse operations
+### SYS-001 Warehouse operations
 
 Moves an order from intake to the dock; the one screen a warehouse worker needs. Replaces today's "Order to invoice today".
 
-**Main workflow: Order pipeline**
+**Main workflow: WF-002 Order pipeline**
 
 ```mermaid
 flowchart LR
@@ -64,18 +62,16 @@ flowchart LR
   n4["Short-pack alert"]
 ```
 
-| Feature | What it does | Where in the workflow |
-| --- | --- | --- |
-| Order pipeline & stage engine | Moves an order through each stage, with task views per role | Order In → Pack → Pack Review → Shipped |
-| Short-pack alert | Flags an item that cannot be packed, in time to buy or cancel | Short-pack alert |
+| ID | Feature | What it does | Where in the workflow | Requirements |
+| --- | --- | --- | --- | --- |
+| FEAT-001 | Order pipeline & stage engine | Moves an order through each stage, with task views per role | Order In → Pack → Pack Review → Shipped | FR-001 |
+| FEAT-002 | Short-pack alert | Flags an item that cannot be packed, in time to buy or cancel | Short-pack alert | FR-002 |
 
-### Orders & invoicing
+### SYS-002 Orders & invoicing
 
 Quotation through to a paid invoice. Replaces today's "Order to invoice today".
 
-**Main workflow: Order to cash**
-
-> ⚠ We drafted this — please confirm
+**Main workflow: WF-003 Order to cash**
 
 ```mermaid
 flowchart LR
@@ -88,7 +84,7 @@ flowchart LR
   n3["Paid"]
 ```
 
-**Sub-workflow: Custom order** — starts at Order received, rejoins Order pipeline · about 20% of orders
+**Sub-workflow: WF-004 Custom order** — starts at Order received, rejoins Order pipeline · about 20% of orders
 
 ```mermaid
 flowchart LR
@@ -99,11 +95,11 @@ flowchart LR
   n2["Receive into stock"]
 ```
 
-| Feature | What it does | Where in the workflow |
-| --- | --- | --- |
-| Order intake & quotation | Captures email and phone orders and prices them | Order received → Quote; Flag as custom |
-| Invoice from packed quantities ⚠ | Raises the invoice from what was packed and shipped | Shipped (in Order pipeline); Invoice → Paid |
-| One login, role-based screens | One login; packers see packing tasks, office staff see orders and invoices | every step |
+| ID | Feature | What it does | Where in the workflow | Requirements |
+| --- | --- | --- | --- | --- |
+| FEAT-003 | Order intake & quotation | Captures email and phone orders and prices them | Order received → Quote; Flag as custom | FR-003 |
+| FEAT-004 | Invoice from packed quantities | Raises the invoice from what was packed and shipped | Shipped (in Order pipeline); Invoice → Paid | FR-004 |
+| FEAT-005 | One login, role-based screens | One login; packers see packing tasks, office staff see orders and invoices | every step | FR-005 |
 
 <!-- scope:end -->
 
@@ -135,7 +131,6 @@ DAT-001: Order — commercial, about 300 per month (assumed).
 Readiness: 63%. Areas — businessContext 80, workflows 70, rules 60,
 integrations 50, data 60, nfrs 60.
 
-Open questions: Q-001 (P1) — is order to cash the right shape? Q-002 (P2) — invoice at
-shipping or at the signed delivery order?
+Open questions: Q-001 (P2) — invoice at shipping or at the signed delivery order?
 Assumptions: ASM-001 (medium impact, unconfirmed) — packers carry a camera phone.
 Blockers: none. Conflicts: none.

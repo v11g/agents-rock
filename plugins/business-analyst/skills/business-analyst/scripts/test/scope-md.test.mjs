@@ -5,14 +5,16 @@ import { mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { applyScope, START_HERE } from '../lib/scope-md.mjs';
+import { applyScope } from '../lib/scope-md.mjs';
 import { mermaid } from '../lib/scope-render.mjs';
 import { checkPackage } from '../lib/checks.mjs';
-import { loadWorkflow } from './scope-cases.mjs';
+import { loadWorkflow, noFlows } from './scope-cases.mjs';
 
 const script = fileURLToPath(new URL('../scope.mjs', import.meta.url));
 const BLOCK = /<!-- scope:start -->[\s\S]*?<!-- scope:end -->\n*/;
-const strip = (md) => md.replace(BLOCK, '').replace(`\n${START_HERE}\n`, '');
+const strip = (md) => md.replace(BLOCK, '');
+const OLD_HERE = '> **Product owner? Start here:** [To-be scope](#to-be-scope) shows the systems, '
+  + 'workflows and features we propose to build. Items marked ⚠ are our draft; tell us in chat what to change.';
 
 test('applyScope rebuilds the fixture from a file without the section', () => {
   const { pkg, md } = loadWorkflow();
@@ -24,24 +26,30 @@ test('applyScope is idempotent', () => {
   assert.equal(applyScope(md, pkg), md);
 });
 
-test('classic mode removes the section and the Start here line', () => {
+test('classic mode removes the section', () => {
   const { pkg, md } = loadWorkflow();
   pkg.scopeMode = 'classic';
   const out = applyScope(md, pkg);
   assert.equal(out, strip(md));
 });
 
-test('the section names things, never ids', () => {
-  const { md } = loadWorkflow();
-  const section = md.match(BLOCK)[0];
-  assert.doesNotMatch(section, /\b(?:SYS|FEAT|WF|FR)-\d{3}\b/);
+test('an old Start-here line is removed on re-run', () => {
+  const { pkg, md } = loadWorkflow();
+  const old = md.replace(/^(# .*)$/m, `$1\n\n${OLD_HERE}`);
+  assert.equal(applyScope(old, pkg), md);
 });
 
-test('a drafted workflow and a drafted feature carry the badge', () => {
+test('the section carries ids for engineers', () => {
   const section = loadWorkflow().md.match(BLOCK)[0];
-  assert.match(section, /\*\*Main workflow: Order to cash\*\*\n\n> ⚠ We drafted this — please confirm/);
-  assert.match(section, /\| Invoice from packed quantities ⚠ \|/);
-  assert.match(section, /Shipped \(in Order pipeline\); Invoice → Paid/);
+  assert.match(section, /^### SYS-002 Orders & invoicing$/m);
+  assert.match(section, /^\*\*Main workflow: WF-003 Order to cash\*\*$/m);
+  assert.match(section, /^\| SYS-001 \| Warehouse operations \|/m);
+});
+
+test('no draft marks anywhere; features list their requirements', () => {
+  const { md } = loadWorkflow();
+  assert.doesNotMatch(md, /⚠|please confirm|Start here/);
+  assert.match(md, /\| FEAT-004 \| Invoice from packed quantities \| .* \| Shipped \(in Order pipeline\); Invoice → Paid \| FR-004 \|/);
 });
 
 test('mermaid: loops back to an existing step and side exits to a new one', () => {
@@ -64,7 +72,7 @@ test('a pipe inside feature text is escaped so the table holds', () => {
   const { pkg, md } = loadWorkflow();
   pkg.features[0].does = 'Moves an order | shows each stage';
   const out = applyScope(md, pkg);
-  assert.match(out, /\| Order pipeline & stage engine \| Moves an order \\\| shows each stage \|/);
+  assert.match(out, /\| FEAT-001 \| Order pipeline & stage engine \| Moves an order \\\| shows each stage \|/);
 });
 
 test('a step name with a colon resolves and renders', () => {
@@ -96,7 +104,7 @@ test('optional fields absent: no map column, no Replaces line', () => {
   delete pkg.mapLabel;
   for (const w of pkg.workflows) delete w.replaces;
   const section = applyScope(md, pkg).match(BLOCK)[0];
-  assert.match(section, /\| System \| Purpose \|\n\| --- \| --- \|\n/);
+  assert.match(section, /\| ID \| System \| Purpose \|\n\| --- \| --- \| --- \|\n/);
   assert.doesNotMatch(section, /Replaces today's/);
 });
 
@@ -115,4 +123,18 @@ test('a pipe inside a feature name passes the Feature column check', () => {
   pkg.features[0].name = 'Pack | ship';
   const out = applyScope(md, pkg).replace('| in | Order pipeline & stage engine |', '| in | Pack \\| ship |');
   assert.deepEqual(checkPackage({ pkg, md: out }), []);
+});
+
+test('a system with no workflow shows its feature table only; no step reads —', () => {
+  const { pkg, md } = noFlows();
+  const out = applyScope(md, pkg);
+  assert.ok(out.includes('### SYS-002 Orders & invoicing\n\nQuotation through to a paid invoice.\n\n| ID | Feature |'));
+  assert.ok(out.includes('| FEAT-003 | Order intake & quotation | Captures email and phone orders and prices them | — | FR-003 |'));
+});
+
+test('a system with no workflows key renders like an empty list', () => {
+  const { pkg, md } = noFlows();
+  const want = applyScope(md, pkg);
+  delete pkg.systems[1].workflows;
+  assert.equal(applyScope(md, pkg), want);
 });

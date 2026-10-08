@@ -1,9 +1,9 @@
 import { modeOf } from './scope-rules.mjs';
 import { START, END, cell, renderScope } from './scope-render.mjs';
 
-export const START_HERE = '> **Product owner? Start here:** [To-be scope](#to-be-scope) shows the systems, '
-  + 'workflows and features we propose to build. Items marked ⚠ are our draft; tell us in chat what to change.';
 const BLOCK = /<!-- scope:start -->[\s\S]*?<!-- scope:end -->\n*/;
+// The 0.3.x Start-here line pointed the PO at this section; the PO now has
+// the review page, so re-running scope removes the line from older files.
 const HERE = /\n> \*\*Product owner\? Start here:\*\*[^\n]*\n/;
 const cells = (line) => line.split(/(?<!\\)\|/).slice(1, -1).map((c) => c.trim());
 const count = (md, marker) => md.split(marker).length - 1;
@@ -21,8 +21,7 @@ export function applyScope(md, pkg) {
   if (modeOf(pkg) === 'classic') return out;
   const part3 = out.search(/^## Part 3/m);
   const i = at >= 0 ? at : part3 >= 0 ? part3 : out.length;
-  out = `${out.slice(0, i)}${renderScope(pkg)}\n\n${out.slice(i)}`;
-  return out.replace(/^# .*$/m, (h1) => `${h1}\n\n${START_HERE}`);
+  return `${out.slice(0, i)}${renderScope(pkg)}\n\n${out.slice(i)}`;
 }
 
 function expectedFeature(pkg, frId) {

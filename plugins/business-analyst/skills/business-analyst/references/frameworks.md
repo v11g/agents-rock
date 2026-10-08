@@ -32,8 +32,9 @@ exceptions.
 
 ## Impact mapping
 WHY (business goal) → WHO (actors) → HOW (behavior change) → WHAT
-(capability). A feature that maps to no WHY becomes an open question, not
-a requirement.
+(capability). A feature that maps to no WHY is asked about, and closes
+like every asked question: an answer, an "Assume …" pick, or out of
+scope (interview.md §2b).
 
 ## Example mapping
 Per story: rules (blue), examples per rule (green), questions (red).

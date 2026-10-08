@@ -5,6 +5,7 @@ import { mkdtempSync, readFileSync, writeFileSync, copyFileSync } from 'node:fs'
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import { noFlowsAt } from './stage.mjs';
 import { findChrome } from '../../../../analyze-requirements/scripts/lib/chrome.mjs';
 import { openPage } from '../../../../analyze-requirements/scripts/lib/cdp.mjs';
 
@@ -108,5 +109,19 @@ test('architecture links come from the roster', { skip }, async () => {
     await settle();
     const hrefs = await page.eval(`JSON.stringify([...document.querySelectorAll('#c-FEAT-001 a.archlink')].map((a) => a.getAttribute('href')))`);
     assert.deepEqual(JSON.parse(hrefs), ['index.html#panel-components-api', 'index.html#panel-containers']);
+  } finally { await page.close(); }
+});
+
+test('a system with no workflow renders clean on the score review', { skip }, async () => {
+  const dir = mkdtempSync(join(tmpdir(), 'wf-noflow-'));
+  copyFileSync(fx('requirements.json'), join(dir, 'requirements.json'));
+  noFlowsAt(dir);
+  writeFileSync(join(dir, 'estimation-inputs.json'), readFileSync(fx('inputs-pass.json'), 'utf8'));
+  execFileSync('node', [script, '--write', join(dir, 'estimation-inputs.json'), '--out', join(dir, 'review.html')]);
+  const page = await openPage(pathToFileURL(join(dir, 'review.html')).href);
+  try {
+    await settle();
+    assert.deepEqual(page.errors, []);
+    assert.match(await page.eval(`document.querySelector('tr[data-cap="FEAT-003"]').textContent`), /off-step/);
   } finally { await page.close(); }
 });

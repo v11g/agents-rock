@@ -12,6 +12,32 @@ copy its structure exactly; the validator enforces it. `schemaVersion` is
 `mapLabel`, `systems`, `features`, and `label`/`source`/`steps`/`branches`
 (`replaces`, `sub` optional) on to-be workflows.
 
+Assumptions may carry `source`; one the PO picked in the interview has
+`source: "PO in interview, <date>"`. Every question asked in the
+interview closes as an answer, an assumption or out of scope, so
+`openQuestions` holds only gaps never asked (P3), for engineers.
+`systems`, `features` and to-be workflows hold only what will be built;
+downstream skills read them as is. A system may have no workflow, and a
+feature may have `steps: []`.
+Names, `purpose`, `does`, steps, branch labels, `share`, a `PO in
+interview` source, and the text of every assumption that is not
+`resolved` reach the PO review page verbatim. Write them without ids
+(`review.mjs page` refuses one).
+
+A branch `label` is the input's own arrow text, copied; an arrow with no
+text has no `label`. Never write one.
+
+Every assumption the input lists is an ASM row, word for word, in the
+input's order, `source` naming the file and section
+(`"SinKowaProposal.docx, Assumptions"`), even when it reads like a
+constraint. A vague one is asked in the interview: the PO's answer adds
+a new assumption (`PO in interview, <date>`), and the input's row keeps
+its words. Once the PO answers, the input row's status becomes
+`accepted`; its words stay. A question about an input assumption adds
+the option "Drop this assumption"; picking it sets that row's status to
+`resolved`. An input assumption leaves the page only when the PO picks
+to drop it (status `resolved`).
+
 ## ID conventions
 
 | Prefix | Register | Prefix | Register |
@@ -28,9 +54,10 @@ copy its structure exactly; the validator enforces it. `schemaVersion` is
 Three digits, zero-padded (`FR-001`). IDs are stable: never renumber on
 re-run; retired items keep their id with a note rather than vanishing.
 
-Constraint vs assumption: a constraint is a confirmed boundary ("must run in
-the client's M365 tenant"); an assumption is an unverified belief ("managers
-authenticate through Entra"). Never file one as the other.
+Constraint vs assumption: a constraint is a confirmed boundary ("must run
+in the client's M365 tenant"); an assumption is an unverified belief
+("managers authenticate through Entra"). Never file one as the other; the
+input's own assumptions list is the exception above.
 
 ## Label discipline
 
@@ -38,7 +65,9 @@ Every requirement, NFR, integration and data row carries
 `label: confirmed | assumed | recommended` and (where the schema asks) a
 `source`. Recommendations never render as confirmed requirements; a
 `recommended` item in scope `in` must have an open question referencing it
-(the validator enforces this).
+(the validator enforces this). In workflow mode scope items are never
+`recommended` (the page refuses undecided items); the paired-open-question
+rule applies to classic-mode requirements and unasked P3 gaps.
 
 ## Ambiguous terms — banned in requirement text
 
@@ -73,8 +102,10 @@ readiness: <overall number>
   with concrete examples, exceptions, to-be capabilities, glossary of
   domain terms. Workflow mode: no to-be capabilities prose — the To-be
   scope section written by `scripts/scope.mjs` replaces it (systems table,
-  then per system its workflows as mermaid and a feature table; no ids;
-  ⚠ on drafted items). Frontmatter gains `scopeMode: workflow`.
+  then per system its workflows as mermaid and a feature table with ids
+  and a Requirements column). No ⚠ marks or "please confirm" banners: scope is decided in the
+  interview, and the md is written after the review page. Frontmatter
+  gains `scopeMode: workflow`.
 - **Part 3 — Requirements**: scope (out / future / unconfirmed — in-scope
   is the FR table itself), actors and permissions, FR table (id, text,
   label, scope; workflow mode adds a last `Feature` column — the feature

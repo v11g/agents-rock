@@ -5,7 +5,7 @@ import { mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { CASES, loadWorkflow } from './scope-cases.mjs';
+import { CASES, loadWorkflow, noFlows } from './scope-cases.mjs';
 
 const py = fileURLToPath(new URL('../validate.py', import.meta.url));
 const js = fileURLToPath(new URL('../validate.mjs', import.meta.url));
@@ -96,6 +96,40 @@ test('scope.py and scope.mjs agree on escaped pipes and a colon step', () => {
   pkg.workflows[1].steps[1] = 'Pack: scan';
   pkg.workflows[1].branches = [{ from: 'Pack: scan', to: 'Short-pack alert' }];
   pkg.features[0].steps[1] = 'WF-002:Pack: scan';
+  const a = writePair(pkg, md);
+  const b = writePair(pkg, md);
+  assert.equal(run('node', jsScope, a.jsonPath, a.mdPath).code, 0);
+  assert.equal(run('python3', pyScope, b.jsonPath, b.mdPath).code, 0);
+  assert.equal(readFileSync(b.mdPath, 'utf8'), readFileSync(a.mdPath, 'utf8'));
+});
+
+function exec(cmd, args) {
+  try {
+    return { code: 0, out: execFileSync(cmd, args, { encoding: 'utf8' }), err: '' };
+  } catch (e) {
+    return { code: e.status, out: e.stdout ?? '', err: e.stderr ?? '' };
+  }
+}
+
+test('validate.py --json without --md matches node', () => {
+  const { jsonPath } = writePair(loadWorkflow().pkg, '');
+  assert.deepEqual(exec('python3', [py, '--json', jsonPath]), exec('node', [js, '--json', jsonPath]));
+});
+
+test('scope.py and validate.py agree with node on a system with no workflow', () => {
+  const { pkg, md } = noFlows();
+  const bare = md.replace(/<!-- scope:start -->[\s\S]*?<!-- scope:end -->\n*/, '');
+  const a = writePair(pkg, bare);
+  const b = writePair(pkg, bare);
+  assert.equal(run('node', jsScope, a.jsonPath, a.mdPath).code, 0);
+  assert.equal(run('python3', pyScope, b.jsonPath, b.mdPath).code, 0);
+  assert.equal(readFileSync(b.mdPath, 'utf8'), readFileSync(a.mdPath, 'utf8'));
+  assert.deepEqual(exec('python3', [py, '--json', a.jsonPath]), exec('node', [js, '--json', a.jsonPath]));
+});
+
+test('scope.py and scope.mjs agree on a system with no workflows key', () => {
+  const { pkg, md } = noFlows();
+  delete pkg.systems[1].workflows;
   const a = writePair(pkg, md);
   const b = writePair(pkg, md);
   assert.equal(run('node', jsScope, a.jsonPath, a.mdPath).code, 0);

@@ -7,7 +7,7 @@ import math
 import re
 import sys
 
-from scope_checks import check_scope, mode_of, scope_ids, to_be
+from scope_checks import check_scope, scope_ids
 from scope_render import check_scope_md
 
 STATUSES = ['DRAFT', 'CLARIFICATION_REQUIRED', 'ANALYZED', 'VALIDATED', 'READY_FOR_ARCHITECTURE']
@@ -62,7 +62,7 @@ AMBIGUOUS = [
 
 PARTS = ['Part 1', 'Part 2', 'Part 3', 'Part 4', 'Part 5']
 QUICK_PARTS = ['Part 1', 'Part 3', 'Part 5']
-ID_TOKEN = re.compile(r'\b(?:G|ACT|WF|FR|BR|SC|NFR|INT|DAT|CON|ASM|Q|CONFLICT)-\d{3}\b')
+ID_TOKEN = re.compile(r'\b(?:G|ACT|WF|FR|BR|SC|NFR|INT|DAT|CON|ASM|Q|CONFLICT|SYS|FEAT)-\d{3}\b')
 
 
 def rows(pkg, name):
@@ -231,9 +231,8 @@ def check_md(pkg, md):
         elif not bodies[key].strip():
             findings.append(f'md: empty section "## {part}"')
     md_ids = {m.group(0) for m in ID_TOKEN.finditer(md)}
-    named = {w['id'] for w in to_be(pkg)} if mode_of(pkg) == 'workflow' else set()
-    for rid in collect_ids(pkg):
-        if rid not in named and rid not in md_ids:
+    for rid in collect_ids(pkg) + scope_ids(pkg):
+        if rid not in md_ids:
             findings.append(f'md: id {rid} absent from requirements.md')
     fm_status = frontmatter(md, 'status')
     if fm_status != pkg.get('status'):
@@ -259,17 +258,18 @@ def check_package(pkg, md):
         return schema_findings
     ids = set(collect_ids(pkg)) | set(scope_ids(pkg))
     scope = check_scope(pkg, ids)
-    return [
+    json_findings = [
         *check_duplicates(pkg),
         *check_refs(pkg, ids),
         *check_labels(pkg),
         *check_ambiguity(pkg),
         *check_readiness(pkg),
-        *check_md(pkg, md),
-        *check_md_orphan_ids(None, md, ids),
         *scope,
-        *([] if scope else check_scope_md(pkg, md)),
     ]
+    if md is None:
+        return json_findings
+    return [*json_findings, *check_md(pkg, md), *check_md_orphan_ids(None, md, ids),
+            *([] if scope else check_scope_md(pkg, md))]
 
 
 def main(argv):
@@ -280,8 +280,10 @@ def main(argv):
             args[argv[i][2:]] = argv[i + 1]
             i += 1
         i += 1
-    with open(args['md'], encoding='utf-8') as f:
-        md = f.read()
+    md = None
+    if args.get('md'):
+        with open(args['md'], encoding='utf-8') as f:
+            md = f.read()
     with open(args['json'], encoding='utf-8') as f:
         pkg = json.load(f)
     findings = check_package(pkg, md)

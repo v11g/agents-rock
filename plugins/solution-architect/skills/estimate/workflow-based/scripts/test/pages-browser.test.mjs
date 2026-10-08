@@ -8,7 +8,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 import { findChrome } from '../../../../analyze-requirements/scripts/lib/chrome.mjs';
 import { openPage } from '../../../../analyze-requirements/scripts/lib/cdp.mjs';
 import { readZip } from '../../../classic/scripts/test/zip.mjs';
-import { staged } from './stage.mjs';
+import { staged, noFlowsAt } from './stage.mjs';
 
 const skip = !findChrome();
 const settle = () => new Promise((r) => setTimeout(r, 1500));
@@ -163,6 +163,28 @@ test('a milestone chip whose feature is in no system hovers without errors', { s
   } finally { await page.close(); }
 });
 
+test('a system with no workflow: Workflow-based page draws it, the card says so, no errors', { skip }, async () => {
+  const page = await openPage(pages(null, noFlowsAt)('estimate.html'));
+  try {
+    await settle();
+    assert.deepEqual(page.errors, []);
+    const metas = JSON.parse(await page.eval(`JSON.stringify([...document.querySelectorAll('#syscards .sys .meta')].map((m) => m.textContent))`));
+    assert.match(metas[0], /workflow from the PO's document/);
+    assert.match(metas[1], /no workflow in the PO's document/);
+    assert.doesNotMatch(await page.eval('document.body.textContent'), /suggested by us|Each system has its workflows/);
+    assert.match(await text(page, 'tr[data-feat="FEAT-003"]'), /not on a workflow step/);
+  } finally { await page.close(); }
+});
+
+test('a system with no workflow: Component-based page renders clean', { skip }, async () => {
+  const page = await openPage(pages(null, noFlowsAt)('estimate-components.html'));
+  try {
+    await settle();
+    assert.deepEqual(page.errors, []);
+    assert.match(await text(page, 'tr[data-cap="FEAT-003"]'), /off-step/);
+  } finally { await page.close(); }
+});
+
 test('a system with no workflow gets its card and its features, no diagram, no errors', { skip }, async () => {
   const noWorkflow = (dir) => {
     const file = join(dir, 'requirements.json');
@@ -177,7 +199,7 @@ test('a system with no workflow gets its card and its features, no diagram, no e
     await settle();
     assert.deepEqual(page.errors, []);
     assert.equal(await page.eval(`document.querySelectorAll('#syscards .sys').length`), 3);
-    assert.match(await text(page, '.sys[data-sys="SYS-003"] .meta'), /1 features · no workflow, features only/);
+    assert.match(await text(page, '.sys[data-sys="SYS-003"] .meta'), /1 features · no workflow in the PO's document/);
     assert.equal(await page.eval(`document.querySelectorAll('#b-SYS-003 .flow').length`), 0);
     assert.equal(await page.eval(`document.querySelectorAll('#b-SYS-003 tr[data-feat="FEAT-005"]').length`), 1);
     await page.eval(`document.querySelector('.sys[data-sys="SYS-003"]').dispatchEvent(new MouseEvent('mouseover', { bubbles: true }))`);

@@ -1,7 +1,9 @@
 # Fresh-eyes review
 
 After validate.mjs passes, dispatch ONE subagent with fresh eyes over both
-artifacts. Give it the two file paths and this checklist verbatim. Apply
+artifacts (workflow mode: over requirements.json only — the md is written
+after the PO review; read "Parts 1–4" as the JSON's context, workflows,
+rules and requirements). Give it the two file paths and this checklist verbatim. Apply
 its findings, re-run validate.mjs, and stop after one cycle — do not loop.
 
 No subagent available (e.g. claude.ai) → run this checklist yourself and
@@ -11,7 +13,9 @@ readiness report.
 ## Checklist
 
 1. **Invented requirements**: is any `confirmed` item unsupported by a
-   quoted source? Downgrade to `assumed` or `recommended`.
+   quoted source? Downgrade to `assumed` or `recommended` (a system,
+   workflow or feature: raise it as an interview question instead of
+   downgrading it).
 2. **Hidden solutioning**: does any FR, system name or feature name
    prescribe a technology or architecture ("use SharePoint webhooks",
    "Order API")? Rewrite as a capability.
@@ -28,6 +32,8 @@ readiness report.
 8. **Unbuilt steps** (workflow mode): list to-be workflow steps that no
    feature points at. For each, is it work nobody has priced (add it to a
    feature, or raise a question) or a person's manual act (fine as is)?
+9. **Verbatim inputs**: Input assumptions (source names an input file)
+   are verbatim: flag a problem, never reword them.
 
 Report findings as a list: `<artifact>:<id or section> — <problem> — <fix>`.
 No praise, no rewrites beyond the flagged items.

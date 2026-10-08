@@ -19,8 +19,10 @@ and md↔json consistency.
 
 Two scope modes. `classic` (default) is the package above. `workflow` adds
 systems → to-be workflows → features for a proposal organised by system;
-`scripts/scope.mjs` writes a To-be scope section (mermaid workflows and
-feature tables, no ids) that the product owner reads, and estimate prices
+the product owner sees the scope on a read-only review page
+(`scripts/review.mjs`, in the shape of their own document, business words
+only), then `scripts/scope.mjs` writes a To-be scope section (mermaid
+workflows and feature tables with ids) for engineers, and estimate prices
 those features.
 
 Requires Node ≥ 20 or Python ≥ 3.10 (`scripts/validate.py` is a

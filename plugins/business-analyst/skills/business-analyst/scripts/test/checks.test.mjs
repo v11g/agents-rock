@@ -1,6 +1,13 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
+import { execFileSync } from 'node:child_process';
+import { mkdtempSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { renderScope } from '../lib/scope-render.mjs';
+import { loadWorkflow } from './scope-cases.mjs';
 import { collectIds, checkDuplicates, checkRefs, checkLabels, checkAmbiguity, checkReadiness, checkPackage } from '../lib/checks.mjs';
 
 const load = () =>
@@ -185,4 +192,24 @@ test('a blank Part 4 section body is an empty section', () => {
     '$1\n\n',
   );
   assert.ok(checkPackage({ pkg: load(), md }).some((f) => f.includes('empty section') && f.includes('Part 4')));
+});
+
+const validate = fileURLToPath(new URL('../validate.mjs', import.meta.url));
+
+test('validate --json without --md checks the JSON only', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'ba-json-only-'));
+  const { pkg } = loadWorkflow();
+  writeFileSync(join(dir, 'r.json'), JSON.stringify(pkg));
+  assert.match(execFileSync('node', [validate, '--json', join(dir, 'r.json')], { encoding: 'utf8' }), /requirements package valid/);
+  pkg.features[0].steps = ['WF-002:Nowhere'];
+  writeFileSync(join(dir, 'r.json'), JSON.stringify(pkg));
+  assert.throws(() => execFileSync('node', [validate, '--json', join(dir, 'r.json')], { stdio: 'pipe' }));
+});
+
+test('review and leftOut are no longer part of the package', () => {
+  const { pkg, md } = loadWorkflow();
+  pkg.leftOut = [{ id: 'FEAT-009' }];
+  pkg.features[0].review = { answer: 'maybe', date: '2026-10-07' };
+  assert.deepEqual(checkPackage({ pkg, md }), []);
+  assert.doesNotMatch(renderScope(pkg), /Reviewed by PO|Left out in review/);
 });

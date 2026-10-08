@@ -48,7 +48,6 @@ function checkMembership(pkg) {
   const flows = toBe(pkg).map((w) => w.id);
   const feats = pkg.features.map((f) => f.id);
   for (const s of pkg.systems) {
-    if (!(s.workflows ?? []).length) findings.push(`${s.id}: needs a to-be workflow`);
     for (const w of s.workflows ?? []) if (!flows.includes(w)) findings.push(`${s.id}: workflow ${w} is not a to-be workflow`);
     for (const f of s.features ?? []) if (!feats.includes(f)) findings.push(`${s.id}: dangling reference ${f}`);
   }

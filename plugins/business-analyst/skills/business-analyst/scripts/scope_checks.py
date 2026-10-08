@@ -57,8 +57,6 @@ def check_feature_steps(pkg):
         steps = f.get('steps') or []
         if steps == ['*']:
             continue
-        if not steps:
-            findings.append(f"{f['id']}: needs at least one step")
         findings += [f"{f['id']}: unknown step {s}" for s in steps if s not in idx]
     return findings
 
@@ -151,8 +149,6 @@ def check_membership(pkg):
     flows = [w['id'] for w in to_be(pkg)]
     feats = [f['id'] for f in pkg['features']]
     for s in pkg['systems']:
-        if not s.get('workflows'):
-            findings.append(f"{s['id']}: needs a to-be workflow")
         findings += [f"{s['id']}: workflow {w} is not a to-be workflow" for w in s.get('workflows') or [] if w not in flows]
         findings += [f"{s['id']}: dangling reference {f}" for f in s.get('features') or [] if f not in feats]
     return (findings

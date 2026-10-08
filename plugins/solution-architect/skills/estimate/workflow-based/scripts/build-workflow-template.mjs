@@ -43,7 +43,9 @@ rep('renderSummary(); renderSystems(); renderBreakdown(); renderRoadmap(); rende
 rep('diagrams need a connection in this mockup', 'diagrams need a connection');
 rep('if (id) return { hit: fromFeat(id)', 'if (id && byId[id]) return { hit: fromFeat(id)'); // a milestone feature in no system has no diagram steps
 rep('byId[id].sys.id === c.dataset.sys', 'byId[id]?.sys.id === c.dataset.sys');
-rep('${s.main.missing ?', "${!s.main ? 'no workflow, features only' : s.main.missing ?"); // a system with workflows: [] has no main workflow
+// A system may have no workflow (BA 0.4.0): s.main is null, and nothing sets `missing`.
+rep("${s.main.missing ? 'workflow suggested by us, confirmed by PO' : 'workflow from the PO\\'s document'}", "${s.main ? 'workflow from the PO\\'s document' : 'no workflow in the PO\\'s document'}");
+rep('Each system has its workflows; each feature sits on the workflow steps it serves.', "A system has the workflows the PO's document draws; each feature sits on the steps it serves, or on none when its system has no workflow.");
 
 writeFileSync(OUT, html);
 console.log(OUT);

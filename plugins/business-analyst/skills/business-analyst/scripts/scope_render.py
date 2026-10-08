@@ -5,15 +5,9 @@ from scope_checks import mode_of
 
 START = '<!-- scope:start -->'
 END = '<!-- scope:end -->'
-BADGE = '> ⚠ We drafted this — please confirm'
-START_HERE = ('> **Product owner? Start here:** [To-be scope](#to-be-scope) shows the systems, '
-              'workflows and features we propose to build. Items marked ⚠ are our draft; tell us in chat what to change.')
 BLOCK = re.compile(r'<!-- scope:start -->.*?<!-- scope:end -->\n*', re.S)
+# The 0.3.x Start-here line is removed from older files on re-run.
 HERE = re.compile(r'\n> \*\*Product owner\? Start here:\*\*[^\n]*\n')
-
-
-def drafted(r):
-    return r.get('label') != 'confirmed'
 
 
 def step_of(ref):
@@ -44,40 +38,42 @@ def mermaid(w):
 
 def where_cell(f, sys_, flows):
     refs = f.get('steps') or []
+    if not refs:
+        return '—'
     if refs == ['*']:
         return 'every step'
     groups = {}
     for r in refs:
         groups.setdefault(r[:r.index(':')], []).append(step_of(r))
-    return '; '.join(' → '.join(st) + ('' if wid in sys_['workflows'] else f" (in {flows[wid]['name']})")
+    return '; '.join(' → '.join(st) + ('' if wid in (sys_.get('workflows') or []) else f" (in {flows[wid]['name']})")
                      for wid, st in groups.items())
 
 
 def workflow_block(w, main, flows):
-    head = f"**{'Main workflow' if main else 'Sub-workflow'}: {w['name']}**"
+    head = f"**{'Main workflow' if main else 'Sub-workflow'}: {w['id']} {w['name']}**"
     if w.get('sub'):
         head += f" — starts at {step_of(w['sub']['startsAt'])}, rejoins {flows[w['sub']['rejoins']]['name']}"
         if w['sub'].get('share'):
             head += f" · {w['sub']['share']}"
-    return '\n\n'.join([head, *([BADGE] if drafted(w) else []), mermaid(w)])
+    return '\n\n'.join([head, mermaid(w)])
 
 
 def system_block(s, ctx):
     flows, feats = ctx
-    replaced = list(dict.fromkeys(r for wid in s['workflows'] for r in flows[wid].get('replaces') or []))
+    replaced = list(dict.fromkeys(r for wid in s.get('workflows') or [] for r in flows[wid].get('replaces') or []))
     names = ', '.join(f'"{flows[r]["name"]}"' for r in replaced)
     intro = s['purpose'] + (f" Replaces today's {names}." if replaced else '')
-    rows = [f"| {cell(f['name'])}{' ⚠' if drafted(f) else ''} | {cell(f['does'])} | {cell(where_cell(f, s, flows))} |"
+    rows = [f"| {f['id']} | {cell(f['name'])} | {cell(f['does'])} | {cell(where_cell(f, s, flows))} | {', '.join(f.get('requirements') or []) or '—'} |"
             for f in (feats[i] for i in s['features'])]
-    table = '\n'.join(['| Feature | What it does | Where in the workflow |', '| --- | --- | --- |', *rows])
-    flows_md = [workflow_block(flows[wid], i == 0, flows) for i, wid in enumerate(s['workflows'])]
-    return '\n\n'.join([f"### {s['name']}", *([BADGE] if drafted(s) else []), intro, *flows_md, table])
+    table = '\n'.join(['| ID | Feature | What it does | Where in the workflow | Requirements |', '| --- | --- | --- | --- | --- |', *rows])
+    flows_md = [workflow_block(flows[wid], i == 0, flows) for i, wid in enumerate(s.get('workflows') or [])]
+    return '\n\n'.join([f"### {s['id']} {s['name']}", intro, *flows_md, table])
 
 
 def systems_table(pkg):
     label = pkg.get('mapLabel')
-    head = f'| System | Purpose | {cell(label)} |\n| --- | --- | --- |' if label else '| System | Purpose |\n| --- | --- |'
-    rows = [f"| {cell(s['name'])} | {cell(s['purpose'])} |" + (f" {cell(s.get('map') or '—')} |" if label else '') for s in pkg['systems']]
+    head = f'| ID | System | Purpose | {cell(label)} |\n| --- | --- | --- | --- |' if label else '| ID | System | Purpose |\n| --- | --- | --- |'
+    rows = [f"| {s['id']} | {cell(s['name'])} | {cell(s['purpose'])} |" + (f" {cell(s.get('map') or '—')} |" if label else '') for s in pkg['systems']]
     return '\n'.join([head, *rows])
 
 
@@ -98,8 +94,7 @@ def apply_scope(md, pkg):
         return out
     part3 = re.search(r'^## Part 3', out, re.M)
     i = m.start() if m else part3.start() if part3 else len(out)
-    out = f'{out[:i]}{render_scope(pkg)}\n\n{out[i:]}'
-    return re.sub(r'^# .*$', lambda h: f'{h.group(0)}\n\n{START_HERE}', out, count=1, flags=re.M)
+    return f'{out[:i]}{render_scope(pkg)}\n\n{out[i:]}'
 
 
 def cells(line):

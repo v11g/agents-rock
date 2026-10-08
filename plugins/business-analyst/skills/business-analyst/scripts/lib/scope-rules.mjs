@@ -38,7 +38,6 @@ export function checkFeatureSteps(pkg) {
   for (const f of pkg.features) {
     const steps = f.steps ?? [];
     if (steps.length === 1 && steps[0] === '*') continue;
-    if (!steps.length) findings.push(`${f.id}: needs at least one step`);
     for (const s of steps) if (!idx.has(s)) findings.push(`${f.id}: unknown step ${s}`);
   }
   return findings;

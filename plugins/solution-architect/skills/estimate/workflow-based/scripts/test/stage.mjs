@@ -18,3 +18,15 @@ export function staged(mutate) {
   execFileSync('node', [script('compute'), '--inputs', join(dir, 'estimation-inputs.json'), '--out', join(dir, 'estimation.json')]);
   return dir;
 }
+
+// SYS-002 as a PO document that lists features but draws no workflow: the
+// system owns none and its features sit on no step (BA 0.4.0 allows it).
+export function noFlowsAt(dir) {
+  const path = join(dir, 'requirements.json');
+  const req = JSON.parse(readFileSync(path, 'utf8'));
+  const gone = new Set(['WF-003', 'WF-004']);
+  req.workflows = req.workflows.filter((w) => !gone.has(w.id));
+  req.systems[1].workflows = [];
+  for (const f of req.features.slice(2, 4)) f.steps = [];
+  writeFileSync(path, JSON.stringify(req));
+}

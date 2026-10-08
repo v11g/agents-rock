@@ -204,7 +204,7 @@ select option, select optgroup { background:var(--sheet); color:var(--ink); }
   </nav>
   <div class="howto"><b class="howto-t">How to read this page</b>
     <div class="howto-chain"><span><b>System</b>a part of the business<small>e.g. Warehouse Mgmt System</small></span><i>→</i><span><b>Workflow</b>the steps work moves through<small>e.g. Order In → Pack → Pack Review</small></span><i>→</i><span><b>Feature</b>something you asked for, on the steps it serves<small>e.g. F04 Order intake &amp; quotation entry</small></span></div>
-    <p class="howto-rule">Each system has its workflows; each feature sits on the workflow steps it serves. The price covers every feature on this page, and each milestone lists the features it finishes.</p></div>
+    <p class="howto-rule">A system has the workflows the PO's document draws; each feature sits on the steps it serves, or on none when its system has no workflow. The price covers every feature on this page, and each milestone lists the features it finishes.</p></div>
 
   <section class="card" id="summary">
     <h2>Summary</h2>
@@ -334,7 +334,7 @@ const byId = Object.fromEntries(FEATS.map((f) => [f.id, f]));
 function renderSystems() {
   $('#syscards').innerHTML = DATA.systems.map((s, i) => {
     return `<button type="button" class="sys" data-sys="${s.id}"><div class="eyebrow">System ${i + 1}</div><h4>${esc(s.name)}</h4>
-      <div class="meta">${s.features.length} features · ${!s.main ? 'no workflow, features only' : s.main.missing ? 'workflow suggested by us, confirmed by PO' : 'workflow from the PO\'s document'}${s.subs.length ? ` · ${s.subs.length} sub-workflow` : ''}</div></button>`;
+      <div class="meta">${s.features.length} features · ${s.main ? 'workflow from the PO\'s document' : 'no workflow in the PO\'s document'}${s.subs.length ? ` · ${s.subs.length} sub-workflow` : ''}</div></button>`;
   }).join('');
 }
 

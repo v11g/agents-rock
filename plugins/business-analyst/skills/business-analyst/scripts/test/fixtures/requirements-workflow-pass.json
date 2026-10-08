@@ -21,7 +21,7 @@
   "workflows": [
     { "id": "WF-001", "name": "Order to invoice today", "state": "as-is", "trigger": "ship sends an order by email or phone", "steps": ["office staff key the order in", "warehouse packs from a paper list", "paper delivery order signed at the dock", "invoice raised when the paper returns"], "exceptions": ["client disputes a charge after sailing"] },
     { "id": "WF-002", "name": "Order pipeline", "state": "to-be", "label": "confirmed", "source": "PO brief, System 1", "trigger": "order confirmed by office staff", "steps": ["Order In", "Pack", "Pack Review", "Shipped"], "branches": [{ "from": "Pack", "to": "Short-pack alert", "label": "can't fulfil" }, { "from": "Pack Review", "to": "Pack", "label": "mismatch" }], "replaces": ["WF-001"], "exceptions": [] },
-    { "id": "WF-003", "name": "Order to cash", "state": "to-be", "label": "recommended", "source": "drafted from PO brief, System 2", "trigger": "order received by email or phone", "steps": ["Order received", "Quote", "Invoice", "Paid"], "branches": [], "replaces": ["WF-001"], "exceptions": [] },
+    { "id": "WF-003", "name": "Order to cash", "state": "to-be", "label": "confirmed", "source": "PO brief, System 2", "trigger": "order received by email or phone", "steps": ["Order received", "Quote", "Invoice", "Paid"], "branches": [], "replaces": ["WF-001"], "exceptions": [] },
     { "id": "WF-004", "name": "Custom order", "state": "to-be", "label": "confirmed", "source": "PO brief, System 2 sub-flow", "trigger": "order holds an item that is sourced, not stocked", "steps": ["Flag as custom", "Vendor PO", "Receive into stock"], "branches": [], "sub": { "startsAt": "WF-003:Order received", "rejoins": "WF-002", "share": "about 20% of orders" }, "exceptions": [] }
   ],
   "systems": [
@@ -32,7 +32,7 @@
     { "id": "FEAT-001", "name": "Order pipeline & stage engine", "does": "Moves an order through each stage, with task views per role", "label": "confirmed", "source": "PO brief, System 1", "steps": ["WF-002:Order In", "WF-002:Pack", "WF-002:Pack Review", "WF-002:Shipped"], "requirements": ["FR-001"] },
     { "id": "FEAT-002", "name": "Short-pack alert", "does": "Flags an item that cannot be packed, in time to buy or cancel", "label": "confirmed", "source": "PO brief, System 1", "steps": ["WF-002:Short-pack alert"], "requirements": ["FR-002"] },
     { "id": "FEAT-003", "name": "Order intake & quotation", "does": "Captures email and phone orders and prices them", "label": "confirmed", "source": "PO brief, System 2", "steps": ["WF-003:Order received", "WF-003:Quote", "WF-004:Flag as custom"], "requirements": ["FR-003"] },
-    { "id": "FEAT-004", "name": "Invoice from packed quantities", "does": "Raises the invoice from what was packed and shipped", "label": "recommended", "source": "drafted from PO brief, System 2", "steps": ["WF-002:Shipped", "WF-003:Invoice", "WF-003:Paid"], "requirements": ["FR-004"] },
+    { "id": "FEAT-004", "name": "Invoice from packed quantities", "does": "Raises the invoice from what was packed and shipped", "label": "confirmed", "source": "PO brief, System 2", "steps": ["WF-002:Shipped", "WF-003:Invoice", "WF-003:Paid"], "requirements": ["FR-004"] },
     { "id": "FEAT-005", "name": "One login, role-based screens", "does": "One login; packers see packing tasks, office staff see orders and invoices", "label": "confirmed", "source": "PO brief, System 1", "steps": ["*"], "requirements": ["FR-005"] }
   ],
   "requirements": [
@@ -65,8 +65,7 @@
     { "id": "ASM-001", "text": "Packers carry a phone with a camera on the warehouse floor.", "impact": "medium", "status": "unconfirmed" }
   ],
   "openQuestions": [
-    { "id": "Q-001", "question": "Is order to cash the right shape: quote before the order is confirmed?", "priority": "P1", "reason": "the workflow was drafted, not described by the client", "affects": ["WF-003"], "status": "open", "answer": null, "architectureBlocker": false },
-    { "id": "Q-002", "question": "Should the invoice be raised at shipping, or when the delivery order is signed?", "priority": "P2", "reason": "decides the invoice trigger", "affects": ["FEAT-004", "INT-001"], "status": "open", "answer": null, "architectureBlocker": false }
+    { "id": "Q-001", "question": "Should the invoice be raised at shipping, or when the delivery order is signed?", "priority": "P2", "reason": "decides the invoice trigger", "affects": ["FEAT-004", "INT-001"], "status": "open", "answer": null, "architectureBlocker": false }
   ],
   "conflicts": [],
   "scope": { "out": ["last-mile delivery tracking"], "future": ["pallet labels"], "unconfirmed": [] },
