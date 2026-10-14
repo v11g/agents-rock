@@ -11,6 +11,7 @@ export async function buildInputs({ root, archPath, modelPath, docPaths = [] }) 
   const arch = await readFile(archPath, 'utf8');
   const docs = await readDocs(root, [archPath, ...docPaths]);
   return {
+    archMd: arch,
     frontmatter: parseFrontmatter(arch).data ?? {},
     tables: parseTables(arch),
     erNames: erEntities(arch),

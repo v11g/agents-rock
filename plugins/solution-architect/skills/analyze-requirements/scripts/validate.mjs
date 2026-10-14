@@ -8,6 +8,7 @@ import { validateDeployment } from './lib/validate-deployment.mjs';
 import { validateLinks } from './lib/validate-links.mjs';
 import { validateTree } from './lib/validate-tree.mjs';
 import { validateClusters } from './lib/validate-clusters.mjs';
+import { validateStrategy } from './lib/validate-strategy.mjs';
 
 function consumeDocs(argv, i, docs) {
   while (argv[i + 1] && !argv[i + 1].startsWith('--')) docs.push(argv[++i]);
@@ -76,6 +77,7 @@ const inputs = await buildInputs({
 
 const findings = [
   ...validateProvenance({ tables: inputs.tables }),
+  ...validateStrategy({ tables: inputs.tables, archMd: inputs.archMd }),
   ...validateElections({ frontmatter: inputs.frontmatter }),
   ...validateModelTables({ model: inputs.model, tables: inputs.tables, erNames: inputs.erNames }),
   ...validateDeployment({ model: inputs.model }),
@@ -83,6 +85,10 @@ const findings = [
   ...(args.mode === 'brownfield' ? brownfieldFindings({ inputs, args, root }) : []),
 ];
 
-for (const f of findings) console.log(`FAIL [${f.check}] ${f.message}`);
-if (!findings.length) console.log('ok all checks passed');
-process.exit(findings.length ? 1 : 0);
+// A warn finding marks a set written before a rule existed: printed so the
+// next rewrite fixes it, never blocking — rule 4 makes validation gate rendering.
+const fails = findings.filter((f) => f.level !== 'warn');
+for (const f of findings.filter((x) => x.level === 'warn')) console.log(`WARN [${f.check}] ${f.message}`);
+for (const f of fails) console.log(`FAIL [${f.check}] ${f.message}`);
+if (!fails.length) console.log('ok all checks passed');
+process.exit(fails.length ? 1 : 0);
