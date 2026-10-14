@@ -164,7 +164,7 @@ Reads `tables` from `buildInputs`:
 2 Scan (brownfield)
 3 Extract   NEW — when inputs/ has files: Workflow workflows/extract.js → node scripts/check-quotes.mjs
 4 Interview   proposes top 3 from extracted facts; writes interview-log.md as answers arrive
-5 Research    unchanged; statedFacts now carry their citation
+5 Research    unchanged; the main agent keeps each stated fact's citation and writes it back after research
 6 Write · 7 Validate (add --inputs) · 8 Render + serve
 ```
 
@@ -203,9 +203,14 @@ existing anchor check covers broken citations.
 
 ### Viewer
 
-Citations render through `md-inline.mjs` unchanged: chip + link + quote.
-Clicking a link opens `interview-log.md` (rendered as a companion doc) or
-the raw input file.
+No viewer change. The viewer is one HTML page (`doc-links.mjs`):
+
+- `interview-log.md` is passed to `render.mjs` with `--docs`, so it is a
+  document in the page; a citation to it becomes an in-page link to the log
+  (the `#q3` fragment is dropped by design — the log is short).
+- An input file is not a document in the page, so its citation renders as
+  plain text with the path on hover (`ext-ref`), never as a dead link. The
+  label (`C1 · 2026-09-10`) and the quote stay visible; that is the trace.
 
 ## Files
 
@@ -269,7 +274,10 @@ plugins/solution-architect/.claude-plugin/plugin.json   3.0.1 → 3.1.0 (Part 1)
   ARCHITECTURE.md facts as `stated`; a cited cell (`stated [C1 …] "…"`) is
   read by the model, not parsed. The plan's first task greps estimate for
   any `src` parsing to confirm.
-- **Viewer serving inputs**: whether `serve.mjs` serves `inputs/*.txt` is
-  unverified; the plan's first Part 2 task checks it before anything links there.
+- **Viewer and inputs**: resolved while planning — inputs are not served;
+  their citations render as text with a hover path (see Viewer).
+- **Estimate copying a citation**: estimate's own checks exact-match `src`
+  in estimation.md (`estimate/classic/scripts/lib/checks.mjs`); a copied
+  `stated [C1 …]` there would fail its check and be fixed in that run.
 - **Warning flood** on old sets (every bare `stated`): intended, and why
   this release warns instead of fails.
