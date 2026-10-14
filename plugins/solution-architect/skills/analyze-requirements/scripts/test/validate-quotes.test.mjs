@@ -68,3 +68,14 @@ test('briefQuotesOf reads the §13 Brief says column', () => {
 test('closestSentence picks the sentence sharing most words', () => {
   assert.match(closestSentence(C1, 'orders in five minutes'), /^For a headline act/);
 });
+
+test('briefQuotesOf strips curly surrounding quotes', () => {
+  const t = {
+    section: '13 Quality Requirements and SLOs',
+    headers: ['Goal', 'Target', 'Brief says', 'src'],
+    rows: [['Speed', 't', '“10am sharp”', 'stated']],
+  };
+  const briefQuotes = briefQuotesOf([t]);
+  assert.deepEqual(briefQuotes, ['10am sharp']);
+  assert.deepEqual(validateQuotes({ citations: [], briefQuotes, sources }), []);
+});

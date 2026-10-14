@@ -26,7 +26,7 @@ export function briefQuotesOf(tables) {
   const t = tables.find((x) => /Quality Requirements/i.test(x.section));
   const col = (t?.headers ?? []).findIndex((h) => /^brief says$/i.test(h));
   if (col === -1) return [];
-  return t.rows.map((r) => (r[col] ?? '').trim().replace(/^"|"$/g, ''))
+  return t.rows.map((r) => (r[col] ?? '').trim().replace(/^["“]|["”]$/g, ''))
     .filter((q) => !EMPTY.test(q));
 }
 

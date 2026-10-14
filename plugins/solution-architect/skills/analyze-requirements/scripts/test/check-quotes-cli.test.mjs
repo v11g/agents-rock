@@ -40,3 +40,10 @@ test('an unreadable input file is a miss, not a crash', () => {
   assert.equal(r.status, 1);
   assert.match(out.misses[0].closest, /file not readable/);
 });
+
+test('an empty or missing quote is a miss, not a pass or a crash', () => {
+  const { r, out } = check([{ fact: 'a', quote: '' }, { fact: 'b' }]);
+  assert.equal(r.status, 1);
+  assert.equal(out.misses.length, 2);
+  assert.equal(out.misses.every((m) => m.closest === 'empty quote'), true);
+});

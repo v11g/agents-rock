@@ -19,6 +19,7 @@ function readSource(path, cache) {
 }
 
 function missOf(fact, cache) {
+  if (!normalize(fact.quote ?? '')) return { ...fact, closest: 'empty quote' };
   const text = readSource(fact.path, cache);
   if (text === null) return { ...fact, closest: `file not readable: ${fact.path}` };
   if (normalize(text).includes(normalize(fact.quote))) return null;
