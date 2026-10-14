@@ -17,7 +17,7 @@ client material (§2) and turns it into quoted facts (§3).
 
 Evidence before questions: a fact quoted from a client file is checked word
 for word, while a fact from an interview answer is only as good as the
-answer. So unless files were given or `inputs/` already holds files, the
+answer. So unless client files were given or `inputs/` already holds files, the
 run's first card asks for them. It is one card in its own `AskUserQuestion`
 call, and it counts toward the interview's 12-question cap:
 
@@ -32,15 +32,16 @@ call, and it counts toward the interview's 12-question cap:
      `0 input files: <n> stated facts cite the interview only`.
 - If option 1 is picked but `inputs/` is still empty, say so and continue
   as option 3.
-- If the user said not to ask, show no card. A brief in the opening message
-  is still saved per §2.1. With no brief, continue as option 3.
+- Whenever no card is shown (client files given, `inputs/` already holds
+  files, or the user said not to ask), a brief in the opening message is
+  still saved per §2.1. With no brief and no files, continue as option 3.
 
 ### 2.1 Saving a brief from chat
 
 Write the part of the user's message that describes the project to
 `inputs/N<n>-brief.md`, using the next free `N` number. Copy it exactly as
 the user wrote it: no heading, no summary, no fixes. Date it the day it
-arrived. From then on it is an input like any other: extracted (§3), never
+arrived, on the log's `**Inputs**` line (`N1 = brief, 2026-10-14`). From then on it is an input like any other: extracted (§3), never
 edited, never recorded or drift-gated. A later brief gets the next number
 and never overwrites an earlier one.
 

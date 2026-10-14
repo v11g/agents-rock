@@ -73,12 +73,15 @@ written as soon as the card returns:
     **Answer** Confirm top 3
 
 - **Inputs** is only needed when an existing input file name is kept (it
-  has no `<ID>-<slug>` name); it maps the ID to that name.
+  has no `<ID>-<slug>` name); it maps the ID to that name. It also carries
+  a chat brief's date (`extract.md` §2.1).
 - Append-only: never passed to the drift gate, recorded at the end of the run.
 - Numbering continues across runs; an existing entry is never edited or
   renumbered — other documents cite it.
 - **Answered by** names the person and role; "on behalf of <client>" when
   the PO answers for the client. An answer given in the user's opening
-  message is logged too, with **Card** `— (in the request)`.
+  message is logged too, with **Card** `— (in the request)`, unless that
+  message was saved as a brief (`extract.md` §2.1): then cite the brief's
+  quote, and log only answers the brief does not contain.
 - A declined question is logged with **Answer** `declined`, so the
   `Not provided — …` cell that follows can cite it.

@@ -115,6 +115,15 @@ test('a fragment resolves to the id its heading was minted as', () => {
   assert.match(html, /<a href="#q3-2">Q3<\/a>/);
 });
 
+// A heading with no ASCII letters slugs to '' — its key must not win over
+// the document anchor, or the link renders as a dead href="#".
+test('an empty minted slug falls back to the document anchor', () => {
+  const map = new Map([...ids,
+    ['/repo/notes.md', 'doc-notes'], ['/repo/notes.md#', '']]);
+  const html = rewriteDocLinks('<a href="notes.md#">N</a>', '/repo/ARCHITECTURE.md', map);
+  assert.match(html, /<a href="#doc-notes">N<\/a>/);
+});
+
 test('anchorIds maps each heading\'s own-document slug to its minted id', () => {
   const page = { path: '/repo/log.md', headings: [
     { level: 3, text: 'Q3', slug: 'q3-2' },

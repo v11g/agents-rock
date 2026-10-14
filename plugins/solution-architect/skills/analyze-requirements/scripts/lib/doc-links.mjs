@@ -23,7 +23,7 @@ export function rewriteDocLinks(html, fromPath, idByPath) {
     if (!path || ABSOLUTE.test(path)) return whole;
     const target = resolve(dir, path);
     const id = idByPath.get(target);
-    if (id) return `<a href="#${idByPath.get(target + (fragment ?? '')) ?? id}">${label}</a>`;
+    if (id) return `<a href="#${idByPath.get(target + (fragment ?? '')) || id}">${label}</a>`;
     return `<span class="ext-ref" title="${path}${fragment ?? ''}">${label}</span>`;
   });
 }
