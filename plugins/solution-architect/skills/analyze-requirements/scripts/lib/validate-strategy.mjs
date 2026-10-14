@@ -2,16 +2,11 @@
 // a goal it serves, every goal is served by some decision. A set written before
 // top-3 goals existed (§13 with no Goal column, §4 as bullets) warns instead of
 // failing, so a rewrite the user declined never blocks the viewer.
-import { sectionBody, sectionTable } from './strategy-sections.mjs';
-
-const GIVES_WAY = /\(gives way first\)/i;
-const NOT_PROVIDED = /^Not provided/i;
+import {
+  sectionBody, sectionTable, goalCells, isGivesWay, isNotProvided, nameOf,
+} from './strategy-sections.mjs';
 
 const fail = (message) => ({ check: 'strategy', message });
-const plain = (cell) => cell.replace(/[*_]/g, '');
-const isGivesWay = (cell) => GIVES_WAY.test(plain(cell));
-const isNotProvided = (cell) => NOT_PROVIDED.test(plain(cell));
-const nameOf = (cell) => plain(cell).replace(GIVES_WAY, '').trim().toLowerCase();
 
 // `tables` is ignored: tables are read from archMd so a table under a ###
 // subheading of §4 or §13 is found.
@@ -25,11 +20,6 @@ export function validateStrategy({ archMd }) {
     ...checkStrategyShape(strategy, sectionBody(archMd, /Solution Strategy/i)),
     ...(real.length && strategy ? checkServes(real, strategy) : []),
   ];
-}
-
-function goalCells(t) {
-  const col = (t?.headers ?? []).findIndex((h) => /^goal$/i.test(h));
-  return col === -1 ? null : t.rows.map((r) => r[col] ?? '');
 }
 
 function checkGoals(t, cells) {
