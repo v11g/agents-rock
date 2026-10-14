@@ -45,10 +45,10 @@ Ships in two parts, one plan each; Part 1 does not need Part 2.
 | # | Decision | Why |
 | --- | --- | --- |
 | D1 | Top 3 **replaces** the three fixed §13 questions. Availability and RPO/RTO are asked only when picked. | Fixed questions assume they matter everywhere; reflex answers inflate the estimate. |
-| D2 | The agent proposes; the user confirms. Candidates come from a fixed catalogue (`references/quality-goals.md`, ~10 goals), 4–6 shown, 3 recommended, each with an exact quote from the input. The full catalogue is never shown. | 20 options get "all important". The filter is the useful part (book: top 3, unordered). |
+| D2 | The agent proposes; the user confirms. Candidates come from a fixed catalogue (`references/quality-goals.md`, 11 goals), 4–6 shown, 3 recommended, each with an exact quote from the input. The full catalogue is never shown. | 20 options get "all important". The filter is the useful part (book: top 3, unordered). |
 | D3 | A candidate passes only if the input shows it **and** it changes the design. A goal every system needs but which needs nothing special (e.g. card payments handled by the payment provider) goes to "Also considered" with its reason. | The book's 3-part test, criterion 2: architectural only if you must design something for it. |
 | D4 | One goal is marked **gives way first** (the cull). | Records the trade-off before design, so the PO can hold scope. |
-| D5 | Thin input (fewer than 3 quote-backed candidates): the empty slots fall back to today's open question "which quality matters most, with a measurable target?". | The guard against inventing goals with no evidence. |
+| D5 | Thin input (fewer than 3 quote-backed candidates): the empty slots fall back to today's open question "which quality matters most, with a measurable target?". A slot still empty after that (user declined, or said "don't ask") renders a Goal cell `Not provided — <reason>`; such a row is not a goal for D8. Goals the user already named in their message are taken as answered (interview hard rule 3) — no card for them. | The guard against inventing goals with no evidence; honest absence, as everywhere else. |
 | D6 | §13 is a 4-column table, exactly 3 rows: `Goal · Target · Brief says · src`. "(gives way first)" sits in one Goal cell. `Brief says` is the evidence the goal was picked; `src` is the source of the Target (they can differ: quote from E1, target from interview Q4). Part 2's quote check also checks every `Brief says` quote against the inputs. Below it, an "Also considered" list, each line ending in a backticked provenance word. | 4 columns keep it a table; the viewer turns ≥5 columns × ≤3 rows into cards (`md-wide.mjs`). |
 | D7 | §4 becomes a table, ≤5 rows: `Decision · Serves · ADR · src`. `Serves` names one or more §13 goals, spelled as in §13. | A table gets `src` checked by the existing validator, and `Serves` becomes a column a check can read. |
 | D8 | New validator check `strategy`: every §4 `Serves` name is a §13 goal; every §13 goal is served by ≥1 row; §13 has 3 goal rows and exactly one "gives way first". A §4 still written as bullets → `WARN`, not `FAIL`. | Enforces the tie. Old sets keep validating. |
@@ -74,6 +74,7 @@ the design:
 | Growth | scalability | users or data grow steadily past one machine |
 | Uptime | availability | an outage window costs money or trust |
 | Data recovery | recoverability (RPO/RTO) | lost or late data has a stated cost |
+| Reliability | reliability | a failure must never leave wrong or half-written state |
 | Security | security | data or actions need protection beyond standard login |
 | Integration | interoperability | a named external system is the source of record |
 | Low cost | cost | a budget or running-cost ceiling is stated |
@@ -139,12 +140,17 @@ links an ADR" to the table above; "never restates rationale" stays —
 
 Reads `tables` from `buildInputs`:
 
-- §13 table must have a `Goal` column and exactly 3 rows → else `FAIL`.
-- exactly one Goal cell contains `(gives way first)` → else `FAIL`.
+- §13 table with no `Goal` column (a set written before this change) →
+  `WARN [strategy] §13 predates top-3 goals`; the other §13 checks and the
+  `Serves` checks are skipped.
+- §13 table with a `Goal` column must have exactly 3 rows → else `FAIL`.
+  A Goal cell starting `Not provided` is a row but not a goal.
+- with 2 or more goals, exactly one Goal cell contains `(gives way first)`;
+  with fewer, at most one → else `FAIL`.
 - §4: no table but bullets present → `WARN [strategy] §4 is a list; rewrite as Decision · Serves · ADR · src`.
 - §4 table: each `Serves` name (comma-split, trimmed, case-insensitive,
   "(gives way first)" stripped from §13 names) is a §13 goal → else `FAIL`.
-- each §13 goal appears in ≥1 `Serves` → else `FAIL`.
+- each §13 goal appears in ≥1 `Serves` → else `FAIL`; a row with an empty `Serves` → `FAIL`.
 - §13 or §4 rendered `Not applicable — <reason>` → check skipped.
 
 `validate.mjs` gains a `WARN` line kind: printed, never changes the exit code.
