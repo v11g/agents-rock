@@ -1,6 +1,6 @@
 # Interview — question bank, card batching, skip rules
 
-Read during the interview phase (SKILL.md step 3). Defines what may be asked, in
+Read during the interview phase (SKILL.md step 4). Defines what may be asked, in
 what shape, and when to stay silent instead.
 
 ## Hard rules

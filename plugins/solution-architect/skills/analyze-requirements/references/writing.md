@@ -1,6 +1,6 @@
 # Writing — spine contract, one-home-per-fact, src-column rules
 
-Read during the writing phase (SKILL.md step 5), after research completes.
+Read during the writing phase (SKILL.md step 6), after research completes.
 This file is the writer's single source for ARCHITECTURE.md's structure and
 for the conventions every companion and mattpocock-convention file follows.
 

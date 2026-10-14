@@ -25,7 +25,7 @@ test('the discipline tells the run to record what it wrote', () => {
   assert.match(doc, /"revision"/, 'the state file shape belongs in the reference once');
 });
 
-test('the skill runs the recorder at the end of step 5', () => {
+test('the skill runs the recorder at the end of step 6', () => {
   assert.match(skill(), /record\.mjs/);
 });
 

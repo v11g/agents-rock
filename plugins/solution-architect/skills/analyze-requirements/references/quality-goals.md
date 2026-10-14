@@ -1,6 +1,6 @@
 # Quality goals — catalogue, filter, top 3
 
-Read during the interview (SKILL.md step 3), before any §13 card. Defines
+Read during the interview (SKILL.md step 4), before any §13 card. Defines
 which quality goals may be proposed, how a candidate earns a place, and how
 the top 3 are confirmed. Method from *Fundamentals of Software Architecture*
 (Richards & Ford, ch. 4–5), in our own words.
