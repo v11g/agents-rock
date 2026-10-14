@@ -54,9 +54,10 @@ target yet`.
 
 ## 4. Thin input and pre-answered goals
 
-- Fewer than 3 candidates: round 1 carries ONE open card — "Which quality
-  matters most for this system, and what is its measurable target?" —
-  answered through Other. Its answer fills every empty slot it can. When the
+- Fewer than 3 candidates: round 1 carries ONE open card — "Which qualities
+  matter most for this system (up to <n>), each with a measurable target?"
+  (<n> = empty slots) — answered through Other. Its answer fills every
+  empty slot it can. When the
   picks are not known in round 1, the trade-off card moves to round 2 with
   the target cards (still max 3 cards per call; split into a second call if
   needed). §13 never exceeds 6 cards of the 12-question cap.
@@ -69,7 +70,8 @@ target yet`.
 
 ## 5. Provenance
 
-A goal confirmed by a card is `stated`; a goal the agent picked that the
-user never confirmed (they said not to ask) is `proposed`; the trade-off
-follows the same rule. This is the one exception to interview.md hard rule 4:
-a pick nobody confirmed is not an answer, so it stays `proposed`.
+`src` follows the Target (writing.md §3a). When the user never confirmed
+the goal itself (they said not to ask), `src` is `proposed` even if the
+Target came from the input. The trade-off pick is recorded only by the
+"(gives way first)" label. This is the one exception to interview.md hard
+rule 4: a pick nobody confirmed is not an answer, so it stays `proposed`.

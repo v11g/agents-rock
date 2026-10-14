@@ -133,8 +133,12 @@ two homes is a defect, not redundancy:
   lists one or more §13 goals, comma-separated, spelled as in §13. Every
   §13 goal appears in at least one `Serves`. The reasoning lives in the ADR;
   `Serves` is a pointer, not a rationale.
-- `validate.mjs` enforces all of this (`validate-strategy.mjs`); a set
-  written before it (bullets in §4, no Goal column in §13) only warns.
+- `validate.mjs` (`validate-strategy.mjs`) enforces the 3-row count, the
+  gives-way-first count, every Serves name being a §13 goal, and every goal
+  being served. When §13 has no real goal (all `Not provided`), the Serves
+  checks are skipped. Catalogue spelling, ≤ 5 rows, Brief says and Also
+  considered are on the writer. A set written before it (bullets in §4, no
+  Goal column in §13) only warns.
 
     | Decision | Serves | ADR | src |
     | --- | --- | --- | --- |

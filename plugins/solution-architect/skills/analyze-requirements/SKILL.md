@@ -24,7 +24,7 @@ served on localhost for review.
 3. **Interview**: follow `references/interview.md`; §13 quality goals per `references/quality-goals.md` (propose top 3 from evidence, never ask cold). Detect project type per `references/project-types.md`.
 4. **Research**: run `workflows/research.js` per `references/research.md`. Surface dropped items before writing.
 5. **Write**: on every run, `node scripts/drift.mjs` gates this step — before the first write, never after (`references/rewriting.md`). Then the model (`references/likec4.md`), then ARCHITECTURE.md and companions (`references/writing.md`). Last, once every document is on disk, record what was written: `node scripts/record.mjs --state ... --files ...`.
-6. **Validate**: export the model with `node scripts/likec4-export.mjs --dir ... --out ...`, then `node scripts/validate.mjs --arch ... --model ...` (add `--mode brownfield --clusters ...` when applicable). Fix findings; re-run until clean.
+6. **Validate**: export the model with `node scripts/likec4-export.mjs --dir ... --out ...`, then `node scripts/validate.mjs --arch ... --model ...` (add `--mode brownfield --clusters ...` when applicable). Fix findings; re-run until clean — `WARN` lines never block; fix them only in files this run is already rewriting.
 7. **Render + serve**: follow `references/viewer.md`; report the URL.
 
 ## Dependency
