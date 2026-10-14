@@ -1,15 +1,17 @@
 import { readFile } from 'node:fs/promises';
-import { relative } from 'node:path';
+import { dirname, join, relative } from 'node:path';
 import { parseFrontmatter } from './frontmatter.mjs';
 import { parseTables } from './md-tables.mjs';
 import { extractLinks } from './md-links.mjs';
 import { erEntities } from './er-entities.mjs';
 import { extractModel } from './likec4-extract.mjs';
 import { nextSlug } from './slug-registry.mjs';
+import { parseCitations } from './validate-quotes.mjs';
 
-export async function buildInputs({ root, archPath, modelPath, docPaths = [] }) {
+export async function buildInputs({ root, archPath, modelPath, docPaths = [], inputPaths = [] }) {
   const arch = await readFile(archPath, 'utf8');
   const docs = await readDocs(root, [archPath, ...docPaths]);
+  const sources = await readDocs(root, inputPaths);
   return {
     archMd: arch,
     frontmatter: parseFrontmatter(arch).data ?? {},
@@ -17,9 +19,17 @@ export async function buildInputs({ root, archPath, modelPath, docPaths = [] }) 
     erNames: erEntities(arch),
     model: extractModel(JSON.parse(await readFile(modelPath, 'utf8'))),
     links: docs.flatMap((d) => extractLinks(d.md).map((l) => ({ fromDoc: d.path, href: l.href }))),
-    files: docs.map((d) => d.path),
+    files: [...docs, ...sources].map((d) => d.path),
     anchors: Object.fromEntries(docs.map((d) => [d.path, headingSlugs(d.md)])),
+    sources: new Map(sources.map((d) => [d.path, d.md])),
+    citations: citationsOf(root, archPath, arch),
   };
+}
+
+// Citations are written relative to ARCHITECTURE.md; sources are keyed
+// relative to the root. Same frame as validate-links, or a nested set fails.
+function citationsOf(root, archPath, md) {
+  return parseCitations(md).map((c) => ({ ...c, path: relative(root, join(dirname(archPath), c.path)) }));
 }
 
 async function readDocs(root, paths) {

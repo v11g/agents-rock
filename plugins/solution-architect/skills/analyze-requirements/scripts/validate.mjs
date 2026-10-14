@@ -9,6 +9,7 @@ import { validateLinks } from './lib/validate-links.mjs';
 import { validateTree } from './lib/validate-tree.mjs';
 import { validateClusters } from './lib/validate-clusters.mjs';
 import { validateStrategy } from './lib/validate-strategy.mjs';
+import { validateQuotes, briefQuotesOf } from './lib/validate-quotes.mjs';
 
 function consumeDocs(argv, i, docs) {
   while (argv[i + 1] && !argv[i + 1].startsWith('--')) docs.push(argv[++i]);
@@ -16,11 +17,11 @@ function consumeDocs(argv, i, docs) {
 }
 
 function parseArgs(argv) {
-  const args = { root: process.cwd(), docs: [] };
+  const args = { root: process.cwd(), docs: [], inputs: [] };
   for (let i = 0; i < argv.length; i += 1) {
     const flag = argv[i];
-    if (flag === '--docs') {
-      i = consumeDocs(argv, i, args.docs);
+    if (flag === '--docs' || flag === '--inputs') {
+      i = consumeDocs(argv, i, args[flag.slice(2)]);
     } else if (flag.startsWith('--')) {
       args[flag.slice(2)] = argv[++i];
     }
@@ -73,11 +74,13 @@ const inputs = await buildInputs({
   archPath: args.arch,
   modelPath: args.model,
   docPaths: args.docs,
+  inputPaths: args.inputs,
 });
 
 const findings = [
   ...validateProvenance({ tables: inputs.tables }),
   ...validateStrategy({ tables: inputs.tables, archMd: inputs.archMd }),
+  ...validateQuotes({ citations: inputs.citations, briefQuotes: briefQuotesOf(inputs.tables), sources: inputs.sources }),
   ...validateElections({ frontmatter: inputs.frontmatter }),
   ...validateModelTables({ model: inputs.model, tables: inputs.tables, erNames: inputs.erNames }),
   ...validateDeployment({ model: inputs.model }),
