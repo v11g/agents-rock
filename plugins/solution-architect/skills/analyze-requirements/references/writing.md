@@ -123,6 +123,12 @@ two homes is a defect, not redundancy:
   - from the interview: `stated [Q3 · 2026-10-14](interview-log.md#q3)` — no quote.
   The path is relative to ARCHITECTURE.md. `validate.mjs` checks the quote
   word for word; a bare `stated` is a `WARN`.
+- A row's `src` covers the whole row. When a `proposed` (or `researched`)
+  row carries a value the client stated — a threshold, a limit, a name —
+  cite that value in its cell, right after it, and leave the row's tag
+  alone: `applies the 0.72 floor (stated [D1 · 2026-10-01](inputs/D1-spec.md) "confidence below 0.72")`.
+  `validate.mjs` checks an inline quote exactly like one in `src`. Never
+  re-tag the row `stated` to keep the value: the design is still yours.
 - In the viewer an interview citation jumps to its answer (`#q3`) in the log; an input citation
   shows as text with its path on hover (inputs are not part of the page).
 - Generated-index tables are exempt: `Decisions` (§14) and `Glossary` (§16)

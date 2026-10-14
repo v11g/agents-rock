@@ -64,6 +64,7 @@ Ships in two parts, one plan each; Part 1 does not need Part 2.
 | D18 | (added 2026-10-14) Heading ids outside ARCHITECTURE.md carry their document's file slug: `<fileSlug>__<slug>` (`interview-log__q3`); dedupe is per document; the spine keeps bare ids. A same-page `#x` resolves against its own document. Supersedes D17's `q3-2` example. | Unique by construction instead of by renumbering: adding a document never moves another document's ids, and `#context` inside an ADR lands in that ADR. |
 | D19 | (added 2026-10-14) The link validator counts headings exactly as the renderer does: frontmatter stripped, fenced code skipped. | A `## ` line inside a code block shifted the validator's `-N` numbering off the viewer's, so a checked link could land nowhere. |
 | D20 | (added 2026-10-14) A link to a heading inside a record (an ADR in the drawer) opens the drawer scrolled to that heading, from a click or a deep link. | The drawer reset its scroll and the click handler rewrote the link to the record's route, so every heading link into an ADR opened at the top. |
+| D21 | (added 2026-10-14) A stated value inside a `proposed`/`researched` row carries its own inline `stated [..](..) "quote"` citation in its cell; the row's `src` is unchanged. | `src` is per row, so a client's number inside a design row lost its source (eval 2, 0.72 floor). The inline citation is quote-checked like any other. |
 
 ## Part 1 — top-3 quality goals and the strategy tie
 
