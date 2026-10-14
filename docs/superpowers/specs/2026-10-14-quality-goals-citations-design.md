@@ -205,7 +205,7 @@ existing anchor check covers broken citations.
 
 ### Viewer
 
-No viewer change. The viewer is one HTML page (`doc-links.mjs`):
+One viewer change (D17). The viewer is one HTML page (`doc-links.mjs`):
 
 - `interview-log.md` is passed to `render.mjs` with `--docs`, so it is a
   document in the page; a citation to it becomes an in-page link to the log

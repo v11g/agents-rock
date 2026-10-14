@@ -46,6 +46,8 @@ and never overwrites an earlier one.
 
 ## 3. Run
 
+Skip this section when there are no input files.
+
 1. Invoke `workflows/extract.js` with
    `args = { files: [{ id, path: <absolute>, date: 'YYYY-MM-DD' }] }`.
    **Never read an input file into the main context yourself.**
