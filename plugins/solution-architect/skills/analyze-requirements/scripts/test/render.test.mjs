@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
-import { readFileSync, mkdtempSync, writeFileSync } from 'node:fs';
+import { readFileSync, mkdtempSync, writeFileSync, cpSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
@@ -168,4 +168,25 @@ test('render.mjs refuses a likec4 bundle with no palette', () => {
     '--mermaid-bundle', stub('m.js', '/*mermaid*/'),
     '--theme', 'plugins/solution-architect/skills/analyze-requirements/assets/mermaid-theme.json',
   ]), /palette|likec4\.config\.json/i);
+});
+
+test('a citation to an interview answer jumps to that answer, even when its id was deduped', () => {
+  const root = mkdtempSync(join(tmpdir(), 'render-anchor-'));
+  cpSync(fixtures, root, { recursive: true });
+  const arch = join(root, 'ARCHITECTURE.md');
+  const log = join(root, 'interview-log.md');
+  writeFileSync(arch, `${readFileSync(arch, 'utf8')}\n### Q3\n\nOwner: stated [Q3 · 2026-10-14](interview-log.md#q3)\n`);
+  writeFileSync(log, '# Interview log\n\n### Q3\n**Answer** Confirm top 3\n');
+  const out = mkdtempSync(join(tmpdir(), 'render-anchor-out-'));
+  const stub = (name, content) => { const p = join(out, name); writeFileSync(p, content); return p; };
+  execFileSync('node', [
+    'plugins/solution-architect/skills/analyze-requirements/scripts/render.mjs',
+    '--root', root, '--arch', arch, '--docs', log, '--out', out,
+    '--likec4-bundle', stub('l.js', LIKEC4_STUB),
+    '--mermaid-bundle', stub('m.js', '/*mermaid*/'),
+    '--theme', 'plugins/solution-architect/skills/analyze-requirements/assets/mermaid-theme.json',
+  ]);
+  const html = readFileSync(join(out, 'index.html'), 'utf8');
+  assert.match(html, /<h3 id="q3-2">Q3<\/h3>/);
+  assert.match(html, /<a href="#q3-2">Q3 · 2026-10-14<\/a>/);
 });

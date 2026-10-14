@@ -2,7 +2,7 @@ import { readFileSync, mkdirSync, writeFileSync } from 'node:fs';
 import { basename, dirname, join, resolve } from 'node:path';
 import { renderMarkdown } from './lib/md-render.mjs';
 import { buildNav } from './lib/nav.mjs';
-import { rewriteDocLinks } from './lib/doc-links.mjs';
+import { rewriteDocLinks, anchorIds } from './lib/doc-links.mjs';
 import { buildDoc } from './lib/doc-sections.mjs';
 import { routeMap } from './lib/doc-routes.mjs';
 import { parseFrontmatter } from './lib/frontmatter.mjs';
@@ -83,7 +83,7 @@ const pages = docPaths.map((p, i) => ({
 
 // Second pass, because a link's target id is only known once every document has
 // been rendered: the id comes from the target's H1, not from its filename.
-const idByPath = new Map(pages.map((p) => [p.path, p.docId]));
+const idByPath = new Map([...pages.map((p) => [p.path, p.docId]), ...pages.flatMap((p) => anchorIds(p))]);
 const linked = pages.map((p) => ({
   ...p,
   html: estimateLink(p, args.out) + rewriteDocLinks(p.html, p.path, idByPath),

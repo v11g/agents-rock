@@ -1,4 +1,5 @@
 import { dirname, resolve } from 'node:path';
+import { nextSlug } from './slug-registry.mjs';
 
 // The viewer is one HTML file, so a link to a sibling .md has nothing to open —
 // every such href in a real set is dead on arrival. Each document is already in
@@ -11,16 +12,25 @@ import { dirname, resolve } from 'node:path';
 const HREF = /<a href="([^"#]*)(#[^"]*)?">([\s\S]*?)<\/a>/g;
 const ABSOLUTE = /^([a-z][a-z0-9+.-]*:|\/\/)/i;
 
+// idByPath maps a document's absolute path to its id, and `<path>#<slug>` to
+// the id that heading was minted as. Authors write a fragment against the
+// target's own headings (#q3), but ids are deduped across the whole set (q3-2),
+// so the fragment is looked up, never trusted; unknown -> the document anchor.
 export function rewriteDocLinks(html, fromPath, idByPath) {
   const dir = dirname(fromPath);
   return html.replace(HREF, (whole, path, fragment, label) => {
     // No path means an in-page anchor; a scheme or // means it leaves the page.
     if (!path || ABSOLUTE.test(path)) return whole;
-    // The fragment is dropped rather than resolved: heading slugs are deduped
-    // across the whole set, so #context inside one ADR may have been minted as
-    // context-7. The document anchor is the target we can honestly name.
-    const id = idByPath.get(resolve(dir, path));
-    if (id) return `<a href="#${id}">${label}</a>`;
+    const target = resolve(dir, path);
+    const id = idByPath.get(target);
+    if (id) return `<a href="#${idByPath.get(target + (fragment ?? '')) ?? id}">${label}</a>`;
     return `<span class="ext-ref" title="${path}${fragment ?? ''}">${label}</span>`;
   });
+}
+
+// The own-document slug is what an author writes after `#` and what
+// validate-links checks; the minted slug is what the page actually carries.
+export function anchorIds({ path, headings }) {
+  const local = new Map();
+  return headings.map((h) => [`${path}#${nextSlug(h.text, local)}`, h.slug]);
 }
