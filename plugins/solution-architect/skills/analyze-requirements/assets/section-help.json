@@ -16,9 +16,9 @@
       "good": "Someone can map a feature request to a directory without resorting to grep."
     },
     "Solution Strategy": {
-      "what": "The handful of decisions that shaped everything else, each pointing at the decision record that argued it.",
+      "what": "The handful of decisions that shaped everything else, each naming the quality goal it serves and pointing at the decision record that argued it.",
       "why": "This is what a reader consults to learn why the system is like this at all, before spending an hour in the detail.",
-      "good": "Five bullets or fewer, each linking a decision record, none restating the rationale."
+      "good": "Five rows or fewer, each naming the top-3 goal it serves and linking a decision record, none restating the rationale."
     },
     "Architecture Model": {
       "what": "The C4 views of the system, from context down through containers to components, as diagrams rather than prose.",
@@ -61,9 +61,9 @@
       "good": "Every boundary crossing on the diagram has a stated authentication mechanism."
     },
     "Quality Requirements & SLOs": {
-      "what": "The quality attributes that matter here, each with a number and a way of measuring it.",
-      "why": "Fast, reliable and scalable are unfalsifiable. A number is something a test can fail against.",
-      "good": "No entry is an adjective. Each carries a value and a measurement method."
+      "what": "The top three quality goals for this system, each with a measurable target and the evidence it was picked from.",
+      "why": "Fast, reliable and scalable are unfalsifiable, and wanting all of them sinks the design. Three goals with numbers say what to build for and what to trade.",
+      "good": "Exactly three goals, no adjectives, each with a value; one marked as the one that gives way first."
     },
     "Decisions": {
       "what": "The index of architecture decision records: what was decided, its current status, and where the full record lives.",
