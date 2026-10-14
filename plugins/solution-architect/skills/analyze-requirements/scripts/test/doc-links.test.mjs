@@ -30,7 +30,7 @@ test('a root-relative href resolves the same way', () => {
 
 // A fragment that names no heading in the target (here: ids has no #context
 // entry) falls back to the document anchor rather than a dead id.
-test('a fragment on a document link is dropped rather than guessed at', () => {
+test('an unknown fragment on a document link falls back to the document', () => {
   const html = rewriteDocLinks(
     '<p><a href="0002-rls.md#context">why</a></p>', '/repo/docs/adr/index.md', ids,
   );
@@ -126,11 +126,24 @@ test('an empty minted slug falls back to the document anchor', () => {
 
 test('anchorIds maps each heading\'s own-document slug to its minted id', () => {
   const page = { path: '/repo/log.md', headings: [
-    { level: 3, text: 'Q3', slug: 'q3-2' },
-    { level: 3, text: 'Q3', slug: 'q3-3' },
+    { level: 3, text: 'Q3', slug: 'log__q3', local: 'q3' },
+    { level: 3, text: 'Q3', slug: 'log__q3-2', local: 'q3-2' },
   ] };
   assert.deepEqual(anchorIds(page), [
-    ['/repo/log.md#q3', 'q3-2'],
-    ['/repo/log.md#q3-2', 'q3-3'],
+    ['/repo/log.md#q3', 'log__q3'],
+    ['/repo/log.md#q3-2', 'log__q3-2'],
   ]);
+});
+
+// Inside an ADR, #context means this ADR's Context, not the spine's.
+test('a same-page anchor resolves against its own document', () => {
+  const map = new Map([['/repo/docs/adr/0007.md#context', '0007__context']]);
+  const html = rewriteDocLinks('<a href="#context">C</a>', '/repo/docs/adr/0007.md', map);
+  assert.match(html, /<a href="#0007__context">C<\/a>/);
+});
+
+// View panels, doc heads and anything else that is not an h2/h3 keep their id.
+test('a same-page anchor that names no heading is left alone', () => {
+  const html = rewriteDocLinks('<a href="#panel-containers">V</a>', '/repo/ARCHITECTURE.md', new Map());
+  assert.equal(html, '<a href="#panel-containers">V</a>');
 });

@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
-import { readFileSync, mkdtempSync, writeFileSync, cpSync } from 'node:fs';
+import { readFileSync, mkdtempSync, writeFileSync, cpSync, mkdirSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
@@ -170,7 +170,7 @@ test('render.mjs refuses a likec4 bundle with no palette', () => {
   ]), /palette|likec4\.config\.json/i);
 });
 
-test('a citation to an interview answer jumps to that answer, even when its id was deduped', () => {
+test('a citation to an interview answer jumps to that answer, not the spine heading of the same name', () => {
   const root = mkdtempSync(join(tmpdir(), 'render-anchor-'));
   cpSync(fixtures, root, { recursive: true });
   const arch = join(root, 'ARCHITECTURE.md');
@@ -187,6 +187,29 @@ test('a citation to an interview answer jumps to that answer, even when its id w
     '--theme', 'plugins/solution-architect/skills/analyze-requirements/assets/mermaid-theme.json',
   ]);
   const html = readFileSync(join(out, 'index.html'), 'utf8');
-  assert.match(html, /<h3 id="q3-2">Q3<\/h3>/);
-  assert.match(html, /<a href="#q3-2">Q3 · 2026-10-14<\/a>/);
+  assert.match(html, /<h3 id="q3">Q3<\/h3>/);
+  assert.match(html, /<h3 id="interview-log__q3">Q3<\/h3>/);
+  assert.match(html, /<a href="#interview-log__q3">Q3 · 2026-10-14<\/a>/);
+});
+
+test('two documents with the same file name get different id prefixes', () => {
+  const root = mkdtempSync(join(tmpdir(), 'render-prefix-'));
+  cpSync(fixtures, root, { recursive: true });
+  for (const d of ['a', 'b']) {
+    mkdirSync(join(root, d));
+    writeFileSync(join(root, d, 'notes.md'), `# Notes ${d}\n\n## Context\n`);
+  }
+  const out = mkdtempSync(join(tmpdir(), 'render-prefix-out-'));
+  const stub = (name, content) => { const p = join(out, name); writeFileSync(p, content); return p; };
+  execFileSync('node', [
+    'plugins/solution-architect/skills/analyze-requirements/scripts/render.mjs',
+    '--root', root, '--arch', join(root, 'ARCHITECTURE.md'),
+    '--docs', join(root, 'a', 'notes.md'), join(root, 'b', 'notes.md'), '--out', out,
+    '--likec4-bundle', stub('l.js', LIKEC4_STUB),
+    '--mermaid-bundle', stub('m.js', '/*mermaid*/'),
+    '--theme', 'plugins/solution-architect/skills/analyze-requirements/assets/mermaid-theme.json',
+  ]);
+  const html = readFileSync(join(out, 'index.html'), 'utf8');
+  assert.match(html, /<h2 id="notes__context">/);
+  assert.match(html, /<h2 id="notes-2__context">/);
 });

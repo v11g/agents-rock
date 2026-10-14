@@ -4,7 +4,8 @@ import { renderMarkdown } from './lib/md-render.mjs';
 import { buildNav } from './lib/nav.mjs';
 import { rewriteDocLinks, anchorIds } from './lib/doc-links.mjs';
 import { buildDoc } from './lib/doc-sections.mjs';
-import { routeMap } from './lib/doc-routes.mjs';
+import { routeMap, fileSlug } from './lib/doc-routes.mjs';
+import { nextSlug } from './lib/slug-registry.mjs';
 import { parseFrontmatter } from './lib/frontmatter.mjs';
 import { embed } from './lib/embed.mjs';
 import { kindOf } from './lib/doc-kinds.mjs';
@@ -70,10 +71,15 @@ function drawerOf(path, index) {
 const args = parseArgs(process.argv.slice(2));
 const archMd = readFileSync(args.arch, 'utf8');
 const docPaths = [args.arch, ...args.docs];
-const slugs = new Map();
+const prefixes = new Map();
+// The spine keeps bare ids: it is the document every other one links into, and
+// its rail, section help and tests name `core-components`, not a prefixed id.
+function headingPrefix(path, index) {
+  return index === 0 ? '' : nextSlug(fileSlug(path), prefixes);
+}
 const docSlugs = new Map();
 const pages = docPaths.map((p, i) => ({
-  ...renderMarkdown(readFileSync(p, 'utf8'), slugs, docSlugs),
+  ...renderMarkdown(readFileSync(p, 'utf8'), { slugs: new Map(), docSlugs, prefix: headingPrefix(p, i) }),
   section: sectionOf(p, i, args.root),
   path: resolve(p),
   spine: i === 0,

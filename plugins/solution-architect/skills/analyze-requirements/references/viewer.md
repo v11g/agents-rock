@@ -172,14 +172,15 @@ Four steps, in order — each feeds the next:
    |---|---|
    | relative path resolving to a document in the set | in-page anchor; a fragment naming one of the target's h2/h3 headings jumps to it, any other fragment falls back to the document |
    | any other relative path — `.c4`, a directory, `/site/root` | `.ext-ref` span, path kept in `title` |
-   | `#anchor` | untouched |
+   | `#anchor` | resolved against this document's own h2/h3 headings; anything else (a view panel, a doc head) untouched |
    | `https:`, `mailto:`, `//host` | untouched |
 
    The test is "is this a relative path", not a list of extensions: a `.c4` model
    or a `docs/` directory can never be a document in the set, so it is exactly as
-   dead as an unresolved `.md` and reads better as text. A fragment on a document
-   link is resolved to the heading id minted for it — slugs are deduped across the
-   whole set, so `#context` inside one ADR may have been minted as `context-7`.
+   dead as an unresolved `.md` and reads better as text. A fragment is resolved to the heading id the page carries: outside
+   ARCHITECTURE.md every h2/h3 id is prefixed with its document's file slug
+   (`0007-cache__context`), so the same heading in two documents never collides
+   and `#context` inside an ADR stays in that ADR.
 
    Unwrapping is also a cheap link check: anything that comes out as `.ext-ref`
    either lives outside the set or does not exist. In the EOS set it surfaced
