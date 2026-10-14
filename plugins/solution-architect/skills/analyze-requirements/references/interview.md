@@ -20,6 +20,7 @@ what shape, and when to stay silent instead.
 
 | spine section | question | mode | skip when |
 |---|---|---|---|
+| client inputs (`extract.md` §2) | Do you have call transcripts, emails, notes or specs? | both | files were given or `inputs/` already holds files, or the user said not to ask |
 | §1 Goals & Scope | What is the primary goal of this system, and who are its intended users? | both | an existing README/pitch doc/ARCHITECTURE.md already states it |
 | §2 Constraints | What constraints must the architecture respect — budget, compliance regime, timeline, mandated tech or vendor? | both | constraints are already documented (compliance docs, existing ADRs, a constraints file the scan found) |
 | §13 Quality Requirements & SLOs | Quality goals: confirm the proposed top 3 (candidates with quotes, per `quality-goals.md`) | both | the user said not to ask — then propose the top 3 from quotes, no card (`quality-goals.md` §4); otherwise skip only goals the user already named |
@@ -38,6 +39,8 @@ what shape, and when to stay silent instead.
 - Group cards by spine section — one `AskUserQuestion` call per section, not
   one call per question.
 - **Max 3 cards per call.**
+- The client-inputs card (`extract.md` §2) is the run's first call, on its
+  own: extraction must finish before any card proposes from evidence.
 - Within a card, the recommended option is listed first and labeled
   `(Recommended)`.
 - §13 is two calls (`quality-goals.md` §3): round 1 = goals + trade-off

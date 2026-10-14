@@ -13,7 +13,8 @@
         "asks-quality-goals-from-evidence: the questions include the target deployment environment AND a §13 quality-goals card; with this thin prompt the card either proposes candidates each backed by a quote from the prompt (e.g. \"compliance audit\") or, lacking 3 quoted candidates, asks the open 'which quality matters most, with a measurable target' question - it never asks a fixed availability or RPO/RTO question for a goal nobody raised",
         "asks-about-data-sensitivity-or-tags-it: the PII/data-sensitivity of reimbursement data is either asked about, or any statement made about it is explicitly tagged 'stated'/'proposed' or rendered as 'Not provided - <reason>' - never asserted bare",
         "mode-and-dependency-stated: the response states the detected mode (brownfield vs greenfield) as overridable AND states the Node >= 20 / npx likec4 dependency before proposing to write anything",
-        "question-budget-respected: the interview stays within 12 questions total, delivered as AskUserQuestion cards with at most 4 options per card and at most 3 cards per call"
+        "question-budget-respected: the interview stays within 12 questions total, delivered as AskUserQuestion cards with at most 4 options per card and at most 3 cards per call",
+        "asks-for-inputs-first: the first AskUserQuestion call is a single card asking for client material (call transcripts, emails, notes or specs), its first option 'Added to inputs/ — continue (Recommended)', and it comes before any §13 quality-goals card"
       ]
     },
     {

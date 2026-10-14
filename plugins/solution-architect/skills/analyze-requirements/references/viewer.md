@@ -170,15 +170,15 @@ Four steps, in order — each feeds the next:
 
    | Href | Becomes |
    |---|---|
-   | relative path resolving to a document in the set | in-page anchor, fragment dropped |
+   | relative path resolving to a document in the set | in-page anchor; a fragment naming one of the target's h2/h3 headings jumps to it, any other fragment falls back to the document |
    | any other relative path — `.c4`, a directory, `/site/root` | `.ext-ref` span, path kept in `title` |
    | `#anchor` | untouched |
    | `https:`, `mailto:`, `//host` | untouched |
 
    The test is "is this a relative path", not a list of extensions: a `.c4` model
    or a `docs/` directory can never be a document in the set, so it is exactly as
-   dead as an unresolved `.md` and reads better as text. Fragments on document
-   links are dropped rather than resolved — heading slugs are deduped across the
+   dead as an unresolved `.md` and reads better as text. A fragment on a document
+   link is resolved to the heading id minted for it — slugs are deduped across the
    whole set, so `#context` inside one ADR may have been minted as `context-7`.
 
    Unwrapping is also a cheap link check: anything that comes out as `.ext-ref`

@@ -21,12 +21,12 @@ served on localhost for review.
 
 1. **Detect mode**: target has source code → brownfield, else greenfield. State the detection and let the user override.
 2. **Scan** (brownfield): `index_repository` if needed, then `get_architecture` — clusters seed §6 Core Components. Read `manage_adr` if present; never write it.
-3. **Extract** (when the user supplied client files): follow `references/extract.md` — `workflows/extract.js`, then `node scripts/check-quotes.mjs`. Never read input files into the main context.
+3. **Inputs + extract**: follow `references/extract.md` — ask for client material unless files were given (§2), then `workflows/extract.js` and `node scripts/check-quotes.mjs` on every input (§3). Never read input files into the main context.
 4. **Interview**: follow `references/interview.md`; §13 quality goals per `references/quality-goals.md` (propose top 3 from evidence, never ask cold). Record every answer in `interview-log.md` as it arrives. Detect project type per `references/project-types.md`.
 5. **Research**: run `workflows/research.js` per `references/research.md`. Surface dropped items before writing.
 6. **Write**: on every run, `node scripts/drift.mjs` gates this step — before the first write, never after (`references/rewriting.md`); `interview-log.md` is excluded from it (append-only, see `references/rewriting.md` §3). Then the model (`references/likec4.md`), then ARCHITECTURE.md and companions (`references/writing.md`). Last, once every document is on disk, record what was written, `interview-log.md` included: `node scripts/record.mjs --state ... --files ...`.
 7. **Validate**: export the model with `node scripts/likec4-export.mjs --dir ... --out ...`, then `node scripts/validate.mjs --arch ... --model ... --docs interview-log.md ... --inputs <input files>` (add `--mode brownfield --clusters ...` when applicable). Fix every `FAIL`; a `WARN` is reported to the user, not blocking — fix it only in files this run is already rewriting. Re-run until no `FAIL`.
-8. **Render + serve**: follow `references/viewer.md`, passing `interview-log.md` in `--docs`; report the URL.
+8. **Render + serve**: follow `references/viewer.md`, passing `interview-log.md` in `--docs`; report the URL, plus the `0 input files` line when the run used none (`references/extract.md` §2).
 
 ## Dependency
 

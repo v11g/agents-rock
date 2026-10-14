@@ -59,6 +59,8 @@ Ships in two parts, one plan each; Part 1 does not need Part 2.
 | D13 | Quotes are checked by a script, not an agent: `scripts/check-quotes.mjs` (lib `validate-quotes.mjs`). Whitespace is normalised; otherwise exact. A miss prints the closest sentence in that file. A failed extract quote goes back to its subagent once; if it still fails, the fact is dropped and reported like research's `dropped`. `validate.mjs` runs the same check on every quoted citation in the set. | Text matching is free and deterministic; a model checking a model is neither. |
 | D14 | `validate.mjs` gets `--inputs <files…>`; inputs and `interview-log.md` join the file list the link check resolves against. | `validate-links.mjs` only accepts targets in its `files` list; without this every citation fails as "target file missing". |
 | D15 | Ideas from the book are written in our own words; the source is named in `quality-goals.md`. Nothing copied from the `software-architecture-fundamentals` skill, and no runtime dependency on it. | That skill lives in another repo and plugin; copying four rules is cheaper than coupling two plugins. |
+| D16 | (added 2026-10-14) Unless files were given or `inputs/` holds files, the run's first card asks for client material; a brief pasted in chat is saved verbatim as `inputs/N<n>-brief.md` and extracted like any input. No card when the user said not to ask; the brief is still saved. | A quoted fact is checked word for word; an interview answer is not. Asking first turns more facts into checked quotes, and a chat brief stops being unverifiable. |
+| D17 | (added 2026-10-14) In the viewer a link fragment resolves to the heading id the renderer minted for it (`#q3` → `q3-2` when deduped); an unknown fragment falls back to the document. | An interview citation should land on its answer, not the top of the log. |
 
 ## Part 1 — top-3 quality goals and the strategy tie
 
@@ -207,7 +209,7 @@ No viewer change. The viewer is one HTML page (`doc-links.mjs`):
 
 - `interview-log.md` is passed to `render.mjs` with `--docs`, so it is a
   document in the page; a citation to it becomes an in-page link to the log
-  (the `#q3` fragment is dropped by design — the log is short).
+  (the `#q3` fragment jumps to that answer — D17).
 - An input file is not a document in the page, so its citation renders as
   plain text with the path on hover (`ext-ref`), never as a dead link. The
   label (`C1 · 2026-09-10`) and the quote stay visible; that is the trace.
