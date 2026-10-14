@@ -119,7 +119,7 @@ two homes is a defect, not redundancy:
 - `stated` is always followed by its citation:
   - from a client input: `stated [C1 · 2026-09-10](inputs/C1-kickoff-call.txt) "exact quote"` —
     the quote copied from a fact `check-quotes.mjs` verified, in straight
-    double quotes (use single quotes inside it);
+    double quotes; if the span holds double quotes itself, quote a shorter span without them;
   - from the interview: `stated [Q3 · 2026-10-14](interview-log.md#q3)` — no quote.
   The path is relative to ARCHITECTURE.md. `validate.mjs` checks the quote
   word for word; a bare `stated` is a `WARN`.

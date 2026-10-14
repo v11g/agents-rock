@@ -34,6 +34,11 @@ Before writing, run:
 List every file this run intends to write. Paths are relative to the state
 file. Exit codes: `0` nothing drifted, `2` something drifted, `1` usage error.
 
+`interview-log.md` is not passed to the gate: the skill owns it and only
+appends (step 4 writes it before this gate runs), so the gate would flag the
+skill's own entries as `untracked` or `drifted`. `record.mjs` still records
+it at the end of the run.
+
 | verdict | meaning | what to do |
 |---|---|---|
 | `unchanged` | matches what we wrote | write it |

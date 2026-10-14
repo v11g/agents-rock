@@ -10,7 +10,7 @@ client material (call transcripts, emails, notes, documents).
 - Each file has an ID: `C` call, `E` email, `N` note, `D` other document,
   numbered per kind in date order (`C1`, `C2`, `E1`). Named
   `<ID>-<slug>.<txt|md>` when the skill files them; an existing name is
-  kept and the ID recorded in `interview-log.md`'s header instead.
+  kept and the ID recorded on the `**Inputs**` line of `interview-log.md` instead.
 - The skill reads inputs, never edits them (hard rule 5: not ours).
 
 ## 2. Run

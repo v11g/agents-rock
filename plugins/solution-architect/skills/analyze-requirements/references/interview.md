@@ -62,12 +62,16 @@ Provenance: `stated`.
 written as soon as the card returns:
 
     # Interview log
+    **Inputs** C1 = <kept file name>
 
     ### Q3
     **Asked** 2026-10-14 · **Answered by** Truong Vu (PO), on behalf of Trellis
     **Card** Quality goals — "Recommended top 3: Uptime, Integration, Speed"
     **Answer** Confirm top 3
 
+- **Inputs** is only needed when an existing input file name is kept (it
+  has no `<ID>-<slug>` name); it maps the ID to that name.
+- Append-only: never passed to the drift gate, recorded at the end of the run.
 - Numbering continues across runs; an existing entry is never edited or
   renumbered — other documents cite it.
 - **Answered by** names the person and role; "on behalf of <client>" when
