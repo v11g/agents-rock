@@ -1,0 +1,40 @@
+{
+  "client": "Riverside Bakery",
+  "date": "2026-10-08",
+  "sources": [
+    { "id": "E1", "kind": "email", "date": "2026-09-02", "who": "Dana Lee — Running out of flour", "file": "sources/E1.txt" },
+    { "id": "C1", "kind": "call", "date": "2026-09-10", "who": "Dana Lee (owner)", "file": "sources/C1.txt" }
+  ],
+  "problems": [
+    { "id": "P1", "text": "We run out of flour before we notice",
+      "quotes": [{ "source": "E1", "text": "Last month we ran out twice on a Saturday and had to close the cake counter by noon." }] },
+    { "id": "P2", "text": "We lose track of an order once its paper ticket is gone",
+      "quotes": [{ "source": "C1", "text": "When a ticket gets lost the customer calls us and we have no idea where the cake is." }] }
+  ],
+  "scope": {
+    "covered": "Order tracking from the WhatsApp order to the courier handoff, and flour stock.",
+    "exclusions": [{ "text": "Delivery routes", "reason": "owned-elsewhere", "source": "C1" }]
+  },
+  "systems": [
+    { "name": "Orders", "purpose": "Tracks each order from WhatsApp to the courier handoff; closes P2", "problem": "P2",
+      "workflows": [
+        { "kind": "main", "steps": ["Order In", "Bake", "Pack", "Courier Handoff"], "source": "C1" },
+        { "kind": "sub", "name": "Custom cake", "steps": ["Quote", "Confirm Design"],
+          "startsAt": "Order In", "rejoinsAt": "Bake", "share": "~30% of orders", "source": "C1" }
+      ],
+      "features": [
+        { "name": "Order board", "does": "Shows every order and its stage, so staff answer a customer's call without searching paper tickets", "problem": "P2", "source": "C1" }
+      ] },
+    { "name": "Stock", "purpose": "Keeps flour on hand for weekend baking; closes P1", "problem": "P1",
+      "workflows": [],
+      "features": [
+        { "name": "Low-flour alert", "does": "Warns the owner when flour drops below a set level, before a Saturday runs out", "problem": "P1", "source": "E1" }
+      ] }
+  ],
+  "assumptions": [
+    { "text": "Orders keep arriving by WhatsApp; staff copy each one onto the board", "feature": "Order board", "source": "C1" }
+  ],
+  "questions": [
+    { "text": "Last time you ran out of flour, how much was left the day before?", "why": "Sets the alert level", "assume": "Alert at 2 bags", "refs": ["P1", "E1"] }
+  ]
+}

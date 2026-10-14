@@ -26,7 +26,7 @@ emails / call transcripts ──[draft-scope]──► draft-scope.docx ──PO
 | --- | --- | --- |
 | D1 | New skill `draft-scope`, sibling of `business-analyst` in the same plugin. Fully standalone: no shared files, no reading the BA's references, no cross-skill tests. | User choice. The BA keeps its rule never to draft systems, workflows or features; the PO stays author of record. |
 | D2 | Runs on claude.ai (primary) and Claude Code. Scripts are Python 3 standard library only. | claude.ai sandbox has Python, no Node, no browser; no third-party package can be assumed. |
-| D3 | Workflows are text step lines (`Order In → Pack → Pack Review → Shipped`), never images. | Editable in both Word and Google Docs. |
+| D3 | Workflows are drawn as boxes made of a plain table: one bordered cell per step, arrow cells between, up to 5 steps per row. Never images, never Word shapes, never Mermaid. (Amended 2026-10-08 after the PO's first run: text step lines read poorly.) | A table draws as boxes and stays editable in both Word and Google Docs; shapes turn into locked drawings in Google Docs, Mermaid shows as code. |
 | D4 | No questions to the PO, before or during drafting. Every gap becomes an item in "Questions for the client". | User choice. The BA interviews the PO later on the edited document; asking twice wastes the PO's time. |
 | D5 | Method: Discover → Define (first diamond of the Double Diamond) → one single draft → script check → build. No alternative drafts. | The PO's edit is the decision; alternatives only lengthen the read. |
 | D6 | Every line in the draft cites a numbered source (E1 email, C1 call, N1 note). Quotes are exact words. Unsourced content is cut. | The PO must be able to trust and trace every line. |
@@ -105,17 +105,39 @@ business areas).
 
 ## Discover note template (steps/discover.md)
 
+Amended 2026-10-08 after the PO's first run: the fixed `Label: text`
+block turned into walls of text on a long call. The note now follows the
+summarize-interview template (bold labels, bullets, Markdown) in its order,
+with three added lines the draft needs. Empty parts are left out.
+
+```markdown
+**Date**: 2026-09-10 · call (C1)
+**Participants**: Dana Lee (owner) · Sam (our PO)
+**Background**: family bakery, one shop
+
+**Current Solution**:
+1. Order arrives on WhatsApp → paper ticket → bake → pack → courier
+
+**What They Like About Current Solution**:
+- Ordering by WhatsApp; customers like it
+
+**Problems With Current Solution**:
+- Lost tickets: no one knows where a cake is
+
+**Key Insights**:
+- "When a ticket gets lost the customer calls us and we have no idea where the cake is."
+
+**Action Items**:
+- Dana, send the courier contract
+
+**Keeps / Others own**: WhatsApp stays · courier owns routes
+**Numbers & rules**: about 30% of orders are custom cakes
+**Open points**:
+- Same-day or next-morning? (C1 vs E2)
 ```
-Source: C1 · call · 12 Sep · Riverside Bakery owner, our PO
-Background:            …
-Current way of working: … (as-is steps, in order)
-What stays as-is:      …
-Who else owns what:    …
-Problems:              … (importance / satisfaction only if stated, else –)
-Steps & rules mentioned: …
-Quotes:                "…" (exact)
-Open points:           … (become client questions)
-```
+
+Added lines: Keeps / Others own (→ exclusions, keep-as-is assumptions),
+Numbers & rules (→ shares, step order), Open points (→ client questions).
 
 Saved together as `discover-notes.md` next to the docx, so the PO can see
 where each line came from. Not part of the docx.
@@ -165,8 +187,8 @@ kept, grouping makes sense, every problem lands in some system.
 
 Python standard library only (`zipfile` + hand-written WordprocessingML),
 the same approach as the proposal's in-page DOCX writer. Headings, plain
-paragraphs, tables, step lines as text. Must open in Word, LibreOffice and
-Google Docs.
+paragraphs, tables, step lines as table boxes (D3). Must open in Word,
+LibreOffice and Google Docs.
 
 ## Files
 
@@ -189,7 +211,7 @@ plugins/business-analyst/evals/draft-scope-thin/
   source id, problem with no feature or question, 9 assumptions, 7
   problems, 6-word step, banned word, missing field) and one clean pass.
 - **build_docx.py**: output is a valid zip with `word/document.xml`; every
-  section present in order; step lines present as text; tables have the
+  section present in order; step lines drawn as table boxes; tables have the
   expected columns.
 - **Evals** (fictional client "Riverside Bakery", no real client data;
   inputs seeded as files):

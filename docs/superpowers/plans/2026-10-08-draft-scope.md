@@ -1918,3 +1918,45 @@ One fresh reviewer (most capable model) reads the spec, this plan and `git diff 
 - [ ] **Step 5: Report and wait**
 
 Report to the user: commits, test count, eval results, claude.ai results, review outcome, deviations. Then **stop**. No merge, no push, until the user has tested and says so.
+
+---
+
+## Amendment A (2026-10-08, after the PO's first claude.ai run)
+
+Approved in chat: step boxes as a plain table (spec D3 amended) and the
+Markdown discover note (spec "Discover note template" amended). Two tasks,
+done after Task 6, each RED first.
+
+### Task A1: Step lines as table boxes
+
+**Files:** Create `$S/scripts/docx_flow.py`; modify `$S/scripts/docx_body.py`
+(drop `flow_line`, call `flow_xml`); modify `$S/scripts/test/build-docx.test.mjs`
+(replace `step lines are plain text`).
+
+- `flow_xml(w) → str`: a Heading3 label (`Main workflow`; `Side path, back to
+  <returnsTo>`; `<name>: starts at …, rejoins at …, <share>`), then one table
+  with no table borders: per row up to 5 step cells, each with its own single
+  border (`w:tcBorders`), and `→` cells between; short last rows are padded
+  with empty borderless cells. Fixed layout, 9 grid columns summing to
+  `TEXT_WIDTH`.
+- Test `step lines are table boxes`: label + step text in order
+  (`Main workflow Order In → Bake → Pack → Courier Handoff`), sub and side
+  labels, one bordered cell per step (count `<w:tcBorders>` in the flow
+  table = steps), 7 steps → 2 rows.
+- Check by hand: LibreOffice PDF shows boxes with arrows between.
+
+### Task A2: Discover note in the summarize-interview template
+
+**Files:** modify `$S/steps/discover.md`, `$S/references/credits.md`;
+modify `$S/scripts/test/skill-files.test.mjs` (one test).
+
+- Replace the `Label: text` block with the spec's note: summarize-interview's
+  bold labels in their order, plus Keeps / Others own, Numbers & rules,
+  Open points. Leave out empty parts. Credits: "template adapted from".
+- Test `discover note follows the summarize-interview template`: the
+  template holds `**Current Solution**:`, `**What They Like About Current
+  Solution**:`, `**Problems With Current Solution**:`, `**Key Insights**:`,
+  `**Action Items**:`, then `**Open points**:`, in that order, and no
+  `Quotes:` label.
+
+npm test then expects 1461 + 2 = 1463 (A1 replaces one build test and adds one gate test for docx_flow.py; A2 adds one).

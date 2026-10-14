@@ -1,7 +1,7 @@
 {
   "name": "business-analyst",
-  "version": "0.4.0",
-  "description": "Business-analysis toolkit: interview-driven requirements discovery that turns raw client input into a validated, traceable requirements package ready for solution architecture.",
+  "version": "0.5.0",
+  "description": "Business-analysis toolkit: interview-driven requirements discovery that turns raw client input into a validated, traceable requirements package ready for solution architecture, plus a drafter that turns raw emails and call transcripts into an editable workflow-based scope document.",
   "author": {
     "name": "Truong Vu",
     "email": "vukhanhtruong@gmail.com"
