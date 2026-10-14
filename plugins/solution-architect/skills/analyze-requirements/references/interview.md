@@ -10,7 +10,8 @@ what shape, and when to stay silent instead.
 3. Never ask what the scan already observed or research already answered — skip
    on sight; don't ask a question only to discard the answer.
 4. Every answer is recorded with provenance `stated` — including confirmations
-   of a detected default.
+   of a detected default — and written to `interview-log.md` the moment the
+   card returns (see "Interview log").
 5. Domain questions (terms, actors, processes, rules) are asked **while the
    mattpocock `domain-modeling` skill is invoked**, so resolved terms land in
    `CONTEXT.md` inline — never batched for later.
@@ -54,3 +55,23 @@ Not provided — <who declined/why>
 ```
 
 Provenance: `stated`.
+
+## Interview log
+
+`interview-log.md` sits beside ARCHITECTURE.md. One entry per answer,
+written as soon as the card returns:
+
+    # Interview log
+
+    ### Q3
+    **Asked** 2026-10-14 · **Answered by** Truong Vu (PO), on behalf of Trellis
+    **Card** Quality goals — "Recommended top 3: Uptime, Integration, Speed"
+    **Answer** Confirm top 3
+
+- Numbering continues across runs; an existing entry is never edited or
+  renumbered — other documents cite it.
+- **Answered by** names the person and role; "on behalf of <client>" when
+  the PO answers for the client. An answer given in the user's opening
+  message is logged too, with **Card** `— (in the request)`.
+- A declined question is logged with **Answer** `declined`, so the
+  `Not provided — …` cell that follows can cite it.

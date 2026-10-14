@@ -10,7 +10,7 @@ served on localhost for review.
 
 ## Hard rules
 
-1. Every fact carries provenance: `observed` | `stated` | `researched` (with source) | `proposed`. A claim nobody verified must never render like one that was.
+1. Every fact carries provenance: `observed` | `stated` | `researched` (with source) | `proposed`. A claim nobody verified must never render like one that was. `stated` always cites its source: an input quote or an interview-log entry (`references/writing.md` §3).
 2. One home per fact — diagrams own topology, tables own properties, prose owns neither.
 3. Unknowns render as honest absences (`Not applicable — <reason>`, `not estimated`, `Not provided`) — never placeholders, never `[TODO]`, never `0`.
 4. Validation blocks rendering: `node scripts/validate.mjs` must exit 0 before the viewer is generated.
@@ -21,12 +21,13 @@ served on localhost for review.
 
 1. **Detect mode**: target has source code → brownfield, else greenfield. State the detection and let the user override.
 2. **Scan** (brownfield): `index_repository` if needed, then `get_architecture` — clusters seed §6 Core Components. Read `manage_adr` if present; never write it.
-3. **Interview**: follow `references/interview.md`; §13 quality goals per `references/quality-goals.md` (propose top 3 from evidence, never ask cold). Detect project type per `references/project-types.md`.
-4. **Research**: run `workflows/research.js` per `references/research.md`. Surface dropped items before writing.
-5. **Write**: on every run, `node scripts/drift.mjs` gates this step — before the first write, never after (`references/rewriting.md`). Then the model (`references/likec4.md`), then ARCHITECTURE.md and companions (`references/writing.md`). Last, once every document is on disk, record what was written: `node scripts/record.mjs --state ... --files ...`.
-6. **Validate**: export the model with `node scripts/likec4-export.mjs --dir ... --out ...`, then `node scripts/validate.mjs --arch ... --model ...` (add `--mode brownfield --clusters ...` when applicable). Fix findings; re-run until clean — `WARN` lines never block; fix them only in files this run is already rewriting.
-7. **Render + serve**: follow `references/viewer.md`; report the URL.
+3. **Extract** (when the user supplied client files): follow `references/extract.md` — `workflows/extract.js`, then `node scripts/check-quotes.mjs`. Never read input files into the main context.
+4. **Interview**: follow `references/interview.md`; §13 quality goals per `references/quality-goals.md` (propose top 3 from evidence, never ask cold). Record every answer in `interview-log.md` as it arrives. Detect project type per `references/project-types.md`.
+5. **Research**: run `workflows/research.js` per `references/research.md`. Surface dropped items before writing.
+6. **Write**: on every run, `node scripts/drift.mjs` gates this step — before the first write, never after (`references/rewriting.md`). Then the model (`references/likec4.md`), then ARCHITECTURE.md and companions (`references/writing.md`). Last, once every document is on disk, record what was written, `interview-log.md` included: `node scripts/record.mjs --state ... --files ...`.
+7. **Validate**: export the model with `node scripts/likec4-export.mjs --dir ... --out ...`, then `node scripts/validate.mjs --arch ... --model ... --docs interview-log.md ... --inputs <input files>` (add `--mode brownfield --clusters ...` when applicable). Fix every `FAIL`; a `WARN` is reported to the user, not blocking — fix it only in files this run is already rewriting. Re-run until no `FAIL`.
+8. **Render + serve**: follow `references/viewer.md`, passing `interview-log.md` in `--docs`; report the URL.
 
 ## Dependency
 
-Node ≥ 20 with npm (`npx likec4`). State this upfront; without it, stop before step 5.
+Node ≥ 20 with npm (`npx likec4`). State this upfront; without it, stop before step 6.

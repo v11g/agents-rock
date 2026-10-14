@@ -116,6 +116,15 @@ two homes is a defect, not redundancy:
 - Values are one of the four provenance words: `observed` · `stated` ·
   `researched` · `proposed`. `researched` is always followed by a bracketed
   source: `researched [source]`.
+- `stated` is always followed by its citation:
+  - from a client input: `stated [C1 · 2026-09-10](inputs/C1-kickoff-call.txt) "exact quote"` —
+    the quote copied from a fact `check-quotes.mjs` verified, in straight
+    double quotes (use single quotes inside it);
+  - from the interview: `stated [Q3 · 2026-10-14](interview-log.md#q3)` — no quote.
+  The path is relative to ARCHITECTURE.md. `validate.mjs` checks the quote
+  word for word; a bare `stated` is a `WARN`.
+- In the viewer an interview citation links to the log; an input citation
+  shows as text with its path on hover (inputs are not part of the page).
 - Generated-index tables are exempt: `Decisions` (§14) and `Glossary` (§16)
   carry no `src` column — they're derived from `docs/adr/` and `CONTEXT.md`
   files, not asserted facts.
