@@ -39,6 +39,8 @@ Show 4–6 candidates, never the whole catalogue. Recommend 3, unranked.
 
 ## 3. Cards
 
+Skip both rounds when the user said not to ask (§4).
+
 Round 1 — one `AskUserQuestion` call, two cards:
 
 - **Quality goals.** Question text lists each candidate with its quote, ★ on
@@ -63,15 +65,17 @@ target yet`.
   needed). §13 never exceeds 6 cards of the 12-question cap.
 - A goal the user already named in their message is answered — no card for
   it (interview.md hard rule 3); its row is `stated`.
-- A slot still empty (declined, or the user said not to ask) renders its
+- The user said not to ask ("don't ask me any"): no card. Take the 3
+  candidates with the strongest quotes; the weakest gives way first. Target
+  from the input, else `Not provided — not asked`.
+- A slot still empty (declined, or fewer than 3 candidates) renders its
   Goal cell as `Not provided — <who declined/why>`. Never invent a goal to
   fill a row.
 - `No target yet` renders the Target cell `Not provided — no target set`.
 
 ## 5. Provenance
 
-`src` follows the Target (writing.md §3a). When the user never confirmed
-the goal itself (they said not to ask), `src` is `proposed` even if the
-Target came from the input. The trade-off pick is recorded only by the
-"(gives way first)" label. This is the one exception to interview.md hard
-rule 4: a pick nobody confirmed is not an answer, so it stays `proposed`.
+`src` is the source of the Target (writing.md §3a), never of the pick: a
+Target quoted from the input or an answer is `stated`; one you suggested is
+`proposed`. An unconfirmed pick does not change `src`. The trade-off pick
+is recorded only by the "(gives way first)" label.
