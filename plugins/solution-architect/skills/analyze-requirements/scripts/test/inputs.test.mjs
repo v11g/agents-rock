@@ -70,3 +70,10 @@ test('accepts a link to a deduped -2 anchor matching the renderer', async () => 
   const inputs = await anchorInputs('## Consequences\n\n## Consequences\n\n[ok](#consequences-2)\n');
   assert.deepEqual(validateLinks(inputs), []);
 });
+
+// md-render skips fenced code and frontmatter; the validator must count the same
+// headings, or `#setup-2` passes the check and lands nowhere in the viewer.
+test('a heading inside a code fence or frontmatter is not an anchor', async () => {
+  const inputs = await anchorInputs('---\n## hidden\ntitle: x\n---\n## Setup\n\n```\n## Setup\n```\n\n## Setup\n');
+  assert.deepEqual(inputs.anchors['ARCHITECTURE.md'], ['setup', 'setup-2']);
+});

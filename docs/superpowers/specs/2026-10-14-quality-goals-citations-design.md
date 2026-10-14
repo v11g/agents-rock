@@ -62,6 +62,7 @@ Ships in two parts, one plan each; Part 1 does not need Part 2.
 | D16 | (added 2026-10-14) Unless files were given or `inputs/` holds files, the run's first card asks for client material; a brief pasted in chat is saved verbatim as `inputs/N<n>-brief.md` and extracted like any input. No card when the user said not to ask; the brief is still saved. | A quoted fact is checked word for word; an interview answer is not. Asking first turns more facts into checked quotes, and a chat brief stops being unverifiable. |
 | D17 | (added 2026-10-14) In the viewer a link fragment resolves to the heading id the renderer minted for it (`#q3` → `q3-2` when deduped); an unknown fragment falls back to the document. | An interview citation should land on its answer, not the top of the log. |
 | D18 | (added 2026-10-14) Heading ids outside ARCHITECTURE.md carry their document's file slug: `<fileSlug>__<slug>` (`interview-log__q3`); dedupe is per document; the spine keeps bare ids. A same-page `#x` resolves against its own document. Supersedes D17's `q3-2` example. | Unique by construction instead of by renumbering: adding a document never moves another document's ids, and `#context` inside an ADR lands in that ADR. |
+| D19 | (added 2026-10-14) The link validator counts headings exactly as the renderer does: frontmatter stripped, fenced code skipped. | A `## ` line inside a code block shifted the validator's `-N` numbering off the viewer's, so a checked link could land nowhere. |
 
 ## Part 1 — top-3 quality goals and the strategy tie
 

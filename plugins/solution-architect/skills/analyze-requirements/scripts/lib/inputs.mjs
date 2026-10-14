@@ -39,14 +39,15 @@ async function readDocs(root, paths) {
   })));
 }
 
-// Mirrors md-render.mjs exactly: only h2/h3 get an id in the viewer, deduped
-// with a shared -N suffix rule (see slug-registry.mjs). Dedupe scope is per doc
-// here, matching how this function is called once per doc; the renderer's
-// cross-doc dedupe is a viewer-side concern (D6, out of scope).
+// Mirrors md-render.mjs: frontmatter stripped, fenced code skipped, only h2/h3,
+// deduped per document with the shared -N rule (slug-registry.mjs). These are
+// the `local` slugs the renderer keys its anchors on (doc-links.mjs anchorIds).
 function headingSlugs(md) {
   const registry = new Map();
-  return md.split('\n')
-    .map((l) => l.match(/^(#{2,3})\s+(.*)$/))
-    .filter(Boolean)
-    .map((m) => nextSlug(m[2].trim(), registry));
+  let fenced = false;
+  return md.replace(/^---\n[\s\S]*?\n---\n?/, '').split('\n').flatMap((l) => {
+    if (l.trim().startsWith('```')) fenced = !fenced;
+    const m = !fenced && l.match(/^(#{2,3})\s+(.*)$/);
+    return m ? [nextSlug(m[2].trim(), registry)] : [];
+  });
 }
