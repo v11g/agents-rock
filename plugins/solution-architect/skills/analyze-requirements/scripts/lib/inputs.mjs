@@ -46,7 +46,8 @@ function headingSlugs(md) {
   const registry = new Map();
   let fenced = false;
   return md.replace(/^---\n[\s\S]*?\n---\n?/, '').split('\n').flatMap((l) => {
-    if (l.trim().startsWith('```')) fenced = !fenced;
+    // Opens on any ``` line, closes only on a bare one — as md-render does.
+    if (fenced ? l.trim() === '```' : l.trim().startsWith('```')) fenced = !fenced;
     const m = !fenced && l.match(/^(#{2,3})\s+(.*)$/);
     return m ? [nextSlug(m[2].trim(), registry)] : [];
   });

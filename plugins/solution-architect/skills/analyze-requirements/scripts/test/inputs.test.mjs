@@ -77,3 +77,10 @@ test('a heading inside a code fence or frontmatter is not an anchor', async () =
   const inputs = await anchorInputs('---\n## hidden\ntitle: x\n---\n## Setup\n\n```\n## Setup\n```\n\n## Setup\n');
   assert.deepEqual(inputs.anchors['ARCHITECTURE.md'], ['setup', 'setup-2']);
 });
+
+// md-render closes a fence only on a bare ``` line; a ```js inside an open fence
+// is content, not a closer.
+test('only a bare fence line closes a fence', async () => {
+  const inputs = await anchorInputs('## A\n\n```md\n## A\n```js\n## B\n```\n## A\n');
+  assert.deepEqual(inputs.anchors['ARCHITECTURE.md'], ['a', 'a-2']);
+});
