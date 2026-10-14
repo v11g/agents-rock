@@ -2,27 +2,29 @@
 // a goal it serves, every goal is served by some decision. A set written before
 // top-3 goals existed (§13 with no Goal column, §4 as bullets) warns instead of
 // failing, so a rewrite the user declined never blocks the viewer.
+import { sectionBody, sectionTable } from './strategy-sections.mjs';
+
 const GIVES_WAY = /\(gives way first\)/i;
 const NOT_PROVIDED = /^Not provided/i;
 
 const fail = (message) => ({ check: 'strategy', message });
-const nameOf = (cell) => cell.replace(GIVES_WAY, '').trim().toLowerCase();
+const plain = (cell) => cell.replace(/[*_]/g, '');
+const isGivesWay = (cell) => GIVES_WAY.test(plain(cell));
+const isNotProvided = (cell) => NOT_PROVIDED.test(plain(cell));
+const nameOf = (cell) => plain(cell).replace(GIVES_WAY, '').trim().toLowerCase();
 
-export function validateStrategy({ tables, archMd }) {
-  const goals = tables.find((t) => /Quality Requirements/i.test(t.section));
-  const strategy = tables.find((t) => /Solution Strategy/i.test(t.section));
+// `tables` is ignored: tables are read from archMd so a table under a ###
+// subheading of §4 or §13 is found.
+export function validateStrategy({ archMd }) {
+  const goals = sectionTable(archMd, /Quality Requirements/i, /^goal$/i);
+  const strategy = sectionTable(archMd, /Solution Strategy/i, /^serves$/i);
   const cells = goalCells(goals);
+  const real = (cells ?? []).filter((c) => !isNotProvided(c));
   return [
     ...checkGoals(goals, cells),
     ...checkStrategyShape(strategy, sectionBody(archMd, /Solution Strategy/i)),
-    ...(cells && strategy ? checkServes(cells, strategy) : []),
+    ...(real.length && strategy ? checkServes(real, strategy) : []),
   ];
-}
-
-// `^## ` never matches `### `, so a subheading stays inside its section.
-function sectionBody(md, title) {
-  const chunk = md.split(/^## /m).find((c) => title.test(c.split('\n')[0]));
-  return chunk ? chunk.slice(chunk.indexOf('\n') + 1) : '';
 }
 
 function goalCells(t) {
@@ -34,8 +36,8 @@ function checkGoals(t, cells) {
   if (!t) return [];
   if (!cells) return [{ ...fail('§13 predates top-3 goals (no Goal column); rewrite as Goal · Target · Brief says · src'), level: 'warn' }];
   const out = cells.length === 3 ? [] : [fail(`§13 has ${cells.length} goal rows, expected 3`)];
-  const marked = cells.filter((c) => GIVES_WAY.test(c)).length;
-  const needOne = cells.filter((c) => !NOT_PROVIDED.test(c)).length >= 2;
+  const marked = cells.filter(isGivesWay).length;
+  const needOne = cells.filter((c) => !isNotProvided(c)).length >= 2;
   if (needOne ? marked !== 1 : marked > 1) {
     out.push(fail(`§13 marks ${marked} goals "(gives way first)", expected ${needOne ? 'exactly 1' : 'at most 1'}`));
   }
@@ -47,10 +49,10 @@ function checkStrategyShape(strategy, body) {
   return [{ ...fail('§4 is a list; rewrite as a Decision · Serves · ADR · src table'), level: 'warn' }];
 }
 
-function checkServes(cells, strategy) {
+function checkServes(real, strategy) {
   const col = strategy.headers.findIndex((h) => /^serves$/i.test(h));
   if (col === -1) return [fail('§4 table has no Serves column')];
-  const goals = cells.filter((c) => !NOT_PROVIDED.test(c)).map(nameOf);
+  const goals = real.map(nameOf);
   const rows = strategy.rows.map((r) => ({
     decision: r[0],
     serves: (r[col] ?? '').split(',').map(nameOf).filter(Boolean),

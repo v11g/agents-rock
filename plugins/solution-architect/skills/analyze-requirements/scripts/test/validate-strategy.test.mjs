@@ -13,7 +13,11 @@ const strategy = (...serves) => ({
   rows: serves.map((s, i) => [`decision ${i}`, s, 'ADR-001', 'proposed']),
 });
 const THREE = goals('Uptime', 'Integration', 'Speed (gives way first)');
-const run = (tables, archMd = '') => validateStrategy({ tables, archMd });
+const render = (t) => [
+  `## ${t.section}`, '', `| ${t.headers.join(' | ')} |`, `|${t.headers.map(() => '---').join('|')}|`,
+  ...t.rows.map((r) => `| ${r.join(' | ')} |`), '',
+].join('\n');
+const run = (tables, archMd = '') => validateStrategy({ tables: [], archMd: tables.map(render).join('\n') + archMd });
 const fails = (fs) => fs.filter((f) => f.level !== 'warn');
 
 test('passes three goals, one giving way, every goal served', () => {
@@ -83,4 +87,32 @@ test('no findings when §4 and §13 are absent or Not applicable', () => {
 
 test('fails never carry the warn level', () => {
   assert.equal(fails(run([THREE, strategy('Uptime')])).length, 2);
+});
+
+const GOAL_TABLE = '| Goal | Target | Brief says | src |\n|---|---|---|---|\n| A | t | q | stated |\n| B | t | q | stated |\n| C (gives way first) | t | q | stated |\n';
+const SERVES = (rows) => `| Decision | Serves | ADR | src |\n|---|---|---|---|\n${rows}\n`;
+
+test('checks a §4 table under a ### subheading', () => {
+  const md = `## 4 Solution Strategy\n\n### Key decisions\n\n${SERVES('| d | A | ADR-1 | proposed |')}\n## 13 Quality Requirements\n\n${GOAL_TABLE}`;
+  const out = validateStrategy({ tables: [], archMd: md });
+  assert.equal(fails(out).length, 2);
+  assert.match(out[0].message, /goal "b" is served by no §4 decision/);
+});
+
+test('finds the Goal table when another table comes first in §13', () => {
+  const slo = '| SLO | Target | src |\n|---|---|---|\n| p95 | 1s | stated |\n\n';
+  const md = `## 4 Solution Strategy\n\n${SERVES('| d | A | ADR-1 | proposed |')}\n## 13 Quality Requirements\n\n${slo}${GOAL_TABLE}`;
+  const out = validateStrategy({ tables: [], archMd: md });
+  assert.ok(out.every((f) => f.level !== 'warn'));
+  assert.equal(out.length, 2);
+});
+
+test('skips serves checks when every §13 goal is Not provided', () => {
+  const t = goals('Not provided — a', 'Not provided — b', 'Not provided — c');
+  assert.deepEqual(run([t, strategy('Growth', '')]), []);
+});
+
+test('ignores markdown emphasis in goal and serves cells', () => {
+  const t = goals('**Uptime**', '_Integration_', 'Speed *(gives way first)*');
+  assert.deepEqual(run([t, strategy('Uptime, **Integration**', 'Speed')]), []);
 });
