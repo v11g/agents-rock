@@ -99,3 +99,9 @@ test('no two spine titles collide once normalised', () => {
   const seen = new Set(SPINE_TITLES.map(normTitle));
   assert.equal(seen.size, 16, 'two spine titles normalise to the same key');
 });
+
+test('§4 and §13 explainers describe the top-3 tie', () => {
+  assert.match(help.spine['Solution Strategy'].good, /goal it serves/);
+  assert.match(help.spine['Quality Requirements & SLOs'].what, /top three quality goals/);
+  assert.match(help.spine['Quality Requirements & SLOs'].good, /gives way first/);
+});

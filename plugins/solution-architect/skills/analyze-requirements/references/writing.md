@@ -24,7 +24,7 @@ frontmatter: name · repo · team · updated · mode · projectType · docVersio
  1  Goals & Scope
  2  Constraints
  3  Project Structure            brownfield only: fs-generated tree depth ≤2 + boundary map
- 4  Solution Strategy            ≤5 bullets, each links an ADR, never restates rationale
+ 4  Solution Strategy            table, ≤5 rows: Decision · Serves · ADR · src; never restates rationale
  5  Architecture Model           LikeC4 C1/C2/C3 views, no prose
  6  Core Components              table: responsibility, tech, deploy unit, key paths, context, invariants
  7  Runtime Behaviour            2–4 LikeC4 dynamic views, named flows only
@@ -35,7 +35,7 @@ frontmatter: name · repo · team · updated · mode · projectType · docVersio
 11  Crosscutting Concepts        observability, error handling, validation, config/secrets,
                                  auth mechanics, testing strategy
 12  Security                     mermaid DFD + trust boundaries, authz model, link to threat model
-13  Quality Requirements & SLOs
+13  Quality Requirements & SLOs  table, 3 rows: Goal · Target · Brief says · src; + "Also considered" list
 14  Decisions                    generated index of docs/adr/ (root + per-context)
 15  Risks & Technical Debt
 16  Glossary                     generated from all CONTEXT.md files; omitted if <5 terms, and says so
@@ -119,6 +119,26 @@ two homes is a defect, not redundancy:
 - Generated-index tables are exempt: `Decisions` (§14) and `Glossary` (§16)
   carry no `src` column — they're derived from `docs/adr/` and `CONTEXT.md`
   files, not asserted facts.
+
+## 3a. §4 and §13 — the top-3 tie
+
+- **§13** has exactly 3 rows, columns `Goal · Target · Brief says · src`.
+  Goal names come from `quality-goals.md` §1, spelled exactly. One Goal cell
+  ends ` (gives way first)` when there are 2+ goals. An empty slot is a row
+  whose Goal is `Not provided — <reason>`. `Brief says` is the quote the goal
+  was picked from; `src` is the source of the Target.
+- Under the table, `Also considered:` — one bullet per runner-up or rejected
+  candidate, with the reason, ending in its backticked provenance word.
+- **§4** is a table, ≤ 5 rows, `Decision · Serves · ADR · src`. `Serves`
+  lists one or more §13 goals, comma-separated, spelled as in §13. Every
+  §13 goal appears in at least one `Serves`. The reasoning lives in the ADR;
+  `Serves` is a pointer, not a rationale.
+- `validate.mjs` enforces all of this (`validate-strategy.mjs`); a set
+  written before it (bullets in §4, no Goal column in §13) only warns.
+
+    | Decision | Serves | ADR | src |
+    | --- | --- | --- | --- |
+    | Single web app + one database | Uptime, Low cost | [ADR-001](docs/adr/0001-single-app.md) | proposed |
 
 ## 3b. Diagram embed convention
 
