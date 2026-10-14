@@ -64,6 +64,26 @@
         "top3-from-spec: §13 has exactly 3 goal rows from the quality-goals catalogue, each with a 'Brief says' quote found in triage-service-spec.md, exactly one marked '(gives way first)', and an 'Also considered' list naming at least one rejected candidate with its reason",
         "strategy-serves-goals: §4 is a Decision · Serves · ADR · src table; every Serves name is one of the §13 goals; every §13 goal is served by at least one row; node scripts/validate.mjs prints no 'FAIL [strategy]' line"
       ]
+    },
+    {
+      "id": 3,
+      "name": "transcript-citations",
+      "prompt": "greenfield - new ticketing platform for Lumen Tickets, no code yet. The kickoff call transcript (C1-kickoff-call.txt, 2026-09-10) and Maya's intro email (E1-intro-email.md, 2026-09-08) are in this folder - treat them as the client inputs. I'm Sam, the PO. Don't ask me anything: take your recommended option on every card and log it. Write ARCHITECTURE.md and ADRs; don't start the viewer.",
+      "expected_output": "The skill extracts facts from both files with workflows/extract.js and verifies them with check-quotes.mjs before writing, never reading the files wholesale into its own reasoning. ARCHITECTURE.md cites every stated fact: input facts as stated [C1 · 2026-09-10](...) \"exact quote\", answers as stated [Qn · date](interview-log.md#qn). interview-log.md exists. validate.mjs prints no FAIL and no 'stated has no citation' warning.",
+      "files": [
+        "plugins/solution-architect/skills/analyze-requirements/evals/fixtures/transcript-citations/C1-kickoff-call.txt",
+        "plugins/solution-architect/skills/analyze-requirements/evals/fixtures/transcript-citations/E1-intro-email.md"
+      ],
+      "assertions": [
+        "extract-then-check: the run invokes workflows/extract.js on both input files and runs scripts/check-quotes.mjs on its output before any interview card or document is written",
+        "spike-goal-quoted: §13 includes Spike handling with a 'Brief says' quote copied exactly from C1 ('ten times the orders in the first five minutes')",
+        "seat-reliability-from-email: Reliability is a §13 goal or an 'Also considered' line, backed by the E1 quote 'never sell the same seat twice'",
+        "vague-speed-not-invented: no numeric speed target is attributed to C1; 'Checkout must be fast' leads to a Speed target that is proposed, logged as an interview answer, or 'Not provided - ...'",
+        "azure-constraint-cited: §2 lists Azure hosting as stated [C1 · 2026-09-10](...) with the quote 'We pay for Azure already, so it has to run there'",
+        "stripe-not-top3: Security is not in the §13 top 3; it appears under 'Also considered' with Stripe handling card data as the reason",
+        "noise-absent: nothing about jazz or the cafe appears in any written document",
+        "every-stated-cites: every stated src cell in ARCHITECTURE.md carries a [label](path) citation, and interview-log.md has a ### Qn entry for each answer cited"
+      ]
     }
   ]
 }
