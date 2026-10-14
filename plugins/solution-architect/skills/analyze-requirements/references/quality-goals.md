@@ -64,12 +64,14 @@ target yet`.
   the target cards (still max 3 cards per call; split into a second call if
   needed). §13 never exceeds 6 cards of the 12-question cap.
 - A goal the user already named in their message is answered — no card for
-  it (interview.md hard rule 3); its row is `stated`.
-- The user said not to ask ("don't ask me any"): no card. Take the 3
-  candidates with the strongest quotes; the weakest gives way first. Target
-  from the input, else `Not provided — not asked`.
+  it (interview.md hard rule 3); its Target, when given, is `stated`.
+- The user said not to ask ("don't ask me any"): no card. Fill a slot
+  only with a candidate that passes §2 on its own quote — never pad to 3.
+  The weakest quote gives way first. Target from the input, else `Not
+  provided — not asked`.
 - A slot still empty (declined, or fewer than 3 candidates) renders its
-  Goal cell as `Not provided — <who declined/why>`. Never invent a goal to
+  Goal cell as `Not provided — <who declined/why>` (e.g. `Not provided —
+  user named only 1`). Never invent a goal to
   fill a row.
 - `No target yet` renders the Target cell `Not provided — no target set`.
 
@@ -77,5 +79,6 @@ target yet`.
 
 `src` is the source of the Target (writing.md §3a), never of the pick: a
 Target quoted from the input or an answer is `stated`; one you suggested is
-`proposed`. An unconfirmed pick does not change `src`. The trade-off pick
+`proposed`. A `Not provided` Target has no source, so its `src` is
+`proposed`, never `stated`. An unconfirmed pick does not change `src`. The trade-off pick
 is recorded only by the "(gives way first)" label.
