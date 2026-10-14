@@ -237,7 +237,7 @@ recorded next to `SPINE_TITLES` in `section-help.mjs`:
   surrounding spaces, so `Goals & Scope` slugifies to `goals--scope` — a shape
   nobody would guess from the JSON key `"Goals & Scope"`.
 - `h2` and `h3` ids share one dedupe registry (`scripts/lib/slug-registry.mjs`)
-  across the whole document set. An `h3` named "Security" anywhere ahead of
+  within one document. An `h3` in the spine named "Security" ahead of
   §12 would take the plain `security` slug and demote the real Security
   heading to `security-2`, with nothing to flag it. Heading text does not
   move when an unrelated document changes; a slug can.
@@ -648,6 +648,9 @@ Four things that are easy to get wrong:
   `#doc-adr-0002-multi-tenancy` while the panel says ADR 0002, and neither is what
   somebody would paste. The listener is on `document`, not `.doc`, because an open
   record is no longer inside `.doc` and one record links to another.
+- **A link to a heading inside a record** opens the drawer scrolled to that
+  heading (D20). The address bar then shows only the record's route
+  `#/<record>`, so a copied URL reopens the record at its top.
 - **`inert` has to come off on close.** It is set on three elements and cleared in
   `closeDrawer`, which runs on every path out — leaving it on makes the whole page
   unfocusable with no visible cause.
