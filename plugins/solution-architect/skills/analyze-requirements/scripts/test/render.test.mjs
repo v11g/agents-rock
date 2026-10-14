@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
 import { readFileSync, mkdtempSync, writeFileSync, cpSync, mkdirSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { join, dirname } from 'node:path';
 
 const fixtures = new URL('./fixtures/docs-pass/', import.meta.url).pathname;
 
@@ -212,4 +212,27 @@ test('two documents with the same file name get different id prefixes', () => {
   const html = readFileSync(join(out, 'index.html'), 'utf8');
   assert.match(html, /<h2 id="notes__context">/);
   assert.match(html, /<h2 id="notes-2__context">/);
+});
+
+test('a file named like a deduped slug still gets its own id prefix', () => {
+  const root = mkdtempSync(join(tmpdir(), 'render-prefix-'));
+  cpSync(fixtures, root, { recursive: true });
+  const names = ['a/notes.md', 'b/notes.md', 'notes-2.md'];
+  for (const n of names) {
+    mkdirSync(join(root, dirname(n)), { recursive: true });
+    writeFileSync(join(root, n), `# ${n}\n\n## Context\n`);
+  }
+  const out = mkdtempSync(join(tmpdir(), 'render-prefix-out-'));
+  const stub = (name, content) => { const p = join(out, name); writeFileSync(p, content); return p; };
+  execFileSync('node', [
+    'plugins/solution-architect/skills/analyze-requirements/scripts/render.mjs',
+    '--root', root, '--arch', join(root, 'ARCHITECTURE.md'),
+    '--docs', ...names.map((n) => join(root, n)), '--out', out,
+    '--likec4-bundle', stub('l.js', LIKEC4_STUB),
+    '--mermaid-bundle', stub('m.js', '/*mermaid*/'),
+    '--theme', 'plugins/solution-architect/skills/analyze-requirements/assets/mermaid-theme.json',
+  ]);
+  const html = readFileSync(join(out, 'index.html'), 'utf8');
+  const prefixes = new Set([...html.matchAll(/<h2 id="([^"]*)__context">/g)].map((m) => m[1]));
+  assert.equal(prefixes.size, 3);
 });

@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs';
 
 // The lookup keys on heading text rather than on a slug for two reasons: slugify
 // keeps both spaces around a stripped "&", so "Goals & Scope" becomes
-// goals--scope; and h2/h3 ids share one dedupe registry, so an h3 named Security
+// goals--scope; and h2/h3 ids in one document share a dedupe registry, so an h3 named Security
 // under Crosscutting Concepts would take `security` and demote §12's h2 to
 // security-2.
 //

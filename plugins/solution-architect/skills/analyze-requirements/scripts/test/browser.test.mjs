@@ -607,4 +607,22 @@ describe('the viewer in a real browser', { skip: findChrome() ? false : 'no chro
       { open: true, inDrawer: true, scrolled: true });
     assert.ok(r.top < 150, `heading sits ${r.top}px below the drawer top`);
   });
+
+  test('a deep link to a heading inside a record opens the drawer at that heading', async () => {
+    const r = await page.eval(`(async () => {
+      const h = document.querySelector('[id^="0009-long__"][id$="__decision"]');
+      location.hash = '#' + h.id;
+      await new Promise((res) => setTimeout(res, 200));
+      const body = document.getElementById('drawer-body');
+      const out = { open: document.getElementById('drawer').classList.contains('is-open'),
+        inDrawer: body.contains(h), scrolled: body.scrollTop > 0,
+        top: Math.round(h.getBoundingClientRect().top - body.getBoundingClientRect().top) };
+      document.getElementById('drawer-close').click();
+      await new Promise((res) => setTimeout(res, 100));
+      return out;
+    })()`);
+    assert.deepEqual({ open: r.open, inDrawer: r.inDrawer, scrolled: r.scrolled },
+      { open: true, inDrawer: true, scrolled: true });
+    assert.ok(r.top < 150, `heading sits ${r.top}px below the drawer top`);
+  });
 });

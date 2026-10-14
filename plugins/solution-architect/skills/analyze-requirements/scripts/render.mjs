@@ -74,8 +74,15 @@ const docPaths = [args.arch, ...args.docs];
 const prefixes = new Map();
 // The spine keeps bare ids: it is the document every other one links into, and
 // its rail, section help and tests name `core-components`, not a prefixed id.
+// A prefix is never reused or empty: `notes-2.md` beside two `notes.md` would
+// otherwise repeat one, and a non-ASCII filename would collide with the spine.
+const usedPrefixes = new Set();
 function headingPrefix(path, index) {
-  return index === 0 ? '' : nextSlug(fileSlug(path), prefixes);
+  if (index === 0) return '';
+  let prefix;
+  do prefix = nextSlug(fileSlug(path) || 'doc', prefixes); while (usedPrefixes.has(prefix));
+  usedPrefixes.add(prefix);
+  return prefix;
 }
 const docSlugs = new Map();
 const pages = docPaths.map((p, i) => ({
