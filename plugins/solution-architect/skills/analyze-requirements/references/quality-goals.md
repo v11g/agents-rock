@@ -54,9 +54,12 @@ target yet`.
 
 ## 4. Thin input and pre-answered goals
 
-- Fewer than 3 candidates: fill each empty slot with the open question
-  "Which quality matters most for this system, and what is its measurable
-  target?" (one card).
+- Fewer than 3 candidates: round 1 carries ONE open card — "Which quality
+  matters most for this system, and what is its measurable target?" —
+  answered through Other. Its answer fills every empty slot it can. When the
+  picks are not known in round 1, the trade-off card moves to round 2 with
+  the target cards (still max 3 cards per call; split into a second call if
+  needed). §13 never exceeds 6 cards of the 12-question cap.
 - A goal the user already named in their message is answered — no card for
   it (interview.md hard rule 3); its row is `stated`.
 - A slot still empty (declined, or the user said not to ask) renders its
@@ -68,4 +71,5 @@ target yet`.
 
 A goal confirmed by a card is `stated`; a goal the agent picked that the
 user never confirmed (they said not to ask) is `proposed`; the trade-off
-follows the same rule.
+follows the same rule. This is the one exception to interview.md hard rule 4:
+a pick nobody confirmed is not an answer, so it stays `proposed`.

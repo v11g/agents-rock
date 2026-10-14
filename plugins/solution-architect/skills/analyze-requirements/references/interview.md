@@ -41,7 +41,7 @@ what shape, and when to stay silent instead.
   `(Recommended)`.
 - §13 is two calls (`quality-goals.md` §3): round 1 = goals + trade-off
   cards, round 2 = one target card per pick. Together ≤ 5 cards of the
-  12-question cap.
+  12-question cap (≤ 6 on thin input, `quality-goals.md` §4).
 
 ## Honest absence
 
