@@ -32,6 +32,10 @@ call, and it counts toward the interview's 12-question cap:
      `0 input files: <n> stated facts cite the interview only`.
 - If option 1 is picked but `inputs/` is still empty, say so and continue
   as option 3.
+- A business-analyst package beside ARCHITECTURE.md (§2.2) is client material:
+  the card still asks for raw files, with these options instead —
+  1. `BA package only — continue (Recommended)` → §2.2 only.
+  2. `Added raw client files to inputs/ — use both` → §2.2, then §3 on `inputs/`.
 - Whenever no card is shown (client files given, `inputs/` already holds
   files, or the user said not to ask), a brief in the opening message is
   still saved per §2.1. With no brief and no files, continue as option 3.
@@ -44,6 +48,23 @@ the user wrote it: no heading, no summary, no fixes. Date it the day it
 arrived, on the log's `**Inputs**` line (`N1 = brief, 2026-10-14`). From then on it is an input like any other: extracted (§3), never
 edited, never recorded or drift-gated. A later brief gets the next number
 and never overwrites an earlier one.
+
+### 2.2 A business-analyst package
+
+The business-analyst skill writes `requirements.json` (for machines) and
+`requirements.md` (for people) into the lead folder. Look for them beside
+ARCHITECTURE.md.
+
+- **Both present → read the json only.** Run
+  `node scripts/ba-facts.mjs --json <path> --out <tmp>/ba.json`. Never extract
+  `requirements.md` too: it is the same package, and every fact would arrive twice.
+- **Only `requirements.md` → fallback.** Treat it as input `D<n>` at its own path
+  (§1) and run §3 with `ba: true` on its file entry.
+- `ba.json` holds `facts` (the BA marked them `confirmed`) and `proposed`
+  (`assumed` or `recommended`). Only `facts` may be `stated` (§5). A `proposed`
+  row is written `proposed`, or asked in the interview when it would change a
+  decision. The package's assumptions and open questions are never `stated`.
+- Pass the package file to `validate.mjs --inputs` like any input.
 
 ## 3. Run
 
@@ -72,6 +93,10 @@ question — never re-extract everything.
 
 - A verified fact is `stated`, cited
   `stated [<src> · <date>](<path relative to ARCHITECTURE.md>) "<quote>"`.
+- A `ba-facts` fact is cited by its row id, with no quote:
+  `stated [<cite>](<path relative to ARCHITECTURE.md>)`, where `cite` is
+  given (`FR-001 · kickoff call 2026-08-20`). A confirmed `quality` row can
+  back a quality-goal candidate; its `fact` becomes the `Brief says` cell.
 - Quality-goal candidates (`quality-goals.md`) come from facts whose
   `section` is `quality…`; the quote becomes the `Brief says` cell.
 - Research (`research.md`) gets `statedFacts: [{ claim: fact }]` as before;
