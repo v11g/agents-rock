@@ -47,9 +47,10 @@ test('a reworded quote on a json citation fails once', () => {
   assert.equal(r.stdout.match(/^FAIL /gm).length, 1, r.stdout);
 });
 
-test('a Brief says quote from a package row passes', () => {
-  const q13 = '## 13 Quality Requirements\n\n| Goal | Target | Brief says | src |\n| --- | --- | --- | --- |\n| Uptime | 99.95% | "The booking page is up 99.95% of the time." | proposed |\n';
-  const dir = setUp('ARCHITECTURE.md', q13);
+test('a Brief says quote from a package row passes, even with a JSON-escaped quote', () => {
+  const q13 = '## 13 Quality Requirements\n\n| Goal | Target | Brief says | src |\n| --- | --- | --- | --- |\n| Uptime | 99.95% | "The page must show "open" 99.95% of the time." | proposed |\n';
+  const pkg = { ...PKG, nfrs: [{ ...PKG.nfrs[0], text: 'The page must show "open" 99.95% of the time.' }] };
+  const dir = setUp('ARCHITECTURE.md', q13, JSON.stringify(pkg));
   const r = run(dir, 'ARCHITECTURE.md');
   assert.doesNotMatch(r.stdout, /Brief says/);
 });
