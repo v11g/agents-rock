@@ -4,7 +4,7 @@
   "status": "READY_FOR_ARCHITECTURE",
   "depth": "QUICK",
   "updated": "2026-10-01",
-  "mode": "new",
+  "mode": "greenfield",
   "context": { "problem": "Members book padel courts by phone; the front desk double-books at peak hours.", "goals": [{ "id": "G-001", "goal": "Members book courts themselves without double-booking" }] },
   "actors": [{ "id": "ACT-001", "name": "Member", "type": "human", "goal": "book a court in under a minute", "painPoints": ["phone line busy at 6pm"] }],
   "workflows": [],
