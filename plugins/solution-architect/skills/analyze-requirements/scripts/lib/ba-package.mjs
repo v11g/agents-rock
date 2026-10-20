@@ -41,6 +41,11 @@ export function isStated(row) {
   return row.label === 'confirmed';
 }
 
+// The text a quote may match: confirmed rows only, never assumed or recommended.
+export function statedText(rows) {
+  return rows.filter(isStated).map((r) => r.fact).join('\n');
+}
+
 // packages maps root-relative path → baRows. A citation's label starts with
 // the row id (`FR-001 · kickoff call`); any quote it carries is checked by
 // validate-quotes against the package's row texts, not here.
@@ -49,7 +54,8 @@ export function validateBaCitations({ citations, packages }) {
     const id = c.label.split('·')[0].trim();
     const row = packages.get(c.path).find((r) => r.id === id);
     if (!row) return [{ check: 'quotes', message: `${id} is not in ${c.path}` }];
-    if (isStated(row)) return [];
-    return [{ check: 'quotes', message: `${id} is ${row.label} in ${c.path}; only confirmed rows are stated` }];
+    if (!isStated(row)) return [{ check: 'quotes', message: `${id} is ${row.label} in ${c.path}; only confirmed rows are stated` }];
+    if (c.label.trim() === row.cite) return [];
+    return [{ check: 'quotes', message: `${c.label.trim()} does not match ${c.path}; cite it as ${row.cite}` }];
   });
 }

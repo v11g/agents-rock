@@ -7,7 +7,7 @@ import { erEntities } from './er-entities.mjs';
 import { extractModel } from './likec4-extract.mjs';
 import { nextSlug } from './slug-registry.mjs';
 import { parseCitations } from './validate-quotes.mjs';
-import { isPackage, baRows } from './ba-package.mjs';
+import { isPackage, baRows, statedText } from './ba-package.mjs';
 
 export async function buildInputs({ root, archPath, modelPath, docPaths = [], inputPaths = [] }) {
   const arch = await readFile(archPath, 'utf8');
@@ -24,7 +24,7 @@ export async function buildInputs({ root, archPath, modelPath, docPaths = [], in
     files: [...docs, ...sources].map((d) => d.path),
     anchors: Object.fromEntries(docs.map((d) => [d.path, headingSlugs(d.md)])),
     sources: new Map(sources.map((d) => [d.path, packages.has(d.path)
-      ? packages.get(d.path).map((r) => r.fact).join('\n') : d.md])),
+      ? statedText(packages.get(d.path)) : d.md])),
     packages,
     citations: citationsOf(root, archPath, arch),
   };

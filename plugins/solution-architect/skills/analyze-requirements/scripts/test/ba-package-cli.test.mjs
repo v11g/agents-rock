@@ -47,12 +47,31 @@ test('a reworded quote on a json citation fails once', () => {
   assert.equal(r.stdout.match(/^FAIL /gm).length, 1, r.stdout);
 });
 
-test('a Brief says quote from a package row passes, even with a JSON-escaped quote', () => {
-  const q13 = '## 13 Quality Requirements\n\n| Goal | Target | Brief says | src |\n| --- | --- | --- | --- |\n| Uptime | 99.95% | "The page must show "open" 99.95% of the time." | proposed |\n';
-  const pkg = { ...PKG, nfrs: [{ ...PKG.nfrs[0], text: 'The page must show "open" 99.95% of the time.' }] };
-  const dir = setUp('ARCHITECTURE.md', q13, JSON.stringify(pkg));
+const Q = '"The page must show "open" 99.95% of the time."';
+const q13 = (quote) => `## 13 Quality Requirements\n\n| Goal | Target | Brief says | src |\n| --- | --- | --- | --- |\n| Uptime | 99.95% | ${quote} | proposed |\n`;
+const nfr = (label) => ({ ...PKG, nfrs: [{ ...PKG.nfrs[0], text: 'The page must show "open" 99.95% of the time.', label, source: 'kickoff call 2026-09-20' }] });
+
+test('a Brief says quote from a confirmed row passes, even with a JSON-escaped quote', () => {
+  const dir = setUp('ARCHITECTURE.md', q13(Q), JSON.stringify(nfr('confirmed')));
+  assert.doesNotMatch(run(dir, 'ARCHITECTURE.md').stdout, /Brief says/);
+});
+
+test('a Brief says quote from an assumed row fails', () => {
+  const dir = setUp('ARCHITECTURE.md', q13(Q), JSON.stringify(nfr('assumed')));
+  assert.match(run(dir, 'ARCHITECTURE.md').stdout, /Brief says .* is in no input file/);
+});
+
+test('an inline quote on a confirmed citation cannot borrow a recommended row', () => {
+  const pkg = { ...PKG, requirements: [...PKG.requirements, { id: 'FR-003', text: 'Members pay a deposit', label: 'recommended' }] };
+  const dir = setUp('ARCHITECTURE.md', row('stated [FR-001 · kickoff call 2026-09-20](requirements.json) "Members pay a deposit"'), JSON.stringify(pkg));
   const r = run(dir, 'ARCHITECTURE.md');
-  assert.doesNotMatch(r.stdout, /Brief says/);
+  assert.equal(r.status, 1);
+  assert.match(r.stdout, /^FAIL \[quotes\]/m);
+});
+
+test('a citation label that is not the row cite fails', () => {
+  const dir = setUp('ARCHITECTURE.md', row('stated [FR-001 · made-up source](requirements.json)'));
+  assert.match(run(dir, 'ARCHITECTURE.md').stdout, /does not match requirements.json; cite it as FR-001 · kickoff call 2026-09-20/);
 });
 
 test('citation paths resolve from a nested ARCHITECTURE.md', () => {
@@ -63,6 +82,12 @@ test('citation paths resolve from a nested ARCHITECTURE.md', () => {
 
 test('a json input that is not a package is plain text, not a crash', () => {
   const dir = setUp('ARCHITECTURE.md', row('stated [C9 · 2026-10-01](requirements.json) "port"'), '{"port": 8080');
+  const r = run(dir, 'ARCHITECTURE.md');
+  assert.equal(r.status, 0, r.stdout + r.stderr);
+});
+
+test('valid json that is not a package is plain text, not a crash', () => {
+  const dir = setUp('ARCHITECTURE.md', row('stated [C9 · 2026-10-01](requirements.json) "port"'), '{"port": 8080}');
   const r = run(dir, 'ARCHITECTURE.md');
   assert.equal(r.status, 0, r.stdout + r.stderr);
 });

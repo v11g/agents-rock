@@ -1,7 +1,7 @@
 // scripts/test/ba-package.test.mjs
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { isPackage, baRows, isStated, validateBaCitations } from '../lib/ba-package.mjs';
+import { isPackage, baRows, isStated, statedText, validateBaCitations } from '../lib/ba-package.mjs';
 
 const PKG = {
   schemaVersion: '1.0', updated: '2026-10-01',
@@ -71,4 +71,17 @@ test('a citation to an assumed row fails with its label', () => {
 test('citations to other files are ignored', () => {
   const other = { label: 'C1 · 2026-09-10', path: 'inputs/C1.txt', quote: 'x' };
   assert.deepEqual(validateBaCitations({ citations: [other], packages }), []);
+});
+
+test('statedText joins the facts of confirmed rows only', () => {
+  assert.equal(statedText(rows), [
+    'Members book up to 4 courts per week.', 'Must run in AWS eu-west-1.',
+    'Stripe (write)', 'Booking, personal, about 900 per week',
+  ].join('\n'));
+});
+
+test('a citation whose label is not the row cite fails', () => {
+  assert.deepEqual(validateBaCitations({ citations: [cite('FR-001 · made-up source')], packages }), [
+    { check: 'quotes', message: 'FR-001 · made-up source does not match requirements.json; cite it as FR-001 · kickoff call 2026-09-20' },
+  ]);
 });
