@@ -65,6 +65,10 @@ Ships in two parts, one plan each; Part 1 does not need Part 2.
 | D19 | (added 2026-10-14) The link validator counts headings exactly as the renderer does: frontmatter stripped, fenced code skipped. | A `## ` line inside a code block shifted the validator's `-N` numbering off the viewer's, so a checked link could land nowhere. |
 | D20 | (added 2026-10-14) A link to a heading inside a record (an ADR in the drawer) opens the drawer scrolled to that heading, from a click or a deep link. | The drawer reset its scroll and the click handler rewrote the link to the record's route, so every heading link into an ADR opened at the top. |
 | D21 | (added 2026-10-14) A stated value inside a `proposed`/`researched` row carries its own inline `stated [..](..) "quote"` citation in its cell; the row's `src` is unchanged. | `src` is per row, so a client's number inside a design row lost its source (eval 2, 0.72 floor). The inline citation is quote-checked like any other. |
+| D22 | (added 2026-10-20) A business-analyst package beside ARCHITECTURE.md is client material. When `requirements.json` and `requirements.md` are both there, only the json is read; the md is used only when there is no json. | The json is the BA's machine handoff ("for analyze-requirements"); the md is the same package written for people. Reading both would duplicate every fact. |
+| D23 | `requirements.json` is read by a script (`scripts/ba-facts.mjs`), not by an extract agent. Only rows the BA labelled `confirmed` (and constraints / business rules, which carry a source and no label) may become `stated`; `assumed` and `recommended` rows are `proposed`, or asked in the interview. The md fallback goes through `extract.js` with a BA rule in the prompt. | Every row already has an id, a label and a source; an agent adds cost and guesswork. Without the label rule a BA guess renders as something the client said. |
+| D24 | A json fact is cited by id, no quote: `stated [FR-001 · kickoff call 2026-08-20](requirements.json)`. The label is `<id> · <BA source>` (the package's `updated` date when a row has no source). | The id is a stable anchor (BA hard rule); a quote of a structured row adds nothing. |
+| D25 | `validate.mjs --inputs` accepts a `requirements.json`: a citation to it fails when its id is not in the package, or the row is not confirmed. A json that is not a BA package is treated as plain text. | Same guarantee as the quote check — a citation names something real that the client confirmed — through the structure the package already has. |
 
 ## Part 1 — top-3 quality goals and the strategy tie
 
@@ -217,6 +221,27 @@ Viewer changes (D17, D18, D20). The viewer is one HTML page (`doc-links.mjs`):
 - An input file is not a document in the page, so its citation renders as
   plain text with the path on hover (`ext-ref`), never as a dead link. The
   label (`C1 · 2026-09-10`) and the quote stay visible; that is the trace.
+
+## Part 5 — business-analyst package as input (D22–D25)
+
+```
+lead folder ── requirements.json ? ──yes──► ba-facts.mjs ──► facts (confirmed) + proposed (assumed/recommended)
+          │                     no
+          └── requirements.md  ? ──yes──► extract.js (ba: true) ──► check-quotes ──► facts
+```
+
+| BA label | In ARCHITECTURE.md |
+| --- | --- |
+| `confirmed` (or a constraint / business rule with a source) | `stated [FR-001 · <BA source>](requirements.json)` |
+| `assumed` | `proposed`, or asked in the interview when it changes a decision |
+| `recommended` | `proposed` |
+
+The inputs card still runs when a package is found, with options
+`BA package only — continue (Recommended)` · `Added raw client files to inputs/ — use both`.
+Raw files are extracted as before; their quotes sit beside the package's ids.
+Assumptions and open questions in the package are never `stated`. No version
+bump (3.2.0 is unreleased). Out of scope: reading BA `openQuestions` into the
+interview.
 
 ## Files
 
