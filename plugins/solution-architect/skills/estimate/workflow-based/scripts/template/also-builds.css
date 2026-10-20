@@ -1,0 +1,3 @@
+.crow .calso:not(.open) .cmini.more { display:none; }
+.alsomore { font:inherit; font-size:.74rem; color:var(--ink-dim); background:none; border:0; padding:0 .2rem; cursor:pointer; text-decoration:underline dotted; }
+.alsomore:hover, .alsomore:focus-visible { color:var(--ink); }

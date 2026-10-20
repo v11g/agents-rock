@@ -308,6 +308,9 @@ textarea, input, select { font-size:.92rem; }
 @media (prefers-color-scheme:dark) { :root:not([data-theme="light"]) { color-scheme:dark; } }
 :root[data-theme="dark"] { color-scheme:dark; }
 select option, select optgroup { background:var(--sheet); color:var(--ink); }
+.crow .calso:not(.open) .cmini.more { display:none; }
+.alsomore { font:inherit; font-size:.74rem; color:var(--ink-dim); background:none; border:0; padding:0 .2rem; cursor:pointer; text-decoration:underline dotted; }
+.alsomore:hover, .alsomore:focus-visible { color:var(--ink); }
 </style>
 </head>
 <body>
@@ -497,10 +500,26 @@ const archLink = (containers) => {
   return [...c3.map((c) => `<a class="archlink" href="${ARCH}#panel-components-${PAGE.c3[c]}" target="_blank" rel="noopener">C3 ${esc(c)} ↗</a>`),
     c2 && `<a class="archlink" href="${ARCH}#panel-containers" target="_blank" rel="noopener">C2 containers ↗</a>`].filter(Boolean).join(' · ');
 };
+// the other features a component builds: 3 or more fold to one chip and "…N more"
+const ALSO_SHOWN = 1; const ALSO_FOLD = 3;
+const alsoChip = (c, fold) => `<span class="cmini${fold ? ' more' : ''}" style="--sc:var(--s${sysNo(c)})" data-cap-chip="${c}" title="${esc(capById[c].name)}">${c}</span>`;
+function alsoHtml(others) {
+  if (!others.length) return '<span class="dim">only this feature</span>';
+  const fold = others.length >= ALSO_FOLD;
+  const chips = others.map((c, i) => alsoChip(c, fold && i >= ALSO_SHOWN)).join('');
+  const more = fold ? `<button type="button" class="alsomore" data-also-more aria-expanded="false">…${others.length - ALSO_SHOWN} more</button>` : '';
+  return `also builds ${chips}${more}`;
+}
+function toggleAlso(b) {
+  const box = b.closest('.calso'); const open = box.classList.toggle('open');
+  b.setAttribute('aria-expanded', String(open));
+  b.textContent = open ? 'show less' : `…${box.querySelectorAll('.cmini.more').length} more`;
+}
+document.addEventListener('click', (e) => { const b = e.target.closest('[data-also-more]'); if (b) toggleAlso(b); });
 // one row per component: its container, its name, and the other features it builds
 function compRow(bid, capId, cls = '') {
   const b = compById[bid]; const others = links[bid].filter((c) => c !== capId);
-  const also = others.length ? `also builds ${others.map((c) => `<span class="cmini" style="--sc:var(--s${sysNo(c)})" data-cap-chip="${c}" title="${esc(capById[c].name)}">${c}</span>`).join('')}` : '<span class="dim">only this feature</span>';
+  const also = alsoHtml(others);
   const x = !FINAL && !cls.includes('removed') ? `<button type="button" data-unlink="${bid}:${capId}" title="This component does not build it">×</button>` : '';
   return `<div class="crow${cls}" data-comp-chip="${bid}"><span class="ccont">${esc(b.container)}</span><b class="cname">${esc(b.name)}</b><span class="calso">${also}</span>${FINAL ? `<span class="chrs">${hoursOf(bid)}h</span>` : ''}${x}</div>`;
 }

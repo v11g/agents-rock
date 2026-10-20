@@ -46,6 +46,10 @@ rep(/function price\(s\) \{\n[\s\S]*?\n\}\n/, 'const price = (s) => featurePrice
 rep(/\/\/ the architecture document holds the C4 views[^\n]*\n\/\/ \(C3 is the Backend API[^\n]*\nconst ARCH = 'architecture\.html';\nconst archLink = [\s\S]*?\.join\(' · '\); \};\n/,
   readFileSync(at('./template/arch-link.js'), 'utf8'));
 
+// ---- "also builds": 3 or more other features fold to one chip and "…N more" ----
+rep(/  const also = others\.length \? `also builds [^\n]*\n/, '  const also = alsoHtml(others);\n');
+rep('// one row per component: its container', `${readFileSync(at('./template/also-builds.js'), 'utf8')}// one row per component: its container`);
+
 // ---- the 22-line function gate (quality-gates.test.mjs) ----
 // An apostrophe inside a template literal reads as a string quote to the gate.
 rep("data-tip=\"Each feature's scores", 'data-tip="Each feature&#39;s scores');
@@ -56,5 +60,5 @@ rep("  const count = { edits: CAPS.filter((c) => isChanged(c.id)).length,", "  r
 rep('diagrams need a connection in this mockup', 'diagrams need a connection');
 
 const head = base.slice(0, base.indexOf('</style>')).replace('<title>Sin Kowa — score review</title>', '<title><!-- slot:TITLE --> — score review</title>');
-writeFileSync(OUT, `${head}${css}${readFileSync(`${M}reading.css`, 'utf8')}</style>\n</head>\n<body>\n${body}`);
+writeFileSync(OUT, `${head}${css}${readFileSync(`${M}reading.css`, 'utf8')}${readFileSync(at('./template/also-builds.css'), 'utf8')}</style>\n</head>\n<body>\n${body}`);
 console.log(OUT);
