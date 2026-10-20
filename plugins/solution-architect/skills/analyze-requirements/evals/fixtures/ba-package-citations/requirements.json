@@ -11,7 +11,7 @@
   "requirements": [
     { "id": "FR-001", "text": "Members book up to 4 courts per week.", "label": "confirmed", "source": "kickoff call 2026-09-20", "scope": "in" },
     { "id": "FR-002", "text": "Two members can never hold the same court and hour.", "label": "confirmed", "source": "kickoff call 2026-09-20", "scope": "in" },
-    { "id": "FR-003", "text": "Members pay a deposit online when booking.", "label": "recommended", "scope": "in" }
+    { "id": "FR-003", "text": "Members pay a deposit online when booking.", "label": "recommended", "source": "BA recommendation", "scope": "in" }
   ],
   "businessRules": [],
   "scenarios": [],
@@ -23,9 +23,9 @@
   "data": [{ "id": "DAT-001", "entity": "Booking", "sensitivity": "personal", "volume": "about 900 per week", "label": "confirmed", "source": "PO brief" }],
   "constraints": [{ "id": "CON-001", "text": "Must run in AWS eu-west-1.", "source": "client IT policy" }],
   "assumptions": [{ "id": "ASM-001", "text": "Members log in with their email address.", "impact": "medium", "status": "unconfirmed" }],
-  "openQuestions": [],
+  "openQuestions": [{ "id": "Q-001", "question": "Should members pay a deposit online when booking?", "priority": "P2", "status": "open", "affects": ["FR-003"], "architectureBlocker": false }],
   "conflicts": [],
   "scope": { "out": ["coaching sessions"], "future": [], "unconfirmed": [] },
   "ai": null,
-  "readiness": { "overall": 80, "areas": {}, "blockers": [] }
+  "readiness": { "overall": 80, "areas": { "businessContext": 80, "workflows": 80, "rules": 80, "integrations": 80, "data": 80, "nfrs": 80 }, "blockers": [] }
 }
