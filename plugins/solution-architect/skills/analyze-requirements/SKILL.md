@@ -26,7 +26,7 @@ served on localhost for review.
 5. **Research**: run `workflows/research.js` per `references/research.md`. Surface dropped items before writing.
 6. **Write**: on every run, `node scripts/drift.mjs` gates this step — before the first write, never after (`references/rewriting.md`); `interview-log.md` is excluded from it (append-only, see `references/rewriting.md` §3). Then the model (`references/likec4.md`), then ARCHITECTURE.md and companions (`references/writing.md`). Last, once every document is on disk, record what was written, `interview-log.md` included: `node scripts/record.mjs --state ... --files ...`.
 7. **Validate**: export the model with `node scripts/likec4-export.mjs --dir ... --out ...`, then `node scripts/validate.mjs --arch ... --model ... --docs interview-log.md ... --inputs <input files>` (add `--mode brownfield --clusters ...` when applicable). Fix every `FAIL`; a `WARN` is reported to the user, not blocking — fix it only in files this run is already rewriting. Re-run until no `FAIL`.
-8. **Render + serve**: follow `references/viewer.md`, passing `interview-log.md` in `--docs`; report the URL, plus the `0 input files` line when the run used none (`references/extract.md` §2).
+8. **Render + serve**: follow `references/viewer.md`, passing `interview-log.md` in `--docs`; report the URL, plus the `0 input files` line when the run used none, or `BA package: <n> confirmed facts` when a package was its only input (`references/extract.md` §2).
 
 ## Dependency
 

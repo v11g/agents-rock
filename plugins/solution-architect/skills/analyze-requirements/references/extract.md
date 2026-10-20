@@ -66,6 +66,10 @@ ARCHITECTURE.md.
   decision. The package's assumptions and open questions are never `stated`.
 - Pass the package file to `validate.mjs --inputs` like any input.
 
+A package is read whether or not the card was shown. It is an input file, so
+the run never reports `0 input files`; report `BA package: <n> confirmed facts`
+instead.
+
 ## 3. Run
 
 Skip this section when there are no input files.
