@@ -7,11 +7,13 @@ import { erEntities } from './er-entities.mjs';
 import { extractModel } from './likec4-extract.mjs';
 import { nextSlug } from './slug-registry.mjs';
 import { parseCitations } from './validate-quotes.mjs';
+import { isPackage, baRows } from './ba-package.mjs';
 
 export async function buildInputs({ root, archPath, modelPath, docPaths = [], inputPaths = [] }) {
   const arch = await readFile(archPath, 'utf8');
   const docs = await readDocs(root, [archPath, ...docPaths]);
   const sources = await readDocs(root, inputPaths);
+  const packages = packagesOf(sources);
   return {
     archMd: arch,
     frontmatter: parseFrontmatter(arch).data ?? {},
@@ -21,7 +23,9 @@ export async function buildInputs({ root, archPath, modelPath, docPaths = [], in
     links: docs.flatMap((d) => extractLinks(d.md).map((l) => ({ fromDoc: d.path, href: l.href }))),
     files: [...docs, ...sources].map((d) => d.path),
     anchors: Object.fromEntries(docs.map((d) => [d.path, headingSlugs(d.md)])),
-    sources: new Map(sources.map((d) => [d.path, d.md])),
+    sources: new Map(sources.map((d) => [d.path, packages.has(d.path)
+      ? packages.get(d.path).map((r) => r.fact).join('\n') : d.md])),
+    packages,
     citations: citationsOf(root, archPath, arch),
   };
 }
@@ -30,6 +34,20 @@ export async function buildInputs({ root, archPath, modelPath, docPaths = [], in
 // relative to the root. Same frame as validate-links, or a nested set fails.
 function citationsOf(root, archPath, md) {
   return parseCitations(md).map((c) => ({ ...c, path: relative(root, join(dirname(archPath), c.path)) }));
+}
+
+// A requirements.json is cited by row id (ba-package.mjs). Its row texts stand
+// in for its source text, so a quote or Brief says from a row still matches.
+// A .json that is not a BA package stays plain text.
+function packagesOf(docs) {
+  return new Map(docs.filter((d) => d.path.endsWith('.json'))
+    .map((d) => [d.path, parseJson(d.md)])
+    .filter(([, pkg]) => isPackage(pkg))
+    .map(([path, pkg]) => [path, baRows(pkg)]));
+}
+
+function parseJson(text) {
+  try { return JSON.parse(text); } catch { return null; }
 }
 
 async function readDocs(root, paths) {

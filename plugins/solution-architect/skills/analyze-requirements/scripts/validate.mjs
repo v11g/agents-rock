@@ -10,6 +10,7 @@ import { validateTree } from './lib/validate-tree.mjs';
 import { validateClusters } from './lib/validate-clusters.mjs';
 import { validateStrategy } from './lib/validate-strategy.mjs';
 import { validateQuotes, briefQuotesOf } from './lib/validate-quotes.mjs';
+import { validateBaCitations } from './lib/ba-package.mjs';
 
 function consumeDocs(argv, i, docs) {
   while (argv[i + 1] && !argv[i + 1].startsWith('--')) docs.push(argv[++i]);
@@ -81,6 +82,7 @@ const findings = [
   ...validateProvenance({ tables: inputs.tables }),
   ...validateStrategy({ tables: inputs.tables, archMd: inputs.archMd }),
   ...validateQuotes({ citations: inputs.citations, briefQuotes: briefQuotesOf(inputs.tables), sources: inputs.sources }),
+  ...validateBaCitations({ citations: inputs.citations, packages: inputs.packages }),
   ...validateElections({ frontmatter: inputs.frontmatter }),
   ...validateModelTables({ model: inputs.model, tables: inputs.tables, erNames: inputs.erNames }),
   ...validateDeployment({ model: inputs.model }),
