@@ -85,3 +85,31 @@ test('a citation whose label is not the row cite fails', () => {
     { check: 'quotes', message: 'FR-001 · made-up source does not match requirements.json; cite it as FR-001 · kickoff call 2026-09-20' },
   ]);
 });
+
+test('a row with no label and no source is unlabelled, so proposed', () => {
+  const [row] = baRows({ schemaVersion: '1.0', requirements: [{ id: 'FR-7', text: 'x' }, { text: 'no id' }] });
+  assert.equal(row.label, 'unlabelled');
+  assert.equal(isStated(row), false);
+});
+
+test('a malformed package is read without throwing', () => {
+  const bad = { schemaVersion: '1.0', requirements: [null, 5, { id: 'FR-1', text: 'x', label: 'confirmed' }], nfrs: {} };
+  assert.deepEqual(baRows(bad).map((r) => r.id), ['FR-1']);
+});
+
+test('a citation to requirements.md fails when requirements.json sits beside it', () => {
+  const md = { label: 'FR-001 · x', path: 'requirements.md', quote: null };
+  assert.deepEqual(validateBaCitations({ citations: [md], packages }), [
+    { check: 'quotes', message: 'requirements.md is the BA package for people; cite requirements.json by row id' },
+  ]);
+  const nested = new Map([['docs/requirements.json', rows]]);
+  const deep = { label: 'FR-001 · x', path: 'docs/requirements.md', quote: null };
+  assert.equal(validateBaCitations({ citations: [deep], packages: nested }).length, 1);
+});
+
+test('a requirements.md with no json beside it is a normal input', () => {
+  const md = { label: 'R1 · x', path: 'requirements.md', quote: 'x' };
+  assert.deepEqual(validateBaCitations({ citations: [md], packages: new Map() }), []);
+  const other = new Map([['docs/requirements.json', rows]]);
+  assert.deepEqual(validateBaCitations({ citations: [md], packages: other }), []);
+});

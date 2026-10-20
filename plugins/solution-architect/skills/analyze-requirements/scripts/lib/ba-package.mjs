@@ -25,16 +25,17 @@ export function isPackage(value) {
 // Constraints and business rules carry a source but no label: the BA records
 // them only once confirmed (business-analyst references/writing.md).
 function rowOf(row, key, updated) {
-  const label = row.label ?? (row.source ? 'confirmed' : null);
+  const label = row.label ?? (row.source ? 'confirmed' : 'unlabelled');
   const fact = (FACT[key] ?? textOf)(row);
   const source = row.source ?? null;
   return { id: row.id, fact, label, source, section: SECTIONS[key], cite: `${row.id} · ${source ?? updated}` };
 }
 
 export function baRows(pkg) {
-  return Object.keys(SECTIONS).flatMap((key) => (pkg[key] ?? [])
+  return Object.keys(SECTIONS).flatMap((key) => (Array.isArray(pkg[key]) ? pkg[key] : [])
+    .filter((row) => row && typeof row === 'object')
     .map((row) => rowOf(row, key, pkg.updated))
-    .filter((r) => r.id && r.label));
+    .filter((r) => r.id));
 }
 
 export function isStated(row) {
@@ -49,7 +50,20 @@ export function statedText(rows) {
 // packages maps root-relative path → baRows. A citation's label starts with
 // the row id (`FR-001 · kickoff call`); any quote it carries is checked by
 // validate-quotes against the package's row texts, not here.
+// The pair rule (D22): when requirements.json sits beside requirements.md, the
+// .md is for people and is never cited.
+function pairRule(c, packages) {
+  const json = c.path.replace(/(^|\/)requirements\.md$/, '$1requirements.json');
+  if (json === c.path || !packages.has(json)) return null;
+  return [{ check: 'quotes', message: `${c.path} is the BA package for people; cite ${json} by row id` }];
+}
+
 export function validateBaCitations({ citations, packages }) {
+  const paired = citations.flatMap((c) => pairRule(c, packages) ?? []);
+  return [...paired, ...citedRows({ citations, packages })];
+}
+
+function citedRows({ citations, packages }) {
   return citations.filter((c) => packages.has(c.path)).flatMap((c) => {
     const id = c.label.split('·')[0].trim();
     const row = packages.get(c.path).find((r) => r.id === id);

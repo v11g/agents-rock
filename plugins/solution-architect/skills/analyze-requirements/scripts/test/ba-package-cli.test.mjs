@@ -91,3 +91,11 @@ test('valid json that is not a package is plain text, not a crash', () => {
   const r = run(dir, 'ARCHITECTURE.md');
   assert.equal(r.status, 0, r.stdout + r.stderr);
 });
+
+test('a citation to requirements.md fails when requirements.json is beside it', () => {
+  const dir = setUp('ARCHITECTURE.md', row('stated [FR-001 · kickoff call 2026-09-20](requirements.md)'));
+  writeFileSync(join(dir, 'requirements.md'), '# Requirements\n');
+  const r = run(dir, 'ARCHITECTURE.md');
+  assert.equal(r.status, 1);
+  assert.match(r.stdout, /^FAIL \[quotes\] requirements.md is the BA package for people; cite requirements.json by row id/m);
+});
