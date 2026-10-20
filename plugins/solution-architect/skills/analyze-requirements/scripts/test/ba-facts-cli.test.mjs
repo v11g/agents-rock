@@ -44,3 +44,12 @@ test('invalid JSON fails the same way', () => {
   assert.equal(r.status, 1);
   assert.match(r.stdout, /is not a requirements package/);
 });
+
+test('a missing --json or --out prints usage and exits 1', () => {
+  const usage = 'FAIL usage: ba-facts.mjs --json <requirements.json> --out <file>';
+  for (const args of [[], ['--json', 'x.json'], ['--out', 'o.json']]) {
+    const r = spawnSync('node', [CLI, ...args], { encoding: 'utf8' });
+    assert.equal(r.status, 1);
+    assert.equal(r.stdout.trim(), usage);
+  }
+});

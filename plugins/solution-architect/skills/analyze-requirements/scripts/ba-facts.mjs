@@ -16,6 +16,10 @@ function readPackage(path) {
 }
 
 const args = parseArgs(process.argv.slice(2));
+if (!args.json || !args.out) {
+  console.log('FAIL usage: ba-facts.mjs --json <requirements.json> --out <file>');
+  process.exit(1);
+}
 const pkg = readPackage(args.json);
 if (!isPackage(pkg)) {
   console.log(`FAIL ${args.json} is not a requirements package`);
