@@ -1,0 +1,8 @@
+.lpick { position:relative; width:100%; max-width:28rem; margin-top:.4rem; }
+.lpick input { width:100%; box-sizing:border-box; font:inherit; font-size:.85rem; padding:.35rem .6rem; color:var(--ink); background:var(--sheet); border:1px dashed var(--ink-dim); border-radius:.3rem; }
+.lpick input:focus { border-style:solid; border-color:var(--ink); outline:none; }
+.lpick-list { position:absolute; z-index:20; left:0; right:0; top:calc(100% + .2rem); max-height:20rem; overflow:auto; background:var(--sheet); border:1px solid var(--grid); border-radius:.3rem; box-shadow:0 6px 18px rgba(0,0,0,.25); padding:.25rem 0; }
+.lpick-g { font-size:.7rem; font-weight:700; text-transform:uppercase; letter-spacing:.04em; color:var(--ink-dim); padding:.35rem .7rem .15rem; }
+.lpick-o { font-size:.88rem; padding:.3rem .7rem .3rem 1.3rem; cursor:pointer; }
+.lpick-o.cur, .lpick-o:hover { background:var(--hi); }
+.lpick-none { padding:.4rem .7rem; font-size:.85rem; }
