@@ -9,6 +9,8 @@ const settle = () => new Promise((r) => setTimeout(r, 1500));
 // office builds FEAT-001, 003, 005; adding 002 and 004 gives FEAT-001's row 4 others
 const wide = (i) => i.components.find((c) => c.id === 'office').builds.push({ feature: 'FEAT-002', why: 'a' }, { feature: 'FEAT-004', why: 'b' });
 
+const one = (i) => i.components.find((c) => c.id === 'office').builds.push({ feature: 'FEAT-002', why: 'a' });
+
 const ROW = `document.querySelector('[data-builtby="FEAT-001"] [data-comp-chip="office"] .calso')`;
 const shown = (page) => page.eval(`[...${ROW}.querySelectorAll('.cmini')].filter((x) => getComputedStyle(x).display !== 'none').map((x) => x.dataset.capChip)`);
 const button = (page) => page.eval(`(() => { const b = ${ROW}.querySelector('[data-also-more]'); return b && { text: b.textContent, open: b.getAttribute('aria-expanded') }; })()`);
@@ -42,6 +44,16 @@ test('two other features show both chips and no button', { skip }, async () => {
     await settle();
     assert.deepEqual(await shown(page), ['FEAT-003', 'FEAT-005']);
     assert.equal(await button(page), null);
+    assert.deepEqual(page.errors, []);
+  } finally { await page.close(); }
+});
+
+test('exactly three other features: one chip and "…2 more"', { skip }, async () => {
+  const page = await openPage(reviewPage(one));
+  try {
+    await settle();
+    assert.deepEqual(await shown(page), ['FEAT-003']);
+    assert.deepEqual(await button(page), { text: '…2 more', open: 'false' });
     assert.deepEqual(page.errors, []);
   } finally { await page.close(); }
 });

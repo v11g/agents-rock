@@ -317,7 +317,7 @@ select option, select optgroup { background:var(--sheet); color:var(--ink); }
 .lpick-list { position:absolute; z-index:20; left:0; right:0; top:calc(100% + .2rem); max-height:20rem; overflow:auto; background:var(--sheet); border:1px solid var(--grid); border-radius:.3rem; box-shadow:0 6px 18px rgba(0,0,0,.25); padding:.25rem 0; }
 .lpick-g { font-size:.7rem; font-weight:700; text-transform:uppercase; letter-spacing:.04em; color:var(--ink-dim); padding:.35rem .7rem .15rem; }
 .lpick-o { font-size:.88rem; padding:.3rem .7rem .3rem 1.3rem; cursor:pointer; }
-.lpick-o.cur, .lpick-o:hover { background:var(--hi); }
+.lpick-o.lpick-cur { background:var(--hi); }
 .lpick-none { padding:.4rem .7rem; font-size:.85rem; }
 
 :root { --c1:#44586a; --c2:#7d96ab; }
@@ -619,18 +619,18 @@ function pickList(capId, q) {
 function openPick(inp) {
   const box = inp.closest('.lpick'); const list = $('.lpick-list', box);
   list.innerHTML = pickList(box.dataset.lpick, inp.value); list.classList.remove('hide');
-  $('.lpick-o', list)?.classList.add('cur');
+  $('.lpick-o', list)?.classList.add('lpick-cur');
 }
 function movePick(list, d) {
   const os = [...list.querySelectorAll('.lpick-o')]; if (!os.length) return;
-  const i = os.findIndex((o) => o.classList.contains('cur'));
-  os.forEach((o) => o.classList.remove('cur'));
-  const n = os[(i + d + os.length) % os.length]; n.classList.add('cur'); n.scrollIntoView({ block: 'nearest' });
+  const i = os.findIndex((o) => o.classList.contains('lpick-cur'));
+  os.forEach((o) => o.classList.remove('lpick-cur'));
+  const n = os[(i + d + os.length) % os.length]; n.classList.add('lpick-cur'); n.scrollIntoView({ block: 'nearest' });
 }
 function pickComp(capId, bid) { links[bid] = [...links[bid], capId]; relink(); }
 function onPickKey(e) {
   const inp = e.target.closest?.('[data-lpick-q]'); if (!inp) return;
-  const box = inp.closest('.lpick'); const list = $('.lpick-list', box); const cur = $('.lpick-o.cur', list);
+  const box = inp.closest('.lpick'); const list = $('.lpick-list', box); const cur = $('.lpick-o.lpick-cur', list);
   if (e.key === 'ArrowDown' || e.key === 'ArrowUp') { e.preventDefault(); if (list.classList.contains('hide')) openPick(inp); else movePick(list, e.key === 'ArrowDown' ? 1 : -1); }
   if (e.key === 'Enter') { e.preventDefault(); if (cur && !list.classList.contains('hide')) pickComp(box.dataset.lpick, cur.dataset.lpickId); }
   if (e.key === 'Escape') { inp.value = ''; list.classList.add('hide'); }
@@ -641,8 +641,14 @@ document.addEventListener('input', (e) => { const q = pickInput(e); if (q) openP
 document.addEventListener('focusout', (e) => { const q = pickInput(e); if (q) $('.lpick-list', q.closest('.lpick')).classList.add('hide'); });
 document.addEventListener('keydown', onPickKey);
 // mousedown would blur the box and close the list before the click lands
-document.addEventListener('mousedown', (e) => { if (e.target.closest('.lpick-o')) e.preventDefault(); });
+document.addEventListener('mousedown', (e) => { if (e.target.closest('.lpick-list')) e.preventDefault(); });
 document.addEventListener('click', (e) => { const o = e.target.closest('.lpick-o'); if (o) pickComp(o.closest('.lpick').dataset.lpick, o.dataset.lpickId); });
+// hovering a row moves the highlight, so mouse and keyboard never show two
+document.addEventListener('mouseover', (e) => {
+  const o = e.target.closest?.('.lpick-o'); if (!o) return;
+  o.parentNode.querySelectorAll('.lpick-cur').forEach((x) => x.classList.remove('lpick-cur'));
+  o.classList.add('lpick-cur');
+});
 // one row per component: its container, its name, and the other features it builds
 function compRow(bid, capId, cls = '') {
   const b = compById[bid]; const others = links[bid].filter((c) => c !== capId);
@@ -660,7 +666,6 @@ function paintBuilt(capId) {
   if (FINAL) { const h = by.reduce((n, b) => n + hoursOf(b), 0); $(`[data-hrs="${capId}"]`).textContent = `${h.toLocaleString('en-US')}h`;
     box.innerHTML = `<div class="bhead">${head}<span class="arch">${archLink(conts)}</span></div><div class="crows">${by.map((b) => compRow(b, capId)).join('')}</div>${by.map((b) => tasksHtml(compById[b])).join('')}`; return; }
   const rows = by.map((b) => compRow(b, capId, was.includes(b) ? '' : ' added')).join('') + was.filter((b) => !by.includes(b)).map((b) => compRow(b, capId, ' removed')).join('');
-  const conts2 = [...new Set(COMPS.map((b) => b.container))];
   const pick = pickerHtml(capId);
   const gap = by.length ? '' : asks[capId] !== undefined
     ? `<div class="ask"><b>Asked the agent to add a component</b> <button type="button" class="btn" data-unask="${capId}">undo</button><textarea data-ask="${capId}" rows="1" placeholder="What should it cover? e.g. parse emails/faxes into a draft order">${esc(asks[capId])}</textarea></div>`
@@ -846,10 +851,6 @@ $('#systems').addEventListener('toggle', (e) => {
   else if (openSys === d.dataset.sys) openSystem(null);
   refresh();
 }, true);
-document.addEventListener('change', (e) => {
-  const capId = e.target.dataset.link;
-  if (capId && e.target.value) { links[e.target.value] = [...links[e.target.value], capId]; relink(); }
-});
 document.addEventListener('input', (e) => {
   const n = e.target.dataset.note; if (n) { notes[n] = e.target.value; save(); }
   const a = e.target.dataset.ask; if (a) { asks[a] = e.target.value; save(); }

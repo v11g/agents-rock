@@ -53,6 +53,9 @@ rep('// one row per component: its container', `${readFileSync(at('./template/al
 // ---- "+ Link a component": a search box that filters as you type, not a <select> ----
 rep(/  const pick = `<select data-link=[\s\S]*?<\/select>`;\n/, '  const pick = pickerHtml(capId);\n');
 rep('// one row per component: its container', `${readFileSync(at('./template/link-picker.js'), 'utf8')}// one row per component: its container`);
+// the Task 2 select is gone: its unused container list and change listener go too
+rep("  const conts2 = [...new Set(COMPS.map((b) => b.container))];\n", '');
+rep(/document\.addEventListener\('change', \(e\) => \{\n  const capId = e\.target\.dataset\.link;[\s\S]*?\n\}\);\n/, '');
 // a click inside the picker is a pick, not a pin
 rep("t.closest('button:not(.dot), input, textarea, select, ", "t.closest('button:not(.dot), input, textarea, select, .lpick, ");
 
