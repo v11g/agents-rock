@@ -26,3 +26,22 @@ test('accepts researched with a source suffix', () => {
   const t = { section: 'X', headers: ['A', 'src'], rows: [['a', 'researched [stripe docs]']] };
   assert.deepEqual(validateProvenance({ tables: [t] }), []);
 });
+
+test('warns, never fails, on a stated row with no citation', () => {
+  const t = { section: 'Constraints', headers: ['C', 'src'], rows: [['azure', 'stated']] };
+  const out = validateProvenance({ tables: [t] });
+  assert.equal(out.length, 1);
+  assert.equal(out[0].level, 'warn');
+  assert.match(out[0].message, /"Constraints" row "azure": stated has no citation/);
+});
+
+test('accepts a cited stated row, with or without a quote', () => {
+  const t = {
+    section: 'Constraints', headers: ['C', 'src'],
+    rows: [
+      ['azure', 'stated [C1 · 2026-09-10](inputs/C1-kickoff-call.txt) "it has to run there"'],
+      ['owner', 'stated [Q2 · 2026-10-14](interview-log.md#q2)'],
+    ],
+  };
+  assert.deepEqual(validateProvenance({ tables: [t] }), []);
+});

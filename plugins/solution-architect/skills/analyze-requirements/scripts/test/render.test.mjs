@@ -1,9 +1,9 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
-import { readFileSync, mkdtempSync, writeFileSync } from 'node:fs';
+import { readFileSync, mkdtempSync, writeFileSync, cpSync, mkdirSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { join, dirname } from 'node:path';
 
 const fixtures = new URL('./fixtures/docs-pass/', import.meta.url).pathname;
 
@@ -168,4 +168,71 @@ test('render.mjs refuses a likec4 bundle with no palette', () => {
     '--mermaid-bundle', stub('m.js', '/*mermaid*/'),
     '--theme', 'plugins/solution-architect/skills/analyze-requirements/assets/mermaid-theme.json',
   ]), /palette|likec4\.config\.json/i);
+});
+
+test('a citation to an interview answer jumps to that answer, not the spine heading of the same name', () => {
+  const root = mkdtempSync(join(tmpdir(), 'render-anchor-'));
+  cpSync(fixtures, root, { recursive: true });
+  const arch = join(root, 'ARCHITECTURE.md');
+  const log = join(root, 'interview-log.md');
+  writeFileSync(arch, `${readFileSync(arch, 'utf8')}\n### Q3\n\nOwner: stated [Q3 · 2026-10-14](interview-log.md#q3)\n`);
+  writeFileSync(log, '# Interview log\n\n### Q3\n**Answer** Confirm top 3\n');
+  const out = mkdtempSync(join(tmpdir(), 'render-anchor-out-'));
+  const stub = (name, content) => { const p = join(out, name); writeFileSync(p, content); return p; };
+  execFileSync('node', [
+    'plugins/solution-architect/skills/analyze-requirements/scripts/render.mjs',
+    '--root', root, '--arch', arch, '--docs', log, '--out', out,
+    '--likec4-bundle', stub('l.js', LIKEC4_STUB),
+    '--mermaid-bundle', stub('m.js', '/*mermaid*/'),
+    '--theme', 'plugins/solution-architect/skills/analyze-requirements/assets/mermaid-theme.json',
+  ]);
+  const html = readFileSync(join(out, 'index.html'), 'utf8');
+  assert.match(html, /<h3 id="q3">Q3<\/h3>/);
+  assert.match(html, /<h3 id="interview-log__q3">Q3<\/h3>/);
+  assert.match(html, /<a href="#interview-log__q3">Q3 · 2026-10-14<\/a>/);
+});
+
+test('two documents with the same file name get different id prefixes', () => {
+  const root = mkdtempSync(join(tmpdir(), 'render-prefix-'));
+  cpSync(fixtures, root, { recursive: true });
+  for (const d of ['a', 'b']) {
+    mkdirSync(join(root, d));
+    writeFileSync(join(root, d, 'notes.md'), `# Notes ${d}\n\n## Context\n`);
+  }
+  const out = mkdtempSync(join(tmpdir(), 'render-prefix-out-'));
+  const stub = (name, content) => { const p = join(out, name); writeFileSync(p, content); return p; };
+  execFileSync('node', [
+    'plugins/solution-architect/skills/analyze-requirements/scripts/render.mjs',
+    '--root', root, '--arch', join(root, 'ARCHITECTURE.md'),
+    '--docs', join(root, 'a', 'notes.md'), join(root, 'b', 'notes.md'), '--out', out,
+    '--likec4-bundle', stub('l.js', LIKEC4_STUB),
+    '--mermaid-bundle', stub('m.js', '/*mermaid*/'),
+    '--theme', 'plugins/solution-architect/skills/analyze-requirements/assets/mermaid-theme.json',
+  ]);
+  const html = readFileSync(join(out, 'index.html'), 'utf8');
+  assert.match(html, /<h2 id="notes__context">/);
+  assert.match(html, /<h2 id="notes-2__context">/);
+});
+
+test('a file named like a deduped slug still gets its own id prefix', () => {
+  const root = mkdtempSync(join(tmpdir(), 'render-prefix-'));
+  cpSync(fixtures, root, { recursive: true });
+  const names = ['a/notes.md', 'b/notes.md', 'notes-2.md'];
+  for (const n of names) {
+    mkdirSync(join(root, dirname(n)), { recursive: true });
+    writeFileSync(join(root, n), `# ${n}\n\n## Context\n`);
+  }
+  const out = mkdtempSync(join(tmpdir(), 'render-prefix-out-'));
+  const stub = (name, content) => { const p = join(out, name); writeFileSync(p, content); return p; };
+  execFileSync('node', [
+    'plugins/solution-architect/skills/analyze-requirements/scripts/render.mjs',
+    '--root', root, '--arch', join(root, 'ARCHITECTURE.md'),
+    '--docs', ...names.map((n) => join(root, n)), '--out', out,
+    '--likec4-bundle', stub('l.js', LIKEC4_STUB),
+    '--mermaid-bundle', stub('m.js', '/*mermaid*/'),
+    '--theme', 'plugins/solution-architect/skills/analyze-requirements/assets/mermaid-theme.json',
+  ]);
+  const html = readFileSync(join(out, 'index.html'), 'utf8');
+  const prefixes = new Set([...html.matchAll(/<h2 id="([^"]*)__context">/g)].map((m) => m[1]));
+  assert.equal(prefixes.size, 3);
 });

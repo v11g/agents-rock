@@ -170,16 +170,17 @@ Four steps, in order — each feeds the next:
 
    | Href | Becomes |
    |---|---|
-   | relative path resolving to a document in the set | in-page anchor, fragment dropped |
+   | relative path resolving to a document in the set | in-page anchor; a fragment naming one of the target's h2/h3 headings jumps to it, any other fragment falls back to the document |
    | any other relative path — `.c4`, a directory, `/site/root` | `.ext-ref` span, path kept in `title` |
-   | `#anchor` | untouched |
+   | `#anchor` | resolved against this document's own h2/h3 headings; anything else (a view panel, a doc head) untouched |
    | `https:`, `mailto:`, `//host` | untouched |
 
    The test is "is this a relative path", not a list of extensions: a `.c4` model
    or a `docs/` directory can never be a document in the set, so it is exactly as
-   dead as an unresolved `.md` and reads better as text. Fragments on document
-   links are dropped rather than resolved — heading slugs are deduped across the
-   whole set, so `#context` inside one ADR may have been minted as `context-7`.
+   dead as an unresolved `.md` and reads better as text. A fragment is resolved to the heading id the page carries: outside
+   ARCHITECTURE.md every h2/h3 id is prefixed with its document's file slug
+   (`0007-cache__context`), so the same heading in two documents never collides
+   and `#context` inside an ADR stays in that ADR.
 
    Unwrapping is also a cheap link check: anything that comes out as `.ext-ref`
    either lives outside the set or does not exist. In the EOS set it surfaced
@@ -236,7 +237,7 @@ recorded next to `SPINE_TITLES` in `section-help.mjs`:
   surrounding spaces, so `Goals & Scope` slugifies to `goals--scope` — a shape
   nobody would guess from the JSON key `"Goals & Scope"`.
 - `h2` and `h3` ids share one dedupe registry (`scripts/lib/slug-registry.mjs`)
-  across the whole document set. An `h3` named "Security" anywhere ahead of
+  within one document. An `h3` in the spine named "Security" ahead of
   §12 would take the plain `security` slug and demote the real Security
   heading to `security-2`, with nothing to flag it. Heading text does not
   move when an unrelated document changes; a slug can.
@@ -647,6 +648,9 @@ Four things that are easy to get wrong:
   `#doc-adr-0002-multi-tenancy` while the panel says ADR 0002, and neither is what
   somebody would paste. The listener is on `document`, not `.doc`, because an open
   record is no longer inside `.doc` and one record links to another.
+- **A link to a heading inside a record** opens the drawer scrolled to that
+  heading (D20). The address bar then shows only the record's route
+  `#/<record>`, so a copied URL reopens the record at its top.
 - **`inert` has to come off on close.** It is set on three elements and cleared in
   `closeDrawer`, which runs on every path out — leaving it on makes the whole page
   unfocusable with no visible cause.

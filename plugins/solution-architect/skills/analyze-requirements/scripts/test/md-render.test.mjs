@@ -5,7 +5,7 @@ import { renderMarkdown } from '../lib/md-render.mjs';
 test('renders headings with slug ids and collects them', () => {
   const { html, headings } = renderMarkdown('## Core Components\ntext');
   assert.match(html, /<h2 id="core-components">Core Components<\/h2>/);
-  assert.deepEqual(headings, [{ level: 2, text: 'Core Components', slug: 'core-components' }]);
+  assert.deepEqual(headings, [{ level: 2, text: 'Core Components', slug: 'core-components', local: 'core-components' }]);
 });
 
 test('renders tables, links, mermaid fences, likec4 markers', () => {
@@ -31,8 +31,8 @@ test('makes repeated heading ids unique within a document', () => {
 
 test('keeps heading ids unique across docs sharing a slug registry', () => {
   const seen = new Map();
-  renderMarkdown('## Considered Options', seen);
-  const { headings } = renderMarkdown('## Considered Options', seen);
+  renderMarkdown('## Considered Options', { slugs: seen });
+  const { headings } = renderMarkdown('## Considered Options', { slugs: seen });
   assert.equal(headings[0].slug, 'considered-options-2');
 });
 
@@ -79,8 +79,8 @@ test('h1 gets a doc-prefixed id and is reported as the page title', () => {
 test('doc ids use their own namespace so section slugs keep their numbering', () => {
   const slugs = new Map();
   const docSlugs = new Map();
-  renderMarkdown('# Related\n\n## Related', slugs, docSlugs);
-  const second = renderMarkdown('# Related\n\n## Related', slugs, docSlugs);
+  renderMarkdown('# Related\n\n## Related', { slugs, docSlugs });
+  const second = renderMarkdown('# Related\n\n## Related', { slugs, docSlugs });
   assert.equal(second.docId, 'doc-related-2');
   assert.equal(second.headings[0].slug, 'related-2');
 });
@@ -223,4 +223,18 @@ test('view markers separated by prose stay separate diagram shells', () => {
   const { html } = renderMarkdown(md);
   assert.doesNotMatch(html, /view-tabs/);
   assert.equal([...html.matchAll(/diagram-shell/g)].length, 2);
+});
+
+test('a prefix scopes heading ids to their document', () => {
+  const { html, headings } = renderMarkdown('## Context\n\n## Context', { prefix: '0007-cache' });
+  assert.match(html, /<h2 id="0007-cache__context">Context<\/h2>/);
+  assert.deepEqual(headings.map((h) => [h.slug, h.local]), [
+    ['0007-cache__context', 'context'],
+    ['0007-cache__context-2', 'context-2'],
+  ]);
+});
+
+test('without a prefix a heading id is its bare slug', () => {
+  const { headings } = renderMarkdown('## Core Components');
+  assert.deepEqual(headings.map((h) => [h.slug, h.local]), [['core-components', 'core-components']]);
 });

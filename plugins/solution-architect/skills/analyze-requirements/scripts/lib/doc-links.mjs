@@ -11,16 +11,28 @@ import { dirname, resolve } from 'node:path';
 const HREF = /<a href="([^"#]*)(#[^"]*)?">([\s\S]*?)<\/a>/g;
 const ABSOLUTE = /^([a-z][a-z0-9+.-]*:|\/\/)/i;
 
+// idByPath maps a document's absolute path to its id, and `<path>#<slug>` to the
+// id that heading carries (prefixed by its document, D18). Authors write a
+// fragment against the target's own headings (#q3) — or, with no path, against
+// their own — so the fragment is looked up, never trusted.
 export function rewriteDocLinks(html, fromPath, idByPath) {
   const dir = dirname(fromPath);
   return html.replace(HREF, (whole, path, fragment, label) => {
-    // No path means an in-page anchor; a scheme or // means it leaves the page.
-    if (!path || ABSOLUTE.test(path)) return whole;
-    // The fragment is dropped rather than resolved: heading slugs are deduped
-    // across the whole set, so #context inside one ADR may have been minted as
-    // context-7. The document anchor is the target we can honestly name.
-    const id = idByPath.get(resolve(dir, path));
-    if (id) return `<a href="#${id}">${label}</a>`;
+    // A scheme or // means it leaves the page.
+    if (ABSOLUTE.test(path)) return whole;
+    // No path: a heading in this same document; anything else keeps its id.
+    if (!path) return linkTo(idByPath.get(fromPath + fragment), label) ?? whole;
+    const target = resolve(dir, path);
+    const id = idByPath.get(target);
+    if (id) return linkTo(idByPath.get(target + (fragment ?? '')) || id, label);
     return `<span class="ext-ref" title="${path}${fragment ?? ''}">${label}</span>`;
   });
+}
+
+function linkTo(id, label) {
+  return id ? `<a href="#${id}">${label}</a>` : null;
+}
+
+export function anchorIds({ path, headings }) {
+  return headings.map((h) => [`${path}#${h.local}`, h.slug]);
 }

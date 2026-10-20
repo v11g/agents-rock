@@ -1,6 +1,6 @@
 # Research — phase order, workflow invocation, provenance rules
 
-Read during the research phase (SKILL.md step 4), after the interview and
+Read during the research phase (SKILL.md step 5), after the interview and
 before any writing starts. Defines the order research runs in, exactly how to
 invoke `workflows/research.js`, and how provenance travels from its result
 into ARCHITECTURE.md.

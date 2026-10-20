@@ -1,6 +1,6 @@
 # Interview — question bank, card batching, skip rules
 
-Read during the interview phase (SKILL.md step 3). Defines what may be asked, in
+Read during the interview phase (SKILL.md step 4). Defines what may be asked, in
 what shape, and when to stay silent instead.
 
 ## Hard rules
@@ -10,7 +10,8 @@ what shape, and when to stay silent instead.
 3. Never ask what the scan already observed or research already answered — skip
    on sight; don't ask a question only to discard the answer.
 4. Every answer is recorded with provenance `stated` — including confirmations
-   of a detected default.
+   of a detected default — and written to `interview-log.md` the moment the
+   card returns (see "Interview log").
 5. Domain questions (terms, actors, processes, rules) are asked **while the
    mattpocock `domain-modeling` skill is invoked**, so resolved terms land in
    `CONTEXT.md` inline — never batched for later.
@@ -19,6 +20,7 @@ what shape, and when to stay silent instead.
 
 | spine section | question | mode | skip when |
 |---|---|---|---|
+| client inputs (`extract.md` §2) | Do you have call transcripts, emails, notes or specs? | both | files were given or `inputs/` already holds files, or the user said not to ask |
 | §1 Goals & Scope | What is the primary goal of this system, and who are its intended users? | both | an existing README/pitch doc/ARCHITECTURE.md already states it |
 | §2 Constraints | What constraints must the architecture respect — budget, compliance regime, timeline, mandated tech or vendor? | both | constraints are already documented (compliance docs, existing ADRs, a constraints file the scan found) |
 | §13 Quality Requirements & SLOs | Quality goals: confirm the proposed top 3 (candidates with quotes, per `quality-goals.md`) | both | the user said not to ask — then propose the top 3 from quotes, no card (`quality-goals.md` §4); otherwise skip only goals the user already named |
@@ -37,6 +39,8 @@ what shape, and when to stay silent instead.
 - Group cards by spine section — one `AskUserQuestion` call per section, not
   one call per question.
 - **Max 3 cards per call.**
+- The client-inputs card (`extract.md` §2) is the run's first call, on its
+  own: extraction must finish before any card proposes from evidence.
 - Within a card, the recommended option is listed first and labeled
   `(Recommended)`.
 - §13 is two calls (`quality-goals.md` §3): round 1 = goals + trade-off
@@ -54,3 +58,30 @@ Not provided — <who declined/why>
 ```
 
 Provenance: `stated`.
+
+## Interview log
+
+`interview-log.md` sits beside ARCHITECTURE.md. One entry per answer,
+written as soon as the card returns:
+
+    # Interview log
+    **Inputs** C1 = <kept file name>
+
+    ### Q3
+    **Asked** 2026-10-14 · **Answered by** Truong Vu (PO), on behalf of Trellis
+    **Card** Quality goals — "Recommended top 3: Uptime, Integration, Speed"
+    **Answer** Confirm top 3
+
+- **Inputs** is only needed when an existing input file name is kept (it
+  has no `<ID>-<slug>` name); it maps the ID to that name. It also carries
+  a chat brief's date (`extract.md` §2.1).
+- Append-only: never passed to the drift gate, recorded at the end of the run.
+- Numbering continues across runs; an existing entry is never edited or
+  renumbered — other documents cite it.
+- **Answered by** names the person and role; "on behalf of <client>" when
+  the PO answers for the client. An answer given in the user's opening
+  message is logged too, with **Card** `— (in the request)`, unless that
+  message was saved as a brief (`extract.md` §2.1): then cite the brief's
+  quote, and log only answers the brief does not contain.
+- A declined question is logged with **Answer** `declined`, so the
+  `Not provided — …` cell that follows can cite it.

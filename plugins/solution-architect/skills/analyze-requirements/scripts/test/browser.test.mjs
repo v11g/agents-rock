@@ -1,7 +1,7 @@
 import { test, before, after, describe } from 'node:test';
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
-import { readFileSync, mkdtempSync, writeFileSync } from 'node:fs';
+import { readFileSync, mkdtempSync, writeFileSync, mkdirSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { openPage } from '../lib/cdp.mjs';
@@ -84,10 +84,16 @@ const REFLOW_DOC = [
 function buildViewer() {
   const out = mkdtempSync(join(tmpdir(), 'analyze-requirements-browser-'));
   const stub = (name, body) => { const p = join(out, name); writeFileSync(p, body); return p; };
+  mkdirSync(join(out, 'adr'));
+  const longAdr = stub(join('adr', '0009-long.md'), ['# ADR 0009: Long record', '', '## Context', '',
+    ...Array.from({ length: 40 }, (_, i) => `Context paragraph ${i + 1} keeps the record taller than the drawer.\n`),
+    '## Decision', '', 'Land here.', '',
+    // Without text below it the heading cannot reach the top: the drawer clamps.
+    ...Array.from({ length: 30 }, (_, i) => `Consequence paragraph ${i + 1} fills the space under the decision.\n`)].join('\n'));
   execFileSync('node', [
     'plugins/solution-architect/skills/analyze-requirements/scripts/render.mjs',
     '--root', fixtures, '--arch', `${fixtures}ARCHITECTURE.md`,
-    '--docs', `${fixtures}docs/adr/0001-sample.md`, stub('reflow.md', REFLOW_DOC),
+    '--docs', `${fixtures}docs/adr/0001-sample.md`, stub('reflow.md', REFLOW_DOC), longAdr,
     '--out', out,
     '--likec4-bundle', stub('l.js', LIKEC4_STUB),
     // Mermaid is stubbed: the diagram renderer is not what these check, and a
@@ -576,5 +582,47 @@ describe('the viewer in a real browser', { skip: findChrome() ? false : 'no chro
 
   test('driving the diagram and the rail logs no error', async () => {
     assert.deepEqual(page.errors, []);
+  });
+
+  // openDrawer resets the scroll and the click handler rewrote the link to the
+  // record's route, so a link to a heading inside an ADR opened it at the top.
+  test('a link to a heading inside a record opens the drawer at that heading', async () => {
+    const r = await page.eval(`(async () => {
+      const h = document.querySelector('[id^="0009-long__"][id$="__decision"]');
+      const a = document.createElement('a');
+      a.href = '#' + h.id; a.textContent = 'jump';
+      document.querySelector('.page:not([hidden])').appendChild(a);
+      a.click();
+      await new Promise((res) => setTimeout(res, 200));
+      const body = document.getElementById('drawer-body');
+      const out = { open: document.getElementById('drawer').classList.contains('is-open'),
+        inDrawer: body.contains(h), scrolled: body.scrollTop > 0,
+        top: Math.round(h.getBoundingClientRect().top - body.getBoundingClientRect().top) };
+      a.remove();
+      document.getElementById('drawer-close').click();
+      await new Promise((res) => setTimeout(res, 100));
+      return out;
+    })()`);
+    assert.deepEqual({ open: r.open, inDrawer: r.inDrawer, scrolled: r.scrolled },
+      { open: true, inDrawer: true, scrolled: true });
+    assert.ok(r.top < 150, `heading sits ${r.top}px below the drawer top`);
+  });
+
+  test('a deep link to a heading inside a record opens the drawer at that heading', async () => {
+    const r = await page.eval(`(async () => {
+      const h = document.querySelector('[id^="0009-long__"][id$="__decision"]');
+      location.hash = '#' + h.id;
+      await new Promise((res) => setTimeout(res, 200));
+      const body = document.getElementById('drawer-body');
+      const out = { open: document.getElementById('drawer').classList.contains('is-open'),
+        inDrawer: body.contains(h), scrolled: body.scrollTop > 0,
+        top: Math.round(h.getBoundingClientRect().top - body.getBoundingClientRect().top) };
+      document.getElementById('drawer-close').click();
+      await new Promise((res) => setTimeout(res, 100));
+      return out;
+    })()`);
+    assert.deepEqual({ open: r.open, inDrawer: r.inDrawer, scrolled: r.scrolled },
+      { open: true, inDrawer: true, scrolled: true });
+    assert.ok(r.top < 150, `heading sits ${r.top}px below the drawer top`);
   });
 });

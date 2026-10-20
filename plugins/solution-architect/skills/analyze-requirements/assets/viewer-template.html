@@ -1837,6 +1837,9 @@ var drawerStatus = document.getElementById('drawer-status');
 var drawerClose = document.getElementById('drawer-close');
 var openRecord = null;
 var returnFocus = null;
+/* A heading the click handler wants landed on once the route change opens its
+   record; the route itself can only name the record. */
+var pendingHeading = '';
 
 /* "ADR-0002", not "ADR-0002: Multi-tenancy via shared database with row-level
    org_id and Postgres RLS". The record's own H1 is two lines below the bar. */
@@ -1898,6 +1901,13 @@ function closeDrawer() {
   returnFocus = null;
 }
 
+/* The record's page is moved into the drawer, so once the drawer is open its
+   heading ids resolve there. The document head is the drawer's own top. */
+function landInRecord(id) {
+  var el = id && document.getElementById(id);
+  if (el && !el.classList.contains('doc-head') && drawerBody.contains(el)) el.scrollIntoView({ block: 'start', behavior: 'instant' });
+}
+
 /* Closing goes through the hash, so the panel and the address never disagree:
    Escape, the scrim and the × all land on the page's own route, and Back does the
    same thing by the ordinary route. */
@@ -1922,7 +1932,7 @@ function navigate(jump) {
   tick();
   /* Order matters: the host page has to be in the layout before the record goes
      over it, or a cold load at #/0002 opens the drawer onto nothing. */
-  if (record) { openDrawer(record); return; }
+  if (record) { openDrawer(record); landInRecord(parts.id || pendingHeading); pendingHeading = ''; return; }
   closeDrawer();
   if (!jump) return;
   var el = parts.id && document.getElementById(parts.id);
@@ -2006,8 +2016,10 @@ addEventListener('click', function (e) {
   var page = el && el.closest('.page');
   if (!page || !isRecord(page)) return;
   e.preventDefault();
-  if (routeParts().slug === page.dataset.route) openDrawer(page);
-  else location.hash = '#/' + page.dataset.route;
+  var heading = el.classList.contains('doc-head') ? '' : el.id;
+  if (routeParts().slug === page.dataset.route) { openDrawer(page); landInRecord(heading); return; }
+  pendingHeading = heading;
+  location.hash = '#/' + page.dataset.route;
 });
 
 addEventListener('hashchange', function () { navigate(true); });

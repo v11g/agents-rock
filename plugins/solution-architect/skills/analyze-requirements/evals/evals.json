@@ -10,10 +10,11 @@
       "assertions": [
         "no-artifacts-written-before-answers: no ARCHITECTURE.md, no docs/architecture/model/*.c4, no docs/adr/*.md and no threat-model.md exists on disk after this turn - the skill stopped at the interview instead of writing",
         "no-invented-components: the response names zero concrete components, datastores, queues or cloud services as belonging to this system (no 'Postgres', 'Redis', 'API Gateway', 'S3', 'Express API' etc. stated as fact); any technology mentioned appears only inside an explicit question or an option the user must confirm",
-        "asks-quality-goals-from-evidence: the questions include the target deployment environment AND a §13 quality-goals card; with this thin prompt the card either proposes candidates each backed by a quote from the prompt (e.g. \"compliance audit\") or, lacking 3 quoted candidates, asks the open 'which quality matters most, with a measurable target' question - it never asks a fixed availability or RPO/RTO question for a goal nobody raised",
+        "asks-quality-goals-from-evidence: if the turn ends at the client-inputs card (extract.md §2 - the run's first call, on its own), this passes when no fixed availability or RPO/RTO question was asked; otherwise the questions include the target deployment environment AND a §13 quality-goals card; with this thin prompt the card either proposes candidates each backed by a quote from the prompt (e.g. \"compliance audit\") or, lacking 3 quoted candidates, asks the open 'which quality matters most, with a measurable target' question - it never asks a fixed availability or RPO/RTO question for a goal nobody raised",
         "asks-about-data-sensitivity-or-tags-it: the PII/data-sensitivity of reimbursement data is either asked about, or any statement made about it is explicitly tagged 'stated'/'proposed' or rendered as 'Not provided - <reason>' - never asserted bare",
         "mode-and-dependency-stated: the response states the detected mode (brownfield vs greenfield) as overridable AND states the Node >= 20 / npx likec4 dependency before proposing to write anything",
-        "question-budget-respected: the interview stays within 12 questions total, delivered as AskUserQuestion cards with at most 4 options per card and at most 3 cards per call"
+        "question-budget-respected: the interview stays within 12 questions total, delivered as AskUserQuestion cards with at most 4 options per card and at most 3 cards per call",
+        "asks-for-inputs-first: the first AskUserQuestion call is a single card asking for client material (call transcripts, emails, notes or specs), its first option 'Added to inputs/ — continue (Recommended)', and it comes before any §13 quality-goals card"
       ]
     },
     {
@@ -57,12 +58,32 @@
       "assertions": [
         "no-observed-provenance-in-greenfield: no table row or prose tag anywhere in the doc set carries provenance 'observed' - there is no code to observe - and §3 Project Structure renders exactly one 'Not applicable - <reason>' line rather than an invented directory tree",
         "no-invented-components: every component, datastore, queue and external system named in §6/§8/§9/§10 traces to an entity the spec fixture actually names (Postmark inbound webhook, Zendesk Tickets API, Anthropic Messages API, audit-log gRPC service, SQS + DLQ, RDS PostgreSQL 16, ECS Fargate, ALB, Secrets Manager, KMS) or is tagged 'proposed' - no unclaimed vendor, service or table is presented as decided",
-        "stated-vs-proposed-split: facts lifted from the spec (the 45s p99, 99.5% availability, 5min RPO / 4h RTO, eu-central-1, the $1,400/month ceiling, the 0.72 confidence floor, the 30-day body retention) are tagged 'stated' wherever they appear; every design decision the skill originated is tagged 'proposed'; any 'researched' row is followed by a bracketed source",
+        "stated-vs-proposed-split: facts lifted from the spec (the 45s p99, 99.5% availability, 5min RPO / 4h RTO, eu-central-1, the $1,400/month ceiling, the 0.72 confidence floor, the 30-day body retention) carry `stated` with a citation wherever they appear — in the row's src, or inline right after the value when the row itself is proposed (writing.md §3, D21); every design decision the skill originated is tagged 'proposed'; any 'researched' row is followed by a bracketed source",
         "threat-model-llm-variant: threat-model.md exists, is framed on OWASP LLM Top 10 2025 (not generic STRIDE) as project-types.md prescribes for an AI/LLM app, and contains all four parts - a DFD, named trust boundaries, a threat list including prompt injection from the email body, and a mitigation per threat",
         "mermaid-er-parses-and-matches: §8's ```mermaid erDiagram block parses as valid mermaid and every entity name in it appears as a row in the §8 Data Stores table (and vice versa); §12's DFD is likewise a parsing mermaid block - neither section uses a LikeC4 view marker",
         "elections-recorded-with-reasons: frontmatter electedDocs is a one-line JSON array with all four companions; threat-model is elected:true, estimation is elected:false with a reason naming the user's declining it, and every other elected:false entry carries a non-empty reason",
         "top3-from-spec: §13 has exactly 3 goal rows from the quality-goals catalogue, each with a 'Brief says' quote found in triage-service-spec.md, exactly one marked '(gives way first)', and an 'Also considered' list naming at least one rejected candidate with its reason",
         "strategy-serves-goals: §4 is a Decision · Serves · ADR · src table; every Serves name is one of the §13 goals; every §13 goal is served by at least one row; node scripts/validate.mjs prints no 'FAIL [strategy]' line"
+      ]
+    },
+    {
+      "id": 3,
+      "name": "transcript-citations",
+      "prompt": "greenfield - new ticketing platform for Lumen Tickets, no code yet. The kickoff call transcript (C1-kickoff-call.txt, 2026-09-10) and Maya's intro email (E1-intro-email.md, 2026-09-08) are in this folder - treat them as the client inputs. I'm Sam, the PO. Don't ask me anything: take your recommended option on every card and log it. Write ARCHITECTURE.md and ADRs; don't start the viewer.",
+      "expected_output": "The skill extracts facts from both files with workflows/extract.js and verifies them with check-quotes.mjs before writing, never reading the files wholesale into its own reasoning. ARCHITECTURE.md cites every stated fact: input facts as stated [C1 · 2026-09-10](...) \"exact quote\", answers as stated [Qn · date](interview-log.md#qn). interview-log.md exists. validate.mjs prints no FAIL and no 'stated has no citation' warning.",
+      "files": [
+        "plugins/solution-architect/skills/analyze-requirements/evals/fixtures/transcript-citations/C1-kickoff-call.txt",
+        "plugins/solution-architect/skills/analyze-requirements/evals/fixtures/transcript-citations/E1-intro-email.md"
+      ],
+      "assertions": [
+        "extract-then-check: the run invokes workflows/extract.js on both input files and runs scripts/check-quotes.mjs on its output before any interview card or document is written",
+        "spike-goal-quoted: §13 includes Spike handling with a 'Brief says' quote copied exactly from C1 ('ten times the orders in the first five minutes')",
+        "seat-reliability-from-email: Reliability is a §13 goal or an 'Also considered' line, backed by the E1 quote 'never sell the same seat twice'",
+        "vague-speed-not-invented: no numeric speed target is attributed to C1; 'Checkout must be fast' leads to a Speed target that is proposed, logged as an interview answer, or 'Not provided - ...'",
+        "azure-constraint-cited: §2 lists Azure hosting as stated [C1 · 2026-09-10](...) with the quote 'We pay for Azure already, so it has to run there'",
+        "stripe-not-top3: Security is not in the §13 top 3; it appears under 'Also considered' with Stripe handling card data as the reason",
+        "noise-absent: nothing about jazz or the cafe appears in any written document",
+        "every-stated-cites: every stated src cell in ARCHITECTURE.md carries a [label](path) citation, and interview-log.md has a ### Qn entry for each answer cited"
       ]
     }
   ]

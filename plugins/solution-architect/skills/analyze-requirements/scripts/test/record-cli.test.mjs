@@ -32,7 +32,7 @@ function run(script, args) {
   return { code: status, stdout, stderr };
 }
 
-// What step 5 leaves on disk: the package, and nothing recorded about it yet.
+// What step 6 leaves on disk: the package, and nothing recorded about it yet.
 function packageDir() {
   const dir = mkdtempSync(join(tmpdir(), 'rerun-safety-record-'));
   mkdirSync(join(dir, 'docs', 'adr'), { recursive: true });

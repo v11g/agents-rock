@@ -1,6 +1,6 @@
 # Rewriting — what is already on disk
 
-Read before step 5 writes anything. The gate (§3) runs on every run, before the
+Read before step 6 writes anything. The gate (§3) runs on every run, before the
 first write; the recording (§5) closes every run. Only what they find differs —
 a first run has no record to compare against, and the documents it finds
 already on disk are, by that fact, not ours.
@@ -34,6 +34,11 @@ Before writing, run:
 List every file this run intends to write. Paths are relative to the state
 file. Exit codes: `0` nothing drifted, `2` something drifted, `1` usage error.
 
+`interview-log.md` is not passed to the gate: the skill owns it and only
+appends (step 4 writes it before this gate runs), so the gate would flag the
+skill's own entries as `untracked` or `drifted`. `record.mjs` still records
+it at the end of the run.
+
 | verdict | meaning | what to do |
 |---|---|---|
 | `unchanged` | matches what we wrote | write it |
@@ -59,7 +64,7 @@ No merge. No three-way resolution. Detect, show, ask which wins, obey.
 ## 5. Recording what you wrote
 
 The gate can only compare against a record, and nothing writes that record on
-its own. **The last thing step 5 does**, once every document is on disk:
+its own. **The last thing step 6 does**, once every document is on disk:
 
     node scripts/record.mjs --state <package>/architecture-state.json \
       --files ARCHITECTURE.md docs/architecture/validation-plan.md docs/adr/0001-….md

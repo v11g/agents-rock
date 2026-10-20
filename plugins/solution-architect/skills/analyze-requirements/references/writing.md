@@ -1,6 +1,6 @@
 # Writing — spine contract, one-home-per-fact, src-column rules
 
-Read during the writing phase (SKILL.md step 5), after research completes.
+Read during the writing phase (SKILL.md step 6), after research completes.
 This file is the writer's single source for ARCHITECTURE.md's structure and
 for the conventions every companion and mattpocock-convention file follows.
 
@@ -116,6 +116,21 @@ two homes is a defect, not redundancy:
 - Values are one of the four provenance words: `observed` · `stated` ·
   `researched` · `proposed`. `researched` is always followed by a bracketed
   source: `researched [source]`.
+- `stated` is always followed by its citation:
+  - from a client input: `stated [C1 · 2026-09-10](inputs/C1-kickoff-call.txt) "exact quote"` —
+    the quote copied from a fact `check-quotes.mjs` verified, in straight
+    double quotes; if the span holds double quotes itself, quote a shorter span without double quotes or `|` (a pipe splits the table cell);
+  - from the interview: `stated [Q3 · 2026-10-14](interview-log.md#q3)` — no quote.
+  The path is relative to ARCHITECTURE.md. `validate.mjs` checks the quote
+  word for word; a bare `stated` is a `WARN`.
+- A row's `src` covers the whole row. When a `proposed` (or `researched`)
+  row carries a value the client stated — a threshold, a limit, a name —
+  cite that value in its cell, right after it, and leave the row's tag
+  alone: `applies the 0.72 floor (stated [D1 · 2026-10-01](inputs/D1-spec.md) "confidence below 0.72")`.
+  `validate.mjs` checks an inline quote exactly like one in `src`. Never
+  re-tag the row `stated` to keep the value: the design is still yours.
+- In the viewer an interview citation jumps to its answer (`#q3`) in the log; an input citation
+  shows as text with its path on hover (inputs are not part of the page).
 - Generated-index tables are exempt: `Decisions` (§14) and `Glossary` (§16)
   carry no `src` column — they're derived from `docs/adr/` and `CONTEXT.md`
   files, not asserted facts.

@@ -9,10 +9,14 @@ import { readFlowGroup } from './md-flows.mjs';
 
 export { escapeHtml };
 
-export function renderMarkdown(md, slugs = new Map(), docSlugs = new Map()) {
+// `slugs` dedupes h2/h3 within one document; `prefix` names that document, so an
+// id is unique across the whole set by construction (0007-cache__context). The
+// separator is `__` because slugify never emits `_`, so a prefixed id cannot
+// collide with a bare one.
+export function renderMarkdown(md, { slugs = new Map(), docSlugs = new Map(), prefix = '' } = {}) {
   const ctx = {
     lines: md.replace(/^---\n[\s\S]*?\n---\n?/, '').split('\n'),
-    i: 0, html: [], headings: [], slugs, docSlugs, title: null, docId: null,
+    i: 0, html: [], headings: [], slugs, docSlugs, prefix, title: null, docId: null,
   };
   while (ctx.i < ctx.lines.length) dispatch(ctx);
   return {
@@ -56,9 +60,16 @@ function renderHeading(ctx) {
     ctx.html.push(`<h${level}>${inline(text)}</h${level}>`);
     return;
   }
-  const slug = nextSlug(text, ctx.slugs);
+  const { slug, local } = headingId(ctx, text);
   ctx.html.push(`<h${level} id="${slug}">${inline(text)}</h${level}>`);
-  ctx.headings.push({ level, text, slug });
+  ctx.headings.push({ level, text, slug, local });
+}
+
+// `local` is what an author writes after `#` inside the document and what the
+// link validator knows; `slug` is the id the page carries.
+function headingId(ctx, text) {
+  const local = nextSlug(text, ctx.slugs);
+  return { local, slug: ctx.prefix ? `${ctx.prefix}__${local}` : local };
 }
 
 function renderFence(ctx) {

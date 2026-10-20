@@ -1,0 +1,16 @@
+Kickoff call - Lumen Tickets - 2026-09-10
+Participants: Maya Chen (founder, Lumen Tickets), Sam (PO, Code Engine Studio)
+
+Sam: Tell me what happens when a big show goes on sale.
+Maya: We open sales at 10am sharp. For a headline act we get ten times the orders in the first five minutes, and last spring the old site just fell over.
+Sam: What did that cost you?
+Maya: About forty thousand dollars in refunds and a lot of angry fans.
+Sam: How do customers pay?
+Maya: Payments go through Stripe, we don't want to touch card data ourselves.
+Sam: Any hosting preference?
+Maya: We pay for Azure already, so it has to run there.
+Maya: Sorry, the cafe downstairs is playing jazz again, ignore that.
+Sam: Anything on speed?
+Maya: Checkout must be fast. People abandon if it hangs.
+Sam: Budget?
+Maya: We are small. Running costs need to stay under two thousand dollars a month outside sale days.

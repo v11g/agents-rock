@@ -1,6 +1,6 @@
 # Project Types — detection, elections, table variants
 
-Read to detect project type (SKILL.md step 3) and to pick per-type companion
+Read to detect project type (SKILL.md step 4) and to pick per-type companion
 elections and table-column variants when writing (`writing.md`).
 
 ## Detection

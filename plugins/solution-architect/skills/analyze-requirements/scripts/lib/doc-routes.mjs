@@ -7,7 +7,7 @@ import { nextSlug } from './slug-registry.mjs';
 // reworded, a filename is the thing every other document already links to.
 // A section's index page takes the section slug instead, so #/decision-records
 // lands on the list rather than on a file called index.
-function fileSlug(path) {
+export function fileSlug(path) {
   return slugOf(basename(path ?? '', extname(path ?? '')));
 }
 

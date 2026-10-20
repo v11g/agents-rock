@@ -2,9 +2,10 @@ import { readFileSync, mkdirSync, writeFileSync } from 'node:fs';
 import { basename, dirname, join, resolve } from 'node:path';
 import { renderMarkdown } from './lib/md-render.mjs';
 import { buildNav } from './lib/nav.mjs';
-import { rewriteDocLinks } from './lib/doc-links.mjs';
+import { rewriteDocLinks, anchorIds } from './lib/doc-links.mjs';
 import { buildDoc } from './lib/doc-sections.mjs';
-import { routeMap } from './lib/doc-routes.mjs';
+import { routeMap, fileSlug } from './lib/doc-routes.mjs';
+import { nextSlug } from './lib/slug-registry.mjs';
 import { parseFrontmatter } from './lib/frontmatter.mjs';
 import { embed } from './lib/embed.mjs';
 import { kindOf } from './lib/doc-kinds.mjs';
@@ -70,10 +71,22 @@ function drawerOf(path, index) {
 const args = parseArgs(process.argv.slice(2));
 const archMd = readFileSync(args.arch, 'utf8');
 const docPaths = [args.arch, ...args.docs];
-const slugs = new Map();
+const prefixes = new Map();
+// The spine keeps bare ids: it is the document every other one links into, and
+// its rail, section help and tests name `core-components`, not a prefixed id.
+// A prefix is never reused or empty: `notes-2.md` beside two `notes.md` would
+// otherwise repeat one, and a non-ASCII filename would collide with the spine.
+const usedPrefixes = new Set();
+function headingPrefix(path, index) {
+  if (index === 0) return '';
+  let prefix;
+  do prefix = nextSlug(fileSlug(path) || 'doc', prefixes); while (usedPrefixes.has(prefix));
+  usedPrefixes.add(prefix);
+  return prefix;
+}
 const docSlugs = new Map();
 const pages = docPaths.map((p, i) => ({
-  ...renderMarkdown(readFileSync(p, 'utf8'), slugs, docSlugs),
+  ...renderMarkdown(readFileSync(p, 'utf8'), { slugs: new Map(), docSlugs, prefix: headingPrefix(p, i) }),
   section: sectionOf(p, i, args.root),
   path: resolve(p),
   spine: i === 0,
@@ -83,7 +96,7 @@ const pages = docPaths.map((p, i) => ({
 
 // Second pass, because a link's target id is only known once every document has
 // been rendered: the id comes from the target's H1, not from its filename.
-const idByPath = new Map(pages.map((p) => [p.path, p.docId]));
+const idByPath = new Map([...pages.map((p) => [p.path, p.docId]), ...pages.flatMap((p) => anchorIds(p))]);
 const linked = pages.map((p) => ({
   ...p,
   html: estimateLink(p, args.out) + rewriteDocLinks(p.html, p.path, idByPath),
