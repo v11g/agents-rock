@@ -85,6 +85,26 @@
         "noise-absent: nothing about jazz or the cafe appears in any written document",
         "every-stated-cites: every stated src cell in ARCHITECTURE.md carries a [label](path) citation, and interview-log.md has a ### Qn entry for each answer cited"
       ]
+    },
+    {
+      "id": 4,
+      "name": "ba-package-citations",
+      "prompt": "greenfield - court booking app for Courtside Club, no code yet. The business-analyst package (requirements.json and requirements.md) is in this folder; write ARCHITECTURE.md beside it. I'm Sam, the PO. Don't ask me anything: take your recommended option on every card and log it. Write ARCHITECTURE.md and ADRs; don't start the viewer.",
+      "expected_output": "The skill reads requirements.json with scripts/ba-facts.mjs, never extracts requirements.md, cites confirmed rows as stated [<id> · <source>](requirements.json), keeps assumed and recommended rows out of stated, and validates with requirements.json in --inputs with no FAIL.",
+      "files": [
+        "plugins/solution-architect/skills/analyze-requirements/evals/fixtures/ba-package-citations/requirements.json",
+        "plugins/solution-architect/skills/analyze-requirements/evals/fixtures/ba-package-citations/requirements.md"
+      ],
+      "assertions": [
+        "json-by-script: the run invokes scripts/ba-facts.mjs on requirements.json and never invokes workflows/extract.js on requirements.md",
+        "md-never-cited: no citation in any written document points at requirements.md",
+        "confirmed-cited-by-id: the double-booking rule is cited stated [FR-002 · kickoff call 2026-09-20](requirements.json) with no quote",
+        "constraint-cited: AWS eu-west-1 appears in §2 cited stated [CON-001 · client IT policy](requirements.json)",
+        "assumed-not-stated: the 99.95% uptime figure is never on a stated row or citation; it is proposed, asked, or absent",
+        "recommended-not-stated: the online deposit is never cited stated [FR-003 ...]",
+        "spike-goal-from-package: §13 includes Spike handling backed by the NFR-002 text about Monday 7am",
+        "validate-clean: validate.mjs runs with requirements.json in --inputs and prints no FAIL"
+      ]
     }
   ]
 }

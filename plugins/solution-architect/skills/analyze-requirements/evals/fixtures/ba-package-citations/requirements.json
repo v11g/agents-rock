@@ -1,0 +1,31 @@
+{
+  "schemaVersion": "1.0",
+  "lead": "courtside-club",
+  "status": "READY_FOR_ARCHITECTURE",
+  "depth": "QUICK",
+  "updated": "2026-10-01",
+  "mode": "greenfield",
+  "context": { "problem": "Members book padel courts by phone; the front desk double-books at peak hours.", "goals": [{ "id": "G-001", "goal": "Members book courts themselves without double-booking" }] },
+  "actors": [{ "id": "ACT-001", "name": "Member", "type": "human", "goal": "book a court in under a minute", "painPoints": ["phone line busy at 6pm"] }],
+  "workflows": [],
+  "requirements": [
+    { "id": "FR-001", "text": "Members book up to 4 courts per week.", "label": "confirmed", "source": "kickoff call 2026-09-20", "scope": "in" },
+    { "id": "FR-002", "text": "Two members can never hold the same court and hour.", "label": "confirmed", "source": "kickoff call 2026-09-20", "scope": "in" },
+    { "id": "FR-003", "text": "Members pay a deposit online when booking.", "label": "recommended", "source": "BA recommendation", "scope": "in" }
+  ],
+  "businessRules": [],
+  "scenarios": [],
+  "nfrs": [
+    { "id": "NFR-001", "area": "availability", "text": "The booking page is up 99.95% of the time.", "label": "assumed" },
+    { "id": "NFR-002", "area": "load", "text": "Bookings for the week open Monday 7am and most members book in the first ten minutes.", "label": "confirmed", "source": "kickoff call 2026-09-20" }
+  ],
+  "integrations": [{ "id": "INT-001", "system": "Club membership spreadsheet", "direction": "read", "label": "confirmed", "source": "PO brief" }],
+  "data": [{ "id": "DAT-001", "entity": "Booking", "sensitivity": "personal", "volume": "about 900 per week", "label": "confirmed", "source": "PO brief" }],
+  "constraints": [{ "id": "CON-001", "text": "Must run in AWS eu-west-1.", "source": "client IT policy" }],
+  "assumptions": [{ "id": "ASM-001", "text": "Members log in with their email address.", "impact": "medium", "status": "unconfirmed" }],
+  "openQuestions": [{ "id": "Q-001", "question": "Should members pay a deposit online when booking?", "priority": "P2", "status": "open", "affects": ["FR-003"], "architectureBlocker": false }],
+  "conflicts": [],
+  "scope": { "out": ["coaching sessions"], "future": [], "unconfirmed": [] },
+  "ai": null,
+  "readiness": { "overall": 80, "areas": { "businessContext": 80, "workflows": 80, "rules": 80, "integrations": 80, "data": 80, "nfrs": 80 }, "blockers": [] }
+}

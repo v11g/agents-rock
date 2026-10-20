@@ -121,6 +121,9 @@ two homes is a defect, not redundancy:
     the quote copied from a fact `check-quotes.mjs` verified, in straight
     double quotes; if the span holds double quotes itself, quote a shorter span without double quotes or `|` (a pipe splits the table cell);
   - from the interview: `stated [Q3 · 2026-10-14](interview-log.md#q3)` — no quote.
+  - from a business-analyst package: `stated [FR-001 · kickoff call 2026-08-20](requirements.json)` —
+    row id and the BA's source, no quote. `validate.mjs` fails an id that is not
+    in the package or a row the BA did not mark confirmed.
   The path is relative to ARCHITECTURE.md. `validate.mjs` checks the quote
   word for word; a bare `stated` is a `WARN`.
 - A row's `src` covers the whole row. When a `proposed` (or `researched`)

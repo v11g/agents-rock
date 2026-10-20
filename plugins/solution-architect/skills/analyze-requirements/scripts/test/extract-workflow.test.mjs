@@ -57,3 +57,13 @@ test('a failed agent lands in dropped; other files still return facts', async ()
   assert.equal(result.facts.length, 1);
   assert.ok(calls.logs.some((l) => l.includes('DROPPED E1')));
 });
+
+test('a BA package file gets the confirmed-only rule; other files do not', async () => {
+  const files = [
+    { id: 'D1', path: '/set/requirements.md', date: '2026-10-01', ba: true },
+    { id: 'C1', path: '/set/inputs/C1-kickoff-call.txt', date: '2026-09-10' },
+  ];
+  const { calls } = await run({ agentImpl: okAgent, args: { files } });
+  assert.match(calls.prompts[0], /only rows labelled confirmed/);
+  assert.doesNotMatch(calls.prompts[1], /labelled confirmed/);
+});

@@ -23,8 +23,12 @@ const CHECKLIST = [
 
 const RULES = 'Read the file with the Read tool. Every fact carries a quote copied character for character from the file: no rewording, no joining separate sentences, no fixing typos. A fact you cannot quote is left out. Small talk is left out.'
 
+// requirements.md read without its json (references/extract.md §2.2): the BA
+// already labelled every row, and only a confirmed one is the client's word.
+const BA = 'This file is a business-analyst requirements package. Take only rows labelled confirmed, plus constraints and business rules that name a source. Skip rows labelled assumed or recommended, the assumptions register and open questions: the client did not confirm them.'
+
 function promptFor(file) {
-  const head = `${RULES}\nFile: ${file.path}\n`
+  const head = `${RULES}${file.ba ? `\n${BA}` : ''}\nFile: ${file.path}\n`
   if (file.fix) return `${head}These quotes were not found in the file. For each, return the fact again with a quote copied exactly from the file, or leave it out:\n${JSON.stringify(file.fix)}`
   if (args.question) return `${head}Answer only this: ${args.question}`
   return `${head}Work through each topic and return every fact the file states about it, with section set to the topic:\n- ${CHECKLIST.join('\n- ')}`
