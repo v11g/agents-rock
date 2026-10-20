@@ -55,6 +55,11 @@ assumptions name the claims they back, and each run is written under
 `~/.reasoning/problems/` so it can be reopened. A run that cannot be saved says
 so and still finishes the analysis. (`reasoning` 0.5.0)
 
+Linking a component to a feature on the score review is a search box instead of
+a drop-down. Typing filters the components by name or container, matches stay
+grouped under their container, and the arrow keys and Enter pick one without
+reaching for the mouse. (`solution-architect` 3.2.1)
+
 ### Changed
 
 Estimates are priced from the feature scores instead of from hours and team
@@ -146,6 +151,11 @@ score beside it. Edits survive, ids are escaped, and stale anchors are marked.
 Switching the estimate page into the client view hid the button that leaves it,
 so returning meant reloading. The toggle now stays put and names the view it
 switches to. (`solution-architect` 2.0.0)
+
+A component that builds many features filled its "Built by" row with a chip for
+every other feature. On the score review and the Component-based estimate page,
+three or more now fold to one chip and `…N more`, which unfolds the rest and
+folds them again with `show less`. (`solution-architect` 3.2.1)
 
 ### BREAKING CHANGES
 
