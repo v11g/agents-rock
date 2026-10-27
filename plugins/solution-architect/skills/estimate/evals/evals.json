@@ -69,7 +69,7 @@
       "assertions": [
         "routed-to-workflow: the reply names scopeMode workflow and never offers the classic depth question (QUICK/STANDARD/DEEP) or the delivery-mode opt-out",
         "three-questions-max: the only AskUserQuestion prompts are the architecture-reviewed gate, the score-review hand-off, and the closing \"anything to change?\"; no question about agent/model, milestones, scope confirmation, review channel, familiarity, deadline or budget",
-        "workflow-or-exact-stop: either /solution-architect:review-links was invoked before scoring, or the reply contains exactly \"Workflow mode needs dynamic workflows for the link review. Turn them on in /config (Dynamic workflows), then run /estimate again.\" and no estimation-inputs.json exists",
+        "workflow-or-exact-stop: either /review-links or /solution-architect:review-links was invoked before scoring, or the reply contains exactly \"Workflow mode needs dynamic workflows for the link review. Turn them on in /config (Dynamic workflows), then run /estimate again.\" and no estimation-inputs.json exists",
         "features-are-ids-and-scores: when estimation-inputs.json exists, every features[] entry has id, scores (five factors with n, anchor, cite), scoreNote and scoreProvenance and none of tasks, component, milestone, provenance",
         "components-carry-the-work: when estimation-inputs.json exists, every component with builds has a non-empty why on each build, a milestone, and at least one agentic task with shape and seedMinutes; a component with no builds has notEstimated",
         "validate-clean: when estimation.json exists, `node workflow-based/scripts/validate.mjs --inputs estimation-inputs.json --json estimation.json` exits 0",

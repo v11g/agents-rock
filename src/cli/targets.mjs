@@ -7,8 +7,8 @@ const CANONICAL = ['.agents', 'skills'];
 
 /**
  * Resolve every path an install writes to. Both scopes share one shape —
- * a canonical skills dir plus one skills dir per agent — so install and
- * uninstall stay scope-agnostic.
+ * a canonical skills dir, one skills dir per agent, and Claude's workflows
+ * dir — so install and uninstall stay scope-agnostic.
  */
 export function resolveTargets({ scope, root, home = homedir(), env = process.env }) {
   if (scope === 'project') return projectTargets(requireRoot(root));
@@ -25,6 +25,7 @@ function projectTargets(root) {
   return {
     canonical: path.join(root, ...CANONICAL),
     agentDirs: mapAgents((agent) => path.join(root, AGENT_HOMES[agent].dir, 'skills')),
+    workflows: path.join(root, AGENT_HOMES.claude.dir, 'workflows'),
   };
 }
 
@@ -32,6 +33,7 @@ function userTargets(home, env) {
   return {
     canonical: path.join(home, ...CANONICAL),
     agentDirs: mapAgents((agent) => path.join(agentHome(agent, home, env), 'skills')),
+    workflows: path.join(agentHome('claude', home, env), 'workflows'),
   };
 }
 

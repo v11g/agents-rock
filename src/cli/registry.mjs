@@ -24,3 +24,11 @@ export function listSkills(pluginDir) {
     .filter((entry) => entry.isDirectory())
     .map((entry) => ({ name: entry.name, dir: path.join(skillsDir, entry.name) }));
 }
+
+export function listWorkflows(pluginDir) {
+  const workflowsDir = path.join(pluginDir, 'workflows');
+  if (!existsSync(workflowsDir)) return [];
+  return readdirSync(workflowsDir, { withFileTypes: true })
+    .filter((entry) => entry.isFile() && entry.name.endsWith('.js'))
+    .map((entry) => ({ name: entry.name, file: path.join(workflowsDir, entry.name) }));
+}

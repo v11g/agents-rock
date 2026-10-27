@@ -1,6 +1,6 @@
 import { existsSync, lstatSync, rmSync } from 'node:fs';
 import path from 'node:path';
-import { listSkills } from './registry.mjs';
+import { listSkills, listWorkflows } from './registry.mjs';
 
 export function uninstallPlugin({ pluginDir, targets, agents, force = false }) {
   const result = { removed: [], canonicalRemoved: [], skipped: [] };
@@ -10,7 +10,17 @@ export function uninstallPlugin({ pluginDir, targets, agents, force = false }) {
     }
     maybeRemoveCanonical(skill.name, targets, result);
   }
+  if (agents.includes('claude')) removeWorkflows(pluginDir, targets, result);
   return result;
+}
+
+function removeWorkflows(pluginDir, targets, result) {
+  for (const workflow of listWorkflows(pluginDir)) {
+    const dest = path.join(targets.workflows, workflow.name);
+    if (!existsSync(dest)) continue;
+    rmSync(dest, { force: true });
+    result.removed.push({ skill: `workflows/${workflow.name}`, agent: 'claude' });
+  }
 }
 
 function removeAgentEntry({ skill, agent, targets, force, result }) {

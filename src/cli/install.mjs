@@ -1,6 +1,6 @@
-import { cpSync, existsSync, lstatSync, mkdirSync, readlinkSync, rmSync, symlinkSync } from 'node:fs';
+import { copyFileSync, cpSync, existsSync, lstatSync, mkdirSync, readlinkSync, rmSync, symlinkSync } from 'node:fs';
 import path from 'node:path';
-import { listSkills } from './registry.mjs';
+import { listSkills, listWorkflows } from './registry.mjs';
 
 export function installPlugin({ pluginDir, targets, agents, force = false }) {
   const result = { installed: [], skipped: [], reused: [] };
@@ -10,7 +10,23 @@ export function installPlugin({ pluginDir, targets, agents, force = false }) {
       linkAgent({ skill: skill.name, canonical, agent, targets, force, result });
     }
   }
+  if (agents.includes('claude')) copyWorkflows({ pluginDir, targets, force, result });
   return result;
+}
+
+// Workflows are Claude Code only, so they are plain copies with no canonical.
+function copyWorkflows({ pluginDir, targets, force, result }) {
+  for (const workflow of listWorkflows(pluginDir)) {
+    const skill = `workflows/${workflow.name}`;
+    const dest = path.join(targets.workflows, workflow.name);
+    if (existsSync(dest) && !force) {
+      result.reused.push({ skill, path: dest });
+      continue;
+    }
+    mkdirSync(targets.workflows, { recursive: true });
+    copyFileSync(workflow.file, dest);
+    result.installed.push({ skill, agent: 'claude', mode: 'file' });
+  }
 }
 
 const NOT_SHIPPED = new Set(['evals']);

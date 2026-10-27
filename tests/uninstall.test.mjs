@@ -91,3 +91,13 @@ test('uninstalling when nothing installed is a silent no-op', (t) => {
   const result = uninstallPlugin({ pluginDir, targets, agents: ['claude', 'codex'] });
   assert.deepEqual(result, { removed: [], canonicalRemoved: [], skipped: [] });
 });
+
+test('uninstalling claude removes the plugin workflows', (t) => {
+  const { pluginDir, targets } = setup(t);
+  mkdirSync(path.join(pluginDir, 'workflows'), { recursive: true });
+  writeFileSync(path.join(pluginDir, 'workflows', 'review.js'), 'x');
+  installPlugin({ pluginDir, targets, agents: ['claude'] });
+  const result = uninstallPlugin({ pluginDir, targets, agents: ['claude'] });
+  assert.ok(!existsSync(path.join(targets.workflows, 'review.js')));
+  assert.ok(result.removed.some((r) => r.skill === 'workflows/review.js'));
+});

@@ -102,3 +102,36 @@ test('does not install eval suites into the canonical copy', (t) => {
   assert.equal(readFileSync(path.join(canonical, 'SKILL.md'), 'utf8'), '# demo v1');
   assert.equal(readFileSync(path.join(canonical, 'assets', 'a.txt'), 'utf8'), 'asset');
 });
+
+function addWorkflow(pluginDir, body = 'export const meta = {}') {
+  mkdirSync(path.join(pluginDir, 'workflows'), { recursive: true });
+  writeFileSync(path.join(pluginDir, 'workflows', 'review.js'), body);
+}
+
+test('copies plugin workflows into the claude workflows dir', (t) => {
+  const { pluginDir, targets } = setup(t);
+  addWorkflow(pluginDir);
+  const result = installPlugin({ pluginDir, targets, agents: ['claude'] });
+  const dest = path.join(targets.workflows, 'review.js');
+  assert.equal(readFileSync(dest, 'utf8'), 'export const meta = {}');
+  assert.ok(result.installed.some((i) => i.skill === 'workflows/review.js' && i.agent === 'claude'));
+});
+
+test('codex-only install ships no workflows', (t) => {
+  const { pluginDir, targets } = setup(t);
+  addWorkflow(pluginDir);
+  installPlugin({ pluginDir, targets, agents: ['codex'] });
+  assert.equal(existsSync(path.join(targets.workflows, 'review.js')), false);
+});
+
+test('existing workflow is reused without force, replaced with force', (t) => {
+  const { pluginDir, targets } = setup(t);
+  addWorkflow(pluginDir, 'v1');
+  installPlugin({ pluginDir, targets, agents: ['claude'] });
+  addWorkflow(pluginDir, 'v2');
+  const dest = path.join(targets.workflows, 'review.js');
+  installPlugin({ pluginDir, targets, agents: ['claude'] });
+  assert.equal(readFileSync(dest, 'utf8'), 'v1');
+  installPlugin({ pluginDir, targets, agents: ['claude'], force: true });
+  assert.equal(readFileSync(dest, 'utf8'), 'v2');
+});

@@ -60,3 +60,11 @@ test('exposes a dir for every supported agent', () => {
   const t = resolveTargets({ scope: 'project', root: ROOT, home: HOME, env: {} });
   assert.deepEqual(Object.keys(t.agentDirs).sort(), ['claude', 'codex']);
 });
+
+test('workflows dir sits under the claude home for both scopes', () => {
+  const env = { CLAUDE_CONFIG_DIR: '/cfg/claude' };
+  const project = resolveTargets({ scope: 'project', root: ROOT, home: HOME, env });
+  const user = resolveTargets({ scope: 'user', root: ROOT, home: HOME, env });
+  assert.equal(project.workflows, path.join(ROOT, '.claude', 'workflows'));
+  assert.equal(user.workflows, path.join('/cfg/claude', 'workflows'));
+});

@@ -41,7 +41,8 @@ run the scripts from here.
    write `components[].builds` with a `why` per link. Components are §6
    rows; `parent` = their container; a container with no components may
    build features itself.
-4. **Review.** Run `/solution-architect:review-links` with
+4. **Review.** Run the `review-links` workflow (`/review-links` when
+   installed via npx, `/solution-architect:review-links` as a plugin) with
    `args = { inputs, architecture, requirements, linking }` (absolute
    paths). Apply the returned findings (add/drop links, fix tasks named
    under "task"). One cycle; do not re-run.
