@@ -62,7 +62,10 @@ run the scripts from here.
    building nothing gets `notEstimated` with a reason.
 7. **Tasks.** For every component that builds something: agentic tasks
    (`shape` from `../classic/references/task-shapes.md`, `scope`,
-   `seedMinutes`), and a `milestone` ("M1 - <name>", ordered). Components
+   `seedMinutes`) and `features`, the features this task serves, taken from
+   the component's `builds`. A task for several features lists them all.
+   Every feature the component builds needs at least one task. Add a
+   `milestone` ("M1 - <name>", ordered). Components
    that build nothing get `notEstimated` with a reason. Write
    `exclusions` — the commercial items the price leaves out that the BA scope
    does not name (hosting and subscriptions, post-launch support, security

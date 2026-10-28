@@ -45,8 +45,9 @@ Answer these per feature, from ARCHITECTURE.md (§5 C4 views, §6 components,
 
 ## Task rubric (the reviewer reads this; tasks live on components)
 
-1. **Covers its links.** Every feature a component builds has at least one
-   task that serves it.
+1. **Covers its links.** Each task lists the features it serves in
+   `features`; every feature a component builds has at least one task that
+   lists it (the validator enforces both).
 2. **No double work.** The same work does not appear in two components.
 3. **Right shape.** Each task's `shape` (`estimate/classic/references/task-shapes.md`)
    matches the work described.

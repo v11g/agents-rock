@@ -121,6 +121,12 @@ single Summary section. (`solution-architect` 2.0.0)
 
 ### Fixed
 
+Component-based estimate: a feature card now lists only the tasks that serve
+that feature, and its hours count only those (a task shared by several features
+counts a share on each). Each component task needs a `features` list; older
+`estimation-inputs.json` files fail validation until it is added. The price does
+not change. (`solution-architect` 3.3.0)
+
 The workbook's Score Rationale tab named the wrong source. Its Provenance column
 carried who set the score while the estimate page's Source column carried where
 the feature came from, and the two share the words stated and proposed, so the
