@@ -55,8 +55,13 @@ rep(/<span class="howto-page">You score the <b>features<\/b>[\s\S]*?<\/span>/,
   '<span class="howto-page"><b>Scoring</b> shows each feature&#39;s scores and price; <b>Effort</b> the components behind it, with tasks and hours. Containers and components are the ones in the architecture document: <a class="archlink" href="index.html#panel-containers" target="_blank" rel="noopener">C2 containers ↗</a></span>');
 rep('const FINAL = false;', 'const FINAL = true;');
 rep('const TASKS = {};', 'const TASKS = PAGE.tasks;');
-rep('const pert = ([, o, m, pp]) => (o + 4 * m + pp) / 6;', 'const pert = (x) => x[2]; // expected hours from estimation.json (agentic baselines)');
-rep('<th class="r">O / M / P h</th>', '<th class="r">Low / Expected / High h</th>');
+// Tasks and hours per feature: a card lists the tasks that serve it.
+rep(/\/\/ ---- components: tasks and hours \(Component-based page only\) ----\n[\s\S]*?<\/table><\/details>`;\n\}\n/, readFileSync(at('./template/feature-tasks.js'), 'utf8'));
+rep('<span class="chrs">${hoursOf(bid)}h</span>', '<span class="chrs">${hoursFor(bid, capId)}h</span>');
+rep('by.reduce((n, b) => n + hoursOf(b), 0)', 'by.reduce((n, b) => n + hoursFor(b, capId), 0)');
+rep('tasksHtml(compById[b])', 'tasksHtml(compById[b], capId)');
+rep("${[...hrs].reduce((n, b) => n + hoursOf(b), 0).toLocaleString('en-US')}h</b><span>${hrs.size} components, each counted once</span>",
+  "${sysHours(s.features.map((c) => c.id)).toLocaleString('en-US')}h</b><span>${hrs.size} components, each task counted once</span>");
 rep(/draw\(\)\.then\(\(\) => \{ if \(FINAL\) setTimeout\(pinFromHash, 150\); \}\);\n/, (m) => `${m}${readFileSync(at('./template/view.js'), 'utf8')}
 viewSummary(PAGE.view); viewRoadmap(PAGE); viewMethod(PAGE.view);
 const XLSX_SOURCE = {

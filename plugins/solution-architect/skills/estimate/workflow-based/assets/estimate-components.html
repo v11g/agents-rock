@@ -573,13 +573,26 @@ function capHtml(c) {
     <div class="builds" data-builtby="${c.id}"></div>
     <div class="side-score"><div class="factors">${K.map((k) => factorHtml(c, k)).join('')}</div>${note}</div></article>`;
 }
-// ---- components: tasks and hours (Component-based page only) ----
+// ---- components: tasks and hours, per feature (Component-based page only) ----
+// TASKS[component]: [name, low, expected, high, confidence, assumptions, features].
+// A task shared by k features counts 1/k of its hours on each card, so the
+// cards add up to the project total.
 const pert = (x) => x[2]; // expected hours from estimation.json (agentic baselines)
-const hoursOf = (id) => Math.round((typeof TASKS === 'undefined' ? [] : TASKS[id] || []).reduce((n, x) => n + pert(x), 0));
-function tasksHtml(b) {
-  const ts = TASKS[b.id] || [];
-  return `<details class="tasks side-effort"><summary>${esc(b.name)} · ${ts.length} tasks · ${hoursOf(b.id)}h expected</summary><table><tr><th>Task</th><th class="r">Low / Expected / High h</th><th class="r">Expected</th><th>Confidence</th></tr>${ts.map((x) =>
-    `<tr><td>${esc(x[0])}${x[5] ? `<div class="dim">${esc(x[5])}</div>` : ''}</td><td class="r">${x[1]} / ${x[2]} / ${x[3]}</td><td class="r"><b>${Math.round(pert(x))}h</b></td><td><span class="conf c-${x[4]}">${x[4]}</span></td></tr>`).join('')}</table></details>`;
+const hoursOf = (id) => Math.round((TASKS[id] || []).reduce((n, x) => n + pert(x), 0));
+const tasksFor = (id, capId) => (TASKS[id] || []).filter((x) => x[6].includes(capId));
+const hoursFor = (id, capId) => Math.round(tasksFor(id, capId).reduce((n, x) => n + pert(x) / x[6].length, 0));
+const sysHours = (ids) => Math.round(COMPS.flatMap((b) => TASKS[b.id] || []).filter((x) => x[6].some((f) => ids.includes(f))).reduce((n, x) => n + pert(x), 0));
+function sharedNote(x, capId) {
+  const others = x[6].filter((f) => f !== capId);
+  return others.length ? `<div class="dim">shared with ${others.map(esc).join(', ')} · 1/${x[6].length} of its hours counted here</div>` : '';
+}
+function taskRow(x, capId) {
+  const note = x[5] ? `<div class="dim">${esc(x[5])}</div>` : '';
+  return `<tr><td>${esc(x[0])}${note}${sharedNote(x, capId)}</td><td class="r">${x[1]} / ${x[2]} / ${x[3]}</td><td class="r"><b>${Math.round(pert(x))}h</b></td><td><span class="conf c-${x[4]}">${x[4]}</span></td></tr>`;
+}
+function tasksHtml(b, capId) {
+  const ts = tasksFor(b.id, capId);
+  return `<details class="tasks side-effort"><summary>${esc(b.name)} · ${ts.length} tasks · ${hoursFor(b.id, capId)}h for this feature</summary><table><tr><th>Task</th><th class="r">Low / Expected / High h</th><th class="r">Expected</th><th>Confidence</th></tr>${ts.map((x) => taskRow(x, capId)).join('')}</table></details>`;
 }
 // the architecture document holds the C4 views; this page links there instead of redrawing them.
 // PAGE.c3 maps a container's name to its id when it has components (a C3 view); the rest live in C2.
@@ -654,7 +667,7 @@ function compRow(bid, capId, cls = '') {
   const b = compById[bid]; const others = links[bid].filter((c) => c !== capId);
   const also = alsoHtml(others);
   const x = !FINAL && !cls.includes('removed') ? `<button type="button" data-unlink="${bid}:${capId}" title="This component does not build it">×</button>` : '';
-  return `<div class="crow${cls}" data-comp-chip="${bid}"><span class="ccont">${esc(b.container)}</span><b class="cname">${esc(b.name)}</b><span class="calso">${also}</span>${FINAL ? `<span class="chrs">${hoursOf(bid)}h</span>` : ''}${x}</div>`;
+  return `<div class="crow${cls}" data-comp-chip="${bid}"><span class="ccont">${esc(b.container)}</span><b class="cname">${esc(b.name)}</b><span class="calso">${also}</span>${FINAL ? `<span class="chrs">${hoursFor(bid, capId)}h</span>` : ''}${x}</div>`;
 }
 // the "Built by" panel on a feature card: rows (× unlinks), a picker to add one, or the gap
 function paintBuilt(capId) {
@@ -663,8 +676,8 @@ function paintBuilt(capId) {
   $(`[data-ms="${capId}"]`).textContent = ms ? ` · ${ms}` : '';
   box.classList.toggle('none', !by.length);
   const head = by.length ? `Built by <b>${by.length}</b> component${by.length > 1 ? 's' : ''} in <b>${conts.length}</b> container${conts.length > 1 ? 's' : ''}` : 'Not built yet';
-  if (FINAL) { const h = by.reduce((n, b) => n + hoursOf(b), 0); $(`[data-hrs="${capId}"]`).textContent = `${h.toLocaleString('en-US')}h`;
-    box.innerHTML = `<div class="bhead">${head}<span class="arch">${archLink(conts)}</span></div><div class="crows">${by.map((b) => compRow(b, capId)).join('')}</div>${by.map((b) => tasksHtml(compById[b])).join('')}`; return; }
+  if (FINAL) { const h = by.reduce((n, b) => n + hoursFor(b, capId), 0); $(`[data-hrs="${capId}"]`).textContent = `${h.toLocaleString('en-US')}h`;
+    box.innerHTML = `<div class="bhead">${head}<span class="arch">${archLink(conts)}</span></div><div class="crows">${by.map((b) => compRow(b, capId)).join('')}</div>${by.map((b) => tasksHtml(compById[b], capId)).join('')}`; return; }
   const rows = by.map((b) => compRow(b, capId, was.includes(b) ? '' : ' added')).join('') + was.filter((b) => !by.includes(b)).map((b) => compRow(b, capId, ' removed')).join('');
   const pick = pickerHtml(capId);
   const gap = by.length ? '' : asks[capId] !== undefined
@@ -743,7 +756,7 @@ function totals() {
     $(`[data-sec="${s.id}"]`).classList.toggle('hide', !s.features.some((c) => capVisible({ ...c, sys: s })));
     const hrs = FINAL ? new Set(s.features.flatMap((c) => buildersOf(c.id))) : null;
     $(`[data-sub="${s.id}"]`).innerHTML = `<div class="side-score"><b>${money(sn)}</b><span>feature build subtotal</span>${Math.round(sn) !== Math.round(sw) ? `<span class="was"> · was ${money(sw)}</span>` : ''}</div>`
-      + (FINAL ? `<div class="side-effort"><b>${[...hrs].reduce((n, b) => n + hoursOf(b), 0).toLocaleString('en-US')}h</b><span>${hrs.size} components, each counted once</span></div>` : '');
+      + (FINAL ? `<div class="side-effort"><b>${sysHours(s.features.map((c) => c.id)).toLocaleString('en-US')}h</b><span>${hrs.size} components, each task counted once</span></div>` : '');
   });
   CAPS.forEach(paintCap);
   const covered = CAPS.filter((c) => buildersOf(c.id).length).length; const gaps = notBuiltCount();
