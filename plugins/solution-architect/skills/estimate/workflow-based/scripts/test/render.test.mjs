@@ -20,7 +20,7 @@ test('render writes both pages and warns when the viewer is missing', () => {
   assert.deepEqual(p.register.exclusions, ['last-mile delivery tracking', 'Hosting and third-party subscription fees']);
   assert.equal(p.view.price.presentLow, JSON.parse(readFileSync(join(dir, 'estimation.json'), 'utf8')).computed.price.presentLow);
   const cp = pageOf(readFileSync(join(dir, 'dist', 'estimate-components.html'), 'utf8'));
-  assert.deepEqual(cp.tasks['api.billing'][0], ['Three-way match', 1, 2.17, 4, 'UNCALIBRATED', '']);
+  assert.deepEqual(cp.tasks['api.billing'][0], ['Three-way match', 1, 2.17, 4, 'UNCALIBRATED', '', ['FEAT-005']]);
   assert.equal(cp.xlsx.rows.length, 5);
   assert.equal(cp.arch, 'index.html');
 });

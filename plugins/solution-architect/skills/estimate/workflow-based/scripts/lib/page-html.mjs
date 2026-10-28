@@ -13,12 +13,12 @@ function common(est, req) {
   return { currency: est.inputs.currency ?? 'USD', view: priceView(est), milestones: milestoneView(est), register: registerView(est, req) };
 }
 
-// The Effort side's task rows: [name, low, expected, high hours, confidence, assumptions].
+// The Effort side's task rows: [name, low, expected, high hours, confidence, assumptions, features].
 export function taskTable(est) {
   const out = {};
   for (const c of est.inputs.components) {
     const done = est.computed.components[c.id]?.tasks ?? {};
-    if (c.tasks?.length) out[c.id] = c.tasks.map((t) => [t.name, done[t.id].low, done[t.id].e, done[t.id].high, done[t.id].confidence, (t.assumptions ?? []).join('; ')]);
+    if (c.tasks?.length) out[c.id] = c.tasks.map((t) => [t.name, done[t.id].low, done[t.id].e, done[t.id].high, done[t.id].confidence, (t.assumptions ?? []).join('; '), t.features]);
   }
   return out;
 }

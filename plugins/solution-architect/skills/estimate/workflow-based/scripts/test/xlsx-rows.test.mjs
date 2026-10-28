@@ -6,9 +6,10 @@ import { computeWorkflowEstimation } from '../lib/rollup.mjs';
 import { xlsxRows } from '../lib/xlsx-rows.mjs';
 
 const fx = fileURLToPath(new URL('./fixtures/inputs-pass.json', import.meta.url));
-function rows(editReq) {
+function rows(editReq, editInputs) {
   const { inputs, req } = loadPair(fx);
   if (editReq) editReq(req);
+  if (editInputs) editInputs(inputs);
   return xlsxRows(computeWorkflowEstimation(inputs, req, []), req);
 }
 
@@ -41,13 +42,13 @@ test('a feature two systems list gets one row, under the first system', () => {
   assert.equal(r.length, 5);
 });
 
-test('every task appears once, under the first feature its component builds', () => {
-  const r = rows();
+test('every task appears once, under the first feature it serves', () => {
+  const r = rows(undefined, (i) => { i.components.find((c) => c.id === 'api.stage').tasks[1].features = ['FEAT-002']; });
   const all = r.flatMap((x) => x.tasks.map((t) => t.name));
   assert.equal(all.length, 8);
   assert.equal(new Set(all).size, 8);
-  // office builds FEAT-001, -003, -005 and is no feature's main builder: its task still lands, under FEAT-001
-  assert.deepEqual(r[0].tasks.map((t) => t.name), ['Stage transitions with audit', 'Transition tests', 'Orders, quotes and invoicing screens']);
+  assert.deepEqual(r[0].tasks.map((t) => t.name), ['Stage transitions with audit', 'Orders, quotes and invoicing screens']);
+  assert.deepEqual(r[1].tasks.map((t) => t.name), ['Transition tests', 'Alert delivery']);
 });
 
 test('task hours map to o / m / p and the shape becomes the category', () => {
