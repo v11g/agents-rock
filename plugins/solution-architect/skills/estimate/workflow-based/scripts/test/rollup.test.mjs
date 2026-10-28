@@ -78,3 +78,11 @@ test('each task carries its low and high hours beside the expected', () => {
   assert.equal(t.e, 2.17);  // PERT of 60/120/240 min
   assert.equal(t.high, 4);  // seed p 240 min
 });
+
+test('task features do not move the price', () => {
+  const { inputs, req } = loadPair(fx);
+  const bare = structuredClone(inputs);
+  for (const c of bare.components) for (const t of c.tasks ?? []) delete t.features;
+  const price = (i) => computeWorkflowEstimation(i, req, []).computed.price;
+  assert.deepEqual(price(inputs), price(bare));
+});

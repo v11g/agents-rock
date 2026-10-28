@@ -35,6 +35,22 @@ function checkIdle(c, out) {
   if (c.tasks?.length) out.push(`component ${c.id}: tasks need a builds entry — link a feature or move the tasks`);
 }
 
+// Each task names the features it serves, out of the component's builds; every
+// build has at least one task (the task rubric's "covers its links").
+function checkTaskFeatures(c, out) {
+  const builds = new Set(c.builds.map((b) => b.feature));
+  const served = new Set();
+  for (const t of c.tasks ?? []) {
+    if (!Array.isArray(t.features) || !t.features.length) { out.push(`task ${t.id}: features must list the features it serves`); continue; }
+    for (const f of t.features) {
+      if (builds.has(f)) served.add(f);
+      else out.push(`task ${t.id}: serves ${f}, which ${c.id} does not build`);
+    }
+  }
+  if (!c.tasks?.length) return;
+  for (const f of builds) if (!served.has(f)) out.push(`component ${c.id}: builds ${f} but no task serves it`);
+}
+
 function checkWork(c, parents, out) {
   const builds = c.builds ?? [];
   if (parents.has(c.id)) {
@@ -51,6 +67,7 @@ function checkWork(c, parents, out) {
   if (!nonEmpty(c.milestone)) out.push(`component ${c.id}: builds features but has no milestone`);
   if (!(c.tasks?.length > 0)) out.push(`component ${c.id}: builds features but has no tasks`);
   for (const t of c.tasks ?? []) checkAgenticTask(t, out);
+  checkTaskFeatures(c, out);
 }
 
 export function checkComponents(inputs, out) {

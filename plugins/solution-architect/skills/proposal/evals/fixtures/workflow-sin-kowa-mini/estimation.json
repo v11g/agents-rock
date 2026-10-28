@@ -246,7 +246,11 @@
               "p": 360
             },
             "assumptions": [],
-            "provenance": "proposed"
+            "provenance": "proposed",
+            "features": [
+              "FEAT-001",
+              "FEAT-002"
+            ]
           },
           {
             "id": "stage-tests",
@@ -262,7 +266,10 @@
               "p": 120
             },
             "assumptions": [],
-            "provenance": "proposed"
+            "provenance": "proposed",
+            "features": [
+              "FEAT-001"
+            ]
           }
         ]
       },
@@ -292,7 +299,10 @@
               "p": 480
             },
             "assumptions": [],
-            "provenance": "proposed"
+            "provenance": "proposed",
+            "features": [
+              "FEAT-003"
+            ]
           }
         ]
       },
@@ -322,7 +332,10 @@
               "p": 240
             },
             "assumptions": [],
-            "provenance": "proposed"
+            "provenance": "proposed",
+            "features": [
+              "FEAT-005"
+            ]
           },
           {
             "id": "billing-docs",
@@ -338,7 +351,10 @@
               "p": 160
             },
             "assumptions": [],
-            "provenance": "proposed"
+            "provenance": "proposed",
+            "features": [
+              "FEAT-005"
+            ]
           }
         ]
       },
@@ -375,7 +391,12 @@
               "p": 720
             },
             "assumptions": [],
-            "provenance": "proposed"
+            "provenance": "proposed",
+            "features": [
+              "FEAT-001",
+              "FEAT-003",
+              "FEAT-005"
+            ]
           }
         ]
       },
@@ -409,7 +430,10 @@
               "p": 120
             },
             "assumptions": [],
-            "provenance": "proposed"
+            "provenance": "proposed",
+            "features": [
+              "FEAT-002"
+            ]
           }
         ]
       },
@@ -439,7 +463,10 @@
               "p": 360
             },
             "assumptions": [],
-            "provenance": "proposed"
+            "provenance": "proposed",
+            "features": [
+              "FEAT-004"
+            ]
           }
         ]
       },

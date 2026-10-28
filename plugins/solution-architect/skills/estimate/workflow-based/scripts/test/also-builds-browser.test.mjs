@@ -7,7 +7,11 @@ import { reviewPage, componentsPage } from './stage.mjs';
 const skip = !findChrome();
 const settle = () => new Promise((r) => setTimeout(r, 1500));
 // office builds FEAT-001, 003, 005; adding 002 and 004 gives FEAT-001's row 4 others
-const wide = (i) => i.components.find((c) => c.id === 'office').builds.push({ feature: 'FEAT-002', why: 'a' }, { feature: 'FEAT-004', why: 'b' });
+const wide = (i) => {
+  const office = i.components.find((c) => c.id === 'office');
+  office.builds.push({ feature: 'FEAT-002', why: 'a' }, { feature: 'FEAT-004', why: 'b' });
+  office.tasks[0].features.push('FEAT-002', 'FEAT-004');
+};
 
 const one = (i) => i.components.find((c) => c.id === 'office').builds.push({ feature: 'FEAT-002', why: 'a' });
 
